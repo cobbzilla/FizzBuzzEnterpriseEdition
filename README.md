@@ -81,3 +81,7 @@ keeps ISO 9000 and SOC 2 findings open until there is independent evidence.
 The [readiness commission](docs/ADR-0009-operational-readiness.md) reports
 `GET /readyz` as a three-vote deployment decision. The simpler `/healthz`
 continues to report HTTP liveness.
+
+The [capacity planning bureau](docs/ADR-0010-capacity-planning.md) forecasts
+the mix of output lines at `GET /capacity/forecast?limit=15` without issuing
+any actual proclamation.

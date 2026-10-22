@@ -18,6 +18,7 @@ import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.a
 import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.audit.OutputTransactionCoordinator;
 import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.audit.AuditStatusProjection;
 import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.compliance.ComplianceEvidenceFactory;
+import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.capacity.CapacityPlanningBureau;
 import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.interfaces.SlopFizzBuzz;
 
 /**
@@ -36,6 +37,7 @@ public final class SlopFizzBuzzHttpServer implements AutoCloseable {
 		this.workers = Executors.newFixedThreadPool(4);
 		this.server.setExecutor(this.workers);
 		this.server.createContext("/fizzbuzz", new FizzBuzzHandler(service, transactions));
+		this.server.createContext("/capacity/forecast", new CapacityForecastHandler());
 		this.server.createContext("/healthz", new HealthHandler());
 		this.server.createContext("/readyz", new ReadinessHandler(journal));
 		this.server.createContext("/audit/status", new AuditStatusHandler(journal));
@@ -72,6 +74,45 @@ public final class SlopFizzBuzzHttpServer implements AutoCloseable {
 			stream.write(bytes);
 		} finally {
 			stream.close();
+		}
+	}
+
+	private static Integer parseLimit(final String query) {
+		if (query == null) {
+			return Integer.valueOf(100);
+		}
+		if (!query.matches("limit=[0-9]{1,4}")) {
+			return null;
+		}
+		final int parsed = Integer.parseInt(query.substring("limit=".length()));
+		return parsed <= 1000 ? Integer.valueOf(parsed) : null;
+	}
+
+	private static final class CapacityForecastHandler implements HttpHandler {
+		private final CapacityPlanningBureau bureau = new CapacityPlanningBureau();
+
+		@Override
+		public void handle(final HttpExchange exchange) throws IOException {
+			try {
+				if (!"/capacity/forecast".equals(exchange.getRequestURI().getPath())) {
+					respond(exchange, 404, "Unknown desk\n");
+					return;
+				}
+				if (!"GET".equals(exchange.getRequestMethod())) {
+					exchange.getResponseHeaders().set("Allow", "GET");
+					respond(exchange, 405, "Method not authorized\n");
+					return;
+				}
+				final Integer limit = parseLimit(exchange.getRequestURI().getRawQuery());
+				if (limit == null) {
+					respond(exchange, 400, "Invalid limit; use an integer from 0 through 1000\n");
+					return;
+				}
+				respond(exchange, 200, this.bureau.forecast(limit.intValue()).toJson(),
+						"application/json; charset=UTF-8");
+			} finally {
+				exchange.close();
+			}
 		}
 	}
 
@@ -161,16 +202,6 @@ public final class SlopFizzBuzzHttpServer implements AutoCloseable {
 			}
 		}
 
-		private static Integer parseLimit(final String query) {
-			if (query == null) {
-				return Integer.valueOf(100);
-			}
-			if (!query.matches("limit=[0-9]{1,4}")) {
-				return null;
-			}
-			final int parsed = Integer.parseInt(query.substring("limit=".length()));
-			return parsed <= 1000 ? Integer.valueOf(parsed) : null;
-		}
 	}
 
 	private static final class AuditStatusHandler implements HttpHandler {
