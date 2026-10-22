@@ -15,6 +15,7 @@ public final class OutputTransactionCoordinator {
 
 	private static final Logger LOGGER = Logger.getLogger(OutputTransactionCoordinator.class.getName());
 	private final ThreadLocal<PendingOutput> pending = new ThreadLocal<PendingOutput>();
+	private final ThreadLocal<OutputCapture> capture = new ThreadLocal<OutputCapture>();
 	private final OutputAuditJournal journal;
 
 	@Autowired
@@ -29,11 +30,26 @@ public final class OutputTransactionCoordinator {
 		this.pending.set(new PendingOutput(number));
 	}
 
+	public OutputCapture capture() {
+		if (this.capture.get() != null) {
+			throw new IllegalStateException("A thread may represent only one output audience at a time.");
+		}
+		final OutputCapture audience = new OutputCapture(this);
+		this.capture.set(audience);
+		return audience;
+	}
+
+	void release(final OutputCapture audience) {
+		if (this.capture.get() != audience) {
+			throw new IllegalStateException("An audience cannot adjourn another audience's hearing.");
+		}
+		this.capture.remove();
+	}
+
 	public void stageOrWrite(final String fragment) throws IOException {
 		final PendingOutput transaction = this.pending.get();
 		if (transaction == null) {
-			System.out.write(fragment.getBytes());
-			System.out.flush();
+			this.publish(fragment.getBytes(StandardCharsets.UTF_8));
 		} else {
 			transaction.payload.append(fragment);
 		}
@@ -47,11 +63,7 @@ public final class OutputTransactionCoordinator {
 		try {
 			final String payload = transaction.payload.toString();
 			final byte[] bytes = payload.getBytes(StandardCharsets.UTF_8);
-			System.out.write(bytes, 0, bytes.length);
-			System.out.flush();
-			if (System.out.checkError()) {
-				throw new IllegalStateException("The output publication failed.");
-			}
+			this.publish(bytes);
 			this.journal.record(transaction.number, payload, OutputDisposition.COMMITTED);
 		} catch (final RuntimeException failure) {
 			this.journal.record(transaction.number, transaction.payload.toString(), OutputDisposition.ABORTED);
@@ -59,6 +71,19 @@ public final class OutputTransactionCoordinator {
 			throw failure;
 		} finally {
 			this.pending.remove();
+		}
+	}
+
+	private void publish(final byte[] bytes) {
+		final OutputCapture audience = this.capture.get();
+		if (audience != null) {
+			audience.accept(bytes);
+		} else {
+			System.out.write(bytes, 0, bytes.length);
+			System.out.flush();
+			if (System.out.checkError()) {
+				throw new IllegalStateException("The output publication failed.");
+			}
 		}
 	}
 
