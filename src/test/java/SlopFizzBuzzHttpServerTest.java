@@ -109,6 +109,18 @@ public class SlopFizzBuzzHttpServerTest {
 	}
 
 	@Test
+	public void evidenceDeskDeclaresOpenCertificationFindings() throws Exception {
+		final Reply evidence = request("GET", "/audit/evidence");
+		assertEquals(200, evidence.status);
+		assertEquals("application/json; charset=UTF-8", evidence.contentType);
+		assertTrue(evidence.body.contains("\"schema\":\"slopbuzz-evidence/v1\""));
+		assertTrue(evidence.body.contains("\"certification\":\"none\""));
+		assertTrue(evidence.body.contains("\"ISO-9000\":\"OPEN\""));
+		assertTrue(evidence.body.contains("\"SOC-2\":\"OPEN\""));
+		assertEquals(405, request("POST", "/audit/evidence").status);
+	}
+
+	@Test
 	public void simultaneousHearingsKeepTheirOutputSeparate() throws Exception {
 		final ExecutorService applicants = Executors.newFixedThreadPool(2);
 		try {
@@ -151,7 +163,8 @@ public class SlopFizzBuzzHttpServerTest {
 			} finally {
 				stream.close();
 			}
-			return new Reply(status, new String(bytes.toByteArray(), StandardCharsets.UTF_8));
+			return new Reply(status, new String(bytes.toByteArray(), StandardCharsets.UTF_8),
+					connection.getHeaderField("Content-Type"));
 		} finally {
 			connection.disconnect();
 		}
@@ -177,10 +190,12 @@ public class SlopFizzBuzzHttpServerTest {
 	private static final class Reply {
 		private final int status;
 		private final String body;
+		private final String contentType;
 
-		private Reply(final int status, final String body) {
+		private Reply(final int status, final String body, final String contentType) {
 			this.status = status;
 			this.body = body;
+			this.contentType = contentType;
 		}
 	}
 }

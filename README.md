@@ -11,6 +11,8 @@ divisible by both three and five is still the game's required `FizzBuzz`.
 
 Build and test with `mvn package`. The application entry point is
 `com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.Main`.
+The [enterprise improvement ledger](CHANGELOG.md) records each formalized
+investment as it enters the `slopbuzz` portfolio.
 
 ## FizzBuzz
 
@@ -71,3 +73,7 @@ bureau checks its stored hash chain on startup.
 The [audit message queue](docs/ADR-0007-audit-message-queue.md) projects
 delivery counts at `GET /audit/status`. The report includes pending and
 dead-letter counts as well as the current chain check.
+
+The [quality manual](docs/QUALITY_MANUAL.md) defines the internal controls
+reported by `GET /audit/evidence`. Its [dossier decision](docs/ADR-0008-evidence-dossier.md)
+keeps ISO 9000 and SOC 2 findings open until there is independent evidence.
