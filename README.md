@@ -67,3 +67,7 @@ Set `SLOPBUZZ_AUDIT_JDBC_URL=jdbc:h2:file:/data/slopbuzz-audit` to keep the
 For the container, create a volume with `docker volume create slopbuzz-audit`
 and run it with `-v slopbuzz-audit:/data` and that environment variable. The
 bureau checks its stored hash chain on startup.
+
+The [audit message queue](docs/ADR-0007-audit-message-queue.md) projects
+delivery counts at `GET /audit/status`. The report includes pending and
+dead-letter counts as well as the current chain check.

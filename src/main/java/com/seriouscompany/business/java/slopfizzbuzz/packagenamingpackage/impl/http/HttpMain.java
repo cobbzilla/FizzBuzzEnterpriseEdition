@@ -6,6 +6,7 @@ import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.Constants;
 import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.audit.OutputTransactionCoordinator;
+import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.audit.OutputAuditJournal;
 import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.interfaces.SlopFizzBuzz;
 
 /**
@@ -24,8 +25,9 @@ public final class HttpMain {
 					(SlopFizzBuzz) context.getBean(Constants.STANDARD_SLOP_FIZZ_BUZZ);
 			final OutputTransactionCoordinator transactions =
 					context.getBean(OutputTransactionCoordinator.class);
+			final OutputAuditJournal journal = context.getBean(OutputAuditJournal.class);
 			final SlopFizzBuzzHttpServer server =
-					new SlopFizzBuzzHttpServer(new InetSocketAddress(port), service, transactions);
+					new SlopFizzBuzzHttpServer(new InetSocketAddress(port), service, transactions, journal);
 			Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
 				@Override
 				public void run() {
