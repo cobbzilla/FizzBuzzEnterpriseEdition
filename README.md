@@ -77,3 +77,7 @@ dead-letter counts as well as the current chain check.
 The [quality manual](docs/QUALITY_MANUAL.md) defines the internal controls
 reported by `GET /audit/evidence`. Its [dossier decision](docs/ADR-0008-evidence-dossier.md)
 keeps ISO 9000 and SOC 2 findings open until there is independent evidence.
+
+The [readiness commission](docs/ADR-0009-operational-readiness.md) reports
+`GET /readyz` as a three-vote deployment decision. The simpler `/healthz`
+continues to report HTTP liveness.

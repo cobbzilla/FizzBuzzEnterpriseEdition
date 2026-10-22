@@ -37,6 +37,7 @@ public final class SlopFizzBuzzHttpServer implements AutoCloseable {
 		this.server.setExecutor(this.workers);
 		this.server.createContext("/fizzbuzz", new FizzBuzzHandler(service, transactions));
 		this.server.createContext("/healthz", new HealthHandler());
+		this.server.createContext("/readyz", new ReadinessHandler(journal));
 		this.server.createContext("/audit/status", new AuditStatusHandler(journal));
 		this.server.createContext("/audit/evidence", new EvidenceDossierHandler(journal));
 	}
@@ -88,6 +89,33 @@ public final class SlopFizzBuzzHttpServer implements AutoCloseable {
 					return;
 				}
 				respond(exchange, 200, "ok\n");
+			} finally {
+				exchange.close();
+			}
+		}
+	}
+
+	private static final class ReadinessHandler implements HttpHandler {
+		private final OperationalReadinessCommission commission;
+
+		private ReadinessHandler(final OutputAuditJournal journal) {
+			this.commission = new OperationalReadinessCommission(journal);
+		}
+
+		@Override
+		public void handle(final HttpExchange exchange) throws IOException {
+			try {
+				if (!"/readyz".equals(exchange.getRequestURI().getPath())) {
+					respond(exchange, 404, "Unknown desk\n");
+					return;
+				}
+				if (!"GET".equals(exchange.getRequestMethod())) {
+					exchange.getResponseHeaders().set("Allow", "GET");
+					respond(exchange, 405, "Method not authorized\n");
+					return;
+				}
+				final ReadinessVerdict verdict = this.commission.convene();
+				respond(exchange, verdict.isReady() ? 200 : 503, verdict.toText());
 			} finally {
 				exchange.close();
 			}
