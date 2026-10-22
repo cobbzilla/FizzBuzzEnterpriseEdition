@@ -72,6 +72,23 @@ public class SlopFizzBuzzHttpServerTest {
 	}
 
 	@Test
+	public void capacityDeskForecastsWithoutCreatingAuditMinutes() throws Exception {
+		final int priorEntries = journal.snapshot().size();
+		final Reply forecast = request("GET", "/capacity/forecast?limit=15");
+		assertEquals(200, forecast.status);
+		assertEquals("application/json; charset=UTF-8", forecast.contentType);
+		assertTrue(forecast.body.contains("\"numeralLines\":8"));
+		assertTrue(forecast.body.contains("\"fizzLines\":4"));
+		assertTrue(forecast.body.contains("\"buzzLines\":2"));
+		assertTrue(forecast.body.contains("\"fizzBuzzLines\":1"));
+		assertTrue(forecast.body.contains("\"workloadUnits\":23"));
+		assertEquals(priorEntries, journal.snapshot().size());
+		assertEquals(400, request("GET", "/capacity/forecast?limit=1001").status);
+		assertEquals(405, request("POST", "/capacity/forecast").status);
+		assertEquals(404, request("GET", "/capacity/forecast-extra").status);
+	}
+
+	@Test
 	public void deadLetterVetoesReadinessButNotLiveness() throws Exception {
 		final OutputAuditJournal failedJournal = new OutputAuditJournal(new EphemeralAuditStore());
 		failedJournal.record(1, "1\n", OutputDisposition.COMMITTED);
