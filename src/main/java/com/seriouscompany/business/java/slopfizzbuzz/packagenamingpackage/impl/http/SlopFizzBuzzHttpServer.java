@@ -19,6 +19,8 @@ import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.a
 import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.audit.AuditStatusProjection;
 import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.compliance.ComplianceEvidenceFactory;
 import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.capacity.CapacityPlanningBureau;
+import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.operations.ProclamationOutcome;
+import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.operations.ServiceLevelScorecard;
 import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.interfaces.SlopFizzBuzz;
 
 /**
@@ -36,7 +38,9 @@ public final class SlopFizzBuzzHttpServer implements AutoCloseable {
 		this.server = HttpServer.create(address, 0);
 		this.workers = Executors.newFixedThreadPool(4);
 		this.server.setExecutor(this.workers);
-		this.server.createContext("/fizzbuzz", new FizzBuzzHandler(service, transactions));
+		final ServiceLevelScorecard scorecard = new ServiceLevelScorecard();
+		this.server.createContext("/fizzbuzz", new FizzBuzzHandler(service, transactions, scorecard));
+		this.server.createContext("/operations/scorecard", new ScorecardHandler(scorecard));
 		this.server.createContext("/capacity/forecast", new CapacityForecastHandler());
 		this.server.createContext("/healthz", new HealthHandler());
 		this.server.createContext("/readyz", new ReadinessHandler(journal));
@@ -166,17 +170,69 @@ public final class SlopFizzBuzzHttpServer implements AutoCloseable {
 	private static final class FizzBuzzHandler implements HttpHandler {
 		private final SlopFizzBuzz service;
 		private final OutputTransactionCoordinator transactions;
+		private final ServiceLevelScorecard scorecard;
 
 		private FizzBuzzHandler(final SlopFizzBuzz service,
-				final OutputTransactionCoordinator transactions) {
+				final OutputTransactionCoordinator transactions,
+				final ServiceLevelScorecard scorecard) {
 			this.service = service;
 			this.transactions = transactions;
+			this.scorecard = scorecard;
+		}
+
+		@Override
+		public void handle(final HttpExchange exchange) throws IOException {
+			final long started = System.nanoTime();
+			ProclamationOutcome outcome = ProclamationOutcome.FAILED;
+			boolean counted = true;
+			try {
+				if (!"/fizzbuzz".equals(exchange.getRequestURI().getPath())) {
+					counted = false;
+					respond(exchange, 404, "Unknown desk\n");
+					return;
+				}
+				if (!"GET".equals(exchange.getRequestMethod())) {
+					exchange.getResponseHeaders().set("Allow", "GET");
+					respond(exchange, 405, "Method not authorized\n");
+					outcome = ProclamationOutcome.REJECTED;
+					return;
+				}
+				final Integer limit = parseLimit(exchange.getRequestURI().getRawQuery());
+				if (limit == null) {
+					respond(exchange, 400, "Invalid limit; use an integer from 0 through 1000\n");
+					outcome = ProclamationOutcome.REJECTED;
+					return;
+				}
+				try (OutputCapture audience = this.transactions.capture()) {
+					this.service.slopFizzBuzz(limit.intValue());
+					respond(exchange, 200, audience.getText());
+					outcome = ProclamationOutcome.SUCCESSFUL;
+				} catch (final RuntimeException failure) {
+					LOGGER.warning("A SlopFizzBuzz HTTP proclamation failed: " + failure.getMessage());
+					respond(exchange, 500, "Generation failed\n");
+				}
+			} finally {
+				if (counted) {
+					this.scorecard.record(outcome, Math.max(0L,
+							(System.nanoTime() - started) / 1000L));
+				}
+				exchange.close();
+			}
+		}
+
+	}
+
+	private static final class ScorecardHandler implements HttpHandler {
+		private final ServiceLevelScorecard scorecard;
+
+		private ScorecardHandler(final ServiceLevelScorecard scorecard) {
+			this.scorecard = scorecard;
 		}
 
 		@Override
 		public void handle(final HttpExchange exchange) throws IOException {
 			try {
-				if (!"/fizzbuzz".equals(exchange.getRequestURI().getPath())) {
+				if (!"/operations/scorecard".equals(exchange.getRequestURI().getPath())) {
 					respond(exchange, 404, "Unknown desk\n");
 					return;
 				}
@@ -185,23 +241,12 @@ public final class SlopFizzBuzzHttpServer implements AutoCloseable {
 					respond(exchange, 405, "Method not authorized\n");
 					return;
 				}
-				final Integer limit = parseLimit(exchange.getRequestURI().getRawQuery());
-				if (limit == null) {
-					respond(exchange, 400, "Invalid limit; use an integer from 0 through 1000\n");
-					return;
-				}
-				try (OutputCapture audience = this.transactions.capture()) {
-					this.service.slopFizzBuzz(limit.intValue());
-					respond(exchange, 200, audience.getText());
-				} catch (final RuntimeException failure) {
-					LOGGER.warning("A SlopFizzBuzz HTTP proclamation failed: " + failure.getMessage());
-					respond(exchange, 500, "Generation failed\n");
-				}
+				respond(exchange, 200, this.scorecard.snapshot().toJson(),
+						"application/json; charset=UTF-8");
 			} finally {
 				exchange.close();
 			}
 		}
-
 	}
 
 	private static final class AuditStatusHandler implements HttpHandler {
