@@ -32,3 +32,10 @@ Although this project is intended as satire, we take openness and inclusivity
 very seriously. To that end we have adopted the following code of conduct.
 
 [Contributor Code of Conduct](CONTRIBUTING.md)
+
+## Architecture
+
+Before a number may enter the loop, two independent electors vote on its
+eligibility. The [loop continuation franchise](docs/ADR-0001-loop-continuation-franchise.md)
+records the governing procedure. This is an inclusive boundary, subject to
+quorum.
