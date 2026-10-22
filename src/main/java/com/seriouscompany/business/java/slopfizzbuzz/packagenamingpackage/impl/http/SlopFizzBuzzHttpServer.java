@@ -17,6 +17,7 @@ import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.a
 import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.audit.OutputAuditJournal;
 import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.audit.OutputTransactionCoordinator;
 import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.audit.AuditStatusProjection;
+import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.compliance.ComplianceEvidenceFactory;
 import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.interfaces.SlopFizzBuzz;
 
 /**
@@ -37,6 +38,7 @@ public final class SlopFizzBuzzHttpServer implements AutoCloseable {
 		this.server.createContext("/fizzbuzz", new FizzBuzzHandler(service, transactions));
 		this.server.createContext("/healthz", new HealthHandler());
 		this.server.createContext("/audit/status", new AuditStatusHandler(journal));
+		this.server.createContext("/audit/evidence", new EvidenceDossierHandler(journal));
 	}
 
 	public void start() {
@@ -55,8 +57,14 @@ public final class SlopFizzBuzzHttpServer implements AutoCloseable {
 
 	private static void respond(final HttpExchange exchange, final int status, final String body)
 			throws IOException {
+		respond(exchange, status, body, "text/plain; charset=UTF-8");
+	}
+
+	private static void respond(final HttpExchange exchange, final int status, final String body,
+			final String contentType)
+			throws IOException {
 		final byte[] bytes = body.getBytes(StandardCharsets.UTF_8);
-		exchange.getResponseHeaders().set("Content-Type", "text/plain; charset=UTF-8");
+		exchange.getResponseHeaders().set("Content-Type", contentType);
 		exchange.sendResponseHeaders(status, bytes.length);
 		final OutputStream stream = exchange.getResponseBody();
 		try {
@@ -164,6 +172,33 @@ public final class SlopFizzBuzzHttpServer implements AutoCloseable {
 						+ "deadLetters=" + this.journal.messages().deadLetterCount() + "\n"
 						+ "chainValid=" + this.journal.verifyChain() + "\n";
 				respond(exchange, 200, status);
+			} finally {
+				exchange.close();
+			}
+		}
+	}
+
+	private static final class EvidenceDossierHandler implements HttpHandler {
+		private final ComplianceEvidenceFactory factory;
+
+		private EvidenceDossierHandler(final OutputAuditJournal journal) {
+			this.factory = new ComplianceEvidenceFactory(journal);
+		}
+
+		@Override
+		public void handle(final HttpExchange exchange) throws IOException {
+			try {
+				if (!"/audit/evidence".equals(exchange.getRequestURI().getPath())) {
+					respond(exchange, 404, "Unknown desk\n");
+					return;
+				}
+				if (!"GET".equals(exchange.getRequestMethod())) {
+					exchange.getResponseHeaders().set("Allow", "GET");
+					respond(exchange, 405, "Method not authorized\n");
+					return;
+				}
+				respond(exchange, 200, this.factory.issue(System.currentTimeMillis()).toJson(),
+						"application/json; charset=UTF-8");
 			} finally {
 				exchange.close();
 			}
