@@ -46,3 +46,16 @@ certify its immediate successor.
 
 Each generated line passes through an [output transaction and audit bureau](docs/ADR-0003-output-transactions.md),
 which keeps process-local, hash-linked minutes.
+
+## HTTP proclamation desk
+
+The [HTTP entry point](docs/ADR-0005-http-proclamation.md) serves
+`GET /fizzbuzz?limit=15` and `GET /healthz`. The limit defaults to 100 and
+may range from 0 through 1000. Build and run the container with:
+
+```sh
+docker build -t slopbuzz .
+docker run --rm -p 8080:8080 slopbuzz
+```
+
+Then request `http://localhost:8080/fizzbuzz?limit=15`.
