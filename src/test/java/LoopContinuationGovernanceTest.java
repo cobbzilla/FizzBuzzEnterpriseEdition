@@ -4,12 +4,12 @@ import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
-import com.seriouscompany.business.java.fizzbuzz.packagenamingpackage.impl.loop.AtBoundaryContinuationElector;
-import com.seriouscompany.business.java.fizzbuzz.packagenamingpackage.impl.loop.InclusiveBoundaryQuorum;
-import com.seriouscompany.business.java.fizzbuzz.packagenamingpackage.impl.loop.LoopCondition;
-import com.seriouscompany.business.java.fizzbuzz.packagenamingpackage.impl.loop.LoopContinuationBallot;
-import com.seriouscompany.business.java.fizzbuzz.packagenamingpackage.impl.loop.PreBoundaryContinuationElector;
-import com.seriouscompany.business.java.fizzbuzz.packagenamingpackage.impl.strategies.comparators.integercomparator.ThreeWayIntegerComparisonResult;
+import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.loop.AtBoundaryContinuationElector;
+import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.loop.InclusiveBoundaryQuorum;
+import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.loop.LoopCondition;
+import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.loop.LoopContinuationBallot;
+import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.loop.PreBoundaryContinuationElector;
+import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.strategies.comparators.integercomparator.ThreeWayIntegerComparisonResult;
 
 /**
  * Constitutional checks for the right of a number to enter the loop.

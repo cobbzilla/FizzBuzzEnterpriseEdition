@@ -7,13 +7,13 @@ public class TestConstants {
 		super();
 	}
 
-	static final String _1_2_FIZZ_4_BUZZ_FIZZ_7_8_FIZZ_BUZZ_11_FIZZ_13_14_FIZZ_BUZZ_16 = "1\n2\nFizz\n4\nBuzz\nFizz\n7\n8\nFizz\nBuzz\n11\nFizz\n13\n14\nFizzBuzz\n16\n";
-	static final String _1_2_FIZZ_4_BUZZ_FIZZ_7_8_FIZZ_BUZZ_11_FIZZ_13_14_FIZZ_BUZZ = "1\n2\nFizz\n4\nBuzz\nFizz\n7\n8\nFizz\nBuzz\n11\nFizz\n13\n14\nFizzBuzz\n";
-	static final String _1_2_FIZZ_4_BUZZ_FIZZ_7_8_FIZZ_BUZZ_11_FIZZ_13_14 = "1\n2\nFizz\n4\nBuzz\nFizz\n7\n8\nFizz\nBuzz\n11\nFizz\n13\n14\n";
-	static final String _1_2_FIZZ_4_BUZZ_FIZZ_7_8_FIZZ_BUZZ_11_FIZZ_13 = "1\n2\nFizz\n4\nBuzz\nFizz\n7\n8\nFizz\nBuzz\n11\nFizz\n13\n";
-	static final String _1_2_FIZZ_4_BUZZ_FIZZ_7_8_FIZZ_BUZZ_11_FIZZ = "1\n2\nFizz\n4\nBuzz\nFizz\n7\n8\nFizz\nBuzz\n11\nFizz\n";
-	static final String _1_2_FIZZ_4_BUZZ_FIZZ_7_8_FIZZ_BUZZ_11 = "1\n2\nFizz\n4\nBuzz\nFizz\n7\n8\nFizz\nBuzz\n11\n";
-	static final String _1_2_FIZZ_4_BUZZ_FIZZ_7_8_FIZZ_BUZZ = "1\n2\nFizz\n4\nBuzz\nFizz\n7\n8\nFizz\nBuzz\n";
+	static final String _1_2_FIZZ_4_BUZZ_FIZZ_7_8_SLOP_FIZZ_BUZZ_11_FIZZ_13_14_SLOP_FIZZ_BUZZ_16 = "1\n2\nFizz\n4\nBuzz\nFizz\n7\n8\nFizz\nBuzz\n11\nFizz\n13\n14\nFizzBuzz\n16\n";
+	static final String _1_2_FIZZ_4_BUZZ_FIZZ_7_8_SLOP_FIZZ_BUZZ_11_FIZZ_13_14_SLOP_FIZZ_BUZZ = "1\n2\nFizz\n4\nBuzz\nFizz\n7\n8\nFizz\nBuzz\n11\nFizz\n13\n14\nFizzBuzz\n";
+	static final String _1_2_FIZZ_4_BUZZ_FIZZ_7_8_SLOP_FIZZ_BUZZ_11_FIZZ_13_14 = "1\n2\nFizz\n4\nBuzz\nFizz\n7\n8\nFizz\nBuzz\n11\nFizz\n13\n14\n";
+	static final String _1_2_FIZZ_4_BUZZ_FIZZ_7_8_SLOP_FIZZ_BUZZ_11_FIZZ_13 = "1\n2\nFizz\n4\nBuzz\nFizz\n7\n8\nFizz\nBuzz\n11\nFizz\n13\n";
+	static final String _1_2_FIZZ_4_BUZZ_FIZZ_7_8_SLOP_FIZZ_BUZZ_11_FIZZ = "1\n2\nFizz\n4\nBuzz\nFizz\n7\n8\nFizz\nBuzz\n11\nFizz\n";
+	static final String _1_2_FIZZ_4_BUZZ_FIZZ_7_8_SLOP_FIZZ_BUZZ_11 = "1\n2\nFizz\n4\nBuzz\nFizz\n7\n8\nFizz\nBuzz\n11\n";
+	static final String _1_2_FIZZ_4_BUZZ_FIZZ_7_8_SLOP_FIZZ_BUZZ = "1\n2\nFizz\n4\nBuzz\nFizz\n7\n8\nFizz\nBuzz\n";
 	static final String _1_2_FIZZ_4_BUZZ_FIZZ_7_8_FIZZ = "1\n2\nFizz\n4\nBuzz\nFizz\n7\n8\nFizz\n";
 	static final String _1_2_FIZZ_4_BUZZ_FIZZ_7_8 = "1\n2\nFizz\n4\nBuzz\nFizz\n7\n8\n";
 	static final String _1_2_FIZZ_4_BUZZ_FIZZ_7 = "1\n2\nFizz\n4\nBuzz\nFizz\n7\n";
@@ -23,7 +23,7 @@ public class TestConstants {
 	static final String _1_2_FIZZ = "1\n2\nFizz\n";
 	static final String _1_2_ = "1\n2\n";
 	static final String _1_ = "1\n";
-	static final String STANDARD_FIZZ_BUZZ = "standardFizzBuzz";
+	static final String STANDARD_SLOP_FIZZ_BUZZ = "standardSlopFizzBuzz";
 	static final String SPRING_XML = "spring.xml";
 	static final int INT_1 = 1;
 	static final int INT_2 = 2;

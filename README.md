@@ -1,15 +1,16 @@
-# FizzBuzzEnterpriseEdition
-
-[![Build status][Build status image]][Build status URL] [![codecov.io](https://codecov.io/github/EnterpriseQualityCoding/FizzBuzzEnterpriseEdition/coverage.svg?branch=master)](https://codecov.io/github/EnterpriseQualityCoding/FizzBuzzEnterpriseEdition?branch=master)
-
-[Build status image]: https://secure.travis-ci.org/EnterpriseQualityCoding/FizzBuzzEnterpriseEdition.png?branch=master
-[Build status URL]: http://travis-ci.org/EnterpriseQualityCoding/FizzBuzzEnterpriseEdition
+# SlopFizzBuzzEnterpriseEdition
 
 Enterprise software marks a special high-grade class of software that makes
 careful use of relevant software architecture design principles to build
 particularly customizable and extensible solutions to real problems. This
 project is an example of how the popular FizzBuzz game might be built were it
 subject to the high quality standards of enterprise software.
+
+The implementation is branded SlopFizzBuzz. Its printed answer to a number
+divisible by both three and five is still the game's required `FizzBuzz`.
+
+Build and test with `mvn package`. The application entry point is
+`com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.Main`.
 
 ## FizzBuzz
 

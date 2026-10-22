@@ -26,4 +26,4 @@ dependencies {
     testCompile 'junit:junit:4.8.2'
 }
 
-mainClassName = 'com.seriouscompany.business.java.fizzbuzz.packagenamingpackage.impl.Main'
+mainClassName = 'com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.Main'

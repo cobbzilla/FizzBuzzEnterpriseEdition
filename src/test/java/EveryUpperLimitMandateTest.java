@@ -14,7 +14,7 @@ import org.junit.runners.Parameterized.Parameters;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
-import com.seriouscompany.business.java.fizzbuzz.packagenamingpackage.interfaces.FizzBuzz;
+import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.interfaces.SlopFizzBuzz;
 
 /**
  * Every possible upper limit in the official one-hundred-number jurisdiction.
@@ -23,7 +23,7 @@ import com.seriouscompany.business.java.fizzbuzz.packagenamingpackage.interfaces
 public class EveryUpperLimitMandateTest {
 
 	private static ConfigurableApplicationContext context;
-	private static FizzBuzz fizzBuzz;
+	private static SlopFizzBuzz slopFizzBuzz;
 
 	private final int upperLimit;
 
@@ -43,7 +43,7 @@ public class EveryUpperLimitMandateTest {
 	@BeforeClass
 	public static void openInstitution() {
 		context = new ClassPathXmlApplicationContext(TestConstants.SPRING_XML);
-		fizzBuzz = (FizzBuzz) context.getBean(TestConstants.STANDARD_FIZZ_BUZZ);
+		slopFizzBuzz = (SlopFizzBuzz) context.getBean(TestConstants.STANDARD_SLOP_FIZZ_BUZZ);
 	}
 
 	@AfterClass
@@ -58,7 +58,7 @@ public class EveryUpperLimitMandateTest {
 		final PrintStream recorder = new PrintStream(record);
 		try {
 			System.setOut(recorder);
-			fizzBuzz.fizzBuzz(this.upperLimit);
+			slopFizzBuzz.slopFizzBuzz(this.upperLimit);
 			recorder.flush();
 		} finally {
 			System.setOut(original);
