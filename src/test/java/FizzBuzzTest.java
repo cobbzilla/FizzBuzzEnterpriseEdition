@@ -84,4 +84,31 @@ public class FizzBuzzTest {
 				TestConstants._1_2_FIZZ_4_BUZZ_FIZZ_7_8_FIZZ_BUZZ_11_FIZZ_13_14_FIZZ_BUZZ_16);
 	}
 
+	/**
+	 * Verifies the full public mandate independently of the ballot machinery.
+	 */
+	@Test
+	public void testCompleteHundredNumberMandate() throws IOException {
+		final StringBuilder expected = new StringBuilder();
+		for (int number = 1; number <= 100; number++) {
+			if (number % 15 == 0) {
+				expected.append("FizzBuzz");
+			} else if (number % 3 == 0) {
+				expected.append("Fizz");
+			} else if (number % 5 == 0) {
+				expected.append("Buzz");
+			} else {
+				expected.append(number);
+			}
+			expected.append('\n');
+		}
+		this.doFizzBuzz(100, expected.toString());
+	}
+
+	@Test
+	public void testNoNumbersReceiveAuthorizationBelowOne() throws IOException {
+		this.doFizzBuzz(0, "");
+		this.doFizzBuzz(-1, "");
+	}
+
 }
