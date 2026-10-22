@@ -42,3 +42,6 @@ quorum.
 
 Likewise, a number advances only after [ordinal succession proceedings](docs/ADR-0002-ordinal-succession.md)
 certify its immediate successor.
+
+Each generated line passes through an [output transaction and audit bureau](docs/ADR-0003-output-transactions.md),
+which keeps process-local, hash-linked minutes.

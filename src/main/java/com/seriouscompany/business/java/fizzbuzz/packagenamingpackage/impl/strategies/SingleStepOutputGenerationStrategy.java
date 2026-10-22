@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.seriouscompany.business.java.fizzbuzz.packagenamingpackage.impl.factories.*;
+import com.seriouscompany.business.java.fizzbuzz.packagenamingpackage.impl.audit.OutputTransactionCoordinator;
 import com.seriouscompany.business.java.fizzbuzz.packagenamingpackage.impl.visitors.FizzBuzzOutputGenerationContext;
 import com.seriouscompany.business.java.fizzbuzz.packagenamingpackage.interfaces.printers.StringPrinter;
 import com.seriouscompany.business.java.fizzbuzz.packagenamingpackage.interfaces.strategies.OutputGenerationStrategy;
@@ -24,6 +25,7 @@ public class SingleStepOutputGenerationStrategy implements OutputGenerationStrat
 	private final List<OutputGenerationContext> contexts;
 	private final OutputGenerationContextVisitor contextVisitor;
 	private final StringPrinter myNewLinePrinter;
+	private final OutputTransactionCoordinator transactions;
 
 	/**
 	 * @param fizzBuzzOutputGenerationContextVisitorFactory FizzBuzzOutputGenerationContextVisitorFactory
@@ -44,8 +46,10 @@ public class SingleStepOutputGenerationStrategy implements OutputGenerationStrat
 			final BuzzStringPrinterFactory buzzStringPrinterFactory,
 			final NoFizzNoBuzzStrategyFactory noFizzNoBuzzStrategyFactory,
 			final IntegerIntegerPrinterFactory integerIntegerPrinterFactory,
-			final NewLineStringPrinterFactory newLineStringPrinterFactory) {
+			final NewLineStringPrinterFactory newLineStringPrinterFactory,
+			final OutputTransactionCoordinator transactions) {
 		super();
+		this.transactions = transactions;
 		this.contextVisitor = fizzBuzzOutputGenerationContextVisitorFactory.createVisitor();
 		this.contexts = new ArrayList<OutputGenerationContext>();
 		this.contexts.add(new FizzBuzzOutputGenerationContext(fizzStrategyFactory.createIsEvenlyDivisibleStrategy(),
@@ -65,12 +69,19 @@ public class SingleStepOutputGenerationStrategy implements OutputGenerationStrat
 	 */
 	public void performGenerationForCurrentStep(final SingleStepOutputGenerationParameter generationParameter) {
 		final int nGenerationParameter = generationParameter.retrieveIntegerValue();
-		final Iterator<OutputGenerationContext> iterator = this.contexts.iterator();
-		while (iterator.hasNext()) {
-			final OutputGenerationContext context = iterator.next();
-			this.contextVisitor.visit(context, nGenerationParameter);
+		this.transactions.begin(nGenerationParameter);
+		try {
+			final Iterator<OutputGenerationContext> iterator = this.contexts.iterator();
+			while (iterator.hasNext()) {
+				final OutputGenerationContext context = iterator.next();
+				this.contextVisitor.visit(context, nGenerationParameter);
+			}
+			this.myNewLinePrinter.print();
+			this.transactions.commit();
+		} catch (final RuntimeException failure) {
+			this.transactions.abort();
+			throw failure;
 		}
-		this.myNewLinePrinter.print();
 	}
 
 }
