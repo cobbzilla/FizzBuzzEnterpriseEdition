@@ -11,7 +11,7 @@ import java.util.logging.Logger;
 import org.springframework.stereotype.Service;
 
 /**
- * An in-memory, hash-linked ledger for the ceremonial output transaction.
+ * A hash-linked ledger with an interchangeable repository of record.
  */
 @Service
 public final class OutputAuditJournal {
@@ -19,6 +19,25 @@ public final class OutputAuditJournal {
 	private static final Logger LOGGER = Logger.getLogger(OutputAuditJournal.class.getName());
 	private static final String GENESIS_DIGEST = "GENESIS";
 	private final List<OutputAuditEntry> entries = new ArrayList<OutputAuditEntry>();
+	private final OutputAuditStore store;
+
+	public OutputAuditJournal() {
+		this(configuredStore());
+	}
+
+	public OutputAuditJournal(final OutputAuditStore store) {
+		this.store = store;
+		this.entries.addAll(store.load());
+		if (!this.verifyChain()) {
+			throw new IllegalStateException("The existing audit chain failed verification.");
+		}
+	}
+
+	private static OutputAuditStore configuredStore() {
+		final String configuredUrl = System.getenv("SLOPBUZZ_AUDIT_JDBC_URL");
+		return configuredUrl == null || configuredUrl.trim().isEmpty()
+				? new EphemeralAuditStore() : new H2AuditStore(configuredUrl);
+	}
 
 	public synchronized OutputAuditEntry record(final int number, final String payload,
 			final OutputDisposition disposition) {
@@ -28,6 +47,7 @@ public final class OutputAuditJournal {
 		final String digest = digest(previous, sequence, number, payload, disposition);
 		final OutputAuditEntry entry =
 				new OutputAuditEntry(sequence, number, payload, disposition, previous, digest);
+		this.store.append(entry);
 		this.entries.add(entry);
 		LOGGER.fine("Output transaction " + sequence + " " + disposition + " for number " + number);
 		return entry;

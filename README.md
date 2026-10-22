@@ -59,3 +59,11 @@ docker run --rm -p 8080:8080 slopbuzz
 ```
 
 Then request `http://localhost:8080/fizzbuzz?limit=15`.
+
+## Persistent minutes
+
+Set `SLOPBUZZ_AUDIT_JDBC_URL=jdbc:h2:file:/data/slopbuzz-audit` to keep the
+[audit bureau's records](docs/ADR-0006-durable-audit-bureau.md) in an H2 database.
+For the container, create a volume with `docker volume create slopbuzz-audit`
+and run it with `-v slopbuzz-audit:/data` and that environment variable. The
+bureau checks its stored hash chain on startup.

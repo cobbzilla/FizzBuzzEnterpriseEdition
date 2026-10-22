@@ -9,6 +9,7 @@ FROM eclipse-temurin:17-jre-noble
 WORKDIR /app
 COPY --from=build /work/target/SlopFizzBuzzEnterpriseEdition-1.0-SNAPSHOT.jar ./app.jar
 COPY --from=build /work/target/dependency/ ./lib/
+RUN mkdir -p /data && chown 10001:10001 /data
 ENV PORT=8080
 EXPOSE 8080
 USER 10001:10001
