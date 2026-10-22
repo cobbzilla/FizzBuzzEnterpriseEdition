@@ -39,3 +39,6 @@ Before a number may enter the loop, two independent electors vote on its
 eligibility. The [loop continuation franchise](docs/ADR-0001-loop-continuation-franchise.md)
 records the governing procedure. This is an inclusive boundary, subject to
 quorum.
+
+Likewise, a number advances only after [ordinal succession proceedings](docs/ADR-0002-ordinal-succession.md)
+certify its immediate successor.

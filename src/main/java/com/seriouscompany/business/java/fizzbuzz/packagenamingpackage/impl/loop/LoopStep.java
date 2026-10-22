@@ -1,8 +1,11 @@
 package com.seriouscompany.business.java.fizzbuzz.packagenamingpackage.impl.loop;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.seriouscompany.business.java.fizzbuzz.packagenamingpackage.impl.Constants;
+import com.seriouscompany.business.java.fizzbuzz.packagenamingpackage.impl.loop.succession.OrdinalSuccessionExecutor;
+import com.seriouscompany.business.java.fizzbuzz.packagenamingpackage.impl.loop.succession.SuccessionPetition;
 
 /**
  * LoopStep
@@ -10,12 +13,20 @@ import com.seriouscompany.business.java.fizzbuzz.packagenamingpackage.impl.Const
 @Service
 public class LoopStep {
 
+	private final OrdinalSuccessionExecutor successionExecutor;
+
+	@Autowired
+	public LoopStep(final OrdinalSuccessionExecutor successionExecutor) {
+		this.successionExecutor = successionExecutor;
+	}
+
 	/**
 	 * @param nCurrentNumber int
 	 * @return int
 	 */
 	public int stepLoop(final int nCurrentNumber) {
-		return nCurrentNumber + Constants.LOOP_INC_VALUE;
+		final SuccessionPetition petition = new SuccessionPetition(nCurrentNumber, Constants.LOOP_INC_VALUE);
+		return this.successionExecutor.execute(petition);
 	}
 
 }
