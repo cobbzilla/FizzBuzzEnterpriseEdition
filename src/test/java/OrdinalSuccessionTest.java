@@ -2,12 +2,12 @@ import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
 
-import com.seriouscompany.business.java.fizzbuzz.packagenamingpackage.impl.loop.LoopStep;
-import com.seriouscompany.business.java.fizzbuzz.packagenamingpackage.impl.loop.succession.OrdinalSuccessionExecutor;
-import com.seriouscompany.business.java.fizzbuzz.packagenamingpackage.impl.loop.succession.SuccessionCertificate;
-import com.seriouscompany.business.java.fizzbuzz.packagenamingpackage.impl.loop.succession.SuccessionCertificateAuditor;
-import com.seriouscompany.business.java.fizzbuzz.packagenamingpackage.impl.loop.succession.SuccessionPetition;
-import com.seriouscompany.business.java.fizzbuzz.packagenamingpackage.impl.loop.succession.UnitAdvancementAuthority;
+import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.loop.LoopStep;
+import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.loop.succession.OrdinalSuccessionExecutor;
+import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.loop.succession.SuccessionCertificate;
+import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.loop.succession.SuccessionCertificateAuditor;
+import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.loop.succession.SuccessionPetition;
+import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.loop.succession.UnitAdvancementAuthority;
 
 /**
  * Succession law, including cases the official one-to-one-hundred run never reaches.

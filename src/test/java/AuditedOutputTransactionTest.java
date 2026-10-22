@@ -11,11 +11,11 @@ import org.junit.Test;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
-import com.seriouscompany.business.java.fizzbuzz.packagenamingpackage.impl.audit.OutputAuditEntry;
-import com.seriouscompany.business.java.fizzbuzz.packagenamingpackage.impl.audit.OutputAuditJournal;
-import com.seriouscompany.business.java.fizzbuzz.packagenamingpackage.impl.audit.OutputDisposition;
-import com.seriouscompany.business.java.fizzbuzz.packagenamingpackage.impl.audit.OutputTransactionCoordinator;
-import com.seriouscompany.business.java.fizzbuzz.packagenamingpackage.interfaces.FizzBuzz;
+import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.audit.OutputAuditEntry;
+import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.audit.OutputAuditJournal;
+import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.audit.OutputDisposition;
+import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.audit.OutputTransactionCoordinator;
+import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.interfaces.SlopFizzBuzz;
 
 /**
  * Minutes, publication, and chain of custody for the output bureau.
@@ -131,15 +131,15 @@ public class AuditedOutputTransactionTest {
 	}
 
 	@Test
-	public void actualFizzBuzzRunLeavesFifteenCommittedEntries() {
+	public void actualSlopFizzBuzzRunLeavesFifteenCommittedEntries() {
 		final ConfigurableApplicationContext context =
 				new ClassPathXmlApplicationContext(TestConstants.SPRING_XML);
 		final PrintStream original = System.out;
 		final ByteArrayOutputStream bytes = new ByteArrayOutputStream();
 		try {
 			System.setOut(new PrintStream(bytes));
-			final FizzBuzz fizzBuzz = (FizzBuzz) context.getBean(TestConstants.STANDARD_FIZZ_BUZZ);
-			fizzBuzz.fizzBuzz(15);
+			final SlopFizzBuzz slopFizzBuzz = (SlopFizzBuzz) context.getBean(TestConstants.STANDARD_SLOP_FIZZ_BUZZ);
+			slopFizzBuzz.slopFizzBuzz(15);
 			final OutputAuditJournal journal = context.getBean(OutputAuditJournal.class);
 			final List<OutputAuditEntry> entries = journal.snapshot();
 			assertEquals(15, entries.size());
