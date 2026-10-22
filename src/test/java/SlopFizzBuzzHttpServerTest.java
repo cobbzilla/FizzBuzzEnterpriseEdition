@@ -7,6 +7,8 @@ import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -86,6 +88,47 @@ public class SlopFizzBuzzHttpServerTest {
 		assertEquals(400, request("GET", "/capacity/forecast?limit=1001").status);
 		assertEquals(405, request("POST", "/capacity/forecast").status);
 		assertEquals(404, request("GET", "/capacity/forecast-extra").status);
+	}
+
+	@Test
+	public void scorecardCountsAcceptedAndRejectedProclamations() throws Exception {
+		final Reply before = request("GET", "/operations/scorecard");
+		assertEquals(200, before.status);
+		assertEquals("application/json; charset=UTF-8", before.contentType);
+		request("GET", "/fizzbuzz?limit=1");
+		request("GET", "/fizzbuzz?limit=-1");
+		final Reply after = awaitScorecard(server.getPort(), "total",
+				jsonNumber(before.body, "total") + 2);
+		assertEquals(jsonNumber(before.body, "successful") + 1,
+				jsonNumber(after.body, "successful"));
+		assertEquals(jsonNumber(before.body, "rejected") + 1,
+				jsonNumber(after.body, "rejected"));
+		assertEquals(jsonNumber(before.body, "failed"), jsonNumber(after.body, "failed"));
+		assertEquals(405, request("POST", "/operations/scorecard").status);
+		assertEquals(404, request("GET", "/operations/scorecard-extra").status);
+	}
+
+	@Test
+	public void failedProclamationAppearsInItsOwnScorecard() throws Exception {
+		final SlopFizzBuzz failingService = new SlopFizzBuzz() {
+			@Override
+			public void slopFizzBuzz(final int limit) {
+				throw new IllegalStateException("The proclamation committee has adjourned.");
+			}
+		};
+		final SlopFizzBuzzHttpServer failingServer = new SlopFizzBuzzHttpServer(
+				new InetSocketAddress("127.0.0.1", 0), failingService,
+				context.getBean(OutputTransactionCoordinator.class),
+				new OutputAuditJournal(new EphemeralAuditStore()));
+		failingServer.start();
+		try {
+			assertEquals(500, request(failingServer.getPort(), "GET", "/fizzbuzz?limit=1").status);
+			final Reply scorecard = awaitScorecard(failingServer.getPort(), "failed", 1);
+			assertEquals(1, jsonNumber(scorecard.body, "failed"));
+			assertEquals(1, jsonNumber(scorecard.body, "total"));
+		} finally {
+			failingServer.close();
+		}
 	}
 
 	@Test
@@ -251,6 +294,25 @@ public class SlopFizzBuzzHttpServerTest {
 			result.append(System.getProperty("line.separator"));
 		}
 		return result.toString();
+	}
+
+	private static long jsonNumber(final String json, final String field) {
+		final Matcher matcher = Pattern.compile("\"" + field + "\":([0-9]+)").matcher(json);
+		assertTrue("Missing scorecard field " + field, matcher.find());
+		return Long.parseLong(matcher.group(1));
+	}
+
+	private static Reply awaitScorecard(final int port, final String field,
+			final long expected) throws Exception {
+		Reply reply = null;
+		for (int attempt = 0; attempt < 50; attempt++) {
+			reply = request(port, "GET", "/operations/scorecard");
+			if (jsonNumber(reply.body, field) >= expected) {
+				return reply;
+			}
+			Thread.sleep(10);
+		}
+		return reply;
 	}
 
 	private static final class Reply {

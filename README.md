@@ -85,3 +85,7 @@ continues to report HTTP liveness.
 The [capacity planning bureau](docs/ADR-0010-capacity-planning.md) forecasts
 the mix of output lines at `GET /capacity/forecast?limit=15` without issuing
 any actual proclamation.
+
+The [service level scorecard](docs/ADR-0011-service-level-scorecard.md)
+summarizes current-process HTTP proclamation outcomes at
+`GET /operations/scorecard`.
