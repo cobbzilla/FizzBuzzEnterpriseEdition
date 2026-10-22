@@ -19,6 +19,10 @@ import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.audit.OutputTransactionCoordinator;
 import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.audit.OutputAuditJournal;
+import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.audit.EphemeralAuditStore;
+import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.audit.AuditEventConsumer;
+import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.audit.OutputAuditEntry;
+import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.audit.OutputDisposition;
 import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.http.SlopFizzBuzzHttpServer;
 import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.interfaces.SlopFizzBuzz;
 
@@ -54,6 +58,46 @@ public class SlopFizzBuzzHttpServerTest {
 		final Reply reply = request("GET", "/healthz");
 		assertEquals(200, reply.status);
 		assertEquals("ok\n", reply.body);
+	}
+
+	@Test
+	public void readinessCommissionApprovesTheHealthyBureau() throws Exception {
+		final Reply reply = request("GET", "/readyz");
+		assertEquals(200, reply.status);
+		assertTrue(reply.body.contains("ready=true\n"));
+		assertTrue(reply.body.contains("integrityVote=APPROVE\n"));
+		assertTrue(reply.body.contains("deliveryVote=APPROVE\n"));
+		assertEquals(405, request("POST", "/readyz").status);
+		assertEquals(404, request("GET", "/readyz-extra").status);
+	}
+
+	@Test
+	public void deadLetterVetoesReadinessButNotLiveness() throws Exception {
+		final OutputAuditJournal failedJournal = new OutputAuditJournal(new EphemeralAuditStore());
+		failedJournal.record(1, "1\n", OutputDisposition.COMMITTED);
+		final AuditEventConsumer refusingOffice = new AuditEventConsumer() {
+			@Override
+			public void accept(final OutputAuditEntry entry) {
+				throw new IllegalStateException("The recipient has left the building.");
+			}
+		};
+		for (int attempt = 0; attempt < 3; attempt++) {
+			failedJournal.messages().dispatch(refusingOffice);
+		}
+		final SlopFizzBuzzHttpServer degraded = new SlopFizzBuzzHttpServer(
+				new InetSocketAddress("127.0.0.1", 0),
+				(SlopFizzBuzz) context.getBean(TestConstants.STANDARD_SLOP_FIZZ_BUZZ),
+				context.getBean(OutputTransactionCoordinator.class), failedJournal);
+		degraded.start();
+		try {
+			final Reply readiness = request(degraded.getPort(), "GET", "/readyz");
+			assertEquals(503, readiness.status);
+			assertTrue(readiness.body.contains("ready=false\n"));
+			assertTrue(readiness.body.contains("deliveryVote=VETO\n"));
+			assertEquals(200, request(degraded.getPort(), "GET", "/healthz").status);
+		} finally {
+			degraded.close();
+		}
 	}
 
 	@Test
@@ -144,7 +188,12 @@ public class SlopFizzBuzzHttpServerTest {
 	}
 
 	private static Reply request(final String method, final String path) throws Exception {
-		final URL url = new URL("http://127.0.0.1:" + server.getPort() + path);
+		return request(server.getPort(), method, path);
+	}
+
+	private static Reply request(final int port, final String method, final String path)
+			throws Exception {
+		final URL url = new URL("http://127.0.0.1:" + port + path);
 		final HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 		connection.setConnectTimeout(5000);
 		connection.setReadTimeout(5000);
