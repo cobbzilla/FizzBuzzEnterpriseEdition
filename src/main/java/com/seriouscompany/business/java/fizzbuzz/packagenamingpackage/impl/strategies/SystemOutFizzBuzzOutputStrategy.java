@@ -2,8 +2,10 @@ package com.seriouscompany.business.java.fizzbuzz.packagenamingpackage.impl.stra
 
 import java.io.IOException;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.seriouscompany.business.java.fizzbuzz.packagenamingpackage.impl.audit.OutputTransactionCoordinator;
 import com.seriouscompany.business.java.fizzbuzz.packagenamingpackage.interfaces.strategies.FizzBuzzOutputStrategy;
 
 /**
@@ -12,6 +14,13 @@ import com.seriouscompany.business.java.fizzbuzz.packagenamingpackage.interfaces
 @Service
 public class SystemOutFizzBuzzOutputStrategy implements FizzBuzzOutputStrategy {
 
+	private final OutputTransactionCoordinator transactions;
+
+	@Autowired
+	public SystemOutFizzBuzzOutputStrategy(final OutputTransactionCoordinator transactions) {
+		this.transactions = transactions;
+	}
+
 	/**
 	 * @param output String
 	 * @throws IOException
@@ -19,8 +28,7 @@ public class SystemOutFizzBuzzOutputStrategy implements FizzBuzzOutputStrategy {
 	 */
 	@Override
 	public void output(final String output) throws IOException {
-		System.out.write(output.getBytes());
-		System.out.flush();
+		this.transactions.stageOrWrite(output);
 	}
 
 }
