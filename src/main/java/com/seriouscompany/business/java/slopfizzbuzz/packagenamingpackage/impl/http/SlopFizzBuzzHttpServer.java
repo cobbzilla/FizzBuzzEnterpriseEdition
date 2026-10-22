@@ -14,7 +14,9 @@ import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
 
 import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.audit.OutputCapture;
+import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.audit.OutputAuditJournal;
 import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.audit.OutputTransactionCoordinator;
+import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.audit.AuditStatusProjection;
 import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.interfaces.SlopFizzBuzz;
 
 /**
@@ -27,12 +29,14 @@ public final class SlopFizzBuzzHttpServer implements AutoCloseable {
 	private final ExecutorService workers;
 
 	public SlopFizzBuzzHttpServer(final InetSocketAddress address, final SlopFizzBuzz service,
-			final OutputTransactionCoordinator transactions) throws IOException {
+			final OutputTransactionCoordinator transactions, final OutputAuditJournal journal)
+			throws IOException {
 		this.server = HttpServer.create(address, 0);
 		this.workers = Executors.newFixedThreadPool(4);
 		this.server.setExecutor(this.workers);
 		this.server.createContext("/fizzbuzz", new FizzBuzzHandler(service, transactions));
 		this.server.createContext("/healthz", new HealthHandler());
+		this.server.createContext("/audit/status", new AuditStatusHandler(journal));
 	}
 
 	public void start() {
@@ -130,6 +134,39 @@ public final class SlopFizzBuzzHttpServer implements AutoCloseable {
 			}
 			final int parsed = Integer.parseInt(query.substring("limit=".length()));
 			return parsed <= 1000 ? Integer.valueOf(parsed) : null;
+		}
+	}
+
+	private static final class AuditStatusHandler implements HttpHandler {
+		private final OutputAuditJournal journal;
+		private final AuditStatusProjection projection = new AuditStatusProjection();
+
+		private AuditStatusHandler(final OutputAuditJournal journal) {
+			this.journal = journal;
+		}
+
+		@Override
+		public void handle(final HttpExchange exchange) throws IOException {
+			try {
+				if (!"/audit/status".equals(exchange.getRequestURI().getPath())) {
+					respond(exchange, 404, "Unknown desk\n");
+					return;
+				}
+				if (!"GET".equals(exchange.getRequestMethod())) {
+					exchange.getResponseHeaders().set("Allow", "GET");
+					respond(exchange, 405, "Method not authorized\n");
+					return;
+				}
+				this.journal.messages().dispatch(this.projection);
+				final String status = "committed=" + this.projection.committedCount() + "\n"
+						+ "aborted=" + this.projection.abortedCount() + "\n"
+						+ "pending=" + this.journal.messages().pendingCount() + "\n"
+						+ "deadLetters=" + this.journal.messages().deadLetterCount() + "\n"
+						+ "chainValid=" + this.journal.verifyChain() + "\n";
+				respond(exchange, 200, status);
+			} finally {
+				exchange.close();
+			}
 		}
 	}
 }

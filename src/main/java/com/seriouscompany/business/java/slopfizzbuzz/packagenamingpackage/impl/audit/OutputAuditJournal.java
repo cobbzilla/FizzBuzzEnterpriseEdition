@@ -20,6 +20,7 @@ public final class OutputAuditJournal {
 	private static final String GENESIS_DIGEST = "GENESIS";
 	private final List<OutputAuditEntry> entries = new ArrayList<OutputAuditEntry>();
 	private final OutputAuditStore store;
+	private final AuditMessageQueue messages = new AuditMessageQueue();
 
 	public OutputAuditJournal() {
 		this(configuredStore());
@@ -30,6 +31,9 @@ public final class OutputAuditJournal {
 		this.entries.addAll(store.load());
 		if (!this.verifyChain()) {
 			throw new IllegalStateException("The existing audit chain failed verification.");
+		}
+		for (final OutputAuditEntry entry : this.entries) {
+			this.messages.publish(entry);
 		}
 	}
 
@@ -49,12 +53,17 @@ public final class OutputAuditJournal {
 				new OutputAuditEntry(sequence, number, payload, disposition, previous, digest);
 		this.store.append(entry);
 		this.entries.add(entry);
+		this.messages.publish(entry);
 		LOGGER.fine("Output transaction " + sequence + " " + disposition + " for number " + number);
 		return entry;
 	}
 
 	public synchronized List<OutputAuditEntry> snapshot() {
 		return Collections.unmodifiableList(new ArrayList<OutputAuditEntry>(this.entries));
+	}
+
+	public AuditMessageQueue messages() {
+		return this.messages;
 	}
 
 	public synchronized boolean verifyChain() {

@@ -83,6 +83,7 @@ public class DurableAuditBureauTest {
 			assertEquals("The filing cabinet is locked.", expected.getMessage());
 		}
 		assertEquals(0, journal.snapshot().size());
+		assertEquals(0, journal.messages().pendingCount());
 		assertTrue(journal.verifyChain());
 	}
 

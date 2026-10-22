@@ -18,6 +18,7 @@ import org.junit.Test;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.audit.OutputTransactionCoordinator;
+import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.audit.OutputAuditJournal;
 import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.http.SlopFizzBuzzHttpServer;
 import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.interfaces.SlopFizzBuzz;
 
@@ -28,15 +29,17 @@ public class SlopFizzBuzzHttpServerTest {
 
 	private static ClassPathXmlApplicationContext context;
 	private static SlopFizzBuzzHttpServer server;
+	private static OutputAuditJournal journal;
 
 	@BeforeClass
 	public static void openDesk() throws Exception {
 		context = new ClassPathXmlApplicationContext(TestConstants.SPRING_XML);
 		final SlopFizzBuzz service =
 				(SlopFizzBuzz) context.getBean(TestConstants.STANDARD_SLOP_FIZZ_BUZZ);
+		journal = context.getBean(OutputAuditJournal.class);
 		server = new SlopFizzBuzzHttpServer(
 				new InetSocketAddress("127.0.0.1", 0), service,
-				context.getBean(OutputTransactionCoordinator.class));
+				context.getBean(OutputTransactionCoordinator.class), journal);
 		server.start();
 	}
 
@@ -91,6 +94,18 @@ public class SlopFizzBuzzHttpServerTest {
 	@Test
 	public void nonGetMethodIsNotAuthorized() throws Exception {
 		assertEquals(405, request("POST", "/fizzbuzz?limit=3").status);
+	}
+
+	@Test
+	public void auditDeskProjectsTheCommittedMessages() throws Exception {
+		request("GET", "/fizzbuzz?limit=3");
+		final Reply status = request("GET", "/audit/status");
+		assertEquals(200, status.status);
+		assertTrue(status.body.contains("committed=" + journal.snapshot().size() + "\n"));
+		assertTrue(status.body.contains("aborted=0\n"));
+		assertTrue(status.body.contains("pending=0\n"));
+		assertTrue(status.body.contains("deadLetters=0\n"));
+		assertTrue(status.body.contains("chainValid=true\n"));
 	}
 
 	@Test
