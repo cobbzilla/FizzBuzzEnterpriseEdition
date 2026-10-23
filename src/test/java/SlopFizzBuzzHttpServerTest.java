@@ -135,8 +135,11 @@ public class SlopFizzBuzzHttpServerTest {
 		assertTrue(page.body.contains("id=\"release-value\""));
 		assertTrue(page.body.contains("id=\"recovery-button\""));
 		assertTrue(page.body.contains("id=\"display-speed\""));
-		assertTrue(page.body.contains("<option value=\"360\" selected>Full Board Ratification · 360 ms/line</option>"));
-		assertTrue(page.body.contains("Executive Fiat · real time (0 ms)"));
+		assertTrue(page.body.contains("<option value=\"1800\" selected>Full Board Ratification</option>"));
+		assertTrue(page.body.contains("<option value=\"800\">Interdepartmental Sign-Off</option>"));
+		assertTrue(page.body.contains("<option value=\"225\">Emergency Delegated Authority</option>"));
+		assertTrue(page.body.contains("<option value=\"0\">Executive Fiat</option>"));
+		assertTrue(page.body.contains("Executive Fiat waives the queue for real-time disclosure."));
 		assertFalse(page.body.contains("leisurely"));
 		assertTrue(page.body.contains("href=\"/api\""));
 		assertTrue(page.contentSecurityPolicy.contains("script-src 'self'"));
