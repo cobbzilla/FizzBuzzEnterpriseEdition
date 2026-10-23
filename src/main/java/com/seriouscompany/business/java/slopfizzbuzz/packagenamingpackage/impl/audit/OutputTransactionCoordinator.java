@@ -17,6 +17,7 @@ public final class OutputTransactionCoordinator {
 	private final ThreadLocal<PendingOutput> pending = new ThreadLocal<PendingOutput>();
 	private final ThreadLocal<OutputCapture> capture = new ThreadLocal<OutputCapture>();
 	private final OutputAuditJournal journal;
+	private final ProclamationNotary notary = new ProclamationNotary();
 
 	@Autowired
 	public OutputTransactionCoordinator(final OutputAuditJournal journal) {
@@ -62,6 +63,7 @@ public final class OutputTransactionCoordinator {
 		}
 		try {
 			final String payload = transaction.payload.toString();
+			this.notary.certify(transaction.number, payload).authorize(transaction.number, payload);
 			final byte[] bytes = payload.getBytes(StandardCharsets.UTF_8);
 			this.publish(bytes);
 			this.journal.record(transaction.number, payload, OutputDisposition.COMMITTED);

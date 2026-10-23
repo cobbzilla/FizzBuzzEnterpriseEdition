@@ -54,6 +54,10 @@ must reconcile the Fizz, Buzz, and numeral strategies with an independent
 arithmetic witness. The visitor receives number-bound certificates rather
 than an informal verbal assurance.
 
+After the printers have spoken, a [proclamation notary](docs/ADR-0020-proclamation-notary.md)
+checks the complete line against its number and exact line ending. Only a
+number-bound, text-bound seal permits the transaction desk to publish it.
+
 ## HTTP proclamation desk
 
 The [HTTP entry point](docs/ADR-0005-http-proclamation.md) serves
