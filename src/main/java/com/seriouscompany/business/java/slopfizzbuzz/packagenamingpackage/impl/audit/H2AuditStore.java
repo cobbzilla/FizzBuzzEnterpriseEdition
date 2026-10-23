@@ -16,6 +16,10 @@ public final class H2AuditStore implements OutputAuditStore {
 
 	private final String jdbcUrl;
 
+	public boolean isDurable() {
+		return this.jdbcUrl.startsWith("jdbc:h2:file:");
+	}
+
 	public H2AuditStore(final String jdbcUrl) {
 		this.jdbcUrl = jdbcUrl;
 		try (Connection connection = DriverManager.getConnection(this.jdbcUrl);

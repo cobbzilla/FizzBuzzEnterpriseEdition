@@ -28,6 +28,8 @@ import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.o
 import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.operations.RehearsalAdmissionCommission;
 import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.operations.RehearsalAdmissionReceipt;
 import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.operations.ReleaseCustodyReport;
+import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.operations.RecoveryRehearsalBureau;
+import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.operations.RecoveryVerdict;
 import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.interfaces.SlopFizzBuzz;
 
 /**
@@ -61,6 +63,7 @@ public final class SlopFizzBuzzHttpServer implements AutoCloseable {
 		this.server.createContext("/fizzbuzz", new FizzBuzzHandler(service, transactions, scorecard, cache));
 		this.server.createContext("/operations/scorecard", new ScorecardHandler(scorecard));
 		this.server.createContext("/operations/release", new ReleaseHandler(release));
+		this.server.createContext("/operations/recovery", new RecoveryHandler(new RecoveryRehearsalBureau(journal)));
 		this.server.createContext("/operations/canary", new CanaryHandler(
 				new RehearsalAdmissionCommission(
 						new SyntheticAssuranceBureau(service, transactions, journal))));
@@ -376,6 +379,37 @@ public final class SlopFizzBuzzHttpServer implements AutoCloseable {
 					verdict = this.commission.latest();
 				}
 				respond(exchange, verdict.getState() == CanaryVerdict.State.FAILED ? 503 : 200,
+						verdict.toJson(), "application/json; charset=UTF-8");
+			} finally {
+				exchange.close();
+			}
+		}
+	}
+
+	private static final class RecoveryHandler implements HttpHandler {
+		private final RecoveryRehearsalBureau bureau;
+
+		private RecoveryHandler(final RecoveryRehearsalBureau bureau) {
+			this.bureau = bureau;
+		}
+
+		@Override
+		public void handle(final HttpExchange exchange) throws IOException {
+			try {
+				if (!"/operations/recovery".equals(exchange.getRequestURI().getPath())) {
+					respond(exchange, 404, "Unknown desk\n");
+					return;
+				}
+				if (!"GET".equals(exchange.getRequestMethod())
+						&& !"POST".equals(exchange.getRequestMethod())) {
+					exchange.getResponseHeaders().set("Allow", "GET, POST");
+					respond(exchange, 405, "Method not authorized\n");
+					return;
+				}
+				exchange.getResponseHeaders().set("Cache-Control", "no-store");
+				final RecoveryVerdict verdict = "POST".equals(exchange.getRequestMethod())
+						? this.bureau.rehearse() : this.bureau.latest();
+				respond(exchange, verdict.getState() == RecoveryVerdict.State.FAILED ? 503 : 200,
 						verdict.toJson(), "application/json; charset=UTF-8");
 			} finally {
 				exchange.close();

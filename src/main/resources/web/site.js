@@ -4,6 +4,7 @@ const limitInput = byId('limit');
 const runButton = byId('run-button');
 const refreshButton = byId('refresh-button');
 const canaryButton = byId('canary-button');
+const recoveryButton = byId('recovery-button');
 let mandateSequence = 0;
 
 async function request(path, options = {}) {
@@ -46,6 +47,31 @@ async function runCanary() {
   } finally {
     canaryButton.disabled = false;
     byId('canary-value').removeAttribute('aria-busy');
+  }
+}
+
+function showRecovery(verdict) {
+  const label = verdict.state === 'PASSED' ? 'COPY MATCHED'
+    : verdict.state === 'FAILED' ? 'REVIEW REQUIRED' : 'NOT YET CONVENED';
+  setCard('recovery-value', label, verdict.state === 'PASSED');
+  if (verdict.state !== 'NOT_RUN') {
+    const medium = verdict.durable ? 'durable repository' : 'process-local store';
+    setText('recovery-status', `Drill ${verdict.sequence}: ${verdict.finding.replaceAll('_', ' ').toLowerCase()}; ${verdict.storedEntries} entries in the ${medium}, reviewed in ${Math.round(verdict.durationMicros / 1000)} milliseconds.`);
+  }
+}
+
+async function runRecovery() {
+  recoveryButton.disabled = true;
+  byId('recovery-value').setAttribute('aria-busy', 'true');
+  setText('recovery-status', 'The bureau is reopening and comparing institutional memory…');
+  try {
+    const reply = await request('/operations/recovery', { method: 'POST' });
+    showRecovery(await reply.json());
+  } catch (error) {
+    setText('recovery-status', `The recovery rehearsal could not be completed: ${error.message}`);
+  } finally {
+    recoveryButton.disabled = false;
+    byId('recovery-value').removeAttribute('aria-busy');
   }
 }
 
@@ -134,7 +160,7 @@ async function refreshOperations() {
   refreshButton.disabled = true;
   byId('operations').setAttribute('aria-busy', 'true');
   setText('operations-status', 'Refreshing the current institutional record…');
-  const paths = ['/healthz', '/readyz', '/cache/status', '/operations/scorecard', '/audit/status', '/operations/canary', '/operations/release'];
+  const paths = ['/healthz', '/readyz', '/cache/status', '/operations/scorecard', '/audit/status', '/operations/canary', '/operations/release', '/operations/recovery'];
   const results = await Promise.allSettled(paths.map((path) => request(path)));
   let available = 0;
   try {
@@ -190,6 +216,12 @@ async function refreshOperations() {
       available++;
     } else setCard('release-value', 'UNAVAILABLE', false);
 
+    const recovery = results[7].status === 'fulfilled' ? results[7].value : null;
+    if (recovery) {
+      showRecovery(await recovery.json());
+      available++;
+    } else setCard('recovery-value', 'UNAVAILABLE', false);
+
     let evidence = null;
     try { evidence = await request('/audit/evidence'); } catch (_) { /* Report below. */ }
     if (evidence?.ok) {
@@ -201,7 +233,7 @@ async function refreshOperations() {
       setText('evidence-json', JSON.stringify(report, null, 2));
       available++;
     } else setText('evidence-json', 'Evidence is temporarily unavailable.');
-    setText('operations-status', `${available} of 8 institutional desks reported. Last checked ${new Date().toLocaleTimeString()}.`);
+    setText('operations-status', `${available} of 9 institutional desks reported. Last checked ${new Date().toLocaleTimeString()}.`);
   } catch (error) {
     setText('operations-status', `The operations review was interrupted: ${error.message}`);
   } finally {
@@ -213,6 +245,7 @@ async function refreshOperations() {
 runForm.addEventListener('submit', runMandate);
 refreshButton.addEventListener('click', refreshOperations);
 canaryButton.addEventListener('click', runCanary);
+recoveryButton.addEventListener('click', runRecovery);
 document.querySelectorAll('[data-limit]').forEach((button) => {
   button.addEventListener('click', () => {
     limitInput.value = button.dataset.limit;

@@ -102,6 +102,12 @@ verdict. An admitted rehearsal makes fifteen ordinary audit entries; the
 [admission commission](docs/ADR-0015-rehearsal-admission.md) reuses that verdict
 for repeat POSTs within fifteen seconds.
 
+The [recovery rehearsal bureau](docs/ADR-0017-recovery-rehearsal.md) accepts
+`POST /operations/recovery` to reopen and compare the audit repository with
+the live hash chain. `GET /operations/recovery` reads the last verdict without
+scanning the store. The drill is read-only and reports whether the configured
+repository is file-backed; it does not restore a backup.
+
 ## Interactive world showcase
 
 Run `docker compose up --build -d` and open `http://localhost:8080/` to see

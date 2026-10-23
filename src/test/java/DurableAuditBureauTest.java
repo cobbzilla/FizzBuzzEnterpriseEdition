@@ -16,6 +16,8 @@ import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.a
 import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.audit.OutputAuditJournal;
 import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.audit.OutputAuditStore;
 import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.audit.OutputDisposition;
+import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.operations.RecoveryRehearsalBureau;
+import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.operations.RecoveryVerdict;
 
 /**
  * Checks whether the audit bureau remembers anything after everyone goes home.
@@ -60,6 +62,50 @@ public class DurableAuditBureauTest {
 		} catch (final IllegalStateException expected) {
 			assertEquals("The existing audit chain failed verification.", expected.getMessage());
 		}
+	}
+
+	@Test
+	public void recoveryRehearsalReopensDurableMemoryWithoutWritingAnotherCertificate() {
+		final OutputAuditJournal journal = new OutputAuditJournal(new H2AuditStore(jdbcUrl()));
+		journal.record(15, "FizzBuzz\n", OutputDisposition.COMMITTED);
+		final RecoveryRehearsalBureau bureau = new RecoveryRehearsalBureau(journal);
+		assertEquals(RecoveryVerdict.State.NOT_RUN, bureau.latest().getState());
+		final RecoveryVerdict verdict = bureau.rehearse();
+		assertEquals(RecoveryVerdict.State.PASSED, verdict.getState());
+		assertTrue(verdict.toJson().contains("\"finding\":\"MATCHED\""));
+		assertTrue(verdict.toJson().contains("\"durable\":true"));
+		assertTrue(verdict.toJson().contains("\"storedEntries\":1"));
+		assertEquals(1, journal.snapshot().size());
+		assertEquals(verdict.toJson(), bureau.latest().toJson());
+	}
+
+	@Test
+	public void recoveryRehearsalFindsTamperingAfterTheProcessHasStarted() throws Exception {
+		final String url = jdbcUrl();
+		final OutputAuditJournal journal = new OutputAuditJournal(new H2AuditStore(url));
+		journal.record(15, "FizzBuzz\n", OutputDisposition.COMMITTED);
+		try (Connection connection = DriverManager.getConnection(url);
+				Statement statement = connection.createStatement()) {
+			statement.executeUpdate("UPDATE output_audit SET payload = 'forged' WHERE sequence_number = 1");
+		}
+		final RecoveryVerdict verdict = new RecoveryRehearsalBureau(journal).rehearse();
+		assertEquals(RecoveryVerdict.State.FAILED, verdict.getState());
+		assertTrue(verdict.toJson().contains("\"finding\":\"STORED_INVALID\""));
+		assertEquals(1, journal.snapshot().size());
+		assertTrue(journal.verifyChain());
+	}
+
+	@Test
+	public void recoveryRehearsalFindsMissingStoredCertificates() {
+		final OutputAuditStore vanishingStore = new OutputAuditStore() {
+			@Override public List<OutputAuditEntry> load() { return java.util.Collections.emptyList(); }
+			@Override public void append(final OutputAuditEntry entry) { }
+		};
+		final OutputAuditJournal journal = new OutputAuditJournal(vanishingStore);
+		journal.record(1, "1\n", OutputDisposition.COMMITTED);
+		final RecoveryVerdict verdict = new RecoveryRehearsalBureau(journal).rehearse();
+		assertEquals(RecoveryVerdict.State.FAILED, verdict.getState());
+		assertTrue(verdict.toJson().contains("\"finding\":\"DIVERGED\""));
 	}
 
 	@Test
