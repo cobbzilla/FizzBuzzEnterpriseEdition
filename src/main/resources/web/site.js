@@ -134,7 +134,7 @@ async function refreshOperations() {
   refreshButton.disabled = true;
   byId('operations').setAttribute('aria-busy', 'true');
   setText('operations-status', 'Refreshing the current institutional record…');
-  const paths = ['/healthz', '/readyz', '/cache/status', '/operations/scorecard', '/audit/status', '/operations/canary'];
+  const paths = ['/healthz', '/readyz', '/cache/status', '/operations/scorecard', '/audit/status', '/operations/canary', '/operations/release'];
   const results = await Promise.allSettled(paths.map((path) => request(path)));
   let available = 0;
   try {
@@ -182,6 +182,14 @@ async function refreshOperations() {
       available++;
     } else setCard('canary-value', 'UNAVAILABLE', false);
 
+    const release = results[6].status === 'fulfilled' ? results[6].value : null;
+    if (release?.ok) {
+      const report = await release.json();
+      setCard('release-value', report.revision === 'unknown'
+        ? 'UNIDENTIFIED' : report.revision.slice(0, 12), report.revision !== 'unknown');
+      available++;
+    } else setCard('release-value', 'UNAVAILABLE', false);
+
     let evidence = null;
     try { evidence = await request('/audit/evidence'); } catch (_) { /* Report below. */ }
     if (evidence?.ok) {
@@ -193,7 +201,7 @@ async function refreshOperations() {
       setText('evidence-json', JSON.stringify(report, null, 2));
       available++;
     } else setText('evidence-json', 'Evidence is temporarily unavailable.');
-    setText('operations-status', `${available} of 7 institutional desks reported. Last checked ${new Date().toLocaleTimeString()}.`);
+    setText('operations-status', `${available} of 8 institutional desks reported. Last checked ${new Date().toLocaleTimeString()}.`);
   } catch (error) {
     setText('operations-status', `The operations review was interrupted: ${error.message}`);
   } finally {

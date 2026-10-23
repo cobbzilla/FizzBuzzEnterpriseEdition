@@ -5,6 +5,16 @@ portfolio. Each iteration branch receives its own entry before integration,
 so future generations can trace how a modest numerical exercise became a
 strategic operating capability.
 
+## 2026-10-22 — `slopbuzz-release-custody-bureau`
+
+**Board-visible release provenance and immutable asset stewardship.**
+Assigned each deployed process a declared Git revision, made the website
+display it, and required the preview deployment ceremony to await readiness
+and verify the same revision. Content-addressed static assets now keep their
+long cache privilege without marooning visitors on yesterday's JavaScript.
+The company can finally answer both “which release is this?” and “did the
+browser receive it?” with suitable institutional confidence.
+
 ## 2026-10-22 — `slopbuzz-rehearsal-admission-commission`
 
 **Rehearsal demand governance and archival cost containment program.**

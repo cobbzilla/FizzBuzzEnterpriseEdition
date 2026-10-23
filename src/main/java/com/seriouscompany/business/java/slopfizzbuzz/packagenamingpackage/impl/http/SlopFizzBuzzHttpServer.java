@@ -27,6 +27,7 @@ import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.o
 import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.operations.SyntheticAssuranceBureau;
 import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.operations.RehearsalAdmissionCommission;
 import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.operations.RehearsalAdmissionReceipt;
+import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.operations.ReleaseCustodyReport;
 import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.interfaces.SlopFizzBuzz;
 
 /**
@@ -47,12 +48,19 @@ public final class SlopFizzBuzzHttpServer implements AutoCloseable {
 	public SlopFizzBuzzHttpServer(final InetSocketAddress address, final SlopFizzBuzz service,
 			final OutputTransactionCoordinator transactions, final OutputAuditJournal journal,
 			final RedisOutputCache cache) throws IOException {
+		this(address, service, transactions, journal, cache, ReleaseCustodyReport.configured());
+	}
+
+	public SlopFizzBuzzHttpServer(final InetSocketAddress address, final SlopFizzBuzz service,
+			final OutputTransactionCoordinator transactions, final OutputAuditJournal journal,
+			final RedisOutputCache cache, final ReleaseCustodyReport release) throws IOException {
 		this.server = HttpServer.create(address, 0);
 		this.workers = Executors.newFixedThreadPool(4);
 		this.server.setExecutor(this.workers);
 		final ServiceLevelScorecard scorecard = new ServiceLevelScorecard();
 		this.server.createContext("/fizzbuzz", new FizzBuzzHandler(service, transactions, scorecard, cache));
 		this.server.createContext("/operations/scorecard", new ScorecardHandler(scorecard));
+		this.server.createContext("/operations/release", new ReleaseHandler(release));
 		this.server.createContext("/operations/canary", new CanaryHandler(
 				new RehearsalAdmissionCommission(
 						new SyntheticAssuranceBureau(service, transactions, journal))));
@@ -302,6 +310,33 @@ public final class SlopFizzBuzzHttpServer implements AutoCloseable {
 				}
 				respond(exchange, 200, this.scorecard.snapshot().toJson(),
 						"application/json; charset=UTF-8");
+			} finally {
+				exchange.close();
+			}
+		}
+	}
+
+	private static final class ReleaseHandler implements HttpHandler {
+		private final ReleaseCustodyReport report;
+
+		private ReleaseHandler(final ReleaseCustodyReport report) {
+			this.report = report;
+		}
+
+		@Override
+		public void handle(final HttpExchange exchange) throws IOException {
+			try {
+				if (!"/operations/release".equals(exchange.getRequestURI().getPath())) {
+					respond(exchange, 404, "Unknown desk\n");
+					return;
+				}
+				if (!"GET".equals(exchange.getRequestMethod())) {
+					exchange.getResponseHeaders().set("Allow", "GET");
+					respond(exchange, 405, "Method not authorized\n");
+					return;
+				}
+				exchange.getResponseHeaders().set("Cache-Control", "no-store");
+				respond(exchange, 200, this.report.toJson(), "application/json; charset=UTF-8");
 			} finally {
 				exchange.close();
 			}

@@ -9,6 +9,8 @@ docker compose up --build -d
 For the shared workspace preview, run `./scripts/deploy-preview.sh` instead. It
 keeps the Compose project running at `http://localhost:18088/` and rebuilds
 the app in place after each `slopbuzz` merge, preserving Redis and H2 state.
+It requires a clean mainline checkout, waits for readiness, and checks that
+`GET /operations/release` reports the deployed Git SHA.
 
 Open `http://localhost:8080/`. Set `SLOPBUZZ_HTTP_PORT` before starting if
 port 8080 is already in use. The Compose stack includes the Java website,
@@ -55,6 +57,9 @@ claim a public deployment or a domain until those steps are performed.
 * Run the form at limits 0, 15, 100, and 1000. Verify the output, forecast,
   status announcement, response time, and cache state.
 * Check narrow and wide layouts, 200% zoom, and a reduced-motion preference.
+* Reload after a deployment and check that CSS and JavaScript URLs carry their
+  current content fingerprints. A matching ETag should return 304; a changed
+  asset fingerprint should cause a fresh request.
 * Review the page against WCAG 2.2 AA. Semantic and ARIA checks establish a
   target, not a formal conformance finding.
 * For a warm-cache response-time sample, issue repeated requests to

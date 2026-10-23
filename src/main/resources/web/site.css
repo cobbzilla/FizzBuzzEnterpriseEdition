@@ -110,7 +110,7 @@ input[aria-invalid=true] { border-color: #a94323; }
 .operations-section { background: #e9e2d6; border-top: 1px solid #d2c9ba; border-bottom: 1px solid #d2c9ba; }
 .operations-section .section-heading { margin-bottom: 16px; }
 .operations-section .inline-status { margin-bottom: 24px; }
-.operations-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 13px; }
+.operations-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 13px; }
 .operation-card { display: flex; flex-direction: column; min-height: 235px; padding: 22px; background: var(--ink); color: var(--white); }
 .card-index { font-size: .7rem; color: #ee9a75; font-weight: 900; letter-spacing: .12em; }
 .operation-card h3 { margin: 25px 0 5px; font-family: Georgia, serif; font-size: 1.28rem; font-weight: 500; }
