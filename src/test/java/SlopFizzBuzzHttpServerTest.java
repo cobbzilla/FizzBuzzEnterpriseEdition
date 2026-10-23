@@ -90,6 +90,13 @@ public class SlopFizzBuzzHttpServerTest {
 		assertTrue(rehearsal.body.contains("\"finding\":\"ANSWER_MATCHED_SPECIMEN\""));
 		assertTrue(rehearsal.body.contains("\"observedLines\":15"));
 		assertTrue(rehearsal.body.contains("\"auditChainValid\":true"));
+		assertEquals("EXECUTED", rehearsal.rehearsalDisposition);
+		assertEquals("15", rehearsal.rehearsalLeaseSeconds);
+		assertEquals(priorEntries + 15, journal.snapshot().size());
+		final Reply repeated = request("POST", "/operations/canary");
+		assertEquals(200, repeated.status);
+		assertEquals("REUSED", repeated.rehearsalDisposition);
+		assertEquals(rehearsal.body, repeated.body);
 		assertEquals(priorEntries + 15, journal.snapshot().size());
 		assertEquals(rehearsal.body, request("GET", "/operations/canary").body);
 		assertEquals(405, request("PUT", "/operations/canary").status);
@@ -353,7 +360,9 @@ public class SlopFizzBuzzHttpServerTest {
 			return new Reply(status, new String(bytes.toByteArray(), StandardCharsets.UTF_8),
 					connection.getHeaderField("Content-Type"),
 					connection.getHeaderField("Content-Security-Policy"),
-					connection.getHeaderField("X-SlopBuzz-Cache"));
+					connection.getHeaderField("X-SlopBuzz-Cache"),
+					connection.getHeaderField("X-SlopBuzz-Rehearsal"),
+					connection.getHeaderField("X-SlopBuzz-Rehearsal-Lease-Seconds"));
 		} finally {
 			connection.disconnect();
 		}
@@ -401,14 +410,19 @@ public class SlopFizzBuzzHttpServerTest {
 		private final String contentType;
 		private final String contentSecurityPolicy;
 		private final String cacheState;
+		private final String rehearsalDisposition;
+		private final String rehearsalLeaseSeconds;
 
 		private Reply(final int status, final String body, final String contentType,
-				final String contentSecurityPolicy, final String cacheState) {
+				final String contentSecurityPolicy, final String cacheState,
+				final String rehearsalDisposition, final String rehearsalLeaseSeconds) {
 			this.status = status;
 			this.body = body;
 			this.contentType = contentType;
 			this.contentSecurityPolicy = contentSecurityPolicy;
 			this.cacheState = cacheState;
+			this.rehearsalDisposition = rehearsalDisposition;
+			this.rehearsalLeaseSeconds = rehearsalLeaseSeconds;
 		}
 	}
 }

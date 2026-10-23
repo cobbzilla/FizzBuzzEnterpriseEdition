@@ -25,6 +25,8 @@ import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.o
 import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.operations.ServiceLevelScorecard;
 import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.operations.CanaryVerdict;
 import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.operations.SyntheticAssuranceBureau;
+import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.operations.RehearsalAdmissionCommission;
+import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.operations.RehearsalAdmissionReceipt;
 import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.interfaces.SlopFizzBuzz;
 
 /**
@@ -52,7 +54,8 @@ public final class SlopFizzBuzzHttpServer implements AutoCloseable {
 		this.server.createContext("/fizzbuzz", new FizzBuzzHandler(service, transactions, scorecard, cache));
 		this.server.createContext("/operations/scorecard", new ScorecardHandler(scorecard));
 		this.server.createContext("/operations/canary", new CanaryHandler(
-				new SyntheticAssuranceBureau(service, transactions, journal)));
+				new RehearsalAdmissionCommission(
+						new SyntheticAssuranceBureau(service, transactions, journal))));
 		this.server.createContext("/cache/status", new CacheStatusHandler(cache));
 		this.server.createContext("/capacity/forecast", new CapacityForecastHandler());
 		this.server.createContext("/healthz", new HealthHandler());
@@ -306,10 +309,10 @@ public final class SlopFizzBuzzHttpServer implements AutoCloseable {
 	}
 
 	private static final class CanaryHandler implements HttpHandler {
-		private final SyntheticAssuranceBureau bureau;
+		private final RehearsalAdmissionCommission commission;
 
-		private CanaryHandler(final SyntheticAssuranceBureau bureau) {
-			this.bureau = bureau;
+		private CanaryHandler(final RehearsalAdmissionCommission commission) {
+			this.commission = commission;
 		}
 
 		@Override
@@ -325,8 +328,18 @@ public final class SlopFizzBuzzHttpServer implements AutoCloseable {
 					respond(exchange, 405, "Method not authorized\n");
 					return;
 				}
-				final CanaryVerdict verdict = "POST".equals(exchange.getRequestMethod())
-						? this.bureau.convene() : this.bureau.latest();
+				exchange.getResponseHeaders().set("Cache-Control", "no-store");
+				final CanaryVerdict verdict;
+				if ("POST".equals(exchange.getRequestMethod())) {
+					final RehearsalAdmissionReceipt receipt = this.commission.convene();
+					verdict = receipt.getVerdict();
+					exchange.getResponseHeaders().set("X-SlopBuzz-Rehearsal",
+							receipt.getDisposition().name());
+					exchange.getResponseHeaders().set("X-SlopBuzz-Rehearsal-Lease-Seconds",
+							Long.toString(receipt.getLeaseSecondsRemaining()));
+				} else {
+					verdict = this.commission.latest();
+				}
 				respond(exchange, verdict.getState() == CanaryVerdict.State.FAILED ? 503 : 200,
 						verdict.toJson(), "application/json; charset=UTF-8");
 			} finally {

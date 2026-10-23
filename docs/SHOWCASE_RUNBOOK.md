@@ -6,6 +6,10 @@
 docker compose up --build -d
 ```
 
+For the shared workspace preview, run `./scripts/deploy-preview.sh` instead. It
+keeps the Compose project running at `http://localhost:18088/` and rebuilds
+the app in place after each `slopbuzz` merge, preserving Redis and H2 state.
+
 Open `http://localhost:8080/`. Set `SLOPBUZZ_HTTP_PORT` before starting if
 port 8080 is already in use. The Compose stack includes the Java website,
 private Redis cache, and an H2 audit volume. Redis has a 64 MB limit and LRU
@@ -21,8 +25,11 @@ Select **Convene rehearsal** in Operations to run the synthetic assurance
 bureau. A passing run reports fifteen observed lines, a valid audit chain, and
 an approved verdict. It creates fifteen fresh audit entries even if the
 fifteen-number answer is already cached, because the rehearsal exercises the
-real Spring path. `GET /operations/canary` reads the last verdict; a POST to
-the same endpoint starts a new rehearsal. Its result is process-local.
+real Spring path. `GET /operations/canary` reads the last verdict. A POST
+starts a new rehearsal when the fifteen-second admission lease has expired;
+inside that lease it returns the same verdict with
+`X-SlopBuzz-Rehearsal: REUSED` and creates no new audit entries. Its result
+is process-local.
 
 Without Redis, `java` and the original Docker image still serve correct
 FizzBuzz answers and the website. The cache reports `BYPASS` and the

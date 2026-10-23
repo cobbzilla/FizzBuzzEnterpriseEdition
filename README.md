@@ -98,7 +98,9 @@ summarizes current-process HTTP proclamation outcomes at
 The [synthetic assurance bureau](docs/ADR-0013-synthetic-assurance.md) accepts
 `POST /operations/canary` to rehearse the real fifteen-number path against an
 approved specimen; `GET /operations/canary` reads the latest process-local
-verdict. Each rehearsal makes fifteen ordinary audit entries.
+verdict. An admitted rehearsal makes fifteen ordinary audit entries; the
+[admission commission](docs/ADR-0015-rehearsal-admission.md) reuses that verdict
+for repeat POSTs within fifteen seconds.
 
 ## Interactive world showcase
 
@@ -108,3 +110,7 @@ FizzBuzz demo, forecast, operational desks, evidence dossier, and an About
 section for The Serious Business Company, Inc. The stack uses a private Redis
 cache and a durable H2 audit volume. See the [showcase runbook](docs/SHOWCASE_RUNBOOK.md)
 for deployment and verification notes.
+
+In this shared workspace, run `./scripts/deploy-preview.sh` to update the
+long-lived local demo at `http://localhost:18088/` after a merge. It recreates
+the app container in place and preserves the Redis service and H2 audit volume.

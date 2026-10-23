@@ -5,6 +5,16 @@ portfolio. Each iteration branch receives its own entry before integration,
 so future generations can trace how a modest numerical exercise became a
 strategic operating capability.
 
+## 2026-10-22 — `slopbuzz-rehearsal-admission-commission`
+
+**Rehearsal demand governance and archival cost containment program.**
+Established a fifteen-second admission lease for the synthetic assurance
+desk, allowing repeat stakeholders to borrow a recent verdict instead of
+commissioning fifteen more permanent audit certificates. Fresh and reused
+rulings now carry transparent receipts, and the public showcase explains the
+decision. A repeatable preview deployment command keeps the board's live
+demonstration current after every portfolio integration.
+
 ## 2026-10-22 — `slopbuzz-classification-ballot`
 
 **Three-seat numerical determination and independent assurance program.**
