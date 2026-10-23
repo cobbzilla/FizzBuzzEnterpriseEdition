@@ -114,3 +114,5 @@ for deployment and verification notes.
 In this shared workspace, run `./scripts/deploy-preview.sh` to update the
 long-lived local demo at `http://localhost:18088/` after a merge. It recreates
 the app container in place and preserves the Redis service and H2 audit volume.
+The [release custody desk](docs/ADR-0016-release-custody.md) verifies readiness
+and the deployed Git revision; the site displays that revision in Operations.

@@ -27,6 +27,7 @@ import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.a
 import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.audit.OutputDisposition;
 import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.cache.RedisOutputCache;
 import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.http.SlopFizzBuzzHttpServer;
+import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.operations.ReleaseCustodyReport;
 import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.interfaces.SlopFizzBuzz;
 
 /**
@@ -72,10 +73,58 @@ public class SlopFizzBuzzHttpServerTest {
 		assertTrue(page.body.contains("<main id=\"main\">"));
 		assertTrue(page.body.contains("aria-live=\"polite\""));
 		assertTrue(page.body.contains("id=\"canary-button\""));
+		assertTrue(page.body.contains("id=\"release-value\""));
 		assertTrue(page.contentSecurityPolicy.contains("script-src 'self'"));
+		assertTrue(page.body.matches("(?s).*href=\"/assets/site\\.css\\?v=[0-9a-f]{64}\".*"));
 		assertTrue(request("GET", "/assets/site.css").body.contains("prefers-reduced-motion"));
 		assertTrue(request("GET", "/assets/site.js").body.contains("fetch(path"));
 		assertEquals(404, request("GET", "/assets/unknown.js").status);
+	}
+
+	@Test
+	public void fingerprintedAssetsRevalidateWithoutKeepingAnOldDeployment() throws Exception {
+		final Reply page = request("GET", "/");
+		assertEquals("no-cache", page.cacheControl);
+		assertTrue(page.etag.matches("\"[0-9a-f]{64}\""));
+		assertEquals(304, request(server.getPort(), "GET", "/", page.etag).status);
+		final Matcher matcher = Pattern.compile("href=\"(/assets/site\\.css\\?v=[0-9a-f]{64})\"")
+				.matcher(page.body);
+		assertTrue(matcher.find());
+		final String assetPath = matcher.group(1);
+		final Reply css = request("GET", assetPath);
+		assertEquals(200, css.status);
+		assertEquals("public, max-age=31536000, immutable", css.cacheControl);
+		assertTrue(css.etag.matches("\"[0-9a-f]{64}\""));
+		assertEquals(304, request(server.getPort(), "GET", assetPath, css.etag).status);
+		assertEquals(304, request(server.getPort(), "GET", assetPath, "W/" + css.etag).status);
+		assertEquals(304, request(server.getPort(), "GET", assetPath,
+				"\"other\", " + css.etag).status);
+		assertEquals(304, request(server.getPort(), "GET", assetPath, "*").status);
+		assertEquals(200, request(server.getPort(), "GET", assetPath, "\"stale\"").status);
+		assertEquals("no-cache", request("GET", "/assets/site.css").cacheControl);
+	}
+
+	@Test
+	public void releaseDeskReportsTheDeclaredRevision() throws Exception {
+		final String revision = "0123456789abcdef0123456789abcdef01234567";
+		final SlopFizzBuzzHttpServer provenanceServer = new SlopFizzBuzzHttpServer(
+				new InetSocketAddress("127.0.0.1", 0),
+				(SlopFizzBuzz) context.getBean(TestConstants.STANDARD_SLOP_FIZZ_BUZZ),
+				context.getBean(OutputTransactionCoordinator.class), journal,
+				new RedisOutputCache("127.0.0.1", 1),
+				new ReleaseCustodyReport(revision, 12345L));
+		provenanceServer.start();
+		try {
+			final Reply report = request(provenanceServer.getPort(), "GET", "/operations/release");
+			assertEquals(200, report.status);
+			assertTrue(report.body.contains("\"revision\":\"" + revision + "\""));
+			assertTrue(report.body.contains("\"startedAtEpochMillis\":12345"));
+			assertEquals("no-store", report.cacheControl);
+			assertEquals(405, request(provenanceServer.getPort(), "POST", "/operations/release").status);
+			assertEquals(404, request(provenanceServer.getPort(), "GET", "/operations/release-extra").status);
+		} finally {
+			provenanceServer.close();
+		}
 	}
 
 	@Test
@@ -338,31 +387,43 @@ public class SlopFizzBuzzHttpServerTest {
 
 	private static Reply request(final int port, final String method, final String path)
 			throws Exception {
+		return request(port, method, path, null);
+	}
+
+	private static Reply request(final int port, final String method, final String path,
+			final String ifNoneMatch) throws Exception {
 		final URL url = new URL("http://127.0.0.1:" + port + path);
 		final HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 		connection.setConnectTimeout(5000);
 		connection.setReadTimeout(5000);
 		connection.setRequestMethod(method);
+		if (ifNoneMatch != null) {
+			connection.setRequestProperty("If-None-Match", ifNoneMatch);
+		}
 		try {
 			final int status = connection.getResponseCode();
-			final InputStream stream = status < 400
+			final InputStream stream = status == 304 ? null : status < 400
 					? connection.getInputStream() : connection.getErrorStream();
 			final ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-			try {
-				final byte[] buffer = new byte[512];
-				int read;
-				while ((read = stream.read(buffer)) != -1) {
-					bytes.write(buffer, 0, read);
+			if (stream != null) {
+				try {
+					final byte[] buffer = new byte[512];
+					int read;
+					while ((read = stream.read(buffer)) != -1) {
+						bytes.write(buffer, 0, read);
+					}
+				} finally {
+					stream.close();
 				}
-			} finally {
-				stream.close();
 			}
 			return new Reply(status, new String(bytes.toByteArray(), StandardCharsets.UTF_8),
 					connection.getHeaderField("Content-Type"),
 					connection.getHeaderField("Content-Security-Policy"),
 					connection.getHeaderField("X-SlopBuzz-Cache"),
 					connection.getHeaderField("X-SlopBuzz-Rehearsal"),
-					connection.getHeaderField("X-SlopBuzz-Rehearsal-Lease-Seconds"));
+					connection.getHeaderField("X-SlopBuzz-Rehearsal-Lease-Seconds"),
+					connection.getHeaderField("ETag"),
+					connection.getHeaderField("Cache-Control"));
 		} finally {
 			connection.disconnect();
 		}
@@ -412,10 +473,13 @@ public class SlopFizzBuzzHttpServerTest {
 		private final String cacheState;
 		private final String rehearsalDisposition;
 		private final String rehearsalLeaseSeconds;
+		private final String etag;
+		private final String cacheControl;
 
 		private Reply(final int status, final String body, final String contentType,
 				final String contentSecurityPolicy, final String cacheState,
-				final String rehearsalDisposition, final String rehearsalLeaseSeconds) {
+				final String rehearsalDisposition, final String rehearsalLeaseSeconds,
+				final String etag, final String cacheControl) {
 			this.status = status;
 			this.body = body;
 			this.contentType = contentType;
@@ -423,6 +487,8 @@ public class SlopFizzBuzzHttpServerTest {
 			this.cacheState = cacheState;
 			this.rehearsalDisposition = rehearsalDisposition;
 			this.rehearsalLeaseSeconds = rehearsalLeaseSeconds;
+			this.etag = etag;
+			this.cacheControl = cacheControl;
 		}
 	}
 }

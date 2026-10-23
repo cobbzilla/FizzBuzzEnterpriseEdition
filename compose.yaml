@@ -9,6 +9,7 @@ services:
       SLOPBUZZ_REDIS_HOST: redis
       SLOPBUZZ_REDIS_PORT: "6379"
       SLOPBUZZ_AUDIT_JDBC_URL: jdbc:h2:file:/data/slopbuzz-audit;DB_CLOSE_DELAY=10
+      SLOPBUZZ_RELEASE_SHA: ${SLOPBUZZ_RELEASE_SHA:-unknown}
     volumes:
       - audit-data:/data
     depends_on:
