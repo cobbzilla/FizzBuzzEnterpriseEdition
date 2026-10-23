@@ -89,3 +89,12 @@ any actual proclamation.
 The [service level scorecard](docs/ADR-0011-service-level-scorecard.md)
 summarizes current-process HTTP proclamation outcomes at
 `GET /operations/scorecard`.
+
+## Interactive world showcase
+
+Run `docker compose up --build -d` and open `http://localhost:8080/` to see
+the [interactive website](docs/ADR-0012-world-showcase.md), including a live
+FizzBuzz demo, forecast, operational desks, evidence dossier, and an About
+section for The Serious Business Company, Inc. The stack uses a private Redis
+cache and a durable H2 audit volume. See the [showcase runbook](docs/SHOWCASE_RUNBOOK.md)
+for deployment and verification notes.

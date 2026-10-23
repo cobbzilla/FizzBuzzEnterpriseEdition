@@ -25,6 +25,7 @@ import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.a
 import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.audit.AuditEventConsumer;
 import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.audit.OutputAuditEntry;
 import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.audit.OutputDisposition;
+import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.cache.RedisOutputCache;
 import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.http.SlopFizzBuzzHttpServer;
 import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.interfaces.SlopFizzBuzz;
 
@@ -60,6 +61,42 @@ public class SlopFizzBuzzHttpServerTest {
 		final Reply reply = request("GET", "/healthz");
 		assertEquals(200, reply.status);
 		assertEquals("ok\n", reply.body);
+	}
+
+	@Test
+	public void showcasePublishesSemanticPageAndSameOriginAssets() throws Exception {
+		final Reply page = request("GET", "/");
+		assertEquals(200, page.status);
+		assertEquals("text/html; charset=UTF-8", page.contentType);
+		assertTrue(page.body.contains("The Serious Business Company, Inc."));
+		assertTrue(page.body.contains("<main id=\"main\">"));
+		assertTrue(page.body.contains("aria-live=\"polite\""));
+		assertTrue(page.contentSecurityPolicy.contains("script-src 'self'"));
+		assertTrue(request("GET", "/assets/site.css").body.contains("prefers-reduced-motion"));
+		assertTrue(request("GET", "/assets/site.js").body.contains("fetch(path"));
+		assertEquals(404, request("GET", "/assets/unknown.js").status);
+	}
+
+	@Test
+	public void cacheFailureFallsBackToTheRealNumericalEngine() throws Exception {
+		final SlopFizzBuzzHttpServer fallback = new SlopFizzBuzzHttpServer(
+				new InetSocketAddress("127.0.0.1", 0),
+				(SlopFizzBuzz) context.getBean(TestConstants.STANDARD_SLOP_FIZZ_BUZZ),
+				context.getBean(OutputTransactionCoordinator.class),
+				new OutputAuditJournal(new EphemeralAuditStore()),
+				new RedisOutputCache("127.0.0.1", 1));
+		fallback.start();
+		try {
+			final Reply answer = request(fallback.getPort(), "GET", "/fizzbuzz?limit=3");
+			assertEquals(200, answer.status);
+			assertEquals(expected(3), answer.body);
+			assertEquals("BYPASS", answer.cacheState);
+			final Reply status = request(fallback.getPort(), "GET", "/cache/status");
+			assertTrue(status.body.contains("\"bypasses\":1"));
+			assertTrue(status.body.contains("\"errors\":1"));
+		} finally {
+			fallback.close();
+		}
 	}
 
 	@Test
@@ -273,7 +310,9 @@ public class SlopFizzBuzzHttpServerTest {
 				stream.close();
 			}
 			return new Reply(status, new String(bytes.toByteArray(), StandardCharsets.UTF_8),
-					connection.getHeaderField("Content-Type"));
+					connection.getHeaderField("Content-Type"),
+					connection.getHeaderField("Content-Security-Policy"),
+					connection.getHeaderField("X-SlopBuzz-Cache"));
 		} finally {
 			connection.disconnect();
 		}
@@ -319,11 +358,16 @@ public class SlopFizzBuzzHttpServerTest {
 		private final int status;
 		private final String body;
 		private final String contentType;
+		private final String contentSecurityPolicy;
+		private final String cacheState;
 
-		private Reply(final int status, final String body, final String contentType) {
+		private Reply(final int status, final String body, final String contentType,
+				final String contentSecurityPolicy, final String cacheState) {
 			this.status = status;
 			this.body = body;
 			this.contentType = contentType;
+			this.contentSecurityPolicy = contentSecurityPolicy;
+			this.cacheState = cacheState;
 		}
 	}
 }
