@@ -23,6 +23,8 @@ import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.c
 import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.cache.RedisOutputCache;
 import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.operations.ProclamationOutcome;
 import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.operations.ServiceLevelScorecard;
+import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.operations.CanaryVerdict;
+import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.operations.SyntheticAssuranceBureau;
 import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.interfaces.SlopFizzBuzz;
 
 /**
@@ -49,6 +51,8 @@ public final class SlopFizzBuzzHttpServer implements AutoCloseable {
 		final ServiceLevelScorecard scorecard = new ServiceLevelScorecard();
 		this.server.createContext("/fizzbuzz", new FizzBuzzHandler(service, transactions, scorecard, cache));
 		this.server.createContext("/operations/scorecard", new ScorecardHandler(scorecard));
+		this.server.createContext("/operations/canary", new CanaryHandler(
+				new SyntheticAssuranceBureau(service, transactions, journal)));
 		this.server.createContext("/cache/status", new CacheStatusHandler(cache));
 		this.server.createContext("/capacity/forecast", new CapacityForecastHandler());
 		this.server.createContext("/healthz", new HealthHandler());
@@ -295,6 +299,36 @@ public final class SlopFizzBuzzHttpServer implements AutoCloseable {
 				}
 				respond(exchange, 200, this.scorecard.snapshot().toJson(),
 						"application/json; charset=UTF-8");
+			} finally {
+				exchange.close();
+			}
+		}
+	}
+
+	private static final class CanaryHandler implements HttpHandler {
+		private final SyntheticAssuranceBureau bureau;
+
+		private CanaryHandler(final SyntheticAssuranceBureau bureau) {
+			this.bureau = bureau;
+		}
+
+		@Override
+		public void handle(final HttpExchange exchange) throws IOException {
+			try {
+				if (!"/operations/canary".equals(exchange.getRequestURI().getPath())) {
+					respond(exchange, 404, "Unknown desk\n");
+					return;
+				}
+				if (!"GET".equals(exchange.getRequestMethod())
+						&& !"POST".equals(exchange.getRequestMethod())) {
+					exchange.getResponseHeaders().set("Allow", "GET, POST");
+					respond(exchange, 405, "Method not authorized\n");
+					return;
+				}
+				final CanaryVerdict verdict = "POST".equals(exchange.getRequestMethod())
+						? this.bureau.convene() : this.bureau.latest();
+				respond(exchange, verdict.getState() == CanaryVerdict.State.FAILED ? 503 : 200,
+						verdict.toJson(), "application/json; charset=UTF-8");
 			} finally {
 				exchange.close();
 			}

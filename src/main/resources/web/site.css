@@ -118,6 +118,14 @@ input[aria-invalid=true] { border-color: #a94323; }
 .operation-card strong { margin-top: auto; font-size: 1.03rem; overflow-wrap: anywhere; }
 .operation-card a { align-self: start; margin-top: 14px; color: #ffc4a5; font-size: .75rem; font-weight: 800; text-underline-offset: 3px; }
 .audit-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; margin-top: 22px; }
+.canary-panel { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 18px 32px; margin-top: 22px; padding: clamp(22px, 3vw, 36px); }
+.canary-panel h3 { margin: 0 0 8px; font-family: Georgia, serif; font-size: 1.45rem; }
+.canary-panel p { max-width: 620px; }
+.canary-actions { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; }
+.canary-actions strong { font-size: 1.05rem; }
+.canary-actions .status-good { color: var(--success); }
+.canary-actions .status-warn { color: var(--warning); }
+.canary-panel .inline-status { grid-column: 1 / -1; margin: 0; }
 .audit-summary { padding: clamp(22px, 3vw, 36px); }
 .audit-summary h3 { font-family: Georgia, serif; font-size: 1.8rem; font-weight: 500; margin-bottom: 8px; }
 .audit-summary dl { margin: 0 0 24px; }
@@ -143,6 +151,7 @@ input[aria-invalid=true] { border-color: #a94323; }
   .about-grid { gap: 32px; }
 }
 @media (max-width: 640px) {
+  .canary-panel { grid-template-columns: 1fr; }
   .shell { width: min(100% - 30px, 1180px); }
   .header-inner { align-items: flex-start; flex-direction: column; justify-content: center; padding-block: 18px; gap: 19px; }
   .site-header nav { width: 100%; justify-content: space-between; gap: 10px; }

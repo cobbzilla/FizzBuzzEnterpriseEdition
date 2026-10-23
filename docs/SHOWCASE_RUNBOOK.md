@@ -17,6 +17,13 @@ page and `X-SlopBuzz-Cache` header; the second should report `HIT`. The
 operations section shows cache counters and the current audit state. A cache
 hit does not create a second set of line certificates.
 
+Select **Convene rehearsal** in Operations to run the synthetic assurance
+bureau. A passing run reports fifteen observed lines, a valid audit chain, and
+an approved verdict. It creates fifteen fresh audit entries even if the
+fifteen-number answer is already cached, because the rehearsal exercises the
+real Spring path. `GET /operations/canary` reads the last verdict; a POST to
+the same endpoint starts a new rehearsal. Its result is process-local.
+
 Without Redis, `java` and the original Docker image still serve correct
 FizzBuzz answers and the website. The cache reports `BYPASS` and the
 application continues to work. Set `SLOPBUZZ_REDIS_HOST` and optionally
@@ -37,7 +44,7 @@ claim a public deployment or a domain until those steps are performed.
   suite, including HTTP asset, security-header, Redis protocol, and fallback
   checks.
 * Check keyboard access to the navigation, form, preset buttons, operations
-  refresh, and evidence disclosure; ensure focus stays visible.
+  refresh, canary rehearsal, and evidence disclosure; ensure focus stays visible.
 * Run the form at limits 0, 15, 100, and 1000. Verify the output, forecast,
   status announcement, response time, and cache state.
 * Check narrow and wide layouts, 200% zoom, and a reduced-motion preference.

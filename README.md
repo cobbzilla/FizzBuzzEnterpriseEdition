@@ -90,6 +90,11 @@ The [service level scorecard](docs/ADR-0011-service-level-scorecard.md)
 summarizes current-process HTTP proclamation outcomes at
 `GET /operations/scorecard`.
 
+The [synthetic assurance bureau](docs/ADR-0013-synthetic-assurance.md) accepts
+`POST /operations/canary` to rehearse the real fifteen-number path against an
+approved specimen; `GET /operations/canary` reads the latest process-local
+verdict. Each rehearsal makes fifteen ordinary audit entries.
+
 ## Interactive world showcase
 
 Run `docker compose up --build -d` and open `http://localhost:8080/` to see

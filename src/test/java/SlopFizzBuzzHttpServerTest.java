@@ -71,10 +71,51 @@ public class SlopFizzBuzzHttpServerTest {
 		assertTrue(page.body.contains("The Serious Business Company, Inc."));
 		assertTrue(page.body.contains("<main id=\"main\">"));
 		assertTrue(page.body.contains("aria-live=\"polite\""));
+		assertTrue(page.body.contains("id=\"canary-button\""));
 		assertTrue(page.contentSecurityPolicy.contains("script-src 'self'"));
 		assertTrue(request("GET", "/assets/site.css").body.contains("prefers-reduced-motion"));
 		assertTrue(request("GET", "/assets/site.js").body.contains("fetch(path"));
 		assertEquals(404, request("GET", "/assets/unknown.js").status);
+	}
+
+	@Test
+	public void syntheticRehearsalExercisesTheRealSpringServiceAndKeepsMinutes() throws Exception {
+		final Reply before = request("GET", "/operations/canary");
+		assertEquals(200, before.status);
+		final long priorEntries = journal.snapshot().size();
+		final Reply rehearsal = request("POST", "/operations/canary");
+		assertEquals(200, rehearsal.status);
+		assertEquals("application/json; charset=UTF-8", rehearsal.contentType);
+		assertTrue(rehearsal.body.contains("\"state\":\"PASSED\""));
+		assertTrue(rehearsal.body.contains("\"finding\":\"ANSWER_MATCHED_SPECIMEN\""));
+		assertTrue(rehearsal.body.contains("\"observedLines\":15"));
+		assertTrue(rehearsal.body.contains("\"auditChainValid\":true"));
+		assertEquals(priorEntries + 15, journal.snapshot().size());
+		assertEquals(rehearsal.body, request("GET", "/operations/canary").body);
+		assertEquals(405, request("PUT", "/operations/canary").status);
+		assertEquals(404, request("GET", "/operations/canary-extra").status);
+	}
+
+	@Test
+	public void failedSyntheticRehearsalPublishesAVisibleFailure() throws Exception {
+		final SlopFizzBuzz silentService = new SlopFizzBuzz() {
+			@Override
+			public void slopFizzBuzz(final int limit) { }
+		};
+		final SlopFizzBuzzHttpServer failingServer = new SlopFizzBuzzHttpServer(
+				new InetSocketAddress("127.0.0.1", 0), silentService,
+				context.getBean(OutputTransactionCoordinator.class),
+				new OutputAuditJournal(new EphemeralAuditStore()));
+		failingServer.start();
+		try {
+			final Reply rehearsal = request(failingServer.getPort(), "POST", "/operations/canary");
+			assertEquals(503, rehearsal.status);
+			assertTrue(rehearsal.body.contains("\"state\":\"FAILED\""));
+			assertTrue(rehearsal.body.contains("\"finding\":\"ANSWER_DEVIATED_FROM_SPECIMEN\""));
+			assertEquals(503, request(failingServer.getPort(), "GET", "/operations/canary").status);
+		} finally {
+			failingServer.close();
+		}
 	}
 
 	@Test

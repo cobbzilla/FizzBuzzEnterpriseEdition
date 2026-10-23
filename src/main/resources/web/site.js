@@ -3,19 +3,47 @@ const runForm = byId('run-form');
 const limitInput = byId('limit');
 const runButton = byId('run-button');
 const refreshButton = byId('refresh-button');
+const canaryButton = byId('canary-button');
 let mandateSequence = 0;
 
-async function request(path) {
+async function request(path, options = {}) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 8000);
   try {
     return await fetch(path, {
+      method: options.method || 'GET',
       signal: controller.signal,
       cache: 'no-store',
       headers: { Accept: 'application/json, text/plain;q=0.9' },
     });
   } finally {
     clearTimeout(timer);
+  }
+}
+
+function showCanary(verdict) {
+  const label = verdict.state === 'PASSED' ? 'APPROVED'
+    : verdict.state === 'FAILED' ? 'REJECTED' : 'NOT YET CONVENED';
+  setCard('canary-value', label, verdict.state === 'PASSED');
+  if (verdict.state !== 'NOT_RUN') {
+    setText('canary-status', `Rehearsal ${verdict.sequence}: ${verdict.finding.replaceAll('_', ' ').toLowerCase()}; ${verdict.observedLines} lines observed in ${Math.round(verdict.durationMicros / 1000)} milliseconds. Audit chain ${verdict.auditChainValid ? 'valid' : 'invalid'}.`);
+  }
+}
+
+async function runCanary() {
+  canaryButton.disabled = true;
+  byId('canary-value').setAttribute('aria-busy', 'true');
+  setText('canary-status', 'The assurance bureau is rehearsing the fifteen-number charter…');
+  try {
+    const reply = await request('/operations/canary', { method: 'POST' });
+    const verdict = await reply.json();
+    showCanary(verdict);
+    void refreshOperations();
+  } catch (error) {
+    setText('canary-status', `The rehearsal could not be completed: ${error.message}`);
+  } finally {
+    canaryButton.disabled = false;
+    byId('canary-value').removeAttribute('aria-busy');
   }
 }
 
@@ -104,7 +132,7 @@ async function refreshOperations() {
   refreshButton.disabled = true;
   byId('operations').setAttribute('aria-busy', 'true');
   setText('operations-status', 'Refreshing the current institutional record…');
-  const paths = ['/healthz', '/readyz', '/cache/status', '/operations/scorecard', '/audit/status'];
+  const paths = ['/healthz', '/readyz', '/cache/status', '/operations/scorecard', '/audit/status', '/operations/canary'];
   const results = await Promise.allSettled(paths.map((path) => request(path)));
   let available = 0;
   try {
@@ -146,6 +174,12 @@ async function refreshOperations() {
       available++;
     }
 
+    const canary = results[5].status === 'fulfilled' ? results[5].value : null;
+    if (canary) {
+      showCanary(await canary.json());
+      available++;
+    } else setCard('canary-value', 'UNAVAILABLE', false);
+
     let evidence = null;
     try { evidence = await request('/audit/evidence'); } catch (_) { /* Report below. */ }
     if (evidence?.ok) {
@@ -157,7 +191,7 @@ async function refreshOperations() {
       setText('evidence-json', JSON.stringify(report, null, 2));
       available++;
     } else setText('evidence-json', 'Evidence is temporarily unavailable.');
-    setText('operations-status', `${available} of 6 institutional desks reported. Last checked ${new Date().toLocaleTimeString()}.`);
+    setText('operations-status', `${available} of 7 institutional desks reported. Last checked ${new Date().toLocaleTimeString()}.`);
   } catch (error) {
     setText('operations-status', `The operations review was interrupted: ${error.message}`);
   } finally {
@@ -168,6 +202,7 @@ async function refreshOperations() {
 
 runForm.addEventListener('submit', runMandate);
 refreshButton.addEventListener('click', refreshOperations);
+canaryButton.addEventListener('click', runCanary);
 document.querySelectorAll('[data-limit]').forEach((button) => {
   button.addEventListener('click', () => {
     limitInput.value = button.dataset.limit;
