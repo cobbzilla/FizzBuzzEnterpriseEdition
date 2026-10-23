@@ -21,6 +21,7 @@
       <nav aria-label="Primary navigation">
         <a href="#demo">Live demo</a>
         <a href="#operations">Operations</a>
+        <a href="/api">API charter</a>
         <a href="#about">About</a>
       </nav>
     </div>
@@ -79,6 +80,16 @@
               <button type="button" data-limit="15">15</button>
               <button type="button" data-limit="100">100</button>
               <button type="button" data-limit="1000">1000</button>
+            </div>
+            <div class="pace-control">
+              <label for="display-speed">Ceremonial reading pace</label>
+              <select id="display-speed" aria-describedby="pace-help">
+                <option value="360" selected>Boardroom deliberation · leisurely</option>
+                <option value="160">Rubber-stamp relay · brisk</option>
+                <option value="45">Caffeinated clerk · rapid</option>
+                <option value="0">Unsupervised reality · instant</option>
+              </select>
+              <p id="pace-help">Controls how lines appear here. It never slows the service response; changing pace during a reading takes effect immediately.</p>
             </div>
             <div class="run-meta" role="group" aria-label="Latest response measurements">
               <div><span class="meta-label">Elapsed</span><strong id="latency">—</strong></div>
@@ -153,7 +164,7 @@
           <p class="lead">We are the fictional institution entrusted with turning elementary arithmetic into an enterprise-wide operational capability.</p>
           <p>At The Serious Business Company, Inc., no integer advances without succession proceedings, no line is published without an output transaction, and no deployment is admitted without a readiness quorum. We maintain a quality manual, an audit bureau, a capacity forecast, and now a shared Redis memory so the same answer need not be rediscovered twice.</p>
           <p>SlopFizzBuzz is a parody of the wonderfully excessive layers that old-school enterprise Java could place around a tiny problem. The joke is in the ceremony; the answer still has to be correct.</p>
-          <div class="about-links"><a class="button button-secondary" href="https://github.com/cobbzilla/FizzBuzzEnterpriseEdition">Explore the repository <span aria-hidden="true">↗</span></a><a class="text-link" href="/audit/evidence">Inspect our evidence</a></div>
+          <div class="about-links"><a class="button button-secondary" href="/api">Read the API charter <span aria-hidden="true">↗</span></a><a class="text-link" href="https://github.com/cobbzilla/FizzBuzzEnterpriseEdition">Explore the repository</a><a class="text-link" href="/audit/evidence">Inspect our evidence</a></div>
         </div>
       </div>
     </section>

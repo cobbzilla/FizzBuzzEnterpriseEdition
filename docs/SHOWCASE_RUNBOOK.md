@@ -18,10 +18,19 @@ private Redis cache, and an H2 audit volume. Redis has a 64 MB limit and LRU
 eviction. The H2 database remains open briefly between line commits to avoid
 repeated file opening. The cache is disposable; the audit volume is durable.
 
+Open `/api` for the searchable human guide or `/openapi.json` for its OpenAPI
+3.2.1 source. The guide's request controls call the same origin; POST controls
+run their documented actions only when selected.
+
 Run the mandate for 15 twice. The first response should report `MISS` in the
 page and `X-SlopBuzz-Cache` header; the second should report `HIT`. The
 operations section shows cache counters and the current audit state. A cache
 hit does not create a second set of line certificates.
+
+The demo reveals one line at a time at its default **Boardroom deliberation**
+pace and keeps the latest line scrolled into view. **Unsupervised reality**
+renders all lines immediately. The elapsed measurement ends when the HTTP
+response arrives, before the visual reading begins.
 
 Select **Convene rehearsal** in Operations to run the synthetic assurance
 bureau. A passing run reports fifteen observed lines, a valid audit chain, and
@@ -58,8 +67,9 @@ claim a public deployment or a domain until those steps are performed.
 * `mvn clean package` compiles the website into the jar and runs the Java
   suite, including HTTP asset, security-header, Redis protocol, and fallback
   checks.
-* Check keyboard access to the navigation, form, preset buttons, operations
-  refresh, canary and recovery rehearsals, and evidence disclosure; ensure focus stays visible.
+* Check keyboard access to the navigation, form, pace selector, preset buttons,
+  operations refresh, canary and recovery rehearsals, API search and request
+  controls, and evidence disclosure; ensure focus stays visible.
 * Run the form at limits 0, 15, 100, and 1000. Verify the output, forecast,
   status announcement, response time, and cache state.
 * Check narrow and wide layouts, 200% zoom, and a reduced-motion preference.

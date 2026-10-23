@@ -1,6 +1,7 @@
 const byId = (id) => document.getElementById(id);
 const runForm = byId('run-form');
 const limitInput = byId('limit');
+const speedControl = byId('display-speed');
 const runButton = byId('run-button');
 const refreshButton = byId('refresh-button');
 const canaryButton = byId('canary-button');
@@ -108,14 +109,54 @@ async function loadForecast(limit, sequence = mandateSequence) {
   if (sequence === mandateSequence) showForecast(forecast);
 }
 
+function waitForPace(milliseconds) {
+  return new Promise((resolve) => {
+    let timer;
+    const finish = () => {
+      clearTimeout(timer);
+      speedControl.removeEventListener('change', finish);
+      resolve();
+    };
+    timer = setTimeout(finish, milliseconds);
+    speedControl.addEventListener('change', finish);
+  });
+}
+
+async function revealOutput(text, sequence, serviceMillis) {
+  const lines = text ? text.trimEnd().split(/\r?\n/) : [];
+  const output = byId('output');
+  output.textContent = lines.length ? '' : 'The zero-number mandate produces no lines.';
+  setText('output-count', `0 of ${lines.length} lines`);
+  setText('run-status', `Service answered in ${serviceMillis} milliseconds. The ceremonial reading is in progress.`);
+  for (let index = 0; index < lines.length; index++) {
+    if (sequence !== mandateSequence) return;
+    if (Number(speedControl.value) === 0) {
+      output.append(document.createTextNode(`${lines.slice(index).join('\n')}\n`));
+      output.scrollTop = output.scrollHeight;
+      setText('output-count', `${lines.length} ${lines.length === 1 ? 'line' : 'lines'}`);
+      break;
+    }
+    output.append(document.createTextNode(`${lines[index]}\n`));
+    output.scrollTop = output.scrollHeight;
+    setText('output-count', `${index + 1} of ${lines.length} lines`);
+    if (index < lines.length - 1) await waitForPace(Number(speedControl.value));
+  }
+  if (sequence === mandateSequence) {
+    setText('output-count', `${lines.length} ${lines.length === 1 ? 'line' : 'lines'}`);
+    setText('run-status', `Mandate complete. The service answered in ${serviceMillis} milliseconds; ${serviceMillis < 1000 ? 'under' : 'above'} the one-second target. All ${lines.length} lines are visible.`);
+  }
+}
+
 async function runMandate(event) {
   event.preventDefault();
   const limit = validateLimit();
   if (limit === null) return;
+  const sequence = ++mandateSequence;
   runButton.disabled = true;
   byId('demo').setAttribute('aria-busy', 'true');
   setText('run-status', `The committee is considering ${limit} numbers…`);
-  const sequence = ++mandateSequence;
+  byId('output').textContent = 'Awaiting a duly authorized number.';
+  setText('output-count', '0 lines');
   void loadForecast(limit, sequence).catch(() => {
     if (sequence === mandateSequence) setText('forecast-units', 'Unavailable');
   });
@@ -125,20 +166,23 @@ async function runMandate(event) {
     const elapsed = performance.now() - started;
     if (!answer.ok) throw new Error(`Proclamation desk returned ${answer.status}.`);
     const text = await answer.text();
-    byId('output').textContent = text || 'The zero-number mandate produces no lines.';
-    const lines = text ? text.trimEnd().split(/\r?\n/).length : 0;
-    setText('output-count', `${lines} ${lines === 1 ? 'line' : 'lines'}`);
+    if (sequence !== mandateSequence) return;
     setText('latency', `${Math.round(elapsed)} ms`);
     setText('cache-result', answer.headers.get('X-SlopBuzz-Cache') || 'UNKNOWN');
-    setText('run-status', `Mandate complete. ${lines} lines issued in ${Math.round(elapsed)} milliseconds; ${elapsed < 1000 ? 'under' : 'above'} the one-second target.`);
-    void refreshOperations();
-  } catch (error) {
-    setText('run-status', error.name === 'AbortError'
-      ? 'The desk did not answer within eight seconds. Please try again.'
-      : `The mandate could not be completed: ${error.message}`);
-  } finally {
     runButton.disabled = false;
-    byId('demo').removeAttribute('aria-busy');
+    void refreshOperations();
+    await revealOutput(text, sequence, Math.round(elapsed));
+  } catch (error) {
+    if (sequence === mandateSequence) {
+      setText('run-status', error.name === 'AbortError'
+        ? 'The desk did not answer within eight seconds. Please try again.'
+        : `The mandate could not be completed: ${error.message}`);
+    }
+  } finally {
+    if (sequence === mandateSequence) {
+      runButton.disabled = false;
+      byId('demo').removeAttribute('aria-busy');
+    }
   }
 }
 
