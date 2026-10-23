@@ -87,6 +87,10 @@ input[aria-invalid=true] { border-color: #a94323; }
 .presets { display: flex; align-items: center; flex-wrap: wrap; gap: 9px; padding: 19px 0 22px; border-bottom: 1px solid var(--line); color: var(--ink-soft); font-size: .82rem; }
 .presets button { min-width: 48px; min-height: 36px; padding: 4px 10px; border: 1px solid var(--line); border-radius: 3px; background: var(--paper); color: var(--ink); font-weight: 800; }
 .presets button:hover { border-color: var(--ink); background: var(--paper-deep); }
+.pace-control { padding: 19px 0 2px; }
+.pace-control label { margin-bottom: 8px; font-size: .86rem; }
+.pace-control select { width: 100%; min-height: 48px; padding: 9px 13px; border: 2px solid var(--ink); border-radius: 3px; background: var(--white); color: var(--ink); font: inherit; }
+.pace-control p { margin: 8px 0 0; color: var(--ink-soft); font-size: .78rem; }
 .run-meta { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; padding-block: 22px; }
 .run-meta > div { min-width: 0; }
 .run-meta strong, .meta-label { display: block; }

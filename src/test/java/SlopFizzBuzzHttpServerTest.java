@@ -15,6 +15,9 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.List;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -78,11 +81,50 @@ public class SlopFizzBuzzHttpServerTest {
 		assertTrue(page.body.contains("id=\"canary-button\""));
 		assertTrue(page.body.contains("id=\"release-value\""));
 		assertTrue(page.body.contains("id=\"recovery-button\""));
+		assertTrue(page.body.contains("id=\"display-speed\""));
+		assertTrue(page.body.contains("Unsupervised reality · instant"));
+		assertTrue(page.body.contains("href=\"/api\""));
 		assertTrue(page.contentSecurityPolicy.contains("script-src 'self'"));
 		assertTrue(page.body.matches("(?s).*href=\"/assets/site\\.css\\?v=[0-9a-f]{64}\".*"));
 		assertTrue(request("GET", "/assets/site.css").body.contains("prefers-reduced-motion"));
 		assertTrue(request("GET", "/assets/site.js").body.contains("fetch(path"));
 		assertEquals(404, request("GET", "/assets/unknown.js").status);
+	}
+
+	@Test
+	public void apiCharterAndReadableGuideCoverEveryPublishedDesk() throws Exception {
+		final Reply guide = request("GET", "/api");
+		assertEquals(200, guide.status);
+		assertEquals("text/html; charset=UTF-8", guide.contentType);
+		assertTrue(guide.body.contains("Every desk."));
+		assertTrue(guide.body.contains("href=\"/openapi.json\""));
+		assertTrue(guide.body.matches("(?s).*src=\"/assets/api\\.js\\?v=[0-9a-f]{64}\".*"));
+		assertEquals(200, request("GET", "/api/").status);
+		assertEquals(404, request("GET", "/api-extra").status);
+		assertTrue(request("GET", "/assets/api.js").body.contains("fetch('/openapi.json'"));
+		assertTrue(request("GET", "/assets/api.css").body.contains("api-card"));
+
+		final Reply charter = request("GET", "/openapi.json");
+		assertEquals(200, charter.status);
+		assertEquals("application/json; charset=UTF-8", charter.contentType);
+		assertEquals("no-cache", charter.cacheControl);
+		assertTrue(charter.body.contains("\"openapi\": \"3.2.1\""));
+		final Set<String> paths = new HashSet<String>();
+		for (final String line : charter.body.split("\\n")) {
+			if (line.startsWith("    \"/")) {
+				paths.add(line.substring(5, line.indexOf('"', 5)));
+			}
+		}
+		assertEquals(new HashSet<String>(Arrays.asList("/fizzbuzz", "/capacity/forecast",
+				"/healthz", "/readyz", "/operations/scorecard", "/operations/release",
+				"/operations/canary", "/operations/recovery", "/cache/status",
+				"/audit/status", "/audit/evidence", "/openapi.json")), paths);
+		for (final String path : paths) {
+			final String target = ("/fizzbuzz".equals(path) || "/capacity/forecast".equals(path))
+					? path + "?limit=0" : path;
+			assertTrue("The charter describes a missing desk: " + path,
+					request("GET", target).status != 404);
+		}
 	}
 
 	@Test

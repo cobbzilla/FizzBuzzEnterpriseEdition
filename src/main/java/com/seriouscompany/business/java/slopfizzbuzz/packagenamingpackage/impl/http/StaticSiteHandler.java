@@ -26,10 +26,15 @@ final class StaticSiteHandler implements HttpHandler {
 		final Map<String, Asset> loaded = new HashMap<String, Asset>();
 		final Asset css = asset("/web/site.css", "text/css; charset=UTF-8", true);
 		final Asset javascript = asset("/web/site.js", "text/javascript; charset=UTF-8", true);
+		final Asset apiCss = asset("/web/api.css", "text/css; charset=UTF-8", true);
+		final Asset apiJavascript = asset("/web/api.js", "text/javascript; charset=UTF-8", true);
 		final Asset mark = asset("/web/mark.svg", "image/svg+xml", true);
 		loaded.put("/assets/site.css", css);
 		loaded.put("/assets/site.js", javascript);
+		loaded.put("/assets/api.css", apiCss);
+		loaded.put("/assets/api.js", apiJavascript);
 		loaded.put("/assets/mark.svg", mark);
+		loaded.put("/openapi.json", asset("/web/openapi.json", "application/json; charset=UTF-8", false));
 		final Asset template = asset("/web/index.html", "text/html; charset=UTF-8", false);
 		final String html = new String(template.bytes, StandardCharsets.UTF_8)
 				.replace("/assets/site.css", "/assets/site.css?v=" + css.fingerprint)
@@ -38,6 +43,15 @@ final class StaticSiteHandler implements HttpHandler {
 		loaded.put("/", new Asset(html.getBytes(StandardCharsets.UTF_8),
 				"text/html; charset=UTF-8", false));
 		loaded.put("/index.html", loaded.get("/"));
+		final Asset apiTemplate = asset("/web/api.html", "text/html; charset=UTF-8", false);
+		final String apiHtml = new String(apiTemplate.bytes, StandardCharsets.UTF_8)
+				.replace("/assets/site.css", "/assets/site.css?v=" + css.fingerprint)
+				.replace("/assets/api.css", "/assets/api.css?v=" + apiCss.fingerprint)
+				.replace("/assets/api.js", "/assets/api.js?v=" + apiJavascript.fingerprint)
+				.replace("/assets/mark.svg", "/assets/mark.svg?v=" + mark.fingerprint);
+		loaded.put("/api", new Asset(apiHtml.getBytes(StandardCharsets.UTF_8),
+				"text/html; charset=UTF-8", false));
+		loaded.put("/api/", loaded.get("/api"));
 		this.assets = Collections.unmodifiableMap(loaded);
 	}
 

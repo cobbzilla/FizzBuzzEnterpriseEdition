@@ -117,6 +117,15 @@ section for The Serious Business Company, Inc. The stack uses a private Redis
 cache and a durable H2 audit volume. See the [showcase runbook](docs/SHOWCASE_RUNBOOK.md)
 for deployment and verification notes.
 
+The demo's reading pace defaults to **Boardroom deliberation** and scrolls as
+each line appears. Choose **Unsupervised reality** for immediate display with
+no artificial delay; the measured service response time excludes playback.
+
+Read the human API charter guide at `http://localhost:18088/api` in the shared
+preview, or fetch `GET /openapi.json` for the OpenAPI 3.2.1 source used to
+build that guide. The [charter decision](docs/ADR-0018-api-charter-and-ceremonial-playback.md)
+records its scope and live request behavior.
+
 In this shared workspace, run `./scripts/deploy-preview.sh` to update the
 long-lived local demo at `http://localhost:18088/` after a merge. It recreates
 the app container in place and preserves the Redis service and H2 audit volume.
