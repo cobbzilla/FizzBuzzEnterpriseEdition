@@ -12,8 +12,8 @@ Static assets carry content fingerprints; the HTML and charter revalidate on
 every visit. The contract test compares the charter's paths with live HTTP
 routes so a missing desk cannot quietly retain its board-approved listing.
 
-The showcase also offers four ceremonial reading paces. Boardroom deliberation
-is selected by default. Unsupervised reality renders the received response in
+The showcase also offers four mandatory disclosure cadences. Full Board Ratification
+is selected by default. Executive Fiat renders the received response in
 one pass without a timer. Other paces reveal one line at a time and scroll the
 output region to its newest line. Changing pace during playback takes effect
 on the next line; submitting another mandate supersedes an unfinished reading.
