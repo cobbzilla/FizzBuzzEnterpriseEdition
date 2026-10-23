@@ -96,6 +96,9 @@ input[aria-invalid=true] { border-color: #a94323; }
 .run-meta strong, .meta-label { display: block; }
 .meta-label { color: var(--ink-soft); font-size: .71rem; font-weight: 850; text-transform: uppercase; letter-spacing: .1em; }
 .run-meta strong { overflow-wrap: anywhere; font-size: 1.14rem; }
+.trace-receipt { display: flex; flex-direction: column; gap: 3px; padding: 0 0 18px; }
+.trace-receipt code { overflow-wrap: anywhere; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .85rem; font-weight: 800; }
+.trace-receipt small { color: var(--ink-soft); font-size: .72rem; }
 .inline-status { min-height: 25px; margin-bottom: 14px; font-size: .83rem; color: var(--ink-soft); }
 .output-heading { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
 .output-heading h3 { margin-bottom: 9px; font-size: .95rem; }
