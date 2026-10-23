@@ -13,13 +13,14 @@ produces the right fifteen lines.
 
 ## Decision
 
-`POST /operations/canary` runs the same Spring-managed `SlopFizzBuzz` service
+An admitted `POST /operations/canary` runs the same Spring-managed `SlopFizzBuzz` service
 as a real proclamation, captures its output, and compares every byte with a
 fixed fifteen-line specimen. The result also checks the audit hash chain. The
 response is a JSON verdict with a sequence, issue time, duration, observed
 line count, and an unambiguous finding. A failed rehearsal returns HTTP 503.
 `GET /operations/canary` reports the last verdict without running the service.
-Before the first rehearsal, it reports `NOT_RUN`.
+Before the first rehearsal, it reports `NOT_RUN`. Subsequent POSTs inside the
+[admission lease](ADR-0015-rehearsal-admission.md) reuse the latest verdict.
 
 The bureau keeps verdicts in process memory; restart resets the sequence and
 status. Each rehearsal generates fifteen normal audit entries, so the action

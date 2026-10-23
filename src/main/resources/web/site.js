@@ -21,12 +21,14 @@ async function request(path, options = {}) {
   }
 }
 
-function showCanary(verdict) {
+function showCanary(verdict, disposition = 'STATUS') {
   const label = verdict.state === 'PASSED' ? 'APPROVED'
     : verdict.state === 'FAILED' ? 'REJECTED' : 'NOT YET CONVENED';
   setCard('canary-value', label, verdict.state === 'PASSED');
   if (verdict.state !== 'NOT_RUN') {
-    setText('canary-status', `Rehearsal ${verdict.sequence}: ${verdict.finding.replaceAll('_', ' ').toLowerCase()}; ${verdict.observedLines} lines observed in ${Math.round(verdict.durationMicros / 1000)} milliseconds. Audit chain ${verdict.auditChainValid ? 'valid' : 'invalid'}.`);
+    const leaseNote = disposition === 'REUSED' ? ' Prior ruling reused during the fifteen-second lease.'
+      : disposition === 'EXECUTED' ? ' New rehearsal completed.' : '';
+    setText('canary-status', `Rehearsal ${verdict.sequence}: ${verdict.finding.replaceAll('_', ' ').toLowerCase()}; ${verdict.observedLines} lines observed in ${Math.round(verdict.durationMicros / 1000)} milliseconds. Audit chain ${verdict.auditChainValid ? 'valid' : 'invalid'}.${leaseNote}`);
   }
 }
 
@@ -37,8 +39,8 @@ async function runCanary() {
   try {
     const reply = await request('/operations/canary', { method: 'POST' });
     const verdict = await reply.json();
-    showCanary(verdict);
-    void refreshOperations();
+    await refreshOperations();
+    showCanary(verdict, reply.headers.get('X-SlopBuzz-Rehearsal'));
   } catch (error) {
     setText('canary-status', `The rehearsal could not be completed: ${error.message}`);
   } finally {
