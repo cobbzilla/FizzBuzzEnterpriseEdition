@@ -32,6 +32,13 @@ pace and keeps the latest line scrolled into view. **Unsupervised reality**
 renders all lines immediately. The elapsed measurement ends when the HTTP
 response arrives, before the visual reading begins.
 
+After a mandate, copy its trace receipt from the page. The HTTP response also
+contains `X-SlopBuzz-Trace-Id` and `X-SlopBuzz-Span-Id`; the application log
+records the same values with request status and duration. A valid incoming
+`traceparent` keeps its trace ID and receives a new span. The guide at `/api`
+lists these headers and shows them beside live responses. Trace IDs correlate
+logs; they do not prove who made a request.
+
 Select **Convene rehearsal** in Operations to run the synthetic assurance
 bureau. A passing run reports fifteen observed lines, a valid audit chain, and
 an approved verdict. It creates fifteen fresh audit entries even if the

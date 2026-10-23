@@ -155,6 +155,7 @@ async function runMandate(event) {
   runButton.disabled = true;
   byId('demo').setAttribute('aria-busy', 'true');
   setText('run-status', `The committee is considering ${limit} numbers…`);
+  setText('trace-result', 'Awaiting a receipt');
   byId('output').textContent = 'Awaiting a duly authorized number.';
   setText('output-count', '0 lines');
   void loadForecast(limit, sequence).catch(() => {
@@ -169,6 +170,7 @@ async function runMandate(event) {
     if (sequence !== mandateSequence) return;
     setText('latency', `${Math.round(elapsed)} ms`);
     setText('cache-result', answer.headers.get('X-SlopBuzz-Cache') || 'UNKNOWN');
+    setText('trace-result', answer.headers.get('X-SlopBuzz-Trace-Id') || 'UNAVAILABLE');
     runButton.disabled = false;
     void refreshOperations();
     await revealOutput(text, sequence, Math.round(elapsed));

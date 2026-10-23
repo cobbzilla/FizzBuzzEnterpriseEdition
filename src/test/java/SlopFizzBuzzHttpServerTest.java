@@ -71,6 +71,58 @@ public class SlopFizzBuzzHttpServerTest {
 	}
 
 	@Test
+	public void traceCustodyIssuesReceiptsAcrossApiAndStaticDesks() throws Exception {
+		final Reply health = request("GET", "/healthz");
+		assertTrue(health.traceId.matches("[0-9a-f]{32}"));
+		assertTrue(!"00000000000000000000000000000000".equals(health.traceId));
+		assertTrue(health.spanId.matches("[0-9a-f]{16}"));
+		assertTrue(!"0000000000000000".equals(health.spanId));
+		final Reply page = request("GET", "/");
+		assertTrue(page.traceId.matches("[0-9a-f]{32}"));
+		final Reply unchanged = request(server.getPort(), "GET", "/", page.etag);
+		assertEquals(304, unchanged.status);
+		assertTrue(unchanged.traceId.matches("[0-9a-f]{32}"));
+		assertTrue(request("GET", "/openapi.json").spanId.matches("[0-9a-f]{16}"));
+		assertTrue(request("GET", "/unknown-desk").traceId.matches("[0-9a-f]{32}"));
+	}
+
+	@Test
+	public void traceCustodyAdmitsValidParentAndGivesEachRequestANewSpan() throws Exception {
+		final String traceId = "4bf92f3577b34da6a3ce929d0e0e4736";
+		final String parent = "00f067aa0ba902b7";
+		final String incoming = "00-" + traceId + "-" + parent + "-01";
+		final Reply first = request(server.getPort(), "GET", "/healthz", null, incoming);
+		final Reply second = request(server.getPort(), "GET", "/healthz", null, incoming);
+		assertEquals(traceId, first.traceId);
+		assertEquals(traceId, second.traceId);
+		assertTrue(!parent.equals(first.spanId));
+		assertTrue(!first.spanId.equals(second.spanId));
+		final Reply future = request(server.getPort(), "GET", "/healthz", null,
+				"01-" + traceId + "-" + parent + "-01-extension");
+		assertEquals(traceId, future.traceId);
+	}
+
+	@Test
+	public void traceCustodyRejectsMalformedParentInsteadOfEchoingIt() throws Exception {
+		final String traceId = "4bf92f3577b34da6a3ce929d0e0e4736";
+		final String parent = "00f067aa0ba902b7";
+		final String[] invalid = {
+				"00-" + traceId + "-0000000000000000-01",
+				"00-00000000000000000000000000000000-" + parent + "-01",
+				"ff-" + traceId + "-" + parent + "-01",
+				"00-" + traceId.toUpperCase() + "-" + parent + "-01",
+				"00-" + traceId + "-" + parent + "-01-extra",
+				"garbage"
+		};
+		for (final String incoming : invalid) {
+			final Reply reply = request(server.getPort(), "GET", "/healthz", null, incoming);
+			assertTrue("Rejected traceparent must receive a new trace ID: " + incoming,
+					!traceId.equals(reply.traceId));
+			assertTrue(reply.traceId.matches("[0-9a-f]{32}"));
+		}
+	}
+
+	@Test
 	public void showcasePublishesSemanticPageAndSameOriginAssets() throws Exception {
 		final Reply page = request("GET", "/");
 		assertEquals(200, page.status);
@@ -483,6 +535,11 @@ public class SlopFizzBuzzHttpServerTest {
 
 	private static Reply request(final int port, final String method, final String path,
 			final String ifNoneMatch) throws Exception {
+		return request(port, method, path, ifNoneMatch, null);
+	}
+
+	private static Reply request(final int port, final String method, final String path,
+			final String ifNoneMatch, final String traceparent) throws Exception {
 		final URL url = new URL("http://127.0.0.1:" + port + path);
 		final HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 		connection.setConnectTimeout(5000);
@@ -490,6 +547,9 @@ public class SlopFizzBuzzHttpServerTest {
 		connection.setRequestMethod(method);
 		if (ifNoneMatch != null) {
 			connection.setRequestProperty("If-None-Match", ifNoneMatch);
+		}
+		if (traceparent != null) {
+			connection.setRequestProperty("traceparent", traceparent);
 		}
 		try {
 			final int status = connection.getResponseCode();
@@ -514,7 +574,9 @@ public class SlopFizzBuzzHttpServerTest {
 					connection.getHeaderField("X-SlopBuzz-Rehearsal"),
 					connection.getHeaderField("X-SlopBuzz-Rehearsal-Lease-Seconds"),
 					connection.getHeaderField("ETag"),
-					connection.getHeaderField("Cache-Control"));
+					connection.getHeaderField("Cache-Control"),
+					connection.getHeaderField("X-SlopBuzz-Trace-Id"),
+					connection.getHeaderField("X-SlopBuzz-Span-Id"));
 		} finally {
 			connection.disconnect();
 		}
@@ -566,11 +628,14 @@ public class SlopFizzBuzzHttpServerTest {
 		private final String rehearsalLeaseSeconds;
 		private final String etag;
 		private final String cacheControl;
+		private final String traceId;
+		private final String spanId;
 
 		private Reply(final int status, final String body, final String contentType,
 				final String contentSecurityPolicy, final String cacheState,
 				final String rehearsalDisposition, final String rehearsalLeaseSeconds,
-				final String etag, final String cacheControl) {
+				final String etag, final String cacheControl,
+				final String traceId, final String spanId) {
 			this.status = status;
 			this.body = body;
 			this.contentType = contentType;
@@ -580,6 +645,8 @@ public class SlopFizzBuzzHttpServerTest {
 			this.rehearsalLeaseSeconds = rehearsalLeaseSeconds;
 			this.etag = etag;
 			this.cacheControl = cacheControl;
+			this.traceId = traceId;
+			this.spanId = spanId;
 		}
 	}
 }

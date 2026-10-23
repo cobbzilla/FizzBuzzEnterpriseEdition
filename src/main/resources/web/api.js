@@ -105,8 +105,11 @@ function tryDesk(path, method, operation) {
       const reply = await fetch(url, { method: method.toUpperCase(), cache: 'no-store', signal: controller.signal });
       const body = await reply.text();
       const elapsed = Math.round(performance.now() - started);
-      report.textContent = `HTTP ${reply.status} · ${elapsed} ms · ${reply.headers.get('content-type') || 'unknown type'}`;
-      output.textContent = body.length > 16000 ? `${body.slice(0, 16000)}\n… response shortened in this view` : body || '(empty body)';
+      const trace = reply.headers.get('X-SlopBuzz-Trace-Id') || 'unavailable';
+      const span = reply.headers.get('X-SlopBuzz-Span-Id') || 'unavailable';
+      report.textContent = `HTTP ${reply.status} · ${elapsed} ms · ${reply.headers.get('content-type') || 'unknown type'} · receipt ${trace.slice(0, 12)}`;
+      const visibleBody = body.length > 16000 ? `${body.slice(0, 16000)}\n… response shortened in this view` : body || '(empty body)';
+      output.textContent = `X-SlopBuzz-Trace-Id: ${trace}\nX-SlopBuzz-Span-Id: ${span}\n\n${visibleBody}`;
       output.hidden = false;
     } catch (error) {
       report.textContent = error.name === 'AbortError' ? 'The desk did not answer within eight seconds.'
@@ -147,6 +150,14 @@ function renderOperation(spec, path, method, operation, index) {
     if (media) description.append(element('small', '', media));
     row.append(description);
     responses.append(row);
+    if (response.headers && Object.keys(response.headers).length) {
+      const headerDetail = element('details', 'api-schema-detail');
+      headerDetail.append(element('summary', '', `HTTP ${code} response headers`));
+      headerDetail.append(table(['Header', 'Meaning'], Object.entries(response.headers).map(([name, value]) => [
+        name, resolve(spec, value)?.description || 'See the machine-readable charter.',
+      ])));
+      responses.append(headerDetail);
+    }
     const fields = schemaFields(spec, response);
     if (fields) responses.append(fields);
   });

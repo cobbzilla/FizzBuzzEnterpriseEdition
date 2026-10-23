@@ -10,6 +10,8 @@ import java.util.logging.Logger;
 
 import org.springframework.stereotype.Service;
 
+import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.operations.TraceCustody;
+
 /**
  * A hash-linked ledger with an interchangeable repository of record.
  */
@@ -54,7 +56,8 @@ public final class OutputAuditJournal {
 		this.store.append(entry);
 		this.entries.add(entry);
 		this.messages.publish(entry);
-		LOGGER.fine("Output transaction " + sequence + " " + disposition + " for number " + number);
+		LOGGER.fine("traceId=" + TraceCustody.currentTraceId() + " outputTransaction="
+				+ sequence + " disposition=" + disposition + " number=" + number);
 		return entry;
 	}
 

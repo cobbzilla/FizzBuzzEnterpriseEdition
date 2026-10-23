@@ -60,20 +60,26 @@ public final class SlopFizzBuzzHttpServer implements AutoCloseable {
 		this.workers = Executors.newFixedThreadPool(4);
 		this.server.setExecutor(this.workers);
 		final ServiceLevelScorecard scorecard = new ServiceLevelScorecard();
-		this.server.createContext("/fizzbuzz", new FizzBuzzHandler(service, transactions, scorecard, cache));
-		this.server.createContext("/operations/scorecard", new ScorecardHandler(scorecard));
-		this.server.createContext("/operations/release", new ReleaseHandler(release));
-		this.server.createContext("/operations/recovery", new RecoveryHandler(new RecoveryRehearsalBureau(journal)));
-		this.server.createContext("/operations/canary", new CanaryHandler(
+		final TraceCustodyFilter trace = new TraceCustodyFilter();
+		register("/fizzbuzz", new FizzBuzzHandler(service, transactions, scorecard, cache), trace);
+		register("/operations/scorecard", new ScorecardHandler(scorecard), trace);
+		register("/operations/release", new ReleaseHandler(release), trace);
+		register("/operations/recovery", new RecoveryHandler(new RecoveryRehearsalBureau(journal)), trace);
+		register("/operations/canary", new CanaryHandler(
 				new RehearsalAdmissionCommission(
-						new SyntheticAssuranceBureau(service, transactions, journal))));
-		this.server.createContext("/cache/status", new CacheStatusHandler(cache));
-		this.server.createContext("/capacity/forecast", new CapacityForecastHandler());
-		this.server.createContext("/healthz", new HealthHandler());
-		this.server.createContext("/readyz", new ReadinessHandler(journal));
-		this.server.createContext("/audit/status", new AuditStatusHandler(journal));
-		this.server.createContext("/audit/evidence", new EvidenceDossierHandler(journal));
-		this.server.createContext("/", new StaticSiteHandler());
+						new SyntheticAssuranceBureau(service, transactions, journal))), trace);
+		register("/cache/status", new CacheStatusHandler(cache), trace);
+		register("/capacity/forecast", new CapacityForecastHandler(), trace);
+		register("/healthz", new HealthHandler(), trace);
+		register("/readyz", new ReadinessHandler(journal), trace);
+		register("/audit/status", new AuditStatusHandler(journal), trace);
+		register("/audit/evidence", new EvidenceDossierHandler(journal), trace);
+		register("/", new StaticSiteHandler(), trace);
+	}
+
+	private void register(final String path, final HttpHandler handler,
+			final TraceCustodyFilter trace) {
+		this.server.createContext(path, handler).getFilters().add(trace);
 	}
 
 	public void start() {

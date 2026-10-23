@@ -126,6 +126,14 @@ preview, or fetch `GET /openapi.json` for the OpenAPI 3.2.1 source used to
 build that guide. The [charter decision](docs/ADR-0018-api-charter-and-ceremonial-playback.md)
 records its scope and live request behavior.
 
+Every HTTP response carries `X-SlopBuzz-Trace-Id` and
+`X-SlopBuzz-Span-Id`. Supply a valid W3C `traceparent` header to preserve an
+upstream trace ID; otherwise the [trace custody office](docs/ADR-0019-trace-custody.md)
+creates a fresh one. The demo shows the trace receipt after each mandate.
+Application logs include the receipt, and FINE-level output transaction logs
+include it for individual lines. A receipt is a search key, not an identity or
+external tracing service.
+
 In this shared workspace, run `./scripts/deploy-preview.sh` to update the
 long-lived local demo at `http://localhost:18088/` after a merge. It recreates
 the app container in place and preserves the Redis service and H2 audit volume.

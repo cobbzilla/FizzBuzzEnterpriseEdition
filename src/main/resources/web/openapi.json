@@ -3,156 +3,1028 @@
   "info": {
     "title": "SlopFizzBuzz Numerical Affairs API",
     "version": "1.0.0",
-    "description": "The public proclamation and institutional assurance desks of The Serious Business Company, Inc. FizzBuzz output remains plain text. Operational verdicts are process-local unless stated otherwise. A passing internal control does not imply external certification."
+    "description": "The public proclamation and institutional assurance desks of The Serious Business Company, Inc. FizzBuzz output remains plain text. Operational verdicts are process-local unless stated otherwise. A passing internal control does not imply external certification. Every response carries X-SlopBuzz-Trace-Id and X-SlopBuzz-Span-Id receipts; a valid W3C traceparent request preserves its trace ID while the server issues a new span."
   },
-  "servers": [{ "url": "/", "description": "The same origin as the interactive showcase" }],
+  "servers": [
+    {
+      "url": "/",
+      "description": "The same origin as the interactive showcase"
+    }
+  ],
   "tags": [
-    { "name": "Numerical affairs", "description": "Issue or forecast a number mandate." },
-    { "name": "Operational confidence", "description": "Inspect health, release custody, performance, and rehearsals." },
-    { "name": "Institutional memory", "description": "Inspect cache and audit evidence." },
-    { "name": "Developer relations", "description": "Read the charter that describes these desks." }
+    {
+      "name": "Numerical affairs",
+      "description": "Issue or forecast a number mandate."
+    },
+    {
+      "name": "Operational confidence",
+      "description": "Inspect health, release custody, performance, and rehearsals."
+    },
+    {
+      "name": "Institutional memory",
+      "description": "Inspect cache and audit evidence."
+    },
+    {
+      "name": "Developer relations",
+      "description": "Read the charter that describes these desks."
+    }
   ],
   "paths": {
     "/fizzbuzz": {
       "get": {
-        "tags": ["Numerical affairs"], "operationId": "issueMandate",
+        "tags": [
+          "Numerical affairs"
+        ],
+        "operationId": "issueMandate",
         "summary": "Issue a numerical mandate",
         "description": "Runs the real Spring service for integers 1 through limit. A cache miss produces audit certificates; a Redis hit returns the same approved text without producing new certificates.",
-        "parameters": [{ "$ref": "#/components/parameters/Limit" }],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Limit"
+          }
+        ],
         "responses": {
-          "200": { "description": "One line per integer, or an empty body for zero.", "headers": { "X-SlopBuzz-Cache": { "$ref": "#/components/headers/CacheDisposition" }, "Cache-Control": { "description": "The HTTP response is never stored by the browser.", "schema": { "type": "string", "const": "no-store" } } }, "content": { "text/plain": { "schema": { "type": "string" }, "example": "1\n2\nFizz\n4\nBuzz\nFizz\n7\n8\nFizz\nBuzz\n11\nFizz\n13\n14\nFizzBuzz\n" } } },
-          "400": { "$ref": "#/components/responses/InvalidLimit" },
-          "500": { "$ref": "#/components/responses/GenerationFailed" }
+          "200": {
+            "description": "One line per integer, or an empty body for zero.",
+            "headers": {
+              "X-SlopBuzz-Cache": {
+                "$ref": "#/components/headers/CacheDisposition"
+              },
+              "Cache-Control": {
+                "description": "The HTTP response is never stored by the browser.",
+                "schema": {
+                  "type": "string",
+                  "const": "no-store"
+                }
+              },
+              "X-SlopBuzz-Trace-Id": {
+                "$ref": "#/components/headers/TraceId"
+              },
+              "X-SlopBuzz-Span-Id": {
+                "$ref": "#/components/headers/SpanId"
+              }
+            },
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                },
+                "example": "1\n2\nFizz\n4\nBuzz\nFizz\n7\n8\nFizz\nBuzz\n11\nFizz\n13\n14\nFizzBuzz\n"
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidLimit"
+          },
+          "500": {
+            "$ref": "#/components/responses/GenerationFailed"
+          }
         }
       }
     },
     "/capacity/forecast": {
       "get": {
-        "tags": ["Numerical affairs"], "operationId": "forecastMandate",
+        "tags": [
+          "Numerical affairs"
+        ],
+        "operationId": "forecastMandate",
         "summary": "Forecast proclamation inventory",
         "description": "Counts each category and assigns fictional internal workload units without running the game or writing audit entries.",
-        "parameters": [{ "$ref": "#/components/parameters/Limit" }],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Limit"
+          }
+        ],
         "responses": {
-          "200": { "description": "Board-ready inventory forecast.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CapacityForecast" }, "example": { "schema": "slopbuzz-capacity/v1", "limit": 15, "numeralLines": 8, "fizzLines": 4, "buzzLines": 2, "fizzBuzzLines": 1, "totalLines": 15, "workloadUnits": 23 } } } },
-          "400": { "$ref": "#/components/responses/InvalidLimit" }
+          "200": {
+            "description": "Board-ready inventory forecast.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CapacityForecast"
+                },
+                "example": {
+                  "schema": "slopbuzz-capacity/v1",
+                  "limit": 15,
+                  "numeralLines": 8,
+                  "fizzLines": 4,
+                  "buzzLines": 2,
+                  "fizzBuzzLines": 1,
+                  "totalLines": 15,
+                  "workloadUnits": 23
+                }
+              }
+            },
+            "headers": {
+              "X-SlopBuzz-Trace-Id": {
+                "$ref": "#/components/headers/TraceId"
+              },
+              "X-SlopBuzz-Span-Id": {
+                "$ref": "#/components/headers/SpanId"
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidLimit"
+          }
         }
       }
     },
     "/healthz": {
       "get": {
-        "tags": ["Operational confidence"], "operationId": "readLiveness",
+        "tags": [
+          "Operational confidence"
+        ],
+        "operationId": "readLiveness",
         "summary": "Check process liveness",
         "description": "Answers when the HTTP desk itself is reachable; it does not convene readiness electors.",
-        "responses": { "200": { "description": "The process answered.", "content": { "text/plain": { "schema": { "type": "string", "const": "ok\n" }, "example": "ok\n" } } } }
+        "responses": {
+          "200": {
+            "description": "The process answered.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string",
+                  "const": "ok\n"
+                },
+                "example": "ok\n"
+              }
+            },
+            "headers": {
+              "X-SlopBuzz-Trace-Id": {
+                "$ref": "#/components/headers/TraceId"
+              },
+              "X-SlopBuzz-Span-Id": {
+                "$ref": "#/components/headers/SpanId"
+              }
+            }
+          }
+        }
       }
     },
     "/readyz": {
       "get": {
-        "tags": ["Operational confidence"], "operationId": "readReadiness",
+        "tags": [
+          "Operational confidence"
+        ],
+        "operationId": "readReadiness",
         "summary": "Convene the readiness quorum",
         "description": "Reports integrity, capacity, and delivery votes as newline-separated key=value pairs.",
         "responses": {
-          "200": { "description": "All electors approved.", "content": { "text/plain": { "schema": { "type": "string" }, "example": "ready=true\nintegrityVote=APPROVE\ncapacityVote=APPROVE\ndeliveryVote=APPROVE\npending=0\ncapacity=10000\ndeadLetters=0\n" } } },
-          "503": { "description": "At least one elector vetoed.", "content": { "text/plain": { "schema": { "type": "string" } } } }
+          "200": {
+            "description": "All electors approved.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                },
+                "example": "ready=true\nintegrityVote=APPROVE\ncapacityVote=APPROVE\ndeliveryVote=APPROVE\npending=0\ncapacity=10000\ndeadLetters=0\n"
+              }
+            },
+            "headers": {
+              "X-SlopBuzz-Trace-Id": {
+                "$ref": "#/components/headers/TraceId"
+              },
+              "X-SlopBuzz-Span-Id": {
+                "$ref": "#/components/headers/SpanId"
+              }
+            }
+          },
+          "503": {
+            "description": "At least one elector vetoed.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "headers": {
+              "X-SlopBuzz-Trace-Id": {
+                "$ref": "#/components/headers/TraceId"
+              },
+              "X-SlopBuzz-Span-Id": {
+                "$ref": "#/components/headers/SpanId"
+              }
+            }
+          }
         }
       }
     },
     "/operations/scorecard": {
       "get": {
-        "tags": ["Operational confidence"], "operationId": "readScorecard",
+        "tags": [
+          "Operational confidence"
+        ],
+        "operationId": "readScorecard",
         "summary": "Read the service scorecard",
         "description": "Counts proclamation requests served by the current process. Duration fields are microseconds.",
-        "responses": { "200": { "description": "Current-process request counters.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Scorecard" } } } } }
+        "responses": {
+          "200": {
+            "description": "Current-process request counters.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Scorecard"
+                }
+              }
+            },
+            "headers": {
+              "X-SlopBuzz-Trace-Id": {
+                "$ref": "#/components/headers/TraceId"
+              },
+              "X-SlopBuzz-Span-Id": {
+                "$ref": "#/components/headers/SpanId"
+              }
+            }
+          }
+        }
       }
     },
     "/operations/release": {
       "get": {
-        "tags": ["Operational confidence"], "operationId": "readReleaseCustody",
+        "tags": [
+          "Operational confidence"
+        ],
+        "operationId": "readReleaseCustody",
         "summary": "Identify the deployed revision",
         "description": "Reports the declared full Git SHA and process start time. The preview deployment script compares this SHA with its merged checkout.",
-        "responses": { "200": { "description": "Release custody statement.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Release" } } } } }
+        "responses": {
+          "200": {
+            "description": "Release custody statement.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Release"
+                }
+              }
+            },
+            "headers": {
+              "X-SlopBuzz-Trace-Id": {
+                "$ref": "#/components/headers/TraceId"
+              },
+              "X-SlopBuzz-Span-Id": {
+                "$ref": "#/components/headers/SpanId"
+              }
+            }
+          }
+        }
       }
     },
     "/operations/canary": {
       "get": {
-        "tags": ["Operational confidence"], "operationId": "readCanary",
+        "tags": [
+          "Operational confidence"
+        ],
+        "operationId": "readCanary",
         "summary": "Read the latest numerical rehearsal",
         "description": "Returns process-local minutes without starting a new rehearsal.",
-        "responses": { "200": { "description": "No rehearsal or the latest passing verdict.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CanaryVerdict" } } } }, "503": { "description": "The latest rehearsal failed.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CanaryVerdict" } } } } }
+        "responses": {
+          "200": {
+            "description": "No rehearsal or the latest passing verdict.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CanaryVerdict"
+                }
+              }
+            },
+            "headers": {
+              "X-SlopBuzz-Trace-Id": {
+                "$ref": "#/components/headers/TraceId"
+              },
+              "X-SlopBuzz-Span-Id": {
+                "$ref": "#/components/headers/SpanId"
+              }
+            }
+          },
+          "503": {
+            "description": "The latest rehearsal failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CanaryVerdict"
+                }
+              }
+            },
+            "headers": {
+              "X-SlopBuzz-Trace-Id": {
+                "$ref": "#/components/headers/TraceId"
+              },
+              "X-SlopBuzz-Span-Id": {
+                "$ref": "#/components/headers/SpanId"
+              }
+            }
+          }
+        }
       },
       "post": {
-        "tags": ["Operational confidence"], "operationId": "rehearseCanary",
+        "tags": [
+          "Operational confidence"
+        ],
+        "operationId": "rehearseCanary",
         "summary": "Rehearse the fifteen-number charter",
         "description": "Runs the real Spring path against an approved specimen. A newly admitted run creates fifteen audit entries; another POST within fifteen seconds reuses the same verdict.",
-        "responses": { "200": { "description": "Passing verdict or an admitted prior verdict.", "headers": { "X-SlopBuzz-Rehearsal": { "description": "Whether work was done now or a lease was reused.", "schema": { "type": "string", "enum": ["EXECUTED", "REUSED"] } }, "X-SlopBuzz-Rehearsal-Lease-Seconds": { "description": "Seconds remaining on the admission lease.", "schema": { "type": "integer", "minimum": 0 } } }, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CanaryVerdict" } } } }, "503": { "description": "The rehearsal failed.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CanaryVerdict" } } } } }
+        "responses": {
+          "200": {
+            "description": "Passing verdict or an admitted prior verdict.",
+            "headers": {
+              "X-SlopBuzz-Rehearsal": {
+                "description": "Whether work was done now or a lease was reused.",
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "EXECUTED",
+                    "REUSED"
+                  ]
+                }
+              },
+              "X-SlopBuzz-Rehearsal-Lease-Seconds": {
+                "description": "Seconds remaining on the admission lease.",
+                "schema": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "X-SlopBuzz-Trace-Id": {
+                "$ref": "#/components/headers/TraceId"
+              },
+              "X-SlopBuzz-Span-Id": {
+                "$ref": "#/components/headers/SpanId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CanaryVerdict"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The rehearsal failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CanaryVerdict"
+                }
+              }
+            },
+            "headers": {
+              "X-SlopBuzz-Trace-Id": {
+                "$ref": "#/components/headers/TraceId"
+              },
+              "X-SlopBuzz-Span-Id": {
+                "$ref": "#/components/headers/SpanId"
+              }
+            }
+          }
+        }
       }
     },
     "/operations/recovery": {
       "get": {
-        "tags": ["Operational confidence"], "operationId": "readRecovery",
+        "tags": [
+          "Operational confidence"
+        ],
+        "operationId": "readRecovery",
         "summary": "Read the latest recovery verdict",
         "description": "Returns process-local minutes without reopening the repository.",
-        "responses": { "200": { "description": "No drill or the latest passing verdict.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/RecoveryVerdict" } } } }, "503": { "description": "The latest drill failed.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/RecoveryVerdict" } } } } }
+        "responses": {
+          "200": {
+            "description": "No drill or the latest passing verdict.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecoveryVerdict"
+                }
+              }
+            },
+            "headers": {
+              "X-SlopBuzz-Trace-Id": {
+                "$ref": "#/components/headers/TraceId"
+              },
+              "X-SlopBuzz-Span-Id": {
+                "$ref": "#/components/headers/SpanId"
+              }
+            }
+          },
+          "503": {
+            "description": "The latest drill failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecoveryVerdict"
+                }
+              }
+            },
+            "headers": {
+              "X-SlopBuzz-Trace-Id": {
+                "$ref": "#/components/headers/TraceId"
+              },
+              "X-SlopBuzz-Span-Id": {
+                "$ref": "#/components/headers/SpanId"
+              }
+            }
+          }
+        }
       },
       "post": {
-        "tags": ["Operational confidence"], "operationId": "rehearseRecovery",
+        "tags": [
+          "Operational confidence"
+        ],
+        "operationId": "rehearseRecovery",
         "summary": "Reopen and compare institutional memory",
         "description": "Read-only integrity drill. It verifies a fresh stored copy and compares it with the live ledger under the append lock. It does not restore a backup or create audit entries.",
-        "responses": { "200": { "description": "Stored and live copies matched at one instant.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/RecoveryVerdict" } } } }, "503": { "description": "The stored copy was unavailable, invalid, or divergent.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/RecoveryVerdict" } } } } }
+        "responses": {
+          "200": {
+            "description": "Stored and live copies matched at one instant.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecoveryVerdict"
+                }
+              }
+            },
+            "headers": {
+              "X-SlopBuzz-Trace-Id": {
+                "$ref": "#/components/headers/TraceId"
+              },
+              "X-SlopBuzz-Span-Id": {
+                "$ref": "#/components/headers/SpanId"
+              }
+            }
+          },
+          "503": {
+            "description": "The stored copy was unavailable, invalid, or divergent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecoveryVerdict"
+                }
+              }
+            },
+            "headers": {
+              "X-SlopBuzz-Trace-Id": {
+                "$ref": "#/components/headers/TraceId"
+              },
+              "X-SlopBuzz-Span-Id": {
+                "$ref": "#/components/headers/SpanId"
+              }
+            }
+          }
+        }
       }
     },
     "/cache/status": {
       "get": {
-        "tags": ["Institutional memory"], "operationId": "readCacheStatus",
+        "tags": [
+          "Institutional memory"
+        ],
+        "operationId": "readCacheStatus",
         "summary": "Read Redis memory counters",
         "description": "Reports whether Redis is configured and how many lookups hit, missed, or bypassed it in this process.",
-        "responses": { "200": { "description": "Current-process cache counters.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CacheStatus" } } } } }
+        "responses": {
+          "200": {
+            "description": "Current-process cache counters.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CacheStatus"
+                }
+              }
+            },
+            "headers": {
+              "X-SlopBuzz-Trace-Id": {
+                "$ref": "#/components/headers/TraceId"
+              },
+              "X-SlopBuzz-Span-Id": {
+                "$ref": "#/components/headers/SpanId"
+              }
+            }
+          }
+        }
       }
     },
     "/audit/status": {
       "get": {
-        "tags": ["Institutional memory"], "operationId": "readAuditStatus",
+        "tags": [
+          "Institutional memory"
+        ],
+        "operationId": "readAuditStatus",
         "summary": "Read the audit queue projection",
         "description": "Dispatches pending process-local audit messages, then reports counts and hash-chain validity as newline-separated key=value pairs.",
-        "responses": { "200": { "description": "Current audit and queue state.", "content": { "text/plain": { "schema": { "type": "string" }, "example": "committed=15\naborted=0\npending=0\ndeadLetters=0\nchainValid=true\n" } } } }
+        "responses": {
+          "200": {
+            "description": "Current audit and queue state.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                },
+                "example": "committed=15\naborted=0\npending=0\ndeadLetters=0\nchainValid=true\n"
+              }
+            },
+            "headers": {
+              "X-SlopBuzz-Trace-Id": {
+                "$ref": "#/components/headers/TraceId"
+              },
+              "X-SlopBuzz-Span-Id": {
+                "$ref": "#/components/headers/SpanId"
+              }
+            }
+          }
+        }
       }
     },
     "/audit/evidence": {
       "get": {
-        "tags": ["Institutional memory"], "operationId": "readEvidenceDossier",
+        "tags": [
+          "Institutional memory"
+        ],
+        "operationId": "readEvidenceDossier",
         "summary": "Issue an internal evidence dossier",
         "description": "Reports internal controls and evidence digest. ISO 9000 and SOC 2 remain OPEN; this is not an external certificate.",
-        "responses": { "200": { "description": "Point-in-time internal evidence.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/EvidenceDossier" } } } } }
+        "responses": {
+          "200": {
+            "description": "Point-in-time internal evidence.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EvidenceDossier"
+                }
+              }
+            },
+            "headers": {
+              "X-SlopBuzz-Trace-Id": {
+                "$ref": "#/components/headers/TraceId"
+              },
+              "X-SlopBuzz-Span-Id": {
+                "$ref": "#/components/headers/SpanId"
+              }
+            }
+          }
+        }
       }
     },
     "/openapi.json": {
       "get": {
-        "tags": ["Developer relations"], "operationId": "readApiCharter",
+        "tags": [
+          "Developer relations"
+        ],
+        "operationId": "readApiCharter",
         "summary": "Read this machine-readable API charter",
         "description": "Serves the same OpenAPI document from which the human-readable API guide is rendered.",
-        "responses": { "200": { "description": "An OpenAPI 3.2.1 document.", "content": { "application/json": { "schema": { "type": "object" } } } } }
+        "responses": {
+          "200": {
+            "description": "An OpenAPI 3.2.1 document.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            },
+            "headers": {
+              "X-SlopBuzz-Trace-Id": {
+                "$ref": "#/components/headers/TraceId"
+              },
+              "X-SlopBuzz-Span-Id": {
+                "$ref": "#/components/headers/SpanId"
+              }
+            }
+          }
+        }
       }
     }
   },
   "components": {
     "parameters": {
-      "Limit": { "name": "limit", "in": "query", "required": false, "description": "Inclusive upper bound; defaults to 100. The query must be exactly limit followed by 1–4 decimal digits.", "schema": { "type": "integer", "minimum": 0, "maximum": 1000, "default": 100 }, "example": 15 }
+      "Limit": {
+        "name": "limit",
+        "in": "query",
+        "required": false,
+        "description": "Inclusive upper bound; defaults to 100. The query must be exactly limit followed by 1–4 decimal digits.",
+        "schema": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000,
+          "default": 100
+        },
+        "example": 15
+      }
     },
     "headers": {
-      "CacheDisposition": { "description": "The Redis lookup decision for this request.", "schema": { "type": "string", "enum": ["HIT", "MISS", "BYPASS"] } }
+      "CacheDisposition": {
+        "description": "The Redis lookup decision for this request.",
+        "schema": {
+          "type": "string",
+          "enum": [
+            "HIT",
+            "MISS",
+            "BYPASS"
+          ]
+        }
+      },
+      "TraceId": {
+        "description": "A 16-byte lowercase hexadecimal trace receipt. A valid incoming W3C traceparent retains its trace ID.",
+        "schema": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{32}$"
+        }
+      },
+      "SpanId": {
+        "description": "A new 8-byte lowercase hexadecimal span for this HTTP request.",
+        "schema": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{16}$"
+        }
+      }
     },
     "responses": {
-      "InvalidLimit": { "description": "Limit syntax or range was rejected.", "content": { "text/plain": { "schema": { "type": "string" }, "example": "Invalid limit; use an integer from 0 through 1000\n" } } },
-      "GenerationFailed": { "description": "The numerical ceremony failed.", "content": { "text/plain": { "schema": { "type": "string" }, "example": "Generation failed\n" } } }
+      "InvalidLimit": {
+        "description": "Limit syntax or range was rejected.",
+        "content": {
+          "text/plain": {
+            "schema": {
+              "type": "string"
+            },
+            "example": "Invalid limit; use an integer from 0 through 1000\n"
+          }
+        },
+        "headers": {
+          "X-SlopBuzz-Trace-Id": {
+            "$ref": "#/components/headers/TraceId"
+          },
+          "X-SlopBuzz-Span-Id": {
+            "$ref": "#/components/headers/SpanId"
+          }
+        }
+      },
+      "GenerationFailed": {
+        "description": "The numerical ceremony failed.",
+        "content": {
+          "text/plain": {
+            "schema": {
+              "type": "string"
+            },
+            "example": "Generation failed\n"
+          }
+        },
+        "headers": {
+          "X-SlopBuzz-Trace-Id": {
+            "$ref": "#/components/headers/TraceId"
+          },
+          "X-SlopBuzz-Span-Id": {
+            "$ref": "#/components/headers/SpanId"
+          }
+        }
+      }
     },
     "schemas": {
-      "CapacityForecast": { "type": "object", "required": ["schema", "limit", "numeralLines", "fizzLines", "buzzLines", "fizzBuzzLines", "totalLines", "workloadUnits"], "properties": { "schema": { "type": "string", "const": "slopbuzz-capacity/v1" }, "limit": { "type": "integer" }, "numeralLines": { "type": "integer" }, "fizzLines": { "type": "integer" }, "buzzLines": { "type": "integer" }, "fizzBuzzLines": { "type": "integer" }, "totalLines": { "type": "integer" }, "workloadUnits": { "type": "integer", "description": "Fictional internal planning units." } } },
-      "Scorecard": { "type": "object", "required": ["schema", "scope", "successful", "rejected", "failed", "total", "totalDurationMicros", "maximumDurationMicros"], "properties": { "schema": { "type": "string", "const": "slopbuzz-scorecard/v1" }, "scope": { "type": "string", "const": "current-process" }, "successful": { "type": "integer" }, "rejected": { "type": "integer" }, "failed": { "type": "integer" }, "total": { "type": "integer" }, "totalDurationMicros": { "type": "integer" }, "maximumDurationMicros": { "type": "integer" } } },
-      "Release": { "type": "object", "required": ["schema", "scope", "revision", "startedAtEpochMillis"], "properties": { "schema": { "type": "string", "const": "slopbuzz-release/v1" }, "scope": { "type": "string", "const": "deployed-process" }, "revision": { "type": "string", "description": "Declared full Git SHA, or unknown outside a stamped deployment." }, "startedAtEpochMillis": { "type": "integer" } } },
-      "CanaryVerdict": { "type": "object", "required": ["schema", "scope", "sequence", "state", "finding", "issuedAtEpochMillis", "durationMicros", "expectedLines", "observedLines", "auditChainValid"], "properties": { "schema": { "type": "string", "const": "slopbuzz-canary/v1" }, "scope": { "type": "string", "const": "current-process" }, "sequence": { "type": "integer" }, "state": { "type": "string", "enum": ["NOT_RUN", "PASSED", "FAILED"] }, "finding": { "type": "string" }, "issuedAtEpochMillis": { "type": "integer" }, "durationMicros": { "type": "integer" }, "expectedLines": { "type": "integer", "const": 15 }, "observedLines": { "type": "integer" }, "auditChainValid": { "type": "boolean" } } },
-      "RecoveryVerdict": { "type": "object", "required": ["schema", "scope", "sequence", "state", "finding", "issuedAtEpochMillis", "durationMicros", "durable", "storedEntries", "headDigest"], "properties": { "schema": { "type": "string", "const": "slopbuzz-recovery/v1" }, "scope": { "type": "string", "const": "current-process" }, "sequence": { "type": "integer" }, "state": { "type": "string", "enum": ["NOT_RUN", "PASSED", "FAILED"] }, "finding": { "type": "string", "enum": ["NOT_REQUESTED", "MATCHED", "LIVE_INVALID", "STORED_INVALID", "DIVERGED", "STORAGE_UNAVAILABLE"] }, "issuedAtEpochMillis": { "type": "integer" }, "durationMicros": { "type": "integer" }, "durable": { "type": "boolean", "description": "True only for a file-backed H2 URL." }, "storedEntries": { "type": "integer", "description": "-1 means the store could not be read." }, "headDigest": { "type": "string" } } },
-      "CacheStatus": { "type": "object", "required": ["schema", "enabled", "hits", "misses", "bypasses", "errors", "ttlSeconds"], "properties": { "schema": { "type": "string", "const": "slopbuzz-cache/v1" }, "enabled": { "type": "boolean" }, "hits": { "type": "integer" }, "misses": { "type": "integer" }, "bypasses": { "type": "integer" }, "errors": { "type": "integer" }, "ttlSeconds": { "type": "integer" } } },
-      "EvidenceDossier": { "type": "object", "required": ["schema", "issuedAtEpochMillis", "scope", "certification", "journalEntries", "committed", "aborted", "pending", "deadLetters", "headDigest", "controls", "evidenceDigest"], "properties": { "schema": { "type": "string", "const": "slopbuzz-evidence/v1" }, "issuedAtEpochMillis": { "type": "integer" }, "scope": { "type": "string", "const": "internal-controls-only" }, "certification": { "type": "string", "const": "none" }, "journalEntries": { "type": "integer" }, "committed": { "type": "integer" }, "aborted": { "type": "integer" }, "pending": { "type": "integer" }, "deadLetters": { "type": "integer" }, "headDigest": { "type": "string" }, "controls": { "type": "object", "required": ["AUD-001", "MSG-001", "ISO-9000", "SOC-2"], "properties": { "AUD-001": { "type": "string" }, "MSG-001": { "type": "string" }, "ISO-9000": { "type": "string", "const": "OPEN" }, "SOC-2": { "type": "string", "const": "OPEN" } } }, "evidenceDigest": { "type": "string" } } }
+      "CapacityForecast": {
+        "type": "object",
+        "required": [
+          "schema",
+          "limit",
+          "numeralLines",
+          "fizzLines",
+          "buzzLines",
+          "fizzBuzzLines",
+          "totalLines",
+          "workloadUnits"
+        ],
+        "properties": {
+          "schema": {
+            "type": "string",
+            "const": "slopbuzz-capacity/v1"
+          },
+          "limit": {
+            "type": "integer"
+          },
+          "numeralLines": {
+            "type": "integer"
+          },
+          "fizzLines": {
+            "type": "integer"
+          },
+          "buzzLines": {
+            "type": "integer"
+          },
+          "fizzBuzzLines": {
+            "type": "integer"
+          },
+          "totalLines": {
+            "type": "integer"
+          },
+          "workloadUnits": {
+            "type": "integer",
+            "description": "Fictional internal planning units."
+          }
+        }
+      },
+      "Scorecard": {
+        "type": "object",
+        "required": [
+          "schema",
+          "scope",
+          "successful",
+          "rejected",
+          "failed",
+          "total",
+          "totalDurationMicros",
+          "maximumDurationMicros"
+        ],
+        "properties": {
+          "schema": {
+            "type": "string",
+            "const": "slopbuzz-scorecard/v1"
+          },
+          "scope": {
+            "type": "string",
+            "const": "current-process"
+          },
+          "successful": {
+            "type": "integer"
+          },
+          "rejected": {
+            "type": "integer"
+          },
+          "failed": {
+            "type": "integer"
+          },
+          "total": {
+            "type": "integer"
+          },
+          "totalDurationMicros": {
+            "type": "integer"
+          },
+          "maximumDurationMicros": {
+            "type": "integer"
+          }
+        }
+      },
+      "Release": {
+        "type": "object",
+        "required": [
+          "schema",
+          "scope",
+          "revision",
+          "startedAtEpochMillis"
+        ],
+        "properties": {
+          "schema": {
+            "type": "string",
+            "const": "slopbuzz-release/v1"
+          },
+          "scope": {
+            "type": "string",
+            "const": "deployed-process"
+          },
+          "revision": {
+            "type": "string",
+            "description": "Declared full Git SHA, or unknown outside a stamped deployment."
+          },
+          "startedAtEpochMillis": {
+            "type": "integer"
+          }
+        }
+      },
+      "CanaryVerdict": {
+        "type": "object",
+        "required": [
+          "schema",
+          "scope",
+          "sequence",
+          "state",
+          "finding",
+          "issuedAtEpochMillis",
+          "durationMicros",
+          "expectedLines",
+          "observedLines",
+          "auditChainValid"
+        ],
+        "properties": {
+          "schema": {
+            "type": "string",
+            "const": "slopbuzz-canary/v1"
+          },
+          "scope": {
+            "type": "string",
+            "const": "current-process"
+          },
+          "sequence": {
+            "type": "integer"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "NOT_RUN",
+              "PASSED",
+              "FAILED"
+            ]
+          },
+          "finding": {
+            "type": "string"
+          },
+          "issuedAtEpochMillis": {
+            "type": "integer"
+          },
+          "durationMicros": {
+            "type": "integer"
+          },
+          "expectedLines": {
+            "type": "integer",
+            "const": 15
+          },
+          "observedLines": {
+            "type": "integer"
+          },
+          "auditChainValid": {
+            "type": "boolean"
+          }
+        }
+      },
+      "RecoveryVerdict": {
+        "type": "object",
+        "required": [
+          "schema",
+          "scope",
+          "sequence",
+          "state",
+          "finding",
+          "issuedAtEpochMillis",
+          "durationMicros",
+          "durable",
+          "storedEntries",
+          "headDigest"
+        ],
+        "properties": {
+          "schema": {
+            "type": "string",
+            "const": "slopbuzz-recovery/v1"
+          },
+          "scope": {
+            "type": "string",
+            "const": "current-process"
+          },
+          "sequence": {
+            "type": "integer"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "NOT_RUN",
+              "PASSED",
+              "FAILED"
+            ]
+          },
+          "finding": {
+            "type": "string",
+            "enum": [
+              "NOT_REQUESTED",
+              "MATCHED",
+              "LIVE_INVALID",
+              "STORED_INVALID",
+              "DIVERGED",
+              "STORAGE_UNAVAILABLE"
+            ]
+          },
+          "issuedAtEpochMillis": {
+            "type": "integer"
+          },
+          "durationMicros": {
+            "type": "integer"
+          },
+          "durable": {
+            "type": "boolean",
+            "description": "True only for a file-backed H2 URL."
+          },
+          "storedEntries": {
+            "type": "integer",
+            "description": "-1 means the store could not be read."
+          },
+          "headDigest": {
+            "type": "string"
+          }
+        }
+      },
+      "CacheStatus": {
+        "type": "object",
+        "required": [
+          "schema",
+          "enabled",
+          "hits",
+          "misses",
+          "bypasses",
+          "errors",
+          "ttlSeconds"
+        ],
+        "properties": {
+          "schema": {
+            "type": "string",
+            "const": "slopbuzz-cache/v1"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "hits": {
+            "type": "integer"
+          },
+          "misses": {
+            "type": "integer"
+          },
+          "bypasses": {
+            "type": "integer"
+          },
+          "errors": {
+            "type": "integer"
+          },
+          "ttlSeconds": {
+            "type": "integer"
+          }
+        }
+      },
+      "EvidenceDossier": {
+        "type": "object",
+        "required": [
+          "schema",
+          "issuedAtEpochMillis",
+          "scope",
+          "certification",
+          "journalEntries",
+          "committed",
+          "aborted",
+          "pending",
+          "deadLetters",
+          "headDigest",
+          "controls",
+          "evidenceDigest"
+        ],
+        "properties": {
+          "schema": {
+            "type": "string",
+            "const": "slopbuzz-evidence/v1"
+          },
+          "issuedAtEpochMillis": {
+            "type": "integer"
+          },
+          "scope": {
+            "type": "string",
+            "const": "internal-controls-only"
+          },
+          "certification": {
+            "type": "string",
+            "const": "none"
+          },
+          "journalEntries": {
+            "type": "integer"
+          },
+          "committed": {
+            "type": "integer"
+          },
+          "aborted": {
+            "type": "integer"
+          },
+          "pending": {
+            "type": "integer"
+          },
+          "deadLetters": {
+            "type": "integer"
+          },
+          "headDigest": {
+            "type": "string"
+          },
+          "controls": {
+            "type": "object",
+            "required": [
+              "AUD-001",
+              "MSG-001",
+              "ISO-9000",
+              "SOC-2"
+            ],
+            "properties": {
+              "AUD-001": {
+                "type": "string"
+              },
+              "MSG-001": {
+                "type": "string"
+              },
+              "ISO-9000": {
+                "type": "string",
+                "const": "OPEN"
+              },
+              "SOC-2": {
+                "type": "string",
+                "const": "OPEN"
+              }
+            }
+          },
+          "evidenceDigest": {
+            "type": "string"
+          }
+        }
+      }
     }
   }
 }
