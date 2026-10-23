@@ -13,6 +13,8 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.List;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -25,6 +27,7 @@ import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.a
 import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.audit.AuditEventConsumer;
 import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.audit.OutputAuditEntry;
 import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.audit.OutputDisposition;
+import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.audit.OutputAuditStore;
 import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.cache.RedisOutputCache;
 import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.http.SlopFizzBuzzHttpServer;
 import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.operations.ReleaseCustodyReport;
@@ -74,6 +77,7 @@ public class SlopFizzBuzzHttpServerTest {
 		assertTrue(page.body.contains("aria-live=\"polite\""));
 		assertTrue(page.body.contains("id=\"canary-button\""));
 		assertTrue(page.body.contains("id=\"release-value\""));
+		assertTrue(page.body.contains("id=\"recovery-button\""));
 		assertTrue(page.contentSecurityPolicy.contains("script-src 'self'"));
 		assertTrue(page.body.matches("(?s).*href=\"/assets/site\\.css\\?v=[0-9a-f]{64}\".*"));
 		assertTrue(request("GET", "/assets/site.css").body.contains("prefers-reduced-motion"));
@@ -124,6 +128,51 @@ public class SlopFizzBuzzHttpServerTest {
 			assertEquals(404, request(provenanceServer.getPort(), "GET", "/operations/release-extra").status);
 		} finally {
 			provenanceServer.close();
+		}
+	}
+
+	@Test
+	public void recoveryDeskRequiresAnExplicitRehearsalAndKeepsReadOnlyMinutes() throws Exception {
+		final Reply before = request("GET", "/operations/recovery");
+		assertEquals(200, before.status);
+		final long priorEntries = journal.snapshot().size();
+		final Reply rehearsal = request("POST", "/operations/recovery");
+		assertEquals(200, rehearsal.status);
+		assertEquals("no-store", rehearsal.cacheControl);
+		assertTrue(rehearsal.body.contains("\"state\":\"PASSED\""));
+		assertTrue(rehearsal.body.contains("\"finding\":\"MATCHED\""));
+		assertEquals(priorEntries, journal.snapshot().size());
+		assertEquals(rehearsal.body, request("GET", "/operations/recovery").body);
+		assertEquals(405, request("PUT", "/operations/recovery").status);
+		assertEquals(404, request("GET", "/operations/recovery-extra").status);
+	}
+
+	@Test
+	public void recoveryDeskReportsAnUnreadableStoredCopyAsUnavailable() throws Exception {
+		final AtomicInteger reads = new AtomicInteger();
+		final OutputAuditStore disappearingStore = new OutputAuditStore() {
+			@Override public List<OutputAuditEntry> load() {
+				if (reads.incrementAndGet() == 1) {
+					return java.util.Collections.emptyList();
+				}
+				throw new IllegalStateException("private database detail");
+			}
+			@Override public void append(final OutputAuditEntry entry) { }
+		};
+		final SlopFizzBuzzHttpServer failingServer = new SlopFizzBuzzHttpServer(
+				new InetSocketAddress("127.0.0.1", 0),
+				(SlopFizzBuzz) context.getBean(TestConstants.STANDARD_SLOP_FIZZ_BUZZ),
+				context.getBean(OutputTransactionCoordinator.class),
+				new OutputAuditJournal(disappearingStore));
+		failingServer.start();
+		try {
+			final Reply rehearsal = request(failingServer.getPort(), "POST", "/operations/recovery");
+			assertEquals(503, rehearsal.status);
+			assertTrue(rehearsal.body.contains("\"finding\":\"STORAGE_UNAVAILABLE\""));
+			assertTrue(!rehearsal.body.contains("private database detail"));
+			assertEquals(503, request(failingServer.getPort(), "GET", "/operations/recovery").status);
+		} finally {
+			failingServer.close();
 		}
 	}
 

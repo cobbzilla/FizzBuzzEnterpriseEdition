@@ -33,6 +33,12 @@ inside that lease it returns the same verdict with
 `X-SlopBuzz-Rehearsal: REUSED` and creates no new audit entries. Its result
 is process-local.
 
+Select **Rehearse recovery** to reopen and verify the audit repository without
+adding certificates. The verdict reports whether the stored copy matches the
+live ledger at that instant, how many entries were read, and whether H2 uses a
+file-backed URL. `GET /operations/recovery` reads the latest process-local
+result. A failed POST returns 503. This inspection does not test backup restore.
+
 Without Redis, `java` and the original Docker image still serve correct
 FizzBuzz answers and the website. The cache reports `BYPASS` and the
 application continues to work. Set `SLOPBUZZ_REDIS_HOST` and optionally
@@ -53,7 +59,7 @@ claim a public deployment or a domain until those steps are performed.
   suite, including HTTP asset, security-header, Redis protocol, and fallback
   checks.
 * Check keyboard access to the navigation, form, preset buttons, operations
-  refresh, canary rehearsal, and evidence disclosure; ensure focus stays visible.
+  refresh, canary and recovery rehearsals, and evidence disclosure; ensure focus stays visible.
 * Run the form at limits 0, 15, 100, and 1000. Verify the output, forecast,
   status announcement, response time, and cache state.
 * Check narrow and wide layouts, 200% zoom, and a reduced-motion preference.

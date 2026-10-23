@@ -67,9 +67,55 @@ public final class OutputAuditJournal {
 	}
 
 	public synchronized boolean verifyChain() {
+		return verifyEntries(this.entries);
+	}
+
+	/** Reopens the repository while holding the same lock used for every append. */
+	public synchronized StoredCopyInspection inspectStoredCopy() {
+		final boolean liveValid = verifyEntries(this.entries);
+		final List<OutputAuditEntry> stored;
+		try {
+			stored = this.store.load();
+		} catch (final RuntimeException failure) {
+			LOGGER.warning("Recovery rehearsal could not read the stored audit copy: "
+					+ failure.getClass().getSimpleName());
+			return new StoredCopyInspection(StoredCopyInspection.Finding.STORAGE_UNAVAILABLE,
+					isDurableStore(), -1, "UNKNOWN");
+		}
+		final String rawHead = stored.isEmpty() ? GENESIS_DIGEST
+				: stored.get(stored.size() - 1).getDigest();
+		final String head = rawHead != null && (GENESIS_DIGEST.equals(rawHead)
+				|| rawHead.matches("[0-9a-f]{64}")) ? rawHead : "UNKNOWN";
+		if (!liveValid) {
+			return new StoredCopyInspection(StoredCopyInspection.Finding.LIVE_INVALID,
+					isDurableStore(), stored.size(), head);
+		}
+		if (!verifyEntries(stored)) {
+			return new StoredCopyInspection(StoredCopyInspection.Finding.STORED_INVALID,
+					isDurableStore(), stored.size(), head);
+		}
+		if (stored.size() != this.entries.size()) {
+			return new StoredCopyInspection(StoredCopyInspection.Finding.DIVERGED,
+					isDurableStore(), stored.size(), head);
+		}
+		for (int index = 0; index < stored.size(); index++) {
+			if (!stored.get(index).getDigest().equals(this.entries.get(index).getDigest())) {
+				return new StoredCopyInspection(StoredCopyInspection.Finding.DIVERGED,
+						isDurableStore(), stored.size(), head);
+			}
+		}
+		return new StoredCopyInspection(StoredCopyInspection.Finding.MATCHED,
+				isDurableStore(), stored.size(), head);
+	}
+
+	private boolean isDurableStore() {
+		return this.store instanceof H2AuditStore && ((H2AuditStore) this.store).isDurable();
+	}
+
+	private static boolean verifyEntries(final List<OutputAuditEntry> entries) {
 		String previous = GENESIS_DIGEST;
 		long sequence = 1L;
-		for (final OutputAuditEntry entry : this.entries) {
+		for (final OutputAuditEntry entry : entries) {
 			if (entry.getSequence() != sequence
 					|| !previous.equals(entry.getPreviousDigest())
 					|| !digest(previous, sequence, entry.getNumber(), entry.getPayload(),
