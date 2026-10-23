@@ -19,6 +19,8 @@ import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.a
 import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.audit.AuditStatusProjection;
 import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.compliance.ComplianceEvidenceFactory;
 import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.capacity.CapacityPlanningBureau;
+import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.cache.CacheLookup;
+import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.cache.RedisOutputCache;
 import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.operations.ProclamationOutcome;
 import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.operations.ServiceLevelScorecard;
 import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.interfaces.SlopFizzBuzz;
@@ -35,17 +37,25 @@ public final class SlopFizzBuzzHttpServer implements AutoCloseable {
 	public SlopFizzBuzzHttpServer(final InetSocketAddress address, final SlopFizzBuzz service,
 			final OutputTransactionCoordinator transactions, final OutputAuditJournal journal)
 			throws IOException {
+		this(address, service, transactions, journal, RedisOutputCache.configured());
+	}
+
+	public SlopFizzBuzzHttpServer(final InetSocketAddress address, final SlopFizzBuzz service,
+			final OutputTransactionCoordinator transactions, final OutputAuditJournal journal,
+			final RedisOutputCache cache) throws IOException {
 		this.server = HttpServer.create(address, 0);
 		this.workers = Executors.newFixedThreadPool(4);
 		this.server.setExecutor(this.workers);
 		final ServiceLevelScorecard scorecard = new ServiceLevelScorecard();
-		this.server.createContext("/fizzbuzz", new FizzBuzzHandler(service, transactions, scorecard));
+		this.server.createContext("/fizzbuzz", new FizzBuzzHandler(service, transactions, scorecard, cache));
 		this.server.createContext("/operations/scorecard", new ScorecardHandler(scorecard));
+		this.server.createContext("/cache/status", new CacheStatusHandler(cache));
 		this.server.createContext("/capacity/forecast", new CapacityForecastHandler());
 		this.server.createContext("/healthz", new HealthHandler());
 		this.server.createContext("/readyz", new ReadinessHandler(journal));
 		this.server.createContext("/audit/status", new AuditStatusHandler(journal));
 		this.server.createContext("/audit/evidence", new EvidenceDossierHandler(journal));
+		this.server.createContext("/", new StaticSiteHandler());
 	}
 
 	public void start() {
@@ -72,6 +82,7 @@ public final class SlopFizzBuzzHttpServer implements AutoCloseable {
 			throws IOException {
 		final byte[] bytes = body.getBytes(StandardCharsets.UTF_8);
 		exchange.getResponseHeaders().set("Content-Type", contentType);
+		exchange.getResponseHeaders().set("X-Content-Type-Options", "nosniff");
 		exchange.sendResponseHeaders(status, bytes.length);
 		final OutputStream stream = exchange.getResponseBody();
 		try {
@@ -171,13 +182,15 @@ public final class SlopFizzBuzzHttpServer implements AutoCloseable {
 		private final SlopFizzBuzz service;
 		private final OutputTransactionCoordinator transactions;
 		private final ServiceLevelScorecard scorecard;
+		private final RedisOutputCache cache;
 
 		private FizzBuzzHandler(final SlopFizzBuzz service,
 				final OutputTransactionCoordinator transactions,
-				final ServiceLevelScorecard scorecard) {
+				final ServiceLevelScorecard scorecard, final RedisOutputCache cache) {
 			this.service = service;
 			this.transactions = transactions;
 			this.scorecard = scorecard;
+			this.cache = cache;
 		}
 
 		@Override
@@ -203,9 +216,21 @@ public final class SlopFizzBuzzHttpServer implements AutoCloseable {
 					outcome = ProclamationOutcome.REJECTED;
 					return;
 				}
+				exchange.getResponseHeaders().set("Cache-Control", "no-store");
+				final CacheLookup lookup = this.cache.lookup(limit.intValue());
+				exchange.getResponseHeaders().set("X-SlopBuzz-Cache", lookup.getState().name());
+				if (lookup.getState() == CacheLookup.State.HIT) {
+					respond(exchange, 200, lookup.getBody());
+					outcome = ProclamationOutcome.SUCCESSFUL;
+					return;
+				}
 				try (OutputCapture audience = this.transactions.capture()) {
 					this.service.slopFizzBuzz(limit.intValue());
-					respond(exchange, 200, audience.getText());
+					final String body = audience.getText();
+					if (lookup.getState() == CacheLookup.State.MISS) {
+						this.cache.store(limit.intValue(), body);
+					}
+					respond(exchange, 200, body);
 					outcome = ProclamationOutcome.SUCCESSFUL;
 				} catch (final RuntimeException failure) {
 					LOGGER.warning("A SlopFizzBuzz HTTP proclamation failed: " + failure.getMessage());
@@ -220,6 +245,33 @@ public final class SlopFizzBuzzHttpServer implements AutoCloseable {
 			}
 		}
 
+	}
+
+	private static final class CacheStatusHandler implements HttpHandler {
+		private final RedisOutputCache cache;
+
+		private CacheStatusHandler(final RedisOutputCache cache) {
+			this.cache = cache;
+		}
+
+		@Override
+		public void handle(final HttpExchange exchange) throws IOException {
+			try {
+				if (!"/cache/status".equals(exchange.getRequestURI().getPath())) {
+					respond(exchange, 404, "Unknown desk\n");
+					return;
+				}
+				if (!"GET".equals(exchange.getRequestMethod())) {
+					exchange.getResponseHeaders().set("Allow", "GET");
+					respond(exchange, 405, "Method not authorized\n");
+					return;
+				}
+				respond(exchange, 200, this.cache.statusJson(),
+						"application/json; charset=UTF-8");
+			} finally {
+				exchange.close();
+			}
+		}
 	}
 
 	private static final class ScorecardHandler implements HttpHandler {
