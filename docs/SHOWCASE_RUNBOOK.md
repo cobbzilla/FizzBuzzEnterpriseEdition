@@ -27,8 +27,8 @@ page and `X-SlopBuzz-Cache` header; the second should report `HIT`. The
 operations section shows cache counters and the current audit state. A cache
 hit does not create a second set of line certificates.
 
-The demo reveals one line at a time at its default **Boardroom deliberation**
-pace and keeps the latest line scrolled into view. **Unsupervised reality**
+The demo reveals one line at a time at its default **Full Board Ratification**
+cadence and keeps the latest line scrolled into view. **Executive Fiat**
 renders all lines immediately. The elapsed measurement ends when the HTTP
 response arrives, before the visual reading begins.
 

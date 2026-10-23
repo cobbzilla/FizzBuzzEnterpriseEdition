@@ -1,4 +1,5 @@
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.io.ByteArrayOutputStream;
@@ -134,7 +135,9 @@ public class SlopFizzBuzzHttpServerTest {
 		assertTrue(page.body.contains("id=\"release-value\""));
 		assertTrue(page.body.contains("id=\"recovery-button\""));
 		assertTrue(page.body.contains("id=\"display-speed\""));
-		assertTrue(page.body.contains("Unsupervised reality · instant"));
+		assertTrue(page.body.contains("<option value=\"360\" selected>Full Board Ratification · 360 ms/line</option>"));
+		assertTrue(page.body.contains("Executive Fiat · real time (0 ms)"));
+		assertFalse(page.body.contains("leisurely"));
 		assertTrue(page.body.contains("href=\"/api\""));
 		assertTrue(page.contentSecurityPolicy.contains("script-src 'self'"));
 		assertTrue(page.body.matches("(?s).*href=\"/assets/site\\.css\\?v=[0-9a-f]{64}\".*"));

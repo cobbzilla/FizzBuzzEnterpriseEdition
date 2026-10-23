@@ -117,8 +117,8 @@ section for The Serious Business Company, Inc. The stack uses a private Redis
 cache and a durable H2 audit volume. See the [showcase runbook](docs/SHOWCASE_RUNBOOK.md)
 for deployment and verification notes.
 
-The demo's reading pace defaults to **Boardroom deliberation** and scrolls as
-each line appears. Choose **Unsupervised reality** for immediate display with
+The demo's mandatory disclosure cadence defaults to **Full Board Ratification**
+and scrolls as each line appears. Choose **Executive Fiat** for immediate display with
 no artificial delay; the measured service response time excludes playback.
 
 Read the human API charter guide at `http://localhost:18088/api` in the shared
