@@ -84,12 +84,12 @@
             <div class="pace-control">
               <label for="display-speed">Mandatory disclosure cadence</label>
               <select id="display-speed" aria-describedby="pace-help">
-                <option value="360" selected>Full Board Ratification · 360 ms/line</option>
-                <option value="160">Interdepartmental Sign-Off · 160 ms/line</option>
-                <option value="45">Emergency Delegated Authority · 45 ms/line</option>
-                <option value="0">Executive Fiat · real time (0 ms)</option>
+                <option value="1800" selected>Full Board Ratification</option>
+                <option value="800">Interdepartmental Sign-Off</option>
+                <option value="225">Emergency Delegated Authority</option>
+                <option value="0">Executive Fiat</option>
               </select>
-              <p id="pace-help">Every line must clear its assigned approval queue before appearing. Change authority mid-proclamation and the next line obeys. The service responds immediately; only this board-mandated display process waits.</p>
+              <p id="pace-help">Every line must clear its assigned approval queue before appearing. Executive Fiat waives the queue for real-time disclosure. Change authority mid-proclamation and the next line obeys. The service response is timed separately.</p>
             </div>
             <div class="run-meta" role="group" aria-label="Latest response measurements">
               <div><span class="meta-label">Elapsed</span><strong id="latency">—</strong></div>
