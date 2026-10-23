@@ -49,6 +49,11 @@ certify its immediate successor.
 Each generated line passes through an [output transaction and audit bureau](docs/ADR-0003-output-transactions.md),
 which keeps process-local, hash-linked minutes.
 
+Before that line can be published, a [three-seat classification ballot](docs/ADR-0014-classification-ballot.md)
+must reconcile the Fizz, Buzz, and numeral strategies with an independent
+arithmetic witness. The visitor receives number-bound certificates rather
+than an informal verbal assurance.
+
 ## HTTP proclamation desk
 
 The [HTTP entry point](docs/ADR-0005-http-proclamation.md) serves

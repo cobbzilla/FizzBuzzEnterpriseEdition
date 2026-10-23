@@ -59,6 +59,11 @@ On 2026-10-22, a local Docker Compose check on a Mac measured a cold audited
 responses each at limits 15 and 1000 were all cache hits: p95 was 45 ms and
 5 ms respectively. These are loopback samples, not a production SLA.
 
+After the classification ballot was added on 2026-10-22, a fresh 991-number
+mandate on the same local Compose stack returned 991 correct lines in 567 ms
+with `X-SlopBuzz-Cache: MISS`. This is another single loopback observation,
+not a production response-time guarantee.
+
 The final mobile browser checks at 390 and 320 CSS pixels found no horizontal overflow;
 Tab reached the skip link first and the first 18 controls, including the demo
 and operations buttons, had a visible 3 px focus outline. An invalid mandate

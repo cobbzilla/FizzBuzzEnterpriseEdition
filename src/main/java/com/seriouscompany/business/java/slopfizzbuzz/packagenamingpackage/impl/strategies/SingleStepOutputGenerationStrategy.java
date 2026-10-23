@@ -9,6 +9,8 @@ import org.springframework.stereotype.Service;
 
 import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.factories.*;
 import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.audit.OutputTransactionCoordinator;
+import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.classification.ClassificationBallot;
+import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.classification.ClassificationBallotBox;
 import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.visitors.SlopFizzBuzzOutputGenerationContext;
 import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.interfaces.printers.StringPrinter;
 import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.interfaces.strategies.OutputGenerationStrategy;
@@ -26,6 +28,7 @@ public class SingleStepOutputGenerationStrategy implements OutputGenerationStrat
 	private final OutputGenerationContextVisitor contextVisitor;
 	private final StringPrinter myNewLinePrinter;
 	private final OutputTransactionCoordinator transactions;
+	private final ClassificationBallotBox ballotBox = new ClassificationBallotBox();
 
 	/**
 	 * @param slopFizzBuzzOutputGenerationContextVisitorFactory SlopFizzBuzzOutputGenerationContextVisitorFactory
@@ -71,10 +74,15 @@ public class SingleStepOutputGenerationStrategy implements OutputGenerationStrat
 		final int nGenerationParameter = generationParameter.retrieveIntegerValue();
 		this.transactions.begin(nGenerationParameter);
 		try {
+			final ClassificationBallot ballot = this.ballotBox.cast(nGenerationParameter,
+					this.contexts.get(0).getStrategy(), this.contexts.get(1).getStrategy(),
+					this.contexts.get(2).getStrategy());
 			final Iterator<OutputGenerationContext> iterator = this.contexts.iterator();
+			int seat = 0;
 			while (iterator.hasNext()) {
 				final OutputGenerationContext context = iterator.next();
-				this.contextVisitor.visit(context, nGenerationParameter);
+				this.contextVisitor.visit(new SlopFizzBuzzOutputGenerationContext(
+						ballot.certifiedStrategy(seat++), context.getPrinter()), nGenerationParameter);
 			}
 			this.myNewLinePrinter.print();
 			this.transactions.commit();
