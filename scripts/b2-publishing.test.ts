@@ -29,7 +29,9 @@ test('directory routes resolve inside the bucket prefix and discard only the ori
  for (const [path, target] of [['/', 'index.html'], ['/api/?utm_campaign=test', 'api/index.html'], ['/assets/abc.js?v=2', 'assets/abc.js']]) {
   const result = await serve(new Request('https://example.org' + path), env, async (url, options) => {
    assert.equal(String(url), env.B2_ORIGIN + target);
-   assert.equal(options?.redirect, 'error');
+   assert.equal(options?.redirect, 'manual');
+   assert.equal(options?.cache, 'no-store');
+   assert.equal((options as RequestInit & {cf?: unknown}).cf, undefined);
    return new Response('ok', {headers: {'Content-Type': 'text/html', 'X-Bz-File-Id': 'private-metadata'}});
   });
   assert.equal(result.status, 200);
@@ -51,12 +53,15 @@ test('invalid paths, writes, missing files and upstream failure never become suc
  assert.equal((await serve(new Request('https://example.org/', {method: 'POST'}), env, forbiddenFetch)).status, 405);
  assert.equal((await serve(new Request('https://example.org/missing.html'), env, async () => new Response('B2 error', {status: 404}))).status, 404);
  assert.equal((await serve(new Request('https://example.org/'), env, async () => new Response('B2 error', {status: 503}))).status, 502);
+ assert.equal((await serve(new Request('https://example.org/'), env, async () => new Response(null, {status: 302, headers: {Location: 'https://other.example/'}}))).status, 502);
  assert.equal((await serve(new Request('https://example.org/'), env, forbiddenFetch)).status, 502);
 });
 
 test('HEAD, range and conditional requests preserve semantics; immutable assets retain their policy', async () => {
  const result = await serve(new Request('https://example.org/assets/0123456789abcdef/runtime-worker.js', {method: 'HEAD', headers: {Range: 'bytes=0-2'}}), env, async (_, options) => {
   assert.equal(options?.method, 'HEAD');
+  assert.equal(options?.redirect, 'manual');
+  assert.equal((options as RequestInit & {cf: {cacheTtl: number}}).cf.cacheTtl, 31536000);
   assert.equal(new Headers(options?.headers).get('Range'), 'bytes=0-2');
   return new Response(null, {status: 206, headers: {'Content-Type': 'text/javascript', 'Content-Length': '3', 'Content-Range': 'bytes 0-2/10'}});
  });

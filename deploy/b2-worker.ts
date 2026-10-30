@@ -12,7 +12,9 @@ export async function serve(request:Request,env:Env,fetchOrigin:typeof fetch=fet
  const immutable=/^\/assets\/[a-f0-9]{16}\//.test(path);
  const headers=new Headers();for(const name of ['range','if-none-match','if-modified-since']){const value=request.headers.get(name);if(value)headers.set(name,value);}
  let upstream:Response;
- try{upstream=await fetchOrigin(target,{method:request.method,headers,redirect:'error',...{cf:{cacheTtl:immutable?31536000:-1}}} as RequestInit);}catch{return new Response('Origin temporarily unavailable',{status:502});}
+ // Workers supports manual/follow redirects, and only nonnegative cacheTtl.
+ // Mutable objects must bypass edge storage rather than receive a negative TTL.
+ try{upstream=await fetchOrigin(target,{method:request.method,headers,redirect:'manual',...(immutable?{cf:{cacheTtl:31536000}}:{cache:'no-store'})} as RequestInit);}catch{return new Response('Origin temporarily unavailable',{status:502});}
  if(!upstream.ok&&upstream.status!==304)return new Response(upstream.status===404?'Not found':'Origin unavailable',{status:upstream.status===404?404:502});
  const result=new Headers();for(const name of ['content-type','content-length','etag','last-modified','content-range','accept-ranges']){const value=upstream.headers.get(name);if(value)result.set(name,value);}
  result.set('Cache-Control',immutable?'public, max-age=31536000, immutable':'no-cache');

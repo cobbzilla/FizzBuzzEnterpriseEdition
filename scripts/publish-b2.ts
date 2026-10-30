@@ -32,7 +32,7 @@ async function main(){
  if(bucket?.bucketType!=='allPublic')throw new Error('Target bucket must be public');
  const origin=`${storage.downloadUrl}/file/${encodeURIComponent(bucket.bucketName)}/${c.prefix}`;
  console.log(`${c.dry?'Dry run':'Publishing'} ${c.url.origin} from ${bucket.bucketName}/${c.prefix}`);
- const childEnv={...process.env,SLOPBUZZ_RUNTIME:'browser',SLOPBUZZ_ENGINE:'auto',SLOPBUZZ_API_BASE_URL:'',SLOPBUZZ_RELEASE_SHA:git('rev-parse','HEAD'),SLOPBUZZ_ANALYTICS_ENABLED:e.SLOPBUZZ_ANALYTICS_ENABLED||'true',SLOPBUZZ_ANALYTICS_ENVIRONMENT:'production',SLOPBUZZ_ANALYTICS_ALLOW_LOCAL:'false',SLOPBUZZ_POSTHOG_ENV_FILE:e.SLOPBUZZ_POSTHOG_ENV_FILE||'tmp/.env.posthog'};
+ const childEnv={...process.env,SLOPBUZZ_RUNTIME:'browser',SLOPBUZZ_ENGINE:'auto',SLOPBUZZ_API_BASE_URL:'',SLOPBUZZ_RELEASE_SHA:git('rev-parse','HEAD'),SLOPBUZZ_ANALYTICS_ENABLED:e.SLOPBUZZ_ANALYTICS_ENABLED||'true',SLOPBUZZ_ANALYTICS_ENVIRONMENT:'production',SLOPBUZZ_ANALYTICS_ALLOW_LOCAL:'false',SLOPBUZZ_POSTHOG_ENV_FILE:e.SLOPBUZZ_POSTHOG_ENV_FILE||(e.SLOPBUZZ_ANALYTICS_ENABLED==='false'?'':'tmp/.env.posthog')};
  const run=(...args:string[])=>execFileSync('pnpm',args,{stdio:'inherit',env:childEnv});
  run('typecheck');run('test:publish');run('build');run('test:parity');run('test:e2e');execFileSync('node',['scripts/build.ts','--assets-only'],{stdio:'inherit',env:childEnv});
  if(!c.dry&&git('status','--porcelain','--untracked-files=no'))throw new Error('Build changed tracked sources; commit generated assets before publishing');
