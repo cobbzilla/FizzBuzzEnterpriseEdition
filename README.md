@@ -12,7 +12,9 @@ divisible by both three and five is still the game's required `FizzBuzz`.
 Build and test with `mvn package`. The application entry point is
 `com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.Main`.
 The [enterprise improvement ledger](CHANGELOG.md) records each formalized
-investment as it enters the `slopbuzz` portfolio.
+investment as it enters the `slopbuzz` portfolio. The same journal is published
+as a [readable website page](http://localhost:18088/changelog) and as
+[`CHANGELOG.md`](http://localhost:18088/CHANGELOG.md) in the shared preview.
 
 ## FizzBuzz
 

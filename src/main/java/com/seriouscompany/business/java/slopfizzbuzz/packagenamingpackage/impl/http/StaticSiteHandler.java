@@ -35,6 +35,8 @@ final class StaticSiteHandler implements HttpHandler {
 		loaded.put("/assets/api.js", apiJavascript);
 		loaded.put("/assets/mark.svg", mark);
 		loaded.put("/openapi.json", asset("/web/openapi.json", "application/json; charset=UTF-8", false));
+		final Asset journal = asset("/CHANGELOG.md", "text/markdown; charset=UTF-8", false);
+		loaded.put("/CHANGELOG.md", journal);
 		final Asset template = asset("/web/index.html", "text/html; charset=UTF-8", false);
 		final String html = new String(template.bytes, StandardCharsets.UTF_8)
 				.replace("/assets/site.css", "/assets/site.css?v=" + css.fingerprint)
@@ -52,6 +54,15 @@ final class StaticSiteHandler implements HttpHandler {
 		loaded.put("/api", new Asset(apiHtml.getBytes(StandardCharsets.UTF_8),
 				"text/html; charset=UTF-8", false));
 		loaded.put("/api/", loaded.get("/api"));
+		final Asset journalTemplate = asset("/web/changelog.html", "text/html; charset=UTF-8", false);
+		final String journalHtml = new String(journalTemplate.bytes, StandardCharsets.UTF_8)
+				.replace("/assets/site.css", "/assets/site.css?v=" + css.fingerprint)
+				.replace("/assets/mark.svg", "/assets/mark.svg?v=" + mark.fingerprint)
+				.replace("<!--LEDGER_CONTENT-->", ImprovementLedgerRenderer.render(
+						new String(journal.bytes, StandardCharsets.UTF_8)));
+		loaded.put("/changelog", new Asset(journalHtml.getBytes(StandardCharsets.UTF_8),
+				"text/html; charset=UTF-8", false));
+		loaded.put("/changelog/", loaded.get("/changelog"));
 		this.assets = Collections.unmodifiableMap(loaded);
 	}
 

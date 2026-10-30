@@ -22,6 +22,11 @@ Open `/api` for the searchable human guide or `/openapi.json` for its OpenAPI
 3.2.1 source. The guide's request controls call the same origin; POST controls
 run their documented actions only when selected.
 
+Open `/changelog` for the public improvement ledger. Its content is rendered
+from the release's `CHANGELOG.md`, also available directly at `/CHANGELOG.md`.
+Check the newest branch entry after each deployment to confirm that the
+institution's account of its own progress has reached the website.
+
 Run the mandate for 15 twice. The first response should report `MISS` in the
 page and `X-SlopBuzz-Cache` header; the second should report `HIT`. The
 operations section shows cache counters and the current audit state. A cache

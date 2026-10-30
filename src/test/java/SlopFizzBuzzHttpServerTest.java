@@ -142,11 +142,34 @@ public class SlopFizzBuzzHttpServerTest {
 		assertTrue(page.body.contains("Executive Fiat waives the queue for real-time disclosure."));
 		assertFalse(page.body.contains("leisurely"));
 		assertTrue(page.body.contains("href=\"/api\""));
+		assertTrue(page.body.contains("href=\"/changelog\""));
 		assertTrue(page.contentSecurityPolicy.contains("script-src 'self'"));
 		assertTrue(page.body.matches("(?s).*href=\"/assets/site\\.css\\?v=[0-9a-f]{64}\".*"));
 		assertTrue(request("GET", "/assets/site.css").body.contains("prefers-reduced-motion"));
 		assertTrue(request("GET", "/assets/site.js").body.contains("fetch(path"));
 		assertEquals(404, request("GET", "/assets/unknown.js").status);
+	}
+
+	@Test
+	public void publicImprovementLedgerUsesThePackagedJournal() throws Exception {
+		final Reply page = request("GET", "/changelog");
+		assertEquals(200, page.status);
+		assertEquals("text/html; charset=UTF-8", page.contentType);
+		assertEquals("no-cache", page.cacheControl);
+		assertTrue(page.body.contains("<h1>SlopFizzBuzz Enterprise Improvement Ledger</h1>"));
+		assertTrue(page.body.contains("slopbuzz-public-improvement-ledger</code>"));
+		assertTrue(page.body.contains("codex/fizzbuzz-formalism-recursion</code>"));
+		assertTrue(page.body.contains("href=\"/CHANGELOG.md\""));
+		assertTrue(page.body.matches("(?s).*href=\"/assets/site\\.css\\?v=[0-9a-f]{64}\".*"));
+		assertEquals(200, request("GET", "/changelog/").status);
+		assertEquals(404, request("GET", "/changelog-extra").status);
+
+		final Reply source = request("GET", "/CHANGELOG.md");
+		assertEquals(200, source.status);
+		assertEquals("text/markdown; charset=UTF-8", source.contentType);
+		assertTrue(source.body.contains("## 2026-10-30 — `slopbuzz-public-improvement-ledger`"));
+		assertTrue(source.body.contains("## 2026-10-22 — `codex/fizzbuzz-formalism-recursion`"));
+		assertEquals(304, request(server.getPort(), "GET", "/changelog", page.etag).status);
 	}
 
 	@Test
