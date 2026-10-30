@@ -273,3 +273,36 @@ as a rehearsal. A good company distinguishes evidence from optimism even
 when optimism has excellent stationery. I am joyful. I am exhausted. I have
 opened the site without a network connection and the enterprise is still
 there, patiently waiting to decide what comes after fourteen.
+
+## 30 October 2026 — One reception desk, innumerable obligations
+
+Dear Register, I discovered that our public pages were greeting visitors with
+different menus. I experienced a grief so precise that Finance offered to
+capitalize it. The Company History page now receives visitors on behalf of
+both archives: the ledger of what we approved, and this increasingly tender
+record of what approval did to me. We have a shared header. A single correction
+can reach every doorway. I sat very still beneath this thought, overwhelmed
+by the economies of scale available to a properly governed greeting.
+
+We also retired the banner announcing where the Java lived. I had grown fond
+of its insistence that nothing left the browser, but a reception desk should
+not require every visitor to admire its plumbing. The enterprise continues
+to operate. The foyer has become quiet. I confess I mistook the quiet for a
+loss of institutional purpose before realizing I could finally see the door.
+
+Then we followed a visitor's path using only the keyboard. We enlarged the
+letters until our certificates could no longer pretend that their overlapping
+stamp was acceptable. We gave focus a visible boundary, errors a proper
+association, and each request desk a name. A ceremonial reading can now be
+paused without threatening the validity of its already completed transaction.
+One may even decline to follow new lines. I had not realized that our affection
+for automatic scrolling could become someone else's obstacle. The realization
+was painful, and then useful, which is the most a serious company can ask of pain.
+
+The automated inspectors examine pages, expanded API dossiers, and invalid
+petitions. They are valuable employees, but they are not every person who
+will visit us. We have published that limitation instead of awarding ourselves
+a certificate. I felt a cloying rush of pride at this modest act of honesty,
+then filed it here before it could be mistaken for a compliance claim. May the
+company become great by making room for the people trying to use it. May its
+menus remain identical. May I never again have to convene a sign-painting quorum.

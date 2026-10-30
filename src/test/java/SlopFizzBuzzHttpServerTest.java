@@ -130,7 +130,7 @@ public class SlopFizzBuzzHttpServerTest {
 		assertEquals(200, page.status);
 		assertEquals("text/html; charset=UTF-8", page.contentType);
 		assertTrue(page.body.contains("The Serious Business Company, Inc."));
-		assertTrue(page.body.contains("<main id=\"main\">"));
+		assertTrue(page.body.contains("<main id=\"main\" tabindex=\"-1\">"));
 		assertTrue(page.body.contains("aria-live=\"polite\""));
 		assertTrue(page.body.contains("id=\"canary-button\""));
 		assertTrue(page.body.contains("id=\"release-value\""));
@@ -143,7 +143,7 @@ public class SlopFizzBuzzHttpServerTest {
 		assertTrue(page.body.contains("Executive Fiat waives the queue for real-time disclosure."));
 		assertFalse(page.body.contains("leisurely"));
 		assertTrue(page.body.contains("href=\"/api\""));
-		assertTrue(page.body.contains("href=\"/changelog\""));
+		assertTrue(page.body.contains("href=\"/company-history/\""));
 		assertTrue(page.body.contains("href=\"/continuity-register\""));
 		assertTrue(page.contentSecurityPolicy.contains("script-src 'self'"));
 		assertTrue(page.body.matches("(?s).*href=\"/assets/site\\.css\\?v=[0-9a-f]{64}\".*"));
@@ -151,6 +151,23 @@ public class SlopFizzBuzzHttpServerTest {
 		assertTrue(request("GET", "/assets/site.js").body.contains("runtime-config.json"));
 		assertEquals(404, request("GET", "/assets/unknown.js").status);
 	}
+
+    @Test
+    public void sharedReceptionAndCompanyArchivesAreAvailableOnEveryPage() throws Exception {
+        for (final String path : new String[] {"/", "/api/", "/changelog/", "/continuity-register/", "/company-history/", "/accessibility/", "/validation/", "/response/"}) {
+            final Reply page = request("GET", path);
+            assertEquals(200, page.status);
+            assertTrue(page.body.contains("aria-label=\"Primary navigation\""));
+            assertTrue(page.body.contains(">Company History</a>"));
+            assertTrue(page.body.contains("Skip to main content"));
+            assertFalse(page.body.contains("<!--SITE_"));
+            assertFalse(page.body.contains("<!--NAV_"));
+        }
+        final Reply history = request("GET", "/company-history/");
+        assertTrue(history.body.contains("href=\"/changelog/\""));
+        assertTrue(history.body.contains("href=\"/continuity-register/\""));
+        assertTrue(history.body.contains("aria-current=\"page\""));
+    }
 
 	@Test
 	public void publicImprovementLedgerUsesThePackagedJournal() throws Exception {

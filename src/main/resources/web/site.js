@@ -71,35 +71,8 @@ var ServerRuntimeClient = class {
 if (!["browser", "server"].includes(config.mode)) throw new Error("Unrecognized runtime mode");
 var runtime = config.mode === "server" ? new ServerRuntimeClient() : new BrowserRuntimeClient();
 var request = (path, options) => path === "/openapi.json" && (!options?.method || options.method === "GET") ? fetch(new URL("openapi.json", scope)) : runtime.request(path, options);
-var banner = document.createElement("p");
-banner.className = "shell";
-banner.id = "runtime-status";
-banner.setAttribute("role", "status");
-banner.textContent = config.mode === "browser" ? "Convening the browser-resident enterprise\u2026" : "Java server \xB7 centrally administered institutional memory";
-document.querySelector("main")?.prepend(banner);
-if (config.mode === "browser") {
-  void request("/operations/runtime").then((r) => r.json()).then((r) => {
-    banner.textContent = `Local Java \xB7 ${r.engine === "wasm" ? "WebAssembly GC" : "compiled JavaScript fallback"} \xB7 IndexedDB audit and cache \xB7 no business requests leave this browser`;
-  }).catch((e) => {
-    banner.textContent = String(e);
-  });
-}
 if ("serviceWorker" in navigator && config.mode === "browser") {
-  void navigator.serviceWorker.register(new URL("sw.js", scope), { scope: new URL(scope).pathname }).then(async (registration) => {
-    await navigator.serviceWorker.ready;
-    const note = document.createElement("span");
-    note.id = "offline-status";
-    note.textContent = " \xB7 Release installed for offline use";
-    note.className = "shell";
-    banner.after(note);
-    const showUpdate = () => {
-      if (registration.waiting) note.textContent = " \xB7 New release ready; close all tabs to update safely";
-    };
-    showUpdate();
-    registration.addEventListener("updatefound", () => registration.installing?.addEventListener("statechange", showUpdate));
-  }).catch((error) => {
-    banner.append(` \xB7 Offline installation unavailable: ${error}`);
-  });
+  void navigator.serviceWorker.register(new URL("sw.js", scope), { scope: new URL(scope).pathname }).catch((error) => console.warn("Offline installation unavailable", error));
 }
 var desks = /^\/(?:fizzbuzz|capacity\/forecast|healthz|readyz|cache\/status|operations\/|audit\/)/;
 if (config.mode === "browser") document.querySelectorAll("a[href]").forEach((link) => {
@@ -124,6 +97,37 @@ var refreshButton = byId("refresh-button");
 var canaryButton = byId("canary-button");
 var recoveryButton = byId("recovery-button");
 var mandateSequence = 0;
+var pauseButton = byId("pause-reading");
+var revealButton = byId("reveal-all");
+var followOutput = byId("follow-output");
+var reading = false;
+var paused = false;
+var revealAll = false;
+var wakeReading;
+function readingControls() {
+  pauseButton.setAttribute("aria-disabled", String(!reading));
+  revealButton.setAttribute("aria-disabled", String(!reading));
+  pauseButton.textContent = paused ? "Resume reading" : "Pause reading";
+}
+pauseButton.addEventListener("click", () => {
+  if (!reading) return;
+  paused = !paused;
+  readingControls();
+  setText("run-status", paused ? "Ceremonial reading paused. Resume or reveal the complete output when ready." : "Ceremonial reading resumed.");
+  wakeReading?.();
+});
+revealButton.addEventListener("click", () => {
+  if (!reading) return;
+  revealAll = true;
+  paused = false;
+  wakeReading?.();
+});
+speedControl.addEventListener("change", () => wakeReading?.());
+function followLatest() {
+  if (followOutput.checked) byId("output").scrollTop = byId("output").scrollHeight;
+}
+followOutput.addEventListener("change", followLatest);
+readingControls();
 function showCanary(verdict, disposition = "STATUS") {
   const label = verdict.state === "PASSED" ? "APPROVED" : verdict.state === "FAILED" ? "REJECTED" : "NOT YET CONVENED";
   setCard("canary-value", label, verdict.state === "PASSED");
@@ -133,7 +137,8 @@ function showCanary(verdict, disposition = "STATUS") {
   }
 }
 async function runCanary() {
-  canaryButton.disabled = true;
+  if (canaryButton.getAttribute("aria-disabled") === "true") return;
+  canaryButton.setAttribute("aria-disabled", "true");
   byId("canary-value").setAttribute("aria-busy", "true");
   setText("canary-status", "The assurance bureau is rehearsing the fifteen-number charter\u2026");
   try {
@@ -144,7 +149,7 @@ async function runCanary() {
   } catch (error) {
     setText("canary-status", `The rehearsal could not be completed: ${error.message}`);
   } finally {
-    canaryButton.disabled = false;
+    canaryButton.removeAttribute("aria-disabled");
     byId("canary-value").removeAttribute("aria-busy");
   }
 }
@@ -157,7 +162,8 @@ function showRecovery(verdict) {
   }
 }
 async function runRecovery() {
-  recoveryButton.disabled = true;
+  if (recoveryButton.getAttribute("aria-disabled") === "true") return;
+  recoveryButton.setAttribute("aria-disabled", "true");
   byId("recovery-value").setAttribute("aria-busy", "true");
   setText("recovery-status", "The bureau is reopening and comparing institutional memory\u2026");
   try {
@@ -166,7 +172,7 @@ async function runRecovery() {
   } catch (error) {
     setText("recovery-status", `The recovery rehearsal could not be completed: ${error.message}`);
   } finally {
-    recoveryButton.disabled = false;
+    recoveryButton.removeAttribute("aria-disabled");
     byId("recovery-value").removeAttribute("aria-busy");
   }
 }
@@ -204,14 +210,18 @@ function waitForPace(milliseconds) {
     let timer;
     const finish = () => {
       clearTimeout(timer);
-      speedControl.removeEventListener("change", finish);
+      if (wakeReading === finish) wakeReading = void 0;
       resolve();
     };
-    timer = setTimeout(finish, milliseconds);
-    speedControl.addEventListener("change", finish);
+    wakeReading = finish;
+    if (milliseconds !== void 0) timer = setTimeout(finish, milliseconds);
   });
 }
 async function revealOutput(text, sequence, serviceMillis) {
+  reading = true;
+  paused = false;
+  revealAll = false;
+  readingControls();
   const lines = text ? text.trimEnd().split(/\r?\n/) : [];
   const output = byId("output");
   output.textContent = lines.length ? "" : "The zero-number mandate produces no lines.";
@@ -219,31 +229,39 @@ async function revealOutput(text, sequence, serviceMillis) {
   setText("run-status", `Service answered in ${serviceMillis} milliseconds. The ceremonial reading is in progress.`);
   for (let index = 0; index < lines.length; index++) {
     if (sequence !== mandateSequence) return;
-    if (Number(speedControl.value) === 0) {
+    while (paused && sequence === mandateSequence) await waitForPace();
+    if (sequence !== mandateSequence) return;
+    if (revealAll || Number(speedControl.value) === 0) {
       output.append(document.createTextNode(`${lines.slice(index).join("\n")}
 `));
-      output.scrollTop = output.scrollHeight;
+      followLatest();
       setText("output-count", `${lines.length} ${lines.length === 1 ? "line" : "lines"}`);
       break;
     }
     output.append(document.createTextNode(`${lines[index]}
 `));
-    output.scrollTop = output.scrollHeight;
+    followLatest();
     setText("output-count", `${index + 1} of ${lines.length} lines`);
     if (index < lines.length - 1) await waitForPace(Number(speedControl.value));
   }
   if (sequence === mandateSequence) {
     setText("output-count", `${lines.length} ${lines.length === 1 ? "line" : "lines"}`);
+    reading = false;
+    readingControls();
     setText("run-status", `Mandate complete. The service answered in ${serviceMillis} milliseconds; ${serviceMillis < 1e3 ? "under" : "above"} the one-second target. All ${lines.length} lines are visible.`);
   }
 }
 async function runMandate(event) {
   event.preventDefault();
+  if (runButton.getAttribute("aria-disabled") === "true") return;
   const limit = validateLimit();
   if (limit === null) return;
   const sequence = ++mandateSequence;
-  runButton.disabled = true;
-  byId("demo").setAttribute("aria-busy", "true");
+  wakeReading?.();
+  reading = false;
+  readingControls();
+  runButton.setAttribute("aria-disabled", "true");
+  byId("output").setAttribute("aria-busy", "true");
   setText("run-status", `The committee is considering ${limit} numbers\u2026`);
   setText("trace-result", "Awaiting a receipt");
   byId("output").textContent = "Awaiting a duly authorized number.";
@@ -261,8 +279,9 @@ async function runMandate(event) {
     setText("latency", `${Math.round(elapsed)} ms`);
     setText("cache-result", answer.headers.get("X-SlopBuzz-Cache") || "UNKNOWN");
     setText("trace-result", answer.headers.get("X-SlopBuzz-Trace-Id") || "UNAVAILABLE");
-    runButton.disabled = false;
+    runButton.removeAttribute("aria-disabled");
     void refreshOperations();
+    byId("output").removeAttribute("aria-busy");
     await revealOutput(text, sequence, Math.round(elapsed));
   } catch (error) {
     if (sequence === mandateSequence) {
@@ -270,8 +289,8 @@ async function runMandate(event) {
     }
   } finally {
     if (sequence === mandateSequence) {
-      runButton.disabled = false;
-      byId("demo").removeAttribute("aria-busy");
+      runButton.removeAttribute("aria-disabled");
+      byId("output").removeAttribute("aria-busy");
     }
   }
 }
@@ -288,8 +307,8 @@ function setCard(id, text, healthy) {
   element.classList.add(healthy ? "status-good" : "status-warn");
 }
 async function refreshOperations() {
-  refreshButton.disabled = true;
-  byId("operations").setAttribute("aria-busy", "true");
+  if (refreshButton.getAttribute("aria-disabled") === "true") return;
+  refreshButton.setAttribute("aria-disabled", "true");
   setText("operations-status", "Refreshing the current institutional record\u2026");
   const paths = ["/healthz", "/readyz", "/cache/status", "/operations/scorecard", "/audit/status", "/operations/canary", "/operations/release", "/operations/recovery"];
   const results = await Promise.allSettled(paths.map((path) => request(path)));
@@ -362,8 +381,7 @@ async function refreshOperations() {
   } catch (error) {
     setText("operations-status", `The operations review was interrupted: ${error.message}`);
   } finally {
-    refreshButton.disabled = false;
-    byId("operations").removeAttribute("aria-busy");
+    refreshButton.removeAttribute("aria-disabled");
   }
 }
 runForm.addEventListener("submit", runMandate);

@@ -71,35 +71,8 @@ var ServerRuntimeClient = class {
 if (!["browser", "server"].includes(config.mode)) throw new Error("Unrecognized runtime mode");
 var runtime = config.mode === "server" ? new ServerRuntimeClient() : new BrowserRuntimeClient();
 var request = (path, options) => path === "/openapi.json" && (!options?.method || options.method === "GET") ? fetch(new URL("openapi.json", scope)) : runtime.request(path, options);
-var banner = document.createElement("p");
-banner.className = "shell";
-banner.id = "runtime-status";
-banner.setAttribute("role", "status");
-banner.textContent = config.mode === "browser" ? "Convening the browser-resident enterprise\u2026" : "Java server \xB7 centrally administered institutional memory";
-document.querySelector("main")?.prepend(banner);
-if (config.mode === "browser") {
-  void request("/operations/runtime").then((r) => r.json()).then((r) => {
-    banner.textContent = `Local Java \xB7 ${r.engine === "wasm" ? "WebAssembly GC" : "compiled JavaScript fallback"} \xB7 IndexedDB audit and cache \xB7 no business requests leave this browser`;
-  }).catch((e) => {
-    banner.textContent = String(e);
-  });
-}
 if ("serviceWorker" in navigator && config.mode === "browser") {
-  void navigator.serviceWorker.register(new URL("sw.js", scope), { scope: new URL(scope).pathname }).then(async (registration) => {
-    await navigator.serviceWorker.ready;
-    const note = document.createElement("span");
-    note.id = "offline-status";
-    note.textContent = " \xB7 Release installed for offline use";
-    note.className = "shell";
-    banner.after(note);
-    const showUpdate = () => {
-      if (registration.waiting) note.textContent = " \xB7 New release ready; close all tabs to update safely";
-    };
-    showUpdate();
-    registration.addEventListener("updatefound", () => registration.installing?.addEventListener("statechange", showUpdate));
-  }).catch((error) => {
-    banner.append(` \xB7 Offline installation unavailable: ${error}`);
-  });
+  void navigator.serviceWorker.register(new URL("sw.js", scope), { scope: new URL(scope).pathname }).catch((error) => console.warn("Offline installation unavailable", error));
 }
 var desks = /^\/(?:fizzbuzz|capacity\/forecast|healthz|readyz|cache\/status|operations\/|audit\/)/;
 if (config.mode === "browser") document.querySelectorAll("a[href]").forEach((link) => {
@@ -130,12 +103,19 @@ function resolve(spec, value) {
   for (const key of value.$ref.slice(2).split("/")) node = node?.[key];
   return node;
 }
-function table(headers, rows) {
+function table(name, headers, rows) {
   const wrap = element("div", "api-table-wrap");
+  wrap.tabIndex = 0;
+  wrap.setAttribute("role", "region");
+  wrap.setAttribute("aria-label", name);
   const grid = element("table", "api-table");
   const heading = element("thead");
   const headerRow = element("tr");
-  headers.forEach((name) => headerRow.append(element("th", "", name)));
+  headers.forEach((name2) => {
+    const th = element("th", "", name2);
+    th.scope = "col";
+    headerRow.append(th);
+  });
   heading.append(headerRow);
   grid.append(heading);
   const body = element("tbody");
@@ -148,7 +128,7 @@ function table(headers, rows) {
   wrap.append(grid);
   return wrap;
 }
-function schemaFields(spec, response) {
+function schemaFields(spec, response, name) {
   const content = response.content || {};
   const media = Object.keys(content)[0];
   const schema = resolve(spec, content[media]?.schema);
@@ -156,8 +136,8 @@ function schemaFields(spec, response) {
   const detail = element("details", "api-schema-detail");
   detail.append(element("summary", "", `Response fields \xB7 ${media}`));
   const required = new Set(schema.required || []);
-  detail.append(table(["Field", "Type", "Meaning"], Object.entries(schema.properties).map(([name, field]) => [
-    `${name}${required.has(name) ? " *" : ""}`,
+  detail.append(table(`${name} response fields`, ["Field", "Type", "Meaning"], Object.entries(schema.properties).map(([name2, field]) => [
+    `${name2}${required.has(name2) ? " *" : ""}`,
     field.type || (field.$ref ? "object" : "value"),
     field.description || (field.enum ? field.enum.join(" \xB7 ") : field.const === void 0 ? "\u2014" : String(field.const))
   ])));
@@ -171,11 +151,15 @@ function tryDesk(path, method, operation) {
   const command = method === "post" ? `curl -i -X POST '${config.mode === "server" ? new URL(config.apiBaseUrl || "/", location.origin).href.replace(/\/$/, "") : "http://localhost:18089"}${path}'` : `curl -i '${config.mode === "server" ? new URL(config.apiBaseUrl || "/", location.origin).href.replace(/\/$/, "") : "http://localhost:18089"}${requestedPath}'`;
   panel.append(element("p", "", "Server deployment example (cURL cannot call an in-browser runtime):"));
   panel.append(element("code", "", command));
+  const id = `request-${method}-${path.replace(/[^a-z0-9]/gi, "-")}`;
   const controls = element("div", "api-try-controls");
   let input = null;
   if (hasLimit) {
     const label = element("label", "", "Upper limit");
     input = element("input");
+    input.id = `${id}-limit`;
+    input.setAttribute("aria-describedby", `${id}-status`);
+    input.addEventListener("input", () => input.removeAttribute("aria-invalid"));
     input.type = "number";
     input.min = "0";
     input.max = "1000";
@@ -186,26 +170,34 @@ function tryDesk(path, method, operation) {
   }
   const button = element("button", "", method === "post" ? "Send POST request" : "Send GET request");
   button.type = "button";
+  button.setAttribute("aria-label", `${button.textContent} to ${path}`);
+  button.setAttribute("aria-controls", `${id}-output`);
   controls.append(button);
   panel.append(controls);
   const report = element("p", "api-try-status", method === "post" ? "This explicit action may update process-local state or add audit entries." : "The response comes from the configured runtime.");
+  report.id = `${id}-status`;
+  report.setAttribute("aria-atomic", "true");
   report.setAttribute("role", "status");
   report.setAttribute("aria-live", "polite");
   panel.append(report);
   const output = element("pre", "api-try-output");
+  output.id = `${id}-output`;
   output.hidden = true;
   output.tabIndex = 0;
   output.setAttribute("role", "region");
   output.setAttribute("aria-label", `${method.toUpperCase()} ${path} response`);
   panel.append(output);
   button.addEventListener("click", async () => {
+    if (button.getAttribute("aria-disabled") === "true") return;
     if (input && (!/^\d+$/.test(input.value) || Number(input.value) > 1e3)) {
       report.textContent = "Enter a whole number from 0 through 1000.";
+      input.setAttribute("aria-invalid", "true");
       input.focus();
       return;
     }
+    input?.removeAttribute("aria-invalid");
     const url = input ? `${path}?limit=${input.value}` : path;
-    button.disabled = true;
+    button.setAttribute("aria-disabled", "true");
     report.textContent = "The desk is reviewing your request\u2026";
     const started = performance.now();
     const controller = new AbortController();
@@ -228,7 +220,7 @@ ${visibleBody}`;
       report.textContent = error.name === "AbortError" ? "The desk did not answer within eight seconds." : `The request failed: ${error.message}`;
     } finally {
       clearTimeout(timer);
-      button.disabled = false;
+      button.removeAttribute("aria-disabled");
     }
   });
   return panel;
@@ -242,11 +234,12 @@ function renderOperation(spec, path, method, operation, index) {
   header.append(element("span", "api-summary", operation.summary || path));
   card.append(header);
   const body = element("div", "api-card-body");
+  body.append(element("h3", "api-operation-title", `${method.toUpperCase()} ${path}: ${operation.summary || "Operation"}`));
   body.append(element("p", "api-description", operation.description || "No additional guidance."));
   const parameters = (operation.parameters || []).map((parameter) => resolve(spec, parameter)).filter((value) => !!value);
   if (parameters.length) {
     body.append(element("h4", "", "Parameters"));
-    body.append(table(["Name", "Location", "Requirement"], parameters.map((parameter) => [
+    body.append(table(`${method.toUpperCase()} ${path} parameters`, ["Name", "Location", "Requirement"], parameters.map((parameter) => [
       parameter.name,
       parameter.in,
       `${parameter.required ? "Required" : "Optional"} \xB7 ${parameter.description || ""}`
@@ -266,13 +259,13 @@ function renderOperation(spec, path, method, operation, index) {
     if (response.headers && Object.keys(response.headers).length) {
       const headerDetail = element("details", "api-schema-detail");
       headerDetail.append(element("summary", "", `HTTP ${code} response headers`));
-      headerDetail.append(table(["Header", "Meaning"], Object.entries(response.headers).map(([name, value]) => [
+      headerDetail.append(table(`${method.toUpperCase()} ${path} HTTP ${code} headers`, ["Header", "Meaning"], Object.entries(response.headers).map(([name, value]) => [
         name,
         resolve(spec, value)?.description || "See the machine-readable charter."
       ])));
       responses.append(headerDetail);
     }
-    const fields = schemaFields(spec, response);
+    const fields = schemaFields(spec, response, `${method.toUpperCase()} ${path} HTTP ${code}`);
     if (fields) responses.append(fields);
   });
   body.append(responses);
@@ -291,6 +284,7 @@ function filterCards() {
       if (match) groupVisible++;
     });
     department.hidden = groupVisible === 0;
+    sections.querySelector(`a[href="#${department.id}"]`).hidden = department.hidden;
     visible += groupVisible;
   });
   status.textContent = `${visible} of ${cards.length} operations shown${needle ? ` for \u201C${search.value.trim()}\u201D` : ""}.`;
