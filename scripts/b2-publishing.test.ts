@@ -84,7 +84,7 @@ test('repeat publication skips matching bytes and metadata but repairs changed p
 });
 
 test('uploads are bounded to four consumers and finish dependencies before HTML and service worker', async () => {
- const files = [...Array.from({length: 9}, (_, i) => file(`assets/${i}.js`)), file('runtime-config.json'), file('index.html'), file('release.json'), file('sw.js')];
+ const files = [...Array.from({length: 9}, (_, i) => file(`assets/0123456789abcdef/${i}.js`)), file('runtime-config.json'), file('index.html'), file('release.json'), file('sw.js')];
  let active = 0, maximum = 0;
  const finished: string[] = [];
  await uploadFiles(files, 'site/', async () => ({uploadUrl: 'https://upload.example/', authorizationToken: 'scoped'}), async (_, options) => {
@@ -94,6 +94,8 @@ test('uploads are bounded to four consumers and finish dependencies before HTML 
   assert.ok(files.filter(f => f.stage < current.stage).every(f => finished.includes(f.path)));
   assert.equal(headers.get('Content-Length'), String(current.bytes.length));
   assert.equal(headers.get('Content-Type'), current.contentType);
+  assert.equal(headers.get('X-Bz-Info-b2-cache-control'), encodeURIComponent(current.cache));
+  assert.equal(decodeURIComponent(headers.get('X-Bz-Info-b2-cache-control')!), current.cache);
   active++; maximum = Math.max(maximum, active);
   await new Promise(resolve => setTimeout(resolve, 2));
   active--; finished.push(path);

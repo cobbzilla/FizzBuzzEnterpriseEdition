@@ -41,7 +41,7 @@ export async function uploadFiles(
         'Content-Type': file.contentType,
         'Content-Length': String(file.bytes.length),
         'X-Bz-Content-Sha1': file.sha1,
-        'X-Bz-Info-b2-cache-control': file.cache,
+        'X-Bz-Info-b2-cache-control': encodeURIComponent(file.cache),
        },
        body: file.bytes,
        signal: AbortSignal.timeout(120000),
