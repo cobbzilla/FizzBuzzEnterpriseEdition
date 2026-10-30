@@ -184,5 +184,5 @@ test-results/
 
 validation/*.json
 
-.env.posthog*
-**/.env.posthog*
+.env*
+**/.env*
