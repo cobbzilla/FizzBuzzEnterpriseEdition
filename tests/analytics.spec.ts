@@ -49,6 +49,8 @@ test('cookieless delivery continues when DNT and GPC are both enabled',async({pa
  expect(await page.evaluate(()=>Object.keys(localStorage).filter(k=>k.startsWith('ph_')))).toEqual([]);
 });
 test('explicit analytics disablement and default localhost policy prevent initialization',async({page})=>{
+ await page.addInitScript(()=>{Object.defineProperty(navigator,'webdriver',{get:()=>false});Object.defineProperty(navigator,'userAgentData',{get:()=>undefined});});
+ await page.route('https://us.i.posthog.com/**',route=>route.fulfill({json:{status:1}}));
  const requests:string[]=[];
  page.on('request',r=>{if(r.url().includes('posthog.com'))requests.push(r.url());});
  for(const config of [{enabled:false,token:'phc_test',allowLocal:true},{enabled:true,token:'phc_test',allowLocal:false}]) {
