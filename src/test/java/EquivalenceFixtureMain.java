@@ -28,9 +28,11 @@ public final class EquivalenceFixtureMain {
   CacheAuthority cache=new CacheAuthority(new CacheRepository(){public boolean enabled(){return true;}public String get(int limit){return memory.get(limit);}public void put(int limit,String body,int ttl){memory.put(limit,body);}});
   EnterpriseDispatcher dispatcher=new EnterpriseDispatcher(ExplicitEnterpriseAssembly.assemble(transactions),transactions,journal,cache,new ReleaseCustodyReport(args[2],clock.currentTimeMillis()),clock);
   List<String[]> requests=new ArrayList<String[]>();
-  String[] desks={"/healthz","/readyz","/cache/status","/operations/scorecard","/operations/release","/operations/canary","/operations/recovery","/audit/status","/audit/evidence","/capacity/forecast"};
+  String[] desks={"/healthz","/readyz","/cache/status","/operations/scorecard","/operations/release","/operations/canary","/operations/recovery","/audit/status","/audit/evidence","/capacity/forecast","/procurement/dossier"};
   for(String path:desks)requests.add(new String[]{"GET",path});
   for(String path:new String[]{"/fizzbuzz?limit=0","/fizzbuzz?limit=0","/fizzbuzz?limit=15","/fizzbuzz?limit=15","/fizzbuzz?limit=0003","/fizzbuzz?limit=1000","/fizzbuzz","/capacity/forecast?limit=1000","/fizzbuzz?limit=1001","/fizzbuzz?limit=-1","/fizzbuzz?limit=1&limit=2","/fizzbuzz?limit=%31","/fizzbuzz?","/fizzbuzz?limit=1&x=2","/fizzbuzz/child","/unknown"})requests.add(new String[]{"GET",path});
+  for(String path:new String[]{"/procurement/dossier?product=Fizz","/procurement/dossier?product=Buzz","/procurement/dossier?product=FizzBuzz","/procurement/dossier?product=fizz","/procurement/dossier?product=","/procurement/dossier?product=Fizz&product=Buzz","/procurement/dossier?product=%46izz","/procurement/dossier?","/procurement/dossier/child"})requests.add(new String[]{"GET",path});
+  requests.add(new String[]{"POST","/procurement/dossier"});
   requests.add(new String[]{"POST","/operations/canary"});requests.add(new String[]{"POST","/operations/canary"});
   requests.add(new String[]{"POST","/operations/recovery"});
   for(String path:desks)requests.add(new String[]{"GET",path});

@@ -25,6 +25,10 @@
       "description": "Inspect cache and audit evidence."
     },
     {
+      "name": "Glyph procurement",
+      "description": "Individually governed character acquisition and receiving evidence."
+    },
+    {
       "name": "Developer relations",
       "description": "Read the charter that describes these desks."
     }
@@ -642,6 +646,51 @@
           }
         }
       }
+    },
+    "/procurement/dossier": {
+      "get": {
+        "tags": [
+          "Glyph procurement"
+        ],
+        "operationId": "inspectGlyphProcurement",
+        "summary": "Inspect the certified glyph supply chain",
+        "description": "Assembles Fizz, Buzz or FizzBuzz through the same procurement implementation used by production string returners. Each repeated character has its own position and certificate. This is an inspection demonstration, not a historical receipt: it creates no audit transactions and consumes no inventory. In browser mode the request executes locally and works offline.",
+        "parameters": [
+          {
+            "name": "product",
+            "in": "query",
+            "required": false,
+            "description": "Approved product, with exact case. Omit for FizzBuzz. Unknown, repeated or extra query parameters are rejected.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "Fizz",
+                "Buzz",
+                "FizzBuzz"
+              ],
+              "default": "FizzBuzz"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Certified assembly and individual receiving records.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProcurementDossier"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Product is not authorized or query is malformed."
+          },
+          "405": {
+            "description": "Only GET is authorized; Allow: GET."
+          }
+        }
+      }
     }
   },
   "components": {
@@ -1068,6 +1117,98 @@
           },
           "evidenceDigest": {
             "type": "string"
+          }
+        }
+      },
+      "ProcurementDossier": {
+        "type": "object",
+        "required": [
+          "schema",
+          "demonstration",
+          "auditTransactions",
+          "product",
+          "text",
+          "assembly",
+          "lineItems"
+        ],
+        "properties": {
+          "schema": {
+            "type": "string",
+            "const": "slopbuzz-glyph-procurement/v1"
+          },
+          "demonstration": {
+            "type": "boolean",
+            "const": true
+          },
+          "auditTransactions": {
+            "type": "integer",
+            "const": 0
+          },
+          "product": {
+            "type": "string",
+            "enum": [
+              "Fizz",
+              "Buzz",
+              "FizzBuzz"
+            ]
+          },
+          "text": {
+            "type": "string",
+            "description": "Certified characters in purchasing order; excludes the proclamation line ending."
+          },
+          "assembly": {
+            "type": "string",
+            "const": "CERTIFIED"
+          },
+          "lineItems": {
+            "type": "array",
+            "minItems": 4,
+            "maxItems": 8,
+            "items": {
+              "type": "object",
+              "required": [
+                "position",
+                "sku",
+                "character",
+                "quantity",
+                "inspection"
+              ],
+              "properties": {
+                "position": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 8
+                },
+                "sku": {
+                  "type": "string",
+                  "enum": [
+                    "GLY-0046",
+                    "GLY-0069",
+                    "GLY-007A",
+                    "GLY-0042",
+                    "GLY-0075"
+                  ]
+                },
+                "character": {
+                  "type": "string",
+                  "enum": [
+                    "F",
+                    "i",
+                    "z",
+                    "B",
+                    "u"
+                  ]
+                },
+                "quantity": {
+                  "type": "integer",
+                  "const": 1
+                },
+                "inspection": {
+                  "type": "string",
+                  "const": "ACCEPTED"
+                }
+              }
+            }
           }
         }
       }

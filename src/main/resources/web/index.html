@@ -138,6 +138,21 @@
           <div class="canary-actions"><strong id="recovery-value">Checking…</strong><button class="button button-secondary" type="button" id="recovery-button">Rehearse recovery</button><a class="text-link" href="/operations/recovery">Read the verdict API <span aria-hidden="true">↗</span></a></div>
           <p class="inline-status" id="recovery-status" role="status" aria-live="polite" aria-atomic="true">No recovery drill requested from this page.</p>
         </section>
+        <section class="canary-panel panel procurement-panel" aria-labelledby="procurement-title" id="procurement">
+          <div><p class="eyebrow">Enterprise glyph supply chain</p><h3 id="procurement-title">Glyph Procurement Directorate</h3><p>Every letter enters circulation through an approved vendor, purchasing authority, receiving inspector, and assembly certificate. The second z is a separate commercial obligation.</p></div>
+          <form id="procurement-form" aria-labelledby="procurement-title" aria-describedby="procurement-help">
+            <label for="procurement-product">Authorized product</label>
+            <select id="procurement-product" name="product"><option>FizzBuzz</option><option>Fizz</option><option>Buzz</option></select>
+            <button class="button button-secondary" id="procurement-button" type="submit" aria-controls="procurement-results">Inspect procurement</button>
+          </form>
+          <p class="fine-print" id="procurement-help">Inspection demonstration: this exercises the production purchasing machinery without committing an audit transaction. It is not a receipt for an earlier mandate. Inventory is fictional and inexhaustible. <a href="/procurement/dossier?product=FizzBuzz">Read the dossier API</a></p>
+          <p class="inline-status" id="procurement-status" role="status" aria-live="polite" aria-atomic="true">The receiving dock awaits your authorized inspection.</p>
+          <div id="procurement-results" hidden>
+            <h4>Certified bill of materials</h4><p id="procurement-summary"></p>
+            <ol id="procurement-items" aria-label="Accepted glyph allocations"></ol>
+            <details><summary>Read the machine-readable procurement dossier</summary><pre id="procurement-json" tabindex="0" role="region" aria-label="Procurement dossier"></pre></details>
+          </div>
+        </section>
         <div class="audit-grid">
           <div class="audit-summary panel">
             <p class="eyebrow">Audit bureau</p><h3>Institutional memory</h3>

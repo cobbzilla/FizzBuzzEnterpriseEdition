@@ -57,7 +57,7 @@ if ('serviceWorker' in navigator && config.mode === 'browser') {
     .catch(error => console.warn('Offline installation unavailable', error));
 }
 // Raw operational links remain useful on a static host, without pretending to be HTTP endpoints.
-const desks = /^\/(?:fizzbuzz|capacity\/forecast|healthz|readyz|cache\/status|operations\/|audit\/)/;
+const desks = /^\/(?:fizzbuzz|procurement\/dossier|capacity\/forecast|healthz|readyz|cache\/status|operations\/|audit\/)/;
 if (config.mode === 'browser') document.querySelectorAll<HTMLAnchorElement>('a[href]').forEach(link => {
   const url = new URL(link.href);
   const base = new URL(scope).pathname.replace(/\/$/, '');

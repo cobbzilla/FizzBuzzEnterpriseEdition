@@ -73,7 +73,7 @@ var runtime = config.mode === "server" ? new ServerRuntimeClient() : new Browser
 if ("serviceWorker" in navigator && config.mode === "browser") {
   void navigator.serviceWorker.register(new URL("sw.js", scope), { scope: new URL(scope).pathname }).catch((error) => console.warn("Offline installation unavailable", error));
 }
-var desks = /^\/(?:fizzbuzz|capacity\/forecast|healthz|readyz|cache\/status|operations\/|audit\/)/;
+var desks = /^\/(?:fizzbuzz|procurement\/dossier|capacity\/forecast|healthz|readyz|cache\/status|operations\/|audit\/)/;
 if (config.mode === "browser") document.querySelectorAll("a[href]").forEach((link) => {
   const url = new URL(link.href);
   const base = new URL(scope).pathname.replace(/\/$/, "");

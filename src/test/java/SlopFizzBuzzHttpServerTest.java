@@ -214,6 +214,24 @@ public class SlopFizzBuzzHttpServerTest {
 		assertEquals(304, request(server.getPort(), "GET", "/continuity-register", page.etag).status);
 	}
 
+ @Test
+ public void glyphProcurementDossiersNeverCommitAnAuditTransaction() throws Exception {
+  String before=request("GET","/audit/status").body;
+  for(String product:new String[]{"Fizz","Buzz","FizzBuzz"}) {
+   Reply dossier=request("GET","/procurement/dossier?product="+product);
+   assertEquals(200,dossier.status);
+   assertEquals("application/json; charset=UTF-8",dossier.contentType);
+   assertTrue(dossier.body.contains("\"text\":\""+product+"\""));
+   assertTrue(dossier.body.contains("\"auditTransactions\":0"));
+  }
+  assertEquals(before,request("GET","/audit/status").body);
+  assertEquals(200,request("GET","/procurement/dossier").status);
+  assertEquals(400,request("GET","/procurement/dossier?product=fizz").status);
+  assertEquals(400,request("GET","/procurement/dossier?product=Fizz&product=Buzz").status);
+  assertEquals(405,request("POST","/procurement/dossier").status);
+  assertEquals(404,request("GET","/procurement/dossier/child").status);
+ }
+
 	@Test
 	public void apiCharterAndReadableGuideCoverEveryPublishedDesk() throws Exception {
 		final Reply guide = request("GET", "/api");
@@ -241,7 +259,7 @@ public class SlopFizzBuzzHttpServerTest {
 		assertEquals(new HashSet<String>(Arrays.asList("/fizzbuzz", "/capacity/forecast",
 				"/healthz", "/readyz", "/operations/scorecard", "/operations/release",
 				"/operations/canary", "/operations/recovery", "/cache/status",
-				"/audit/status", "/audit/evidence", "/openapi.json", "/operations/runtime")), paths);
+				"/audit/status", "/audit/evidence", "/openapi.json", "/operations/runtime", "/procurement/dossier")), paths);
 		for (final String path : paths) {
 			final String target = ("/fizzbuzz".equals(path) || "/capacity/forecast".equals(path))
 					? path + "?limit=0" : path;

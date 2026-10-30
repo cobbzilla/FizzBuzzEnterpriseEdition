@@ -164,3 +164,8 @@ and the deployed Git revision; the site displays that revision in Operations.
 Public hosting uses B2 and a Cloudflare Worker Custom Domain. Run `pnpm publish:b2`
 from the merged branch; see the [public publishing runbook](docs/B2_PUBLISHING.md)
 for credentials, automatic DNS/TLS, and release verification.
+
+The [Glyph Procurement Directorate](docs/ADR-0022-glyph-procurement.md) requires
+position-specific receiving certificates for every Fizz/Buzz character. Inspect
+its bill of materials in the website’s Operations section or through
+`GET /procurement/dossier?product=FizzBuzz` in the configured runtime.

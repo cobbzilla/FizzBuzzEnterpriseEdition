@@ -1,23 +1,15 @@
 package com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.stringreturners;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
 import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.interfaces.stringreturners.StringStringReturner;
+import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.procurement.GlyphProcurementDirectorate;
 
-/**
- * Returner for BuzzString
- */
+/** No syllable enters circulation without a completed purchasing proceeding. */
 @Service
 public class BuzzStringReturner implements StringStringReturner {
-
-	/**
-	 * @return String
-	 */
-	public String getReturnString() {
-		final StringBuilder myStringBuilder = new StringBuilder(
-				com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.Constants.BUZZ);
-		final String myString = myStringBuilder.toString();
-		return new String(myString);
-	}
-
+ private final GlyphProcurementDirectorate procurement;
+ public BuzzStringReturner() { this(GlyphProcurementDirectorate.standard()); }
+ @Autowired public BuzzStringReturner(GlyphProcurementDirectorate procurement) { this.procurement=procurement; }
+ public String getReturnString() { return procurement.procure("Buzz").text(); }
 }

@@ -39,6 +39,13 @@ public final class EnterpriseDispatcher {
  this(service,transactions,journal,cache,release,clock,new com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.runtime.RuntimeIdentity(){public String toJson(){return "{\"mode\":\"server\",\"engine\":\"JVM\",\"storage\":\"configured JVM audit repository\",\"cache\":\"Redis adapter\",\"protocol\":1}";}});
  }
  public EnterpriseDispatcher(SlopFizzBuzz service, OutputTransactionCoordinator transactions, OutputAuditJournal journal, OutputCache cache, ReleaseCustodyReport release, final RuntimeClock clock, final com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.runtime.RuntimeIdentity identity) {
+  register("/procurement/dossier",new DeskHandler(){public void handle(EnterpriseExchange exchange)throws IOException {
+   if(!"GET".equals(exchange.getRequestMethod())) {exchange.headers.set("Allow","GET");respond(exchange,405,"Method not authorized\n");return;}
+   String query=exchange.getRequestURI().getRawQuery();
+   String product=query==null?"FizzBuzz":query.startsWith("product=")?query.substring(8):"";
+   if(!("Fizz".equals(product)||"Buzz".equals(product)||"FizzBuzz".equals(product))) {respond(exchange,400,"Invalid product; use Fizz, Buzz or FizzBuzz\n");return;}
+   respond(exchange,200,com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.procurement.GlyphProcurementDirectorate.standard().procure(product).toJson(),"application/json; charset=UTF-8");
+  }});
   final ServiceLevelScorecard scorecard=new ServiceLevelScorecard();
         register("/operations/runtime",new DeskHandler(){public void handle(EnterpriseExchange exchange)throws IOException {
             if(!"GET".equals(exchange.getRequestMethod())){exchange.headers.set("Allow","GET");respond(exchange,405,"Method not authorized\n");return;}

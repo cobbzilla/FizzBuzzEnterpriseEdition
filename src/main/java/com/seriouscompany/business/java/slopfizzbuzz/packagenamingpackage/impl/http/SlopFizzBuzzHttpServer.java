@@ -55,7 +55,7 @@ public final class SlopFizzBuzzHttpServer implements AutoCloseable {
                 exchange.getResponseBody().write(bytes);
             } finally {exchange.close();}
         }};
-        for(String path:new String[]{"/operations/runtime","/fizzbuzz","/capacity/forecast","/healthz","/readyz","/cache/status","/audit/status","/audit/evidence","/operations/scorecard","/operations/canary","/operations/recovery","/operations/release"}) register(path,adapter,trace);
+        for(String path:new String[]{"/operations/runtime", "/procurement/dossier","/fizzbuzz","/capacity/forecast","/healthz","/readyz","/cache/status","/audit/status","/audit/evidence","/operations/scorecard","/operations/canary","/operations/recovery","/operations/release"}) register(path,adapter,trace);
         register("/",new StaticSiteHandler(),trace);
 	}
 

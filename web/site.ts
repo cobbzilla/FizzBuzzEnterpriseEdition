@@ -330,3 +330,40 @@ void refreshOperations();
 interface Canary {state: string;sequence: number;finding: string;observedLines: number;durationMicros: number;auditChainValid: boolean}
 interface Recovery {state: string;sequence: number;finding: string;storedEntries: number;durationMicros: number;durable: boolean}
 interface Forecast {numeralLines: number;fizzLines: number;buzzLines: number;fizzBuzzLines: number;workloadUnits: number}
+
+interface ProcurementDossier {
+ product: string; text: string; assembly: string; demonstration: boolean; auditTransactions: number;
+ lineItems: {position: number; sku: string; character: string; quantity: number; inspection: string}[];
+}
+const procurementForm = byId<HTMLFormElement>('procurement-form');
+const procurementButton = byId<HTMLButtonElement>('procurement-button');
+procurementForm.addEventListener('submit', async event => {
+ event.preventDefault();
+ if (procurementButton.getAttribute('aria-disabled') === 'true') return;
+ procurementButton.setAttribute('aria-disabled', 'true');
+ byId('procurement-results').setAttribute('aria-busy', 'true');
+ byId('procurement-results').hidden = true;
+ setText('procurement-status', 'Receiving is reconciling each individual commercial obligation…');
+ try {
+  const product = byId<HTMLSelectElement>('procurement-product').value;
+  const response = await request(`/procurement/dossier?product=${encodeURIComponent(product)}`);
+  if (!response.ok) throw new Error(`The purchasing authority returned HTTP ${response.status}.`);
+  const dossier: ProcurementDossier = await response.json();
+  setText('procurement-summary', `${dossier.text} · ${dossier.assembly} · ${dossier.lineItems.length} individually received allocations`);
+  const items = dossier.lineItems.map(item => {
+   const li = document.createElement('li');
+   const glyph = document.createElement('strong'); glyph.textContent = item.character;
+   const receipt = document.createElement('span'); receipt.textContent = `${item.sku} · quantity ${item.quantity} · ${item.inspection}`;
+   li.append(glyph, receipt); return li;
+  });
+  byId('procurement-items').replaceChildren(...items);
+  setText('procurement-json', JSON.stringify(dossier, null, 2));
+  byId('procurement-results').hidden = false;
+  setText('procurement-status', `${dossier.product} certified. ${dossier.lineItems.length} separate line items accepted; no audit transaction committed.`);
+ } catch (error) {
+  setText('procurement-status', `Procurement inspection could not be completed. ${error.message} You may request another inspection.`);
+ } finally {
+  procurementButton.removeAttribute('aria-disabled');
+  byId('procurement-results').removeAttribute('aria-busy');
+ }
+});

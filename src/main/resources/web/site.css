@@ -250,3 +250,12 @@ button[aria-disabled=true]::after { content: ' (unavailable)'; font-size: .8em; 
 .forecast-list div, .audit-summary dl div { flex-wrap: wrap; }
 body { overflow-wrap: anywhere; }
 .document-stamp { width: 9em; height: auto; min-height: 9em; padding: .6em; aspect-ratio: 1; }
+
+.procurement-panel > .fine-print, .procurement-panel > #procurement-results { grid-column: 1 / -1; }
+.procurement-panel form { display: grid; gap: 12px; }
+.procurement-panel select { min-height: 48px; width: 100%; padding: 9px 13px; background: var(--white); color: var(--ink); border: 2px solid var(--ink); font: inherit; }
+.procurement-panel ol { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(100%,220px),1fr)); gap: 12px; padding: 0; list-style-position: inside; }
+.procurement-panel li { padding: 14px; border: 1px solid var(--line); overflow-wrap: anywhere; }
+.procurement-panel li strong { font-size: 1.35em; }
+.procurement-panel li span { display: block; color: var(--ink-soft); }
+.procurement-panel pre { max-width: 100%; max-height: 24rem; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; padding: 16px; background: var(--paper); }
