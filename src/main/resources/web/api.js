@@ -1,5 +1,10 @@
 // Generated from web/*.ts by scripts/build.ts. Do not edit.
 
+// web/telemetry.ts
+function trackUsage(detail) {
+  window.dispatchEvent(new CustomEvent("slopbuzz:usage", { detail }));
+}
+
 // web/runtime.ts
 var scope = new URL("../", import.meta.url).href;
 var config = await fetch(new URL("runtime-config.json", scope), { cache: "no-cache" }).then((r) => {
@@ -206,6 +211,7 @@ function tryDesk(path, method, operation) {
       const reply = await request(url, { method: method.toUpperCase(), cache: "no-store", signal: controller.signal });
       const body = await reply.text();
       const elapsed = Math.round(performance.now() - started);
+      trackUsage({ event: "slopbuzz_api_request", outcome: reply.ok ? "success" : "failure", runtime_mode: config.mode, duration_ms: elapsed, endpoint: path, method: method.toUpperCase(), status: reply.status });
       const trace = reply.headers.get("X-SlopBuzz-Trace-Id") || "unavailable";
       const span = reply.headers.get("X-SlopBuzz-Span-Id") || "unavailable";
       report.textContent = `HTTP ${reply.status} \xB7 ${elapsed} ms \xB7 ${reply.headers.get("content-type") || "unknown type"} \xB7 receipt ${trace.slice(0, 12)}`;
@@ -217,6 +223,7 @@ X-SlopBuzz-Span-Id: ${span}
 ${visibleBody}`;
       output.hidden = false;
     } catch (error) {
+      trackUsage({ event: "slopbuzz_api_request", outcome: "failure", runtime_mode: config.mode, duration_ms: performance.now() - started, endpoint: path, method: method.toUpperCase() });
       report.textContent = error.name === "AbortError" ? "The desk did not answer within eight seconds." : `The request failed: ${error.message}`;
     } finally {
       clearTimeout(timer);

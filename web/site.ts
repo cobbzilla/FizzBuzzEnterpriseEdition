@@ -1,4 +1,5 @@
-import { request } from './runtime';
+import {trackUsage} from './telemetry';
+import { request, config } from './runtime';
 const byId = <T extends HTMLElement = HTMLElement>(id: string): T => { const node = document.getElementById(id); if (!node) throw new Error(`Missing element ${id}`); return node as T; };
 const runForm = byId<HTMLFormElement>('run-form');
 const limitInput = byId<HTMLInputElement>('limit');
@@ -189,6 +190,7 @@ async function runMandate(event: Event) {
     const elapsed = performance.now() - started;
     if (!answer.ok) throw new Error(`Proclamation desk returned ${answer.status}.`);
     const text = await answer.text();
+    trackUsage({event:'slopbuzz_demo_run',outcome:'success',runtime_mode:config.mode,duration_ms:elapsed,cache_outcome:answer.headers.get('X-SlopBuzz-Cache')||'UNKNOWN'});
     if (sequence !== mandateSequence) return;
     setText('latency', `${Math.round(elapsed)} ms`);
     setText('cache-result', answer.headers.get('X-SlopBuzz-Cache') || 'UNKNOWN');
@@ -198,6 +200,7 @@ async function runMandate(event: Event) {
     byId('output').removeAttribute('aria-busy');
     await revealOutput(text, sequence, Math.round(elapsed));
   } catch (error) {
+    trackUsage({event:'slopbuzz_demo_run',outcome:'failure',runtime_mode:config.mode,duration_ms:performance.now()-started});
     if (sequence === mandateSequence) {
       setText('run-status', error.name === 'AbortError'
         ? 'The desk did not answer within eight seconds. Please try again.'

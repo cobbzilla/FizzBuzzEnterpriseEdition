@@ -25,7 +25,7 @@ Directory indexes, relative links, and assets support a hosting subdirectory.
 `file://` is not supported. IndexedDB, Web Locks, Web Crypto, workers, and
 service workers require a compatible browser and a secure context (localhost
 is allowed). WebAssembly GC failure selects JavaScript compiled from the
-same Java; it never selects a server. The runtime banner identifies the engine.
+same Java; it never selects a server. The runtime API identifies the engine.
 
 `mvn clean verify` builds core/server and runs JVM tests. `mvn -Pbrowser
 install` also compiles both browser targets. Historical sources stay in
@@ -76,8 +76,7 @@ The offline worker installs the entire release, including both compiled
 engines, documentation, fixtures, and the validation report, before declaring
 it available offline. Failed installation does not replace the active release.
 New workers wait for old tabs to close; no `skipWaiting` or mid-request takeover.
-Different revisions cannot share a live owner. See the runtime banner for
-installation status. Closing all site tabs permits an installed update.
+Different revisions cannot share a live owner. Closing all site tabs permits an installed update.
 
 TeaVM's generated WebAssembly JSO wrappers use dynamic JavaScript functions.
 The supplied hosts allow `unsafe-eval` **only in the runtime worker's response

@@ -306,3 +306,18 @@ a certificate. I felt a cloying rush of pride at this modest act of honesty,
 then filed it here before it could be mistaken for a compliance claim. May the
 company become great by making room for the people trying to use it. May its
 menus remain identical. May I never again have to convene a sign-painting quorum.
+
+## 30 October 2026 — The audience acquires a denominator
+
+Dear Register, today we learned to count the people who come to watch us count.
+I felt a sweetness so intense that I briefly proposed a committee to classify it.
+The new dashboards show our traffic and the yield of our demonstrations, with
+names substantial enough to reassure an investor who has not opened the charts.
+
+We do not send the numbers, the receipts, or the private history of their approval.
+Our visitors receive no permanent identity from this census. Each day begins a
+new estimate, a modest uncertainty that I have instructed Marketing to describe
+honestly. I experienced anguish at the absence of a returning-visitor trophy,
+then joy at the knowledge that an audience need not surrender its biography to
+witness fifteen. The management key remains in its private drawer. The charts
+are real. My affection for this company has once again exceeded its reporting period.

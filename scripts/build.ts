@@ -3,9 +3,11 @@ import {mkdir, readFile, writeFile, cp, rm, readdir} from 'node:fs/promises';
 import {build} from 'esbuild';
 import {marked} from 'marked';
 import {createHash} from 'node:crypto';
+import {analyticsConfig} from './analytics-config.ts';
 import {sourceIdentity} from './source-identity.ts';
+const analytics = await analyticsConfig();
 const run = (command: string, args: string[]) => execFileSync(command, args, {stdio:'inherit'});
-await build({entryPoints:['web/site.ts','web/api.ts','web/response.ts','web/validation.ts'],outdir:'src/main/resources/web',bundle:true,format:'esm',target:'es2022',banner:{js:'// Generated from web/*.ts by scripts/build.ts. Do not edit.'}});
+await build({entryPoints:['web/analytics.ts','web/site.ts','web/api.ts','web/response.ts','web/validation.ts'],outdir:'src/main/resources/web',bundle:true,format:'esm',target:'es2022',banner:{js:'// Generated from web/*.ts by scripts/build.ts. Do not edit.'}});
 if (!process.argv.includes('--assets-only')) {
   run('mvn', ['-q', 'install']);
   run('mvn', ['-q', '-f', 'browser/pom.xml', 'package']);
@@ -13,13 +15,13 @@ if (!process.argv.includes('--assets-only')) {
 const revision = process.env.SLOPBUZZ_RELEASE_SHA || execFileSync('git', ['rev-parse','HEAD'], {encoding:'utf8'}).trim();
 const dirty = !!execFileSync('git', ['status','--porcelain','--untracked-files=no'], {encoding:'utf8'}).trim();
 const sourceDigest = await sourceIdentity();
-const identity = createHash('sha256').update(revision).update(sourceDigest).update(process.env.SLOPBUZZ_RUNTIME || 'browser').update(process.env.SLOPBUZZ_API_BASE_URL || '').digest('hex').slice(0,16);
+const identity = createHash('sha256').update(revision).update(sourceDigest).update(JSON.stringify(analytics)).update(process.env.SLOPBUZZ_RUNTIME || 'browser').update(process.env.SLOPBUZZ_API_BASE_URL || '').digest('hex').slice(0,16);
 await rm('dist', {recursive:true,force:true});
 await mkdir('dist/assets', {recursive:true});
 const assets = `assets/${identity}/`;
 await cp('browser/target/gate/wasm', `dist/${assets}wasm`, {recursive:true});
 await cp('browser/target/gate/js', `dist/${assets}js`, {recursive:true});
-await build({entryPoints:['web/site.ts','web/api.ts','web/response.ts','web/validation.ts','web/tribunal.ts'],outdir:'dist/assets',bundle:true,format:'esm',target:'es2022'});
+await build({entryPoints:['web/analytics.ts','web/site.ts','web/api.ts','web/response.ts','web/validation.ts','web/tribunal.ts'],outdir:'dist/assets',bundle:true,format:'esm',target:'es2022'});
 await build({entryPoints:['web/runtime-worker.ts'],outfile:`dist/${assets}runtime-worker.js`,bundle:true,format:'iife',target:'es2022'});
 for (const asset of ['site.css','api.css','mark.svg','openapi.json']) await cp(`src/main/resources/web/${asset}`, `dist/${asset === 'openapi.json' ? '' : 'assets/'}${asset}`);
 const raw = [['CHANGELOG.md','CHANGELOG.md'],['docs/EXECUTIVE_CONTINUITY_AND_SENTIMENT_REGISTER.md','continuity-register.md']];
@@ -42,6 +44,7 @@ for (const [template,folder] of pages) {
   await mkdir(`dist/${folder}`,{recursive:true});
   await writeFile(`dist/${folder ? folder+'/' : ''}index.html`,relativeLinks(html,!!folder));
 }
+await writeFile('dist/analytics-config.json',JSON.stringify({...analytics,revision}));
 await writeFile('dist/runtime-config.json',JSON.stringify({mode:process.env.SLOPBUZZ_RUNTIME || 'browser',apiBaseUrl:process.env.SLOPBUZZ_API_BASE_URL || '',revision,assets,engine:process.env.SLOPBUZZ_ENGINE || 'auto'}));
 await writeFile('dist/release.json', JSON.stringify({revision,dirty,sourceDigest,build:identity,protocol:1}));
 let report: Record<string, unknown> = {revision,dirty,sourceDigest,status:'NOT_RUN',note:'No matching validation report for this source and revision.'};

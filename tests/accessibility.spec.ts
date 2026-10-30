@@ -1,5 +1,7 @@
 import {test, expect, type Page} from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
+// These DOM tests mock fixtures; offline cache behavior has its own lifecycle suite.
+test.use({serviceWorkers:'block'});
 const routes = ['', 'api/', 'company-history/', 'changelog/', 'continuity-register/', 'validation/', 'response/', 'accessibility/'];
 async function audit(page: Page) {
   const result = await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21a','wcag21aa','wcag22aa','best-practice']).analyze();
