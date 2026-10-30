@@ -1,3 +1,4 @@
+import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.audit.JvmAuditJournalFactory;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -21,7 +22,7 @@ public class ComplianceEvidenceDossierTest {
 	@Test
 	public void emptyInstitutionReportsItsLimitedScopeHonestly() {
 		final ComplianceEvidenceDossier dossier =
-				new ComplianceEvidenceFactory(new OutputAuditJournal()).issue(123L);
+				new ComplianceEvidenceFactory(JvmAuditJournalFactory.create()).issue(123L);
 		assertEquals(ControlResult.PASS, dossier.getChainControl());
 		assertEquals(ControlResult.PASS, dossier.getDeliveryControl());
 		assertEquals(64, dossier.getEvidenceDigest().length());
@@ -33,7 +34,7 @@ public class ComplianceEvidenceDossierTest {
 
 	@Test
 	public void queuedMessageFailsDeliveryControlUntilProjected() {
-		final OutputAuditJournal journal = new OutputAuditJournal();
+		final OutputAuditJournal journal = JvmAuditJournalFactory.create();
 		final ComplianceEvidenceFactory factory = new ComplianceEvidenceFactory(journal);
 		final String before = factory.issue(123L).getEvidenceDigest();
 		journal.record(1, "1\n", OutputDisposition.COMMITTED);
@@ -52,7 +53,7 @@ public class ComplianceEvidenceDossierTest {
 
 	@Test
 	public void deadLetterKeepsDeliveryControlFailed() {
-		final OutputAuditJournal journal = new OutputAuditJournal();
+		final OutputAuditJournal journal = JvmAuditJournalFactory.create();
 		journal.record(2, "unpublished", OutputDisposition.ABORTED);
 		final AuditEventConsumer refusing = new AuditEventConsumer() {
 			@Override

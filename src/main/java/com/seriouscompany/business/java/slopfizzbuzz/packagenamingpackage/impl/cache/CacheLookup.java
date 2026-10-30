@@ -8,7 +8,7 @@ public final class CacheLookup {
 	private final State state;
 	private final String body;
 
-	CacheLookup(final State state, final String body) {
+	public CacheLookup(final State state, final String body) {
 		this.state = state;
 		this.body = body;
 	}

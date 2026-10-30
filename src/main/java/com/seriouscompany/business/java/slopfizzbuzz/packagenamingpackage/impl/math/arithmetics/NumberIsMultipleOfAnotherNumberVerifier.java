@@ -1,10 +1,7 @@
 package com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.math.arithmetics;
 
-import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.ApplicationContextHolder;
-import javax.annotation.PostConstruct;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Service;
 
 import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.strategies.comparators.integercomparator.IntegerForEqualityComparator;
@@ -15,30 +12,24 @@ import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.s
 @Service
 public class NumberIsMultipleOfAnotherNumberVerifier {
 
-	private static IntegerDivider integerDivider;
+	private static final IntegerDivider DEFAULT_DIVIDER = new IntegerDivider(
+        new com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.strategies.comparators.doublecomparator.FirstIsLargerThanSecondDoubleComparator(),
+        new com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.strategies.comparators.doublecomparator.FirstIsSmallerThanSecondDoubleComparator());
 
-	@Autowired
-	private ApplicationContextHolder applicationContextHolder;
-
-	/**
-	 * @return
-	 */
-	@PostConstruct
-	public void init() {
-		final ApplicationContext applicationContext = applicationContextHolder.getApplicationContext();
-
-		this.integerDivider = applicationContext.getBean(IntegerDivider.class);
-	}
+    private final IntegerDivider integerDivider;
+    public NumberIsMultipleOfAnotherNumberVerifier(){this(DEFAULT_DIVIDER);}
+    @Autowired public NumberIsMultipleOfAnotherNumberVerifier(IntegerDivider divider){this.integerDivider=divider;}
+    public static boolean numberIsMultipleOfAnotherNumber(int first,int second){return new NumberIsMultipleOfAnotherNumberVerifier().verify(first,second);}
 
 	/**
 	 * @param nFirstNumber
 	 * @param nSecondNumber
 	 * @return
 	 */
-	public static boolean numberIsMultipleOfAnotherNumber(final int nFirstNumber, final int nSecondNumber) {
+	public boolean verify(final int nFirstNumber, final int nSecondNumber) {
 		try {
 			final int nDivideFirstIntegerBySecondIntegerResult =
-					(NumberIsMultipleOfAnotherNumberVerifier.integerDivider.divide(nFirstNumber, nSecondNumber));
+					(this.integerDivider.divide(nFirstNumber, nSecondNumber));
 			final int nMultiplyDivisionResultBySecondIntegerResult =
 					nDivideFirstIntegerBySecondIntegerResult * nSecondNumber;
 			if (IntegerForEqualityComparator.areTwoIntegersEqual(nMultiplyDivisionResultBySecondIntegerResult,

@@ -3,12 +3,12 @@
   "info": {
     "title": "SlopFizzBuzz Numerical Affairs API",
     "version": "1.0.0",
-    "description": "The public proclamation and institutional assurance desks of The Serious Business Company, Inc. FizzBuzz output remains plain text. Operational verdicts are process-local unless stated otherwise. A passing internal control does not imply external certification. Every response carries X-SlopBuzz-Trace-Id and X-SlopBuzz-Span-Id receipts; a valid W3C traceparent request preserves its trace ID while the server issues a new span."
+    "description": "The public proclamation and institutional assurance desks of The Serious Business Company, Inc. FizzBuzz output remains plain text. Operational verdicts are process-local unless stated otherwise. A passing internal control does not imply external certification. Every response carries X-SlopBuzz-Trace-Id and X-SlopBuzz-Span-Id receipts; a valid W3C traceparent request preserves its trace ID while the server issues a new span. The static showcase executes these business operations locally through the RuntimeClient interface; paths describe logical requests and are not HTTP listeners in browser mode. cURL examples apply to the optional Java server. Browser audit and cache use IndexedDB; server deployments use their configured H2/Redis adapters. See /operations/runtime for capabilities."
   },
   "servers": [
     {
       "url": "/",
-      "description": "The same origin as the interactive showcase"
+      "description": "Optional Java HTTP deployment; browser mode uses local RuntimeClient dispatch"
     }
   ],
   "tags": [
@@ -596,6 +596,52 @@
           }
         }
       }
+    },
+    "/operations/runtime": {
+      "get": {
+        "tags": [
+          "Operational confidence"
+        ],
+        "summary": "Inspect the configured execution environment",
+        "operationId": "runtimeCapabilities",
+        "description": "Identifies the engine, audit repository and cache provider. No automatic browser-to-server failover occurs.",
+        "responses": {
+          "200": {
+            "description": "Current runtime capabilities",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "mode": {
+                      "type": "string",
+                      "enum": [
+                        "browser",
+                        "server"
+                      ]
+                    },
+                    "engine": {
+                      "type": "string"
+                    },
+                    "storage": {
+                      "type": "string"
+                    },
+                    "cache": {
+                      "type": "string"
+                    },
+                    "protocol": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Method not authorized"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -604,7 +650,7 @@
         "name": "limit",
         "in": "query",
         "required": false,
-        "description": "Inclusive upper bound; defaults to 100. The query must be exactly limit followed by 1–4 decimal digits.",
+        "description": "Inclusive upper bound; defaults to 100. The query must be exactly limit followed by 1\u20134 decimal digits.",
         "schema": {
           "type": "integer",
           "minimum": 0,

@@ -24,6 +24,7 @@ final class StaticSiteHandler implements HttpHandler {
 
 	StaticSiteHandler() {
 		final Map<String, Asset> loaded = new HashMap<String, Asset>();
+        loaded.put("/runtime-config.json",new Asset("{\"mode\":\"server\",\"revision\":\"unknown\",\"assets\":\"assets/\"}".getBytes(StandardCharsets.UTF_8),"application/json; charset=UTF-8",false));
 		final Asset css = asset("/web/site.css", "text/css; charset=UTF-8", true);
 		final Asset javascript = asset("/web/site.js", "text/javascript; charset=UTF-8", true);
 		final Asset apiCss = asset("/web/api.css", "text/css; charset=UTF-8", true);

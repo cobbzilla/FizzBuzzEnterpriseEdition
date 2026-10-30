@@ -1,3 +1,8 @@
+> Current deployment: the default site runs Java in-browser. See the
+> [Browser Residency Charter](BROWSER_RUNTIME.md) for static builds and current
+> preview ports. The JVM operational procedures below remain applicable to
+> the optional server deployment on port 18089.
+
 # World showcase operating notes
 
 ## Run the complete local demonstration

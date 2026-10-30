@@ -11,13 +11,18 @@ import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.m
  */
 @Service
 public class BuzzStrategy implements IsEvenlyDivisibleStrategy {
+    private final NumberIsMultipleOfAnotherNumberVerifier verifier;
+    public BuzzStrategy(){this(new NumberIsMultipleOfAnotherNumberVerifier());}
+    @org.springframework.beans.factory.annotation.Autowired
+    public BuzzStrategy(NumberIsMultipleOfAnotherNumberVerifier verifier){this.verifier=verifier;}
+
 
 	/**
 	 * @param theInteger int
 	 * @return boolean
 	 */
 	public boolean isEvenlyDivisible(final int theInteger) {
-		if (NumberIsMultipleOfAnotherNumberVerifier.numberIsMultipleOfAnotherNumber(theInteger,
+		if (this.verifier.verify(theInteger,
 				BuzzStrategyConstants.BUZZ_INTEGER_CONSTANT_VALUE)) {
 			return true;
 		} else {

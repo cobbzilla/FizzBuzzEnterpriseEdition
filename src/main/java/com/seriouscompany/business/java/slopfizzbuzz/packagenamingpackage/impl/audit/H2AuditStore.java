@@ -12,7 +12,7 @@ import java.util.List;
 /**
  * JDBC custody for audit entries, committed one certificate at a time.
  */
-public final class H2AuditStore implements OutputAuditStore {
+public final class H2AuditStore implements DurableAuditStore {
 
 	private final String jdbcUrl;
 

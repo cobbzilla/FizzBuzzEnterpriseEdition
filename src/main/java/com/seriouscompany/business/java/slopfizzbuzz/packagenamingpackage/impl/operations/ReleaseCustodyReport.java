@@ -15,11 +15,6 @@ public final class ReleaseCustodyReport {
 		this.startedAtEpochMillis = startedAtEpochMillis;
 	}
 
-	public static ReleaseCustodyReport configured() {
-		final String value = System.getenv("SLOPBUZZ_RELEASE_SHA");
-		return new ReleaseCustodyReport(value == null || value.trim().isEmpty()
-				? "unknown" : value, System.currentTimeMillis());
-	}
 
 	public String getRevision() {
 		return this.revision;
