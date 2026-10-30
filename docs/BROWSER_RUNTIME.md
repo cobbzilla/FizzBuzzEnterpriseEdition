@@ -75,8 +75,24 @@ invented by relocating the enterprise.
 The offline worker installs the entire release, including both compiled
 engines, documentation, fixtures, and the validation report, before declaring
 it available offline. Failed installation does not replace the active release.
-New workers wait for old tabs to close; no `skipWaiting` or mid-request takeover.
-Different revisions cannot share a live owner. Closing all site tabs permits an installed update.
+New service workers wait for old tabs to close; no `skipWaiting` or mid-request
+takeover. A hard refresh can load a newer page while another tab still owns the
+audit runtime. The client probes that owner's `/operations/runtime` read-only
+report and accepts protocol 1 with its existing IndexedDB schema. Retained
+operations use the owner's actual revision and its serialized queue. Responses
+identify the executor in `X-SlopBuzz-Executing-Revision`; release custody continues
+to describe the executing runtime, rather than relabeling old code as new.
+
+During this overlap, current-release read-only desks (`/fizzbuzz/window`,
+`/capacity/forecast/extended`, and `/procurement/dossier`) run in a separate,
+release-local Java worker. It opens no database, cannot append audit entries or
+populate the cache, and refuses all other operations. The existing audit owner
+continues uninterrupted. When its tab closes, the queued current worker acquires
+the original lock, verifies the journal, and restores the same cache. No request
+is replayed. Unknown protocols are refused before any mandate is submitted.
+Protocol 1 must change if the journal schema or retained operation contracts
+become incompatible. Closing all site tabs still permits an installed offline
+release to activate, but is no longer required to use compatible demo updates.
 
 TeaVM's generated WebAssembly JSO wrappers use dynamic JavaScript functions.
 The supplied hosts allow `unsafe-eval` **only in the runtime worker's response

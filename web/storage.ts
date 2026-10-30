@@ -20,7 +20,7 @@ export function transaction<T>(db: IDBDatabase, store: string, mode: IDBTransact
     tx.onerror = () => { /* onabort rejects after rollback */ };
   });
 }
-export function hostCapabilities(db: IDBDatabase) {
+export function hostCapabilities(db?: IDBDatabase) {
   return async (operation: string, value: string): Promise<string> => {
     switch (operation) {
       case 'random-hex': {
@@ -34,17 +34,20 @@ export function hostCapabilities(db: IDBDatabase) {
         const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value));
         return Array.from(new Uint8Array(digest), b => b.toString(16).padStart(2, '0')).join('');
       }
-      case 'load': return JSON.stringify(await transaction(db, 'entries', 'readonly', s => s.getAll()));
+      case 'load': return db ? JSON.stringify(await transaction(db, 'entries', 'readonly', s => s.getAll())) : '[]';
       case 'append': {
+        if (!db) throw new Error('Transient proceedings cannot append to institutional memory');
         // add, never put: a stale owner cannot overwrite a committed sequence.
         await transaction(db, 'entries', 'readwrite', s => s.add(value, Number(value.split('|')[0])));
         return 'COMMITTED';
       }
       case 'cache-get': {
+        if (!db) return 'MISS';
         const row = await transaction<{expires: number; body: string} | undefined>(db, 'cache', 'readonly', s => s.get(value));
         return row && row.expires > Date.now() ? `HIT:${row.body}` : 'MISS';
       }
       case 'cache-put': {
+        if (!db) throw new Error('Transient proceedings cannot populate the retained cache');
         const separator = value.indexOf('|');
         const key = value.slice(0, separator);
         if (!/^\d{1,4}$/.test(key) || Number(key) > 1000) throw new Error('Unratified cache key');

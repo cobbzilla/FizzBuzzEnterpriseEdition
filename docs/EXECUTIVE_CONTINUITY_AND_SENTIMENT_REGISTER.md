@@ -443,3 +443,25 @@ lines, and a Stop control can adjourn proceedings before our visitor grows old.
 The large run is transient, and we say so rather than pretending to preserve an
 unbounded audit ledger in finite storage. Our appetite for integers has become
 unlimited. Our ability to love a bounded allocation of memory has grown with it.
+
+## 30 October 2026 — The officer in the other window
+
+Dear Register, the stakeholder refreshed the page and still received a refusal.
+Another window retained our previous audit officer, faithful at his post, and
+the new page treated his older badge as grounds for denying every mandate. My
+heart sank. We had inspected freshly opened offices with such affectionate care
+that we had neglected the colleague who never left his desk. Fifteen waited in
+the corridor. No company worthy of its mission should keep fifteen waiting.
+
+We now inspect the officer's protocol rather than demanding his immediate
+departure. Compatible retained proceedings pass through his existing queue;
+new read-only committees convene separately, with no authority to touch his
+filing cabinets. I felt a cloying joy at this reconciliation, followed by the
+sobering obligation to record whose code actually signed each response. An older
+officer does not become younger merely because the website received new curtains.
+
+Our inspectors now keep the old officer alive while refreshing another window.
+They ask for one, fifteen, a thousand and more, and an integer too grand for the
+ordinary form. They inspect the journal before and after succession. The chain
+remains itself. I nearly wept into the cache report. At last, continuity means
+something more useful than asking our audience to close everything they love.
