@@ -129,3 +129,75 @@ test('transient uploads refresh their token; permanent failures stop before rele
  }, noWait), /checksum/);
  assert.equal(attempts, 4);
 });
+
+test('first-party intake forwards exact bytes and query while discarding browser credentials', async () => {
+ const bytes = new Uint8Array([31,139,0,255,3,8]);
+ const result = await serve(new Request('https://example.org/intake/e/?ip=0&compression=gzip-js', {
+  method: 'POST', body: bytes, headers: {
+   Origin: 'https://example.org', 'Content-Type': 'text/plain', Cookie: 'private=never-forward',
+   Authorization: 'Bearer private-session', 'CF-Connecting-IP': '192.0.2.23',
+   'X-Forwarded-For': 'forged-address', 'User-Agent': 'Audience inspector',
+  },
+ }), env, async (url, options) => {
+  assert.equal(String(url), 'https://us.i.posthog.com/e/?ip=0&compression=gzip-js');
+  assert.equal(options?.method, 'POST');
+  assert.equal(options?.redirect, 'manual');
+  assert.equal(options?.cache, 'no-store');
+  assert.deepEqual(new Uint8Array(options?.body as ArrayBuffer), bytes);
+  const headers = new Headers(options?.headers);
+  assert.equal(headers.get('Cookie'), null); assert.equal(headers.get('Authorization'), null);
+  assert.equal(headers.get('X-Forwarded-For'), '192.0.2.23');
+  assert.equal(headers.get('User-Agent'), 'Audience inspector');
+  assert.equal(headers.get('Origin'), null);
+  return new Response('{"status":1}', {headers: {'Content-Type': 'application/json', 'Set-Cookie': 'forbidden=1'}});
+ });
+ assert.equal(result.status, 200);
+ assert.equal(result.headers.get('Cache-Control'), 'no-store');
+ assert.equal(result.headers.get('Set-Cookie'), null);
+ assert.equal(await result.text(), '{"status":1}');
+});
+
+test('intake methods, origin and fixed path prevent unrelated proxy requests', async () => {
+ const never = async () => {throw new Error('No upstream call authorized');};
+ for (const path of ['/intake/query/', '/intake/static/sdk.js', '/intake/https://other.example/']) {
+  assert.equal((await serve(new Request('https://example.org'+path, {method:'POST'}), env, never)).status, 404);
+ }
+ const foreign = new Request('https://example.org/intake/e/', {method:'POST', headers:{Origin:'https://other.example'}});
+ assert.equal((await serve(foreign, env, never)).status, 403);
+ assert.equal((await serve(new Request('https://example.org/intake/e/'), env, never)).status, 405);
+ const preflight = await serve(new Request('https://example.org/intake/e/', {method:'OPTIONS',headers:{Origin:'https://example.org'}}), env, never);
+ assert.equal(preflight.status, 204); assert.equal(preflight.headers.get('Cache-Control'),'no-store');
+});
+
+test('ingestion failure is reported truthfully and never redirected or cached', async () => {
+ for (const status of [400, 429, 503]) {
+  const result=await serve(new Request('https://example.org/intake/e/',{method:'POST',body:'{}'}), env,
+   async()=>new Response('provider rejected the event',{status,headers:{'Retry-After':'5'}}));
+  assert.equal(result.status,status); assert.equal(result.headers.get('Retry-After'),'5');
+  assert.equal(result.headers.get('Cache-Control'),'no-store');
+ }
+ const redirect=await serve(new Request('https://example.org/intake/e/',{method:'POST'}),env,
+  async()=>new Response(null,{status:302,headers:{Location:'https://other.example/'}}));
+ assert.equal(redirect.status,502);assert.equal(redirect.headers.get('Location'),null);
+ const unavailable=await serve(new Request('https://example.org/intake/e/',{method:'POST'}),env,
+  async()=>{throw new Error('network down');});
+ assert.equal(unavailable.status,502);
+});
+
+test('local static preview exposes the same intake route without leaking its session cookie', async t => {
+ const {createStaticServer}=await import('./serve.ts');
+ const originalFetch=fetch;let sent=false;
+ t.mock.method(globalThis,'fetch',async(input:RequestInfo|URL,init?:RequestInit)=>{
+  assert.equal(String(input),'https://us.i.posthog.com/e/?ip=0');
+  assert.equal(new Headers(init?.headers).get('Cookie'),null);sent=true;
+  return new Response('busy',{status:429,headers:{'Content-Type':'text/plain'}});
+ });
+ const server=createStaticServer('dist','/portfolio/');
+ await new Promise<void>(resolve=>server.listen(0,'127.0.0.1',resolve));
+ try {
+  const port=(server.address() as {port:number}).port;
+  const response=await originalFetch(`http://127.0.0.1:${port}/intake/e/?ip=0`,{method:'POST',headers:{Cookie:'private=1'},body:'{}'});
+  assert.equal(response.status,429);assert.equal(response.headers.get('Cache-Control'),'no-store');
+  assert.equal(await response.text(),'busy');assert.equal(sent,true);
+ } finally {server.close();server.closeAllConnections();}
+});

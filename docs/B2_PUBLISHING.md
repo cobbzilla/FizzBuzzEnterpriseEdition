@@ -107,6 +107,7 @@ The Worker maps directory URLs to `index.html`, redirects extensionless routes t
 their slash form while preserving query parameters, supports GET/HEAD and genuine
 404s, and keeps origin paths within the configured bucket prefix. It forwards no
 cookies or authorization headers to B2. Browser queries remain in the address bar
-but are not sent to object storage. CSP permits the local Java runtimes and the
-configured US PostHog ingestion host. The Worker contains the public B2 origin,
+but are not sent to object storage. CSP permits the local Java runtimes and same-origin connections.
+`POST /intake/e/` is handled before static routing and forwarded to the fixed
+PostHog US ingestion endpoint with credentials stripped and caching disabled. The Worker contains the public B2 origin,
 never a B2 credential.

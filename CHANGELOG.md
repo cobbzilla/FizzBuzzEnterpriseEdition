@@ -5,6 +5,18 @@ portfolio. Each iteration branch receives its own entry before integration,
 so future generations can trace how a modest numerical exercise became a
 strategic operating capability.
 
+## 2026-10-30 — `slopbuzz-first-party-analytics`
+
+**Sovereign Audience Reception and Centrally Governed Beacon Forwarding.**
+Opened an intake desk under the company's own hostname so visitor measurements
+report to a familiar door before continuing to PostHog. The existing Cloudflare
+Worker now handles this narrowly chartered forwarding duty, strips browser
+credentials, declines unrelated destinations, and refuses to cache attendance.
+The bundled SDK requires no external browser connection, while release inspectors
+submit genuine preview-marked beacons and demand successful receiving receipts.
+The company can now count its audience through its own reception architecture,
+without procuring an additional domain, certificate, or excuse for a second lobby.
+
 ## 2026-10-30 — `slopbuzz-analytics-signal-policy`
 
 **Audience Census Activation and Explicit Signal Interpretation Policy.**

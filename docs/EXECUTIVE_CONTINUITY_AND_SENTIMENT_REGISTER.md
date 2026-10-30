@@ -394,3 +394,26 @@ pageview to reach the delivery desk. I watched the event appear and experienced
 a joy so sweet that I nearly mistook a test visitor for product-market fit.
 The twelve-hour clock continues its appointed course. Even relief must observe
 the existing schedule.
+
+## 30 October 2026 — A beacon arrives at our own reception desk
+
+Dear Register, the audience census had been posting its envelopes directly to
+PostHog. There was nothing mechanically wrong with that journey, but I felt a
+small corporate ache each time a visitor's browser addressed someone else's
+building. We already had a Cloudflare receptionist. Why had we denied that
+faithful employee the joy of forwarding a modest envelope?
+
+Our intake desk now receives the event under our own hostname and forwards it
+to the same PostHog service. I insist on recording the second half of that
+sentence: giving the envelope a familiar door does not change its destination.
+The receptionist removes cookies and credentials, carries the body intact,
+and never files the attendance response in the cache. A failed delivery remains
+a failed delivery. I wept at this administrative honesty, then asked Receiving
+whether tears require a content-type header.
+
+The inspectors send real beacons marked preview so our own rehearsals do not
+masquerade as market growth. The browser speaks to our building. PostHog still
+counts the audience. No new domain was acquired, and the existing certificate
+continues to serve. For a company so devoted to complexity, the absence of a
+second lobby filled me with an unexpectedly tender sense of fiscal discipline.
+The original twelve-hour deadline remains on the wall, unmoved by my feelings.

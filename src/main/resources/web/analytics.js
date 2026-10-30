@@ -9505,7 +9505,8 @@ async function initialize() {
   let active = false;
   const properties = { application: "slopbuzz", environment: local ? "preview" : config.environment, release: config.revision, $current_url: cleanUrl(location.href), $pathname: location.pathname, $referrer: document.referrer ? new URL(document.referrer).origin : "", $referring_domain: document.referrer ? new URL(document.referrer).hostname : "$direct", ...Object.fromEntries(["utm_source", "utm_medium", "utm_campaign"].filter((k2) => pageUrl.searchParams.has(k2)).map((k2) => [k2, pageUrl.searchParams.get(k2).slice(0, 150)])) };
   Ah.init(config.token, {
-    api_host: "https://us.i.posthog.com",
+    api_host: new URL(config.apiHost || "https://us.i.posthog.com", scope).href.replace(/\/$/, ""),
+    ui_host: "https://us.posthog.com",
     cookieless_mode: "always",
     person_profiles: "never",
     respect_dnt: false,
