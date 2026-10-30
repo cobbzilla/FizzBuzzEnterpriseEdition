@@ -58,7 +58,7 @@ function schemaFields(spec: Spec, response: Schema, name: string) {
   return detail;
 }
 
-function tryDesk(path: string, method: string, operation: Operation) {
+function tryDesk(spec: Spec, path: string, method: string, operation: Operation) {
   const panel = element('div', 'api-try');
   panel.append(element('h4', '', 'Live request desk'));
   const hasLimit = (operation.parameters || []).some((parameter) =>
@@ -82,6 +82,18 @@ function tryDesk(path: string, method: string, operation: Operation) {
     input.min = '0'; input.max = '1000'; input.step = '1'; input.value = '15';
     label.append(input);
     controls.append(label);
+  }
+  const productParameter = (operation.parameters || []).map(parameter => resolve(spec, parameter)).find(parameter => parameter?.name === 'product');
+  let productSelect: HTMLSelectElement | null = null;
+  if (productParameter) {
+    const label = element('label', '', 'Authorized product');
+    productSelect = element('select'); productSelect.id = `${id}-product`;
+    productSelect.setAttribute('aria-describedby', `${id}-status`);
+    for (const product of productParameter.schema?.enum || []) {
+      const option = element('option', '', product); option.value = product; productSelect.append(option);
+    }
+    productSelect.value = String(productParameter.schema?.default || productParameter.schema?.enum?.[0] || '');
+    label.append(productSelect); controls.append(label);
   }
   const button = element('button', '', method === 'post' ? 'Send POST request' : 'Send GET request');
   button.type = 'button';
@@ -113,7 +125,7 @@ function tryDesk(path: string, method: string, operation: Operation) {
       return;
     }
     input?.removeAttribute('aria-invalid');
-    const url = input ? `${path}?limit=${input.value}` : path;
+    const url = input ? `${path}?limit=${input.value}` : productSelect ? `${path}?product=${encodeURIComponent(productSelect.value)}` : path;
     button.setAttribute('aria-disabled', 'true');
     report.textContent = 'The desk is reviewing your request…';
     const started = performance.now();
@@ -183,7 +195,7 @@ function renderOperation(spec: Spec, path: string, method: string, operation: Op
     if (fields) responses.append(fields);
   });
   body.append(responses);
-  body.append(tryDesk(path, method, operation));
+  body.append(tryDesk(spec, path, method, operation));
   card.append(body);
   return card;
 }
@@ -244,6 +256,6 @@ try {
   status.textContent = `The charter could not be loaded: ${error.message}. Open the raw JSON link or try again.`;
 }
 
-interface Schema { $ref?: string; type?: string; description?: string; enum?: string[]; const?: unknown; properties?: Record<string, Schema>; required?: string[]; content?: Record<string, {schema: Schema}>; headers?: Record<string, Schema>; name?: string; in?: string }
+interface Schema { schema?: Schema; default?: unknown; $ref?: string; type?: string; description?: string; enum?: string[]; const?: unknown; properties?: Record<string, Schema>; required?: string[]; content?: Record<string, {schema: Schema}>; headers?: Record<string, Schema>; name?: string; in?: string }
 interface Operation { operationId?: string; summary?: string; description?: string; tags?: string[]; parameters?: Schema[]; responses?: Record<string, Schema> }
 interface Spec { openapi: string; paths: Record<string, Record<string, Operation>>; tags?: {name: string; description?: string}[] }

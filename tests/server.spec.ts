@@ -11,6 +11,7 @@ test('generated TypeScript interface runs against the optional Spring JVM server
     const port=await new Promise<string>((resolve,reject)=>{child.stdout.on('data',data=>{const match=String(data).match(/SLOPBUZZ_LISTENING=(\d+)/);if(match)resolve(match[1]);});child.once('exit',code=>reject(new Error(`Server exited ${code}`)));child.once('error',reject);});
     await page.goto(`http://127.0.0.1:${port}/`);await expect(page.locator('#health-value')).toHaveText('LIVE');
     await page.selectOption('#display-speed','0');await page.click('#run-button');await expect(page.locator('#run-status')).toContainText('Mandate complete');await expect(page.locator('#cache-result')).toHaveText('BYPASS');
+    await page.click('#procurement-button');await expect(page.locator('#procurement-status')).toContainText('8 separate line items');
     await page.click('#recovery-button');await expect(page.locator('#recovery-value')).toHaveText('COPY MATCHED');
     await page.goto(`http://127.0.0.1:${port}/api/`);await expect(page.locator('#api-total')).toContainText('ratified operations');
     for(const route of ['company-history','accessibility','validation','response']) {

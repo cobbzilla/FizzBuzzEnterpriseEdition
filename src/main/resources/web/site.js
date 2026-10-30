@@ -79,7 +79,7 @@ var request = (path, options) => path === "/openapi.json" && (!options?.method |
 if ("serviceWorker" in navigator && config.mode === "browser") {
   void navigator.serviceWorker.register(new URL("sw.js", scope), { scope: new URL(scope).pathname }).catch((error) => console.warn("Offline installation unavailable", error));
 }
-var desks = /^\/(?:fizzbuzz|capacity\/forecast|healthz|readyz|cache\/status|operations\/|audit\/)/;
+var desks = /^\/(?:fizzbuzz|procurement\/dossier|capacity\/forecast|healthz|readyz|cache\/status|operations\/|audit\/)/;
 if (config.mode === "browser") document.querySelectorAll("a[href]").forEach((link) => {
   const url = new URL(link.href);
   const base = new URL(scope).pathname.replace(/\/$/, "");
@@ -403,3 +403,38 @@ document.querySelectorAll("[data-limit]").forEach((button) => {
 });
 void loadForecast(15).catch(() => setText("operations-status", "Forecast desk is temporarily unavailable."));
 void refreshOperations();
+var procurementForm = byId("procurement-form");
+var procurementButton = byId("procurement-button");
+procurementForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  if (procurementButton.getAttribute("aria-disabled") === "true") return;
+  procurementButton.setAttribute("aria-disabled", "true");
+  byId("procurement-results").setAttribute("aria-busy", "true");
+  byId("procurement-results").hidden = true;
+  setText("procurement-status", "Receiving is reconciling each individual commercial obligation\u2026");
+  try {
+    const product = byId("procurement-product").value;
+    const response = await request(`/procurement/dossier?product=${encodeURIComponent(product)}`);
+    if (!response.ok) throw new Error(`The purchasing authority returned HTTP ${response.status}.`);
+    const dossier = await response.json();
+    setText("procurement-summary", `${dossier.text} \xB7 ${dossier.assembly} \xB7 ${dossier.lineItems.length} individually received allocations`);
+    const items = dossier.lineItems.map((item) => {
+      const li = document.createElement("li");
+      const glyph = document.createElement("strong");
+      glyph.textContent = item.character;
+      const receipt = document.createElement("span");
+      receipt.textContent = `${item.sku} \xB7 quantity ${item.quantity} \xB7 ${item.inspection}`;
+      li.append(glyph, receipt);
+      return li;
+    });
+    byId("procurement-items").replaceChildren(...items);
+    setText("procurement-json", JSON.stringify(dossier, null, 2));
+    byId("procurement-results").hidden = false;
+    setText("procurement-status", `${dossier.product} certified. ${dossier.lineItems.length} separate line items accepted; no audit transaction committed.`);
+  } catch (error) {
+    setText("procurement-status", `Procurement inspection could not be completed. ${error.message} You may request another inspection.`);
+  } finally {
+    procurementButton.removeAttribute("aria-disabled");
+    byId("procurement-results").removeAttribute("aria-busy");
+  }
+});

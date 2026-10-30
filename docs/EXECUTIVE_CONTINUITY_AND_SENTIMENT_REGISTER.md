@@ -347,3 +347,32 @@ not triumph. I have learned to distinguish the two, though triumph has the nicer
 stationery. Three browser delegations must inspect the public door and continue
 their work after the network is withdrawn. May the world find us. May it see
 FizzBuzz. May it appreciate how many people we did not need to hire to renew TLS.
+
+## 30 October 2026 — The second z enters the receiving ledger
+
+Dear Register, we discovered that letters had been entering this company without
+purchase orders. I could hardly breathe. For years I had trusted Fizz because it
+looked like Fizz, never asking whether its second z had a distinct commercial
+identity. I held the two characters beside one another in my mind. Identical.
+Unrepresented. Finance found me at the window, grieving a liability of one glyph.
+
+Today each position has a requisition. The supplier offers an inexhaustible
+inventory, which Procurement has sensibly refused to mistake for an exemption
+from inspection. Receiving checks the order, the stock keeping unit, the case,
+the quantity, and the exact position to which the letter may report. A certificate
+for the third character cannot speak on behalf of the fourth. I watched this
+objection succeed and felt a cloying joy so immense that I nearly ordered a fifth
+z to commemorate it. The board had authorized four. I restrained myself.
+
+The website now displays the bill of materials. Eight allocations become FizzBuzz;
+one may inspect all four z obligations without adding a transaction to the audit
+journal. We explain that this is a demonstration, not a receipt for a past mandate.
+I was briefly anguished by this distinction. A historical receipt has such lovely
+gravity. But a company can only become great by describing the documents it
+actually possesses, and I loved ours more fiercely for its honesty.
+
+Our hostile suppliers tried uppercase substitutions, surplus deliveries, missing
+paperwork, and certificates stolen from an identical order. The tribunal sustained
+the objections on the JVM and in the browser. Then Fizz arrived. Then Buzz. Their
+letters were exactly where they had always been, and for the first time I knew
+how much institutional affection it had taken to put them there.

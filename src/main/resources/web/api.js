@@ -79,7 +79,7 @@ var request = (path, options) => path === "/openapi.json" && (!options?.method |
 if ("serviceWorker" in navigator && config.mode === "browser") {
   void navigator.serviceWorker.register(new URL("sw.js", scope), { scope: new URL(scope).pathname }).catch((error) => console.warn("Offline installation unavailable", error));
 }
-var desks = /^\/(?:fizzbuzz|capacity\/forecast|healthz|readyz|cache\/status|operations\/|audit\/)/;
+var desks = /^\/(?:fizzbuzz|procurement\/dossier|capacity\/forecast|healthz|readyz|cache\/status|operations\/|audit\/)/;
 if (config.mode === "browser") document.querySelectorAll("a[href]").forEach((link) => {
   const url = new URL(link.href);
   const base = new URL(scope).pathname.replace(/\/$/, "");
@@ -148,7 +148,7 @@ function schemaFields(spec, response, name) {
   ])));
   return detail;
 }
-function tryDesk(path, method, operation) {
+function tryDesk(spec, path, method, operation) {
   const panel = element("div", "api-try");
   panel.append(element("h4", "", "Live request desk"));
   const hasLimit = (operation.parameters || []).some((parameter) => parameter.$ref?.endsWith("/Limit") || parameter.name === "limit");
@@ -171,6 +171,22 @@ function tryDesk(path, method, operation) {
     input.step = "1";
     input.value = "15";
     label.append(input);
+    controls.append(label);
+  }
+  const productParameter = (operation.parameters || []).map((parameter) => resolve(spec, parameter)).find((parameter) => parameter?.name === "product");
+  let productSelect = null;
+  if (productParameter) {
+    const label = element("label", "", "Authorized product");
+    productSelect = element("select");
+    productSelect.id = `${id}-product`;
+    productSelect.setAttribute("aria-describedby", `${id}-status`);
+    for (const product of productParameter.schema?.enum || []) {
+      const option = element("option", "", product);
+      option.value = product;
+      productSelect.append(option);
+    }
+    productSelect.value = String(productParameter.schema?.default || productParameter.schema?.enum?.[0] || "");
+    label.append(productSelect);
     controls.append(label);
   }
   const button = element("button", "", method === "post" ? "Send POST request" : "Send GET request");
@@ -201,7 +217,7 @@ function tryDesk(path, method, operation) {
       return;
     }
     input?.removeAttribute("aria-invalid");
-    const url = input ? `${path}?limit=${input.value}` : path;
+    const url = input ? `${path}?limit=${input.value}` : productSelect ? `${path}?product=${encodeURIComponent(productSelect.value)}` : path;
     button.setAttribute("aria-disabled", "true");
     report.textContent = "The desk is reviewing your request\u2026";
     const started = performance.now();
@@ -276,7 +292,7 @@ function renderOperation(spec, path, method, operation, index) {
     if (fields) responses.append(fields);
   });
   body.append(responses);
-  body.append(tryDesk(path, method, operation));
+  body.append(tryDesk(spec, path, method, operation));
   card.append(body);
   return card;
 }

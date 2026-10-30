@@ -36,7 +36,7 @@ export async function verifyPublic(origin: string, revision: string) {
    const businessRequests: string[] = [];
    page.on('request', request => {
     const url = new URL(request.url());
-    if (url.origin === origin && /^\/(fizzbuzz|healthz|readyz|audit|operations|capacity|cache)(\/|\?|$)/.test(url.pathname)) businessRequests.push(url.pathname);
+    if (url.origin === origin && /^\/(fizzbuzz|healthz|readyz|audit|operations|capacity|cache|procurement)(\/|\?|$)/.test(url.pathname)) businessRequests.push(url.pathname);
    });
    await page.goto(origin + '/');
    await expect(page.locator('#health-value')).toHaveText('LIVE');
@@ -47,6 +47,9 @@ export async function verifyPublic(origin: string, revision: string) {
    assert.deepEqual((await page.locator('#output').textContent())?.trim().split('\n'), expected);
    await page.click('#run-button');
    await expect(page.locator('#cache-result')).toHaveText('HIT');
+   await page.click('#procurement-button');
+   await expect(page.locator('#procurement-status')).toContainText('8 separate line items');
+   await expect(page.locator('#procurement-items li')).toHaveCount(8);
    await page.click('#canary-button');
    await expect(page.locator('#canary-value')).toHaveText('APPROVED');
    await page.click('#recovery-button');
@@ -65,6 +68,8 @@ export async function verifyPublic(origin: string, revision: string) {
    await page.click('#run-button');
    await expect(page.locator('#run-status')).toContainText('Mandate complete');
    assert.equal((await page.locator('#output').textContent())?.trim().split('\n').at(-1), '16');
+   await page.click('#procurement-button');
+   await expect(page.locator('#procurement-status')).toContainText('8 separate line items');
    await page.goto(origin + '/api/');
    await expect(page.locator('#api-total')).toContainText('ratified operations');
    assert.deepEqual(businessRequests, []);
