@@ -1,6 +1,7 @@
 FROM maven:3.9-eclipse-temurin-17-noble AS build
 WORKDIR /work
 COPY pom.xml .
+COPY CHANGELOG.md .
 COPY src ./src
 COPY resources ./resources
 RUN mvn -q -DskipTests package dependency:copy-dependencies -DoutputDirectory=target/dependency
