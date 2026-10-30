@@ -186,3 +186,7 @@ validation/*.json
 
 .env*
 **/.env*
+
+# Deployment credentials and editor backups
+.b2.env*
+**/.b2.env*

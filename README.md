@@ -160,3 +160,7 @@ long-lived local demo at `http://localhost:18088/` after a merge. It publishes t
 18089, and preserves the existing Redis service and H2 audit volume.
 The [release custody desk](docs/ADR-0016-release-custody.md) verifies readiness
 and the deployed Git revision; the site displays that revision in Operations.
+
+Public hosting uses B2 and a Cloudflare Worker Custom Domain. Run `pnpm publish:b2`
+from the merged branch; see the [public publishing runbook](docs/B2_PUBLISHING.md)
+for credentials, automatic DNS/TLS, and release verification.

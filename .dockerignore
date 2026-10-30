@@ -13,3 +13,9 @@ playwright-report
 .env.posthog*
 **/.env.posthog*
 tmp/
+
+# Deployment credentials and editor backups
+.b2.env*
+**/.b2.env*
+.env*
+**/.env*
