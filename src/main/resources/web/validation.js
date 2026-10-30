@@ -1,26 +1,35 @@
 // Generated from web/*.ts by scripts/build.ts. Do not edit.
 
+// web/runtime-protocol.ts
+var runtimeProtocol = 1;
+function isTransientOperation(path, method = "GET") {
+  return method === "GET" && ["/fizzbuzz/window", "/capacity/forecast/extended", "/procurement/dossier"].includes(path.split("?")[0]);
+}
+
 // web/runtime.ts
 var scope = new URL("../", import.meta.url).href;
 var config = await fetch(new URL("runtime-config.json", scope), { cache: "no-cache" }).then((r) => {
   if (!r.ok) throw new Error("Deployment configuration is unavailable");
   return r.json();
 });
-var BrowserRuntimeClient = class {
-  constructor(configuration = config, isolated) {
+var BrowserRuntimeClient = class _BrowserRuntimeClient {
+  constructor(configuration = config, isolated, transient = false) {
     this.configuration = configuration;
     if (!navigator.locks || !globalThis.crypto?.subtle) throw new Error("This browser requires a secure context, Web Locks, IndexedDB and Web Crypto.");
     this.channel = new BroadcastChannel(`slopbuzz:${scope}${isolated ? `:rehearsal:${isolated}` : ""}`);
     this.channel.onmessage = (event) => this.pending.get(event.data.id)?.(event.data);
     this.worker = new Worker(new URL(`${configuration.assets}runtime-worker.js`, scope));
-    this.worker.postMessage({ config: configuration, scope, isolated });
+    this.worker.postMessage({ config: configuration, scope, isolated, transient });
     addEventListener("pagehide", () => this.close(), { once: true });
   }
   configuration;
   channel;
   worker;
   pending = /* @__PURE__ */ new Map();
+  compatibleOwners = /* @__PURE__ */ new Map();
+  transientClient;
   close() {
+    this.transientClient?.close();
     this.worker.terminate();
     this.channel.close();
   }
@@ -46,7 +55,26 @@ var BrowserRuntimeClient = class {
   async request(path, options = {}) {
     const owner = await this.owner();
     if (owner.error) throw new Error(owner.error);
-    if (owner.revision !== this.configuration.revision) throw new Error("An older release owns the repository. Close other tabs and reload.");
+    if (owner.revision !== this.configuration.revision) {
+      if (!this.compatibleOwners.has(owner.leader)) {
+        this.compatibleOwners.set(owner.leader, this.verifyCompatibility(owner));
+      }
+      await this.compatibleOwners.get(owner.leader);
+      if (isTransientOperation(path, options.method)) {
+        this.transientClient ||= new _BrowserRuntimeClient(this.configuration, crypto.randomUUID(), true);
+        return this.transientClient.request(path, options);
+      }
+    }
+    return this.dispatch(owner, path, options);
+  }
+  async verifyCompatibility(owner) {
+    const response = await this.dispatch(owner, "/operations/runtime");
+    const runtime2 = response.ok ? await response.json() : {};
+    if (runtime2.protocol !== runtimeProtocol || runtime2.mode !== "browser" || runtime2.revision !== owner.revision || runtime2.storage !== "IndexedDB") {
+      throw new Error("The open audit runtime uses an unsupported protocol. Close other site tabs, then reload. No mandate was submitted.");
+    }
+  }
+  dispatch(owner, path, options = {}) {
     const id = crypto.randomUUID();
     return new Promise((resolve, reject) => {
       const timeout = setTimeout(() => {
@@ -54,12 +82,17 @@ var BrowserRuntimeClient = class {
         reject(new Error("The runtime stopped responding. The outcome is unknown; inspect the audit before resubmitting."));
       }, 12e4);
       this.pending.set(id, (reply) => {
+        if (reply.kind !== "reply" || reply.leader !== owner.leader || reply.revision !== owner.revision) return;
         clearTimeout(timeout);
         this.pending.delete(id);
         if (reply.error) reject(new Error(reply.error));
-        else resolve(new Response(reply.result.body, { status: reply.result.status, headers: reply.result.headers }));
+        else {
+          const headers = new Headers(reply.result.headers);
+          headers.set("X-SlopBuzz-Executing-Revision", reply.revision);
+          resolve(new Response(reply.result.body, { status: reply.result.status, headers }));
+        }
       });
-      this.channel.postMessage({ kind: "request", id, leader: owner.leader, revision: this.configuration.revision, path, method: options.method || "GET", traceparent: new Headers(options.headers).get("traceparent") || "" });
+      this.channel.postMessage({ kind: "request", id, leader: owner.leader, revision: owner.revision, path, method: options.method || "GET", traceparent: new Headers(options.headers).get("traceparent") || "" });
     });
   }
 };

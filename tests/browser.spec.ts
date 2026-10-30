@@ -97,14 +97,22 @@ test('subdirectory hosting resolves workers, docs and API assets',async({page},i
     await page.getByRole('link',{name:'API charter',exact:true}).click();await expect(page.locator('#api-total')).toContainText('ratified operations');
   }finally{server.close();server.closeAllConnections();}
 });
-test('a different release cannot submit work to the current owner',async({page})=>{
+test('the owner rejects a request addressed with the wrong execution revision',async({page})=>{
   await page.goto('/');await expect(page.locator('#health-value')).toHaveText('LIVE');
   const error=await page.evaluate(async()=>{
     const m=await import(new URL('/assets/tribunal.js',location.href).href);
-    const client=new m.BrowserRuntimeClient({...m.config,revision:'0000000000000000000000000000000000000000'});
-    try {await client.request('/fizzbuzz?limit=15');return 'UNEXPECTED SUCCESS';}catch(error){return String(error);}finally{client.close();}
+    const channel=new BroadcastChannel(`slopbuzz:${m.scope}`);
+    return new Promise<string>(resolve=>{
+      const id=crypto.randomUUID();
+      channel.onmessage=event=>{
+        if(event.data.id!==id)return;
+        if(event.data.kind==='ready')channel.postMessage({kind:'request',id,leader:event.data.leader,revision:'0000000000000000000000000000000000000000',method:'GET',path:'/fizzbuzz?limit=15'});
+        else if(event.data.kind==='reply'){channel.close();resolve(event.data.error || 'UNEXPECTED SUCCESS');}
+      };
+      channel.postMessage({kind:'hello',id,revision:m.config.revision});
+    });
   });
-  expect(error).toContain('older release');expect(JSON.parse((await invoke(page,'/audit/evidence')).body).journalEntries).toBe(0);
+  expect(error).toContain('different release');expect(JSON.parse((await invoke(page,'/audit/evidence')).body).journalEntries).toBe(0);
 });
 test('failed audit append is not acknowledged or cached; transaction state is released',async({page})=>{
   await page.goto('/');await expect(page.locator('#health-value')).toHaveText('LIVE');

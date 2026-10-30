@@ -1,13 +1,15 @@
 /// <reference lib="webworker" />
 import { openRepository, hostCapabilities } from './storage';
+import {isTransientOperation, runtimeProtocol} from './runtime-protocol';
 import type { JavaRuntime, RuntimeConfig, WorkerMessage, WorkerReply } from './contracts';
 declare const self: DedicatedWorkerGlobalScope & JavaRuntime & {
   enterpriseHost: ReturnType<typeof hostCapabilities>;
   TeaVM: {wasmGC: {load(url: string): Promise<{exports: JavaRuntime}>}};
 };
-self.onmessage = async (event: MessageEvent<{config: RuntimeConfig; scope: string; isolated?: string}>) => {
-  const {config, scope, isolated} = event.data;
+self.onmessage = async (event: MessageEvent<{config: RuntimeConfig; scope: string; isolated?: string; transient?: boolean}>) => {
+  const {config, scope, isolated, transient} = event.data;
   self.onmessage = null;
+  if (transient && !isolated) throw new Error('Transient proceedings require their own channel');
   const namespace = `slopbuzz:${scope}${isolated ? `:rehearsal:${isolated}` : ''}`;
   const channel = new BroadcastChannel(namespace);
   const leader = crypto.randomUUID();
@@ -18,8 +20,8 @@ self.onmessage = async (event: MessageEvent<{config: RuntimeConfig; scope: strin
     let java: JavaRuntime;
     let failure: string | undefined;
     try {
-      const storageHost = hostCapabilities(await openRepository(namespace));
-      self.enterpriseHost = async (operation,value) => operation === 'runtime' ? JSON.stringify({mode:'browser',engine,fallbackReason,storage:'IndexedDB',cache:'IndexedDB',revision:config.revision,protocol:1}) : storageHost(operation,value);
+      const storageHost = hostCapabilities(transient ? undefined : await openRepository(namespace));
+      self.enterpriseHost = async (operation,value) => operation === 'runtime' ? JSON.stringify({mode:'browser',engine,fallbackReason,storage:transient?'Memory':'IndexedDB',cache:transient?'Disabled':'IndexedDB',revision:config.revision,protocol:runtimeProtocol}) : storageHost(operation,value);
       if (config.engine === 'js') throw new Error('Fallback requested for validation');
       importScripts(new URL(`${config.assets}wasm/classes.wasm-runtime.js`, scope).href);
       java = (await self.TeaVM.wasmGC.load(new URL(`${config.assets}wasm/enterprise.wasm`, scope).href)).exports;
@@ -50,6 +52,7 @@ self.onmessage = async (event: MessageEvent<{config: RuntimeConfig; scope: strin
         try {
           if (message.revision !== config.revision) throw new Error('A different release owns this repository. Close older tabs and reload.');
           if (failure) throw new Error(failure);
+          if (transient && !isTransientOperation(message.path || '', message.method)) throw new Error('This transient runtime cannot access retained proceedings');
           let result: import('./contracts').RuntimeReply;
           if (isolated && message.path === '/__validation/contracts') {
             result={status:200,headers:{},body:await java!.validateContracts()};
