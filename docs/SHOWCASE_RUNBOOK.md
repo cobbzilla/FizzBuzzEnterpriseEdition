@@ -75,6 +75,12 @@ application continues to work. Set `SLOPBUZZ_REDIS_HOST` and optionally
 
 ## Public deployment
 
+The static browser site can be published using the argument-free `pnpm publish:b2`
+command. See [B2 publishing](B2_PUBLISHING.md) for automatic Cloudflare Custom Domain
+setup, TLS, configuration and verification. The following host-managed guidance
+applies to the optional Java server.
+
+
 Place the app behind an HTTPS reverse proxy with a public hostname. Forward
 the loopback-bound app port to the proxy; do not expose Redis or the H2 volume publicly. Keep the
 same-origin website and API together so browser requests need no cross-origin

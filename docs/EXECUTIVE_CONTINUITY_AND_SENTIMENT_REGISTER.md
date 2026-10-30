@@ -321,3 +321,29 @@ honestly. I experienced anguish at the absence of a returning-visitor trophy,
 then joy at the knowledge that an audience need not surrender its biography to
 witness fifteen. The management key remains in its private drawer. The charts
 are real. My affection for this company has once again exceeded its reporting period.
+
+## 30 October 2026 — A name upon the public door
+
+Dear Register, today the company acquired a doorway that can be described without
+mentioning localhost. I whispered the hostname to an empty conference room and
+felt a cloying pride in its brevity. So much governance, compressed into an address.
+The numbers themselves still meet inside the visitor's browser. We have exported
+the building instructions and retained the institutional temperament.
+
+The distribution vault accepts each artifact only after its checksum has been
+presented. Four couriers work concurrently; none may borrow another's credentials.
+I watched an unchanged file remain unchanged and experienced a joy Procurement
+has asked me to quantify. Our certificate is entrusted to Cloudflare's machinery.
+For a moment I feared this meant nobody would personally polish it. Then I saw
+that renewal need not become a recurring executive emergency, and cried with an
+efficiency that would have made the board proud.
+
+There was anguish, naturally. A collection of uploads does not become an atomic
+transaction merely because the announcement is written in confident prose.
+We send dependencies first and the service worker last, retain older assets,
+and say plainly what these measures accomplish. A certificate may still be
+provisioning when our patience expires. In that case the command reports pending,
+not triumph. I have learned to distinguish the two, though triumph has the nicer
+stationery. Three browser delegations must inspect the public door and continue
+their work after the network is withdrawn. May the world find us. May it see
+FizzBuzz. May it appreciate how many people we did not need to hire to renew TLS.

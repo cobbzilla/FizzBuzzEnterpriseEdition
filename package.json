@@ -19,7 +19,9 @@
     "test:parity": "node scripts/parity.ts",
     "test:e2e": "node scripts/e2e.ts",
     "test:compiler-gate": "node scripts/compiler-gate.ts",
-    "analytics:setup": "node scripts/setup-posthog.ts"
+    "analytics:setup": "node scripts/setup-posthog.ts",
+    "test:publish": "node --test scripts/b2-publishing.test.ts",
+    "publish:b2": "node scripts/publish-b2.ts"
   },
   "dependencies": {
     "posthog-js": "^1.442.1"
