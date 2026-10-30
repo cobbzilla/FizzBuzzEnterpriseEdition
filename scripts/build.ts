@@ -5,7 +5,7 @@ import {marked} from 'marked';
 import {createHash} from 'node:crypto';
 import {sourceIdentity} from './source-identity.ts';
 const run = (command: string, args: string[]) => execFileSync(command, args, {stdio:'inherit'});
-await build({entryPoints:['web/site.ts','web/api.ts'],outdir:'src/main/resources/web',bundle:true,format:'esm',target:'es2022',banner:{js:'// Generated from web/*.ts by scripts/build.ts. Do not edit.'}});
+await build({entryPoints:['web/site.ts','web/api.ts','web/response.ts','web/validation.ts'],outdir:'src/main/resources/web',bundle:true,format:'esm',target:'es2022',banner:{js:'// Generated from web/*.ts by scripts/build.ts. Do not edit.'}});
 if (!process.argv.includes('--assets-only')) {
   run('mvn', ['-q', 'install']);
   run('mvn', ['-q', '-f', 'browser/pom.xml', 'package']);
@@ -24,28 +24,23 @@ await build({entryPoints:['web/runtime-worker.ts'],outfile:`dist/${assets}runtim
 for (const asset of ['site.css','api.css','mark.svg','openapi.json']) await cp(`src/main/resources/web/${asset}`, `dist/${asset === 'openapi.json' ? '' : 'assets/'}${asset}`);
 const raw = [['CHANGELOG.md','CHANGELOG.md'],['docs/EXECUTIVE_CONTINUITY_AND_SENTIMENT_REGISTER.md','continuity-register.md']];
 for (const [source,target] of raw) await cp(source, `dist/${target}`);
-const pages = [['index.html',''],['api.html','api'],['changelog.html','changelog'],['continuity.html','continuity-register']];
-const navigation = '<a href="/validation/">Validation tribunal</a>';
+const pages = [['index.html',''],['api.html','api'],['changelog.html','changelog'],['continuity.html','continuity-register'],['history.html','company-history'],['accessibility.html','accessibility'],['validation.html','validation'],['response.html','response']];
+const header = await readFile('src/main/resources/web/components/header.html', 'utf8');
+const footer = await readFile('src/main/resources/web/components/footer.html', 'utf8');
 function relativeLinks(html: string, nested: boolean) {
   return html.replace(/(href|src)="\/(?!\/)([^"]*)"/g, (_, attr, path) => {
     const [base, suffix = ''] = path.split(/(?=[?#])/);
-    const folder = ['api','changelog','continuity-register','validation','response'].includes(base) ? `${base}/` : base;
+    const folder = ['api','changelog','continuity-register','validation','response','company-history','accessibility'].includes(base) ? `${base}/` : base;
     return `${attr}="${nested ? '../' : './'}${folder}${suffix}"`;
   });
 }
 for (const [template,folder] of pages) {
   let html = await readFile(`src/main/resources/web/${template}`, 'utf8');
   html = html.replace('<!--LEDGER_CONTENT-->', await marked.parse(await readFile(raw[0][0],'utf8'))).replace('<!--REGISTER_CONTENT-->', await marked.parse(await readFile(raw[1][0],'utf8')));
-  html = html.replace('</nav>', `${navigation}</nav>`).replace('Run the real Java service. Repeat a mandate to observe Redis remember what the committee already decided.', 'Run the real Java enterprise in your browser. Repeat a mandate to observe institutional memory recall the committee’s decision.').replaceAll('Redis memory','Institutional cache').replaceAll('>Redis<','>Cache<').replace('shared Redis memory','swappable institutional memory').replace('HTTP liveness','Runtime liveness');
+  const active = folder === 'api' ? 'API' : folder === 'company-history' ? 'HISTORY' : folder === 'validation' ? 'VALIDATION' : '';
+  html = html.replace('<!--SITE_HEADER-->', header).replace('<!--SITE_FOOTER-->', footer).replace(`<!--NAV_${active}-->`, 'aria-current="page"').replace(/<!--NAV_[A-Z]+-->/g, '').replace('Run the real Java service. Repeat a mandate to observe Redis remember what the committee already decided.', 'Run the real Java enterprise in your browser. Repeat a mandate to observe institutional memory recall the committee’s decision.').replaceAll('Redis memory','Institutional cache').replaceAll('>Redis<','>Cache<').replace('shared Redis memory','swappable institutional memory').replace('HTTP liveness','Runtime liveness');
   await mkdir(`dist/${folder}`,{recursive:true});
   await writeFile(`dist/${folder ? folder+'/' : ''}index.html`,relativeLinks(html,!!folder));
-}
-for (const [name,title,body] of [
-  ['response','Official response','<pre tabindex="0" aria-label="Runtime response">Convening the desk…</pre>'],
-  ['validation','Cross-Runtime Equivalence Tribunal','<p>This release’s verification record and an isolated local rehearsal. Rehearsals use a separate database and never touch your demo audit.</p><pre id="release-report" tabindex="0">Loading release record…</pre><button id="rehearse">Convene isolated browser rehearsal</button><p id="verdict" role="status"></p><pre id="rehearsal-output" tabindex="0"></pre>']
-]) {
-  await mkdir(`dist/${name}`,{recursive:true});
-  await writeFile(`dist/${name}/index.html`, `<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title} · The Serious Business Company, Inc.</title><link rel="stylesheet" href="../assets/site.css"><script type="module" src="../assets/${name}.js"></script><body><main class="shell"><nav><a href="../">Showcase</a> · <a href="../api/">API charter</a> · <a href="../changelog/">Improvement ledger</a></nav><h1>${title}</h1>${body}</main></body></html>`);
 }
 await writeFile('dist/runtime-config.json',JSON.stringify({mode:process.env.SLOPBUZZ_RUNTIME || 'browser',apiBaseUrl:process.env.SLOPBUZZ_API_BASE_URL || '',revision,assets,engine:process.env.SLOPBUZZ_ENGINE || 'auto'}));
 await writeFile('dist/release.json', JSON.stringify({revision,dirty,sourceDigest,build:identity,protocol:1}));
@@ -66,7 +61,7 @@ async function files(directory: string): Promise<string[]> {
   } return result;
 }
 const paths = await files('dist');
-paths.push('', 'api/', 'changelog/', 'continuity-register/', 'response/', 'validation/');
+paths.push('', 'api/', 'changelog/', 'continuity-register/', 'response/', 'validation/', 'company-history/', 'accessibility/');
 // Evidence can arrive after the first preview of the same source revision.
 // Give that complete bundle a new cache so installed previews receive the sealed report.
 const evidenceSeal = createHash('sha256').update(await readFile('dist/validation/report.json')).digest('hex').slice(0,12);

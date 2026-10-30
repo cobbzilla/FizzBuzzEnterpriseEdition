@@ -19,6 +19,11 @@ The [Executive Continuity and Sentiment Register](docs/EXECUTIVE_CONTINUITY_AND_
 is its fictional diary companion, also readable at
 `http://localhost:18088/continuity-register`.
 
+[Company History](http://localhost:18088/company-history/) introduces both archives.
+The [Accessibility page](http://localhost:18088/accessibility/) describes keyboard
+and reading controls; [the review record](docs/ACCESSIBILITY_REVIEW.md) documents
+repeatable checks and remaining assistive-technology testing.
+
 ## FizzBuzz
 
 FizzBuzz is a game that has gained in popularity as a programming assignment to

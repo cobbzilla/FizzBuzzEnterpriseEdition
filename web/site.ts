@@ -8,6 +8,33 @@ const refreshButton = byId<HTMLButtonElement>('refresh-button');
 const canaryButton = byId<HTMLButtonElement>('canary-button');
 const recoveryButton = byId<HTMLButtonElement>('recovery-button');
 let mandateSequence = 0;
+const pauseButton = byId<HTMLButtonElement>('pause-reading');
+const revealButton = byId<HTMLButtonElement>('reveal-all');
+const followOutput = byId<HTMLInputElement>('follow-output');
+let reading = false;
+let paused = false;
+let revealAll = false;
+let wakeReading: (() => void) | undefined;
+function readingControls() {
+  pauseButton.setAttribute('aria-disabled', String(!reading));
+  revealButton.setAttribute('aria-disabled', String(!reading));
+  pauseButton.textContent = paused ? 'Resume reading' : 'Pause reading';
+}
+pauseButton.addEventListener('click', () => {
+  if (!reading) return;
+  paused = !paused;
+  readingControls();
+  setText('run-status', paused ? 'Ceremonial reading paused. Resume or reveal the complete output when ready.' : 'Ceremonial reading resumed.');
+  wakeReading?.();
+});
+revealButton.addEventListener('click', () => {
+  if (!reading) return;
+  revealAll = true; paused = false; wakeReading?.();
+});
+speedControl.addEventListener('change', () => wakeReading?.());
+function followLatest() { if (followOutput.checked) byId('output').scrollTop = byId('output').scrollHeight; }
+followOutput.addEventListener('change', followLatest);
+readingControls();
 
 
 function showCanary(verdict: Canary, disposition = 'STATUS') {
@@ -22,7 +49,8 @@ function showCanary(verdict: Canary, disposition = 'STATUS') {
 }
 
 async function runCanary() {
-  canaryButton.disabled = true;
+  if (canaryButton.getAttribute('aria-disabled') === 'true') return;
+  canaryButton.setAttribute('aria-disabled', 'true');
   byId('canary-value').setAttribute('aria-busy', 'true');
   setText('canary-status', 'The assurance bureau is rehearsing the fifteen-number charter…');
   try {
@@ -33,7 +61,7 @@ async function runCanary() {
   } catch (error) {
     setText('canary-status', `The rehearsal could not be completed: ${error.message}`);
   } finally {
-    canaryButton.disabled = false;
+    canaryButton.removeAttribute('aria-disabled');
     byId('canary-value').removeAttribute('aria-busy');
   }
 }
@@ -49,7 +77,8 @@ function showRecovery(verdict: Recovery) {
 }
 
 async function runRecovery() {
-  recoveryButton.disabled = true;
+  if (recoveryButton.getAttribute('aria-disabled') === 'true') return;
+  recoveryButton.setAttribute('aria-disabled', 'true');
   byId('recovery-value').setAttribute('aria-busy', 'true');
   setText('recovery-status', 'The bureau is reopening and comparing institutional memory…');
   try {
@@ -58,7 +87,7 @@ async function runRecovery() {
   } catch (error) {
     setText('recovery-status', `The recovery rehearsal could not be completed: ${error.message}`);
   } finally {
-    recoveryButton.disabled = false;
+    recoveryButton.removeAttribute('aria-disabled');
     byId('recovery-value').removeAttribute('aria-busy');
   }
 }
@@ -96,20 +125,21 @@ async function loadForecast(limit: number, sequence = mandateSequence) {
   if (sequence === mandateSequence) showForecast(forecast);
 }
 
-function waitForPace(milliseconds: number) {
+function waitForPace(milliseconds?: number) {
   return new Promise<void>((resolve) => {
-    let timer: ReturnType<typeof setTimeout>;
+    let timer: ReturnType<typeof setTimeout> | undefined;
     const finish = () => {
       clearTimeout(timer);
-      speedControl.removeEventListener('change', finish);
+      if (wakeReading === finish) wakeReading = undefined;
       resolve();
     };
-    timer = setTimeout(finish, milliseconds);
-    speedControl.addEventListener('change', finish);
+    wakeReading = finish;
+    if (milliseconds !== undefined) timer = setTimeout(finish, milliseconds);
   });
 }
 
 async function revealOutput(text: string, sequence: number, serviceMillis: number) {
+  reading = true; paused = false; revealAll = false; readingControls();
   const lines = text ? text.trimEnd().split(/\r?\n/) : [];
   const output = byId('output');
   output.textContent = lines.length ? '' : 'The zero-number mandate produces no lines.';
@@ -117,30 +147,35 @@ async function revealOutput(text: string, sequence: number, serviceMillis: numbe
   setText('run-status', `Service answered in ${serviceMillis} milliseconds. The ceremonial reading is in progress.`);
   for (let index = 0; index < lines.length; index++) {
     if (sequence !== mandateSequence) return;
-    if (Number(speedControl.value) === 0) {
+    while (paused && sequence === mandateSequence) await waitForPace();
+    if (sequence !== mandateSequence) return;
+    if (revealAll || Number(speedControl.value) === 0) {
       output.append(document.createTextNode(`${lines.slice(index).join('\n')}\n`));
-      output.scrollTop = output.scrollHeight;
+      followLatest();
       setText('output-count', `${lines.length} ${lines.length === 1 ? 'line' : 'lines'}`);
       break;
     }
     output.append(document.createTextNode(`${lines[index]}\n`));
-    output.scrollTop = output.scrollHeight;
+    followLatest();
     setText('output-count', `${index + 1} of ${lines.length} lines`);
     if (index < lines.length - 1) await waitForPace(Number(speedControl.value));
   }
   if (sequence === mandateSequence) {
     setText('output-count', `${lines.length} ${lines.length === 1 ? 'line' : 'lines'}`);
+    reading = false; readingControls();
     setText('run-status', `Mandate complete. The service answered in ${serviceMillis} milliseconds; ${serviceMillis < 1000 ? 'under' : 'above'} the one-second target. All ${lines.length} lines are visible.`);
   }
 }
 
 async function runMandate(event: Event) {
   event.preventDefault();
+  if (runButton.getAttribute('aria-disabled') === 'true') return;
   const limit = validateLimit();
   if (limit === null) return;
   const sequence = ++mandateSequence;
-  runButton.disabled = true;
-  byId('demo').setAttribute('aria-busy', 'true');
+  wakeReading?.(); reading = false; readingControls();
+  runButton.setAttribute('aria-disabled', 'true');
+  byId('output').setAttribute('aria-busy', 'true');
   setText('run-status', `The committee is considering ${limit} numbers…`);
   setText('trace-result', 'Awaiting a receipt');
   byId('output').textContent = 'Awaiting a duly authorized number.';
@@ -158,8 +193,9 @@ async function runMandate(event: Event) {
     setText('latency', `${Math.round(elapsed)} ms`);
     setText('cache-result', answer.headers.get('X-SlopBuzz-Cache') || 'UNKNOWN');
     setText('trace-result', answer.headers.get('X-SlopBuzz-Trace-Id') || 'UNAVAILABLE');
-    runButton.disabled = false;
+    runButton.removeAttribute('aria-disabled');
     void refreshOperations();
+    byId('output').removeAttribute('aria-busy');
     await revealOutput(text, sequence, Math.round(elapsed));
   } catch (error) {
     if (sequence === mandateSequence) {
@@ -169,8 +205,8 @@ async function runMandate(event: Event) {
     }
   } finally {
     if (sequence === mandateSequence) {
-      runButton.disabled = false;
-      byId('demo').removeAttribute('aria-busy');
+      runButton.removeAttribute('aria-disabled');
+      byId('output').removeAttribute('aria-busy');
     }
   }
 }
@@ -190,8 +226,8 @@ function setCard(id: string, text: string, healthy: boolean) {
 }
 
 async function refreshOperations() {
-  refreshButton.disabled = true;
-  byId('operations').setAttribute('aria-busy', 'true');
+  if (refreshButton.getAttribute('aria-disabled') === 'true') return;
+  refreshButton.setAttribute('aria-disabled', 'true');
   setText('operations-status', 'Refreshing the current institutional record…');
   const paths = ['/healthz', '/readyz', '/cache/status', '/operations/scorecard', '/audit/status', '/operations/canary', '/operations/release', '/operations/recovery'];
   const results = await Promise.allSettled(paths.map((path) => request(path)));
@@ -270,8 +306,7 @@ async function refreshOperations() {
   } catch (error) {
     setText('operations-status', `The operations review was interrupted: ${error.message}`);
   } finally {
-    refreshButton.disabled = false;
-    byId('operations').removeAttribute('aria-busy');
+    refreshButton.removeAttribute('aria-disabled');
   }
 }
 

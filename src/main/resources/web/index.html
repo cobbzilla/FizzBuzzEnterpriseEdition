@@ -11,24 +11,9 @@
   <script type="module" src="/assets/site.js"></script>
 </head>
 <body>
-  <a class="skip-link" href="#main">Skip to main content</a>
-  <header class="site-header">
-    <div class="shell header-inner">
-      <a class="brand" href="#top">
-        <img src="/assets/mark.svg" alt="" width="38" height="38">
-        <span><strong>The Serious Business Company, Inc.</strong><small>Office of Numerical Affairs</small></span>
-      </a>
-      <nav aria-label="Primary navigation">
-        <a href="#demo">Live demo</a>
-        <a href="#operations">Operations</a>
-        <a href="/api">API charter</a>
-        <a href="/changelog">Improvement ledger</a>
-        <a href="#about">About</a>
-      </nav>
-    </div>
-  </header>
+  <!--SITE_HEADER-->
 
-  <main id="main">
+  <main id="main" tabindex="-1">
     <section class="hero" id="top" aria-labelledby="hero-title">
       <div class="shell hero-grid">
         <div class="hero-copy">
@@ -78,9 +63,9 @@
             </form>
             <div class="presets" role="group" aria-label="Suggested mandates">
               <span>Try a brief:</span>
-              <button type="button" data-limit="15">15</button>
-              <button type="button" data-limit="100">100</button>
-              <button type="button" data-limit="1000">1000</button>
+              <button type="button" data-limit="15" aria-label="Run mandate for 15 numbers">15</button>
+              <button type="button" data-limit="100" aria-label="Run mandate for 100 numbers">100</button>
+              <button type="button" data-limit="1000" aria-label="Run mandate for 1000 numbers">1000</button>
             </div>
             <div class="pace-control">
               <label for="display-speed">Mandatory disclosure cadence</label>
@@ -103,6 +88,11 @@
               <small>Give this ID to the logging department to locate the request proceedings.</small>
             </div>
             <p class="inline-status" id="run-status" role="status" aria-live="polite" aria-atomic="true">Ready to receive a mandate.</p>
+            <div class="reading-controls" role="group" aria-label="Output reading controls">
+              <button class="button button-secondary" id="pause-reading" type="button" aria-controls="output" aria-disabled="true">Pause reading</button>
+              <button class="button button-secondary" id="reveal-all" type="button" aria-controls="output" aria-disabled="true">Reveal complete output</button>
+              <label><input type="checkbox" id="follow-output" checked> Follow new output</label>
+            </div>
             <div class="output-heading"><h3>Official output</h3><span id="output-count">0 lines</span></div>
             <pre class="terminal" id="output" tabindex="0" role="region" aria-label="FizzBuzz output">Awaiting a duly authorized number.</pre>
           </div>
@@ -157,7 +147,7 @@
           <div class="audit-summary panel">
             <p class="eyebrow">Internal controls</p><h3>Evidence dossier</h3>
             <dl><div><dt>Journal control</dt><dd id="control-aud">—</dd></div><div><dt>Message control</dt><dd id="control-msg">—</dd></div><div><dt>ISO 9000</dt><dd id="control-iso">—</dd></div><div><dt>SOC 2</dt><dd id="control-soc">—</dd></div></dl>
-            <details><summary>Read the full machine-readable dossier</summary><pre id="evidence-json" tabindex="0">Loading…</pre></details>
+            <details><summary>Read the full machine-readable dossier</summary><pre tabindex="0" role="region" aria-label="Audit evidence" id="evidence-json">Loading…</pre></details>
           </div>
         </div>
       </div>
@@ -176,6 +166,6 @@
     </section>
   </main>
 
-  <footer class="site-footer"><div class="shell footer-inner"><span>© The Serious Business Company, Inc. · A fictional enterprise with very real tests.</span><a href="#top">Back to top ↑</a></div></footer>
+  <!--SITE_FOOTER-->
 </body>
 </html>

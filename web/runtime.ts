@@ -51,21 +51,10 @@ class ServerRuntimeClient implements RuntimeClient {
 if (!['browser', 'server'].includes(config.mode)) throw new Error('Unrecognized runtime mode');
 export const runtime: RuntimeClient = config.mode === 'server' ? new ServerRuntimeClient() : new BrowserRuntimeClient();
 export const request = (path: string, options?: RequestInit) => path === '/openapi.json' && (!options?.method || options.method === 'GET') ? fetch(new URL('openapi.json',scope)) : runtime.request(path, options);
-const banner = document.createElement('p');
-banner.className = 'shell'; banner.id = 'runtime-status'; banner.setAttribute('role', 'status');
-banner.textContent = config.mode === 'browser' ? 'Convening the browser-resident enterprise…' : 'Java server · centrally administered institutional memory';
-document.querySelector('main')?.prepend(banner);
-if (config.mode === 'browser') {
-  void request('/operations/runtime').then(r => r.json()).then(r => {banner.textContent = `Local Java · ${r.engine === 'wasm' ? 'WebAssembly GC' : 'compiled JavaScript fallback'} · IndexedDB audit and cache · no business requests leave this browser`;}).catch(e => {banner.textContent = String(e);});
-}
+// Offline installation is an infrastructure concern, not a site-wide announcement.
 if ('serviceWorker' in navigator && config.mode === 'browser') {
-  void navigator.serviceWorker.register(new URL('sw.js', scope), {scope: new URL(scope).pathname}).then(async registration => {
-    await navigator.serviceWorker.ready;
-    const note = document.createElement('span'); note.id = 'offline-status'; note.textContent = ' · Release installed for offline use'; note.className='shell'; banner.after(note);
-    const showUpdate = () => {if (registration.waiting) note.textContent = ' · New release ready; close all tabs to update safely';};
-    showUpdate();
-    registration.addEventListener('updatefound', () => registration.installing?.addEventListener('statechange', showUpdate));
-  }).catch(error => {banner.append(` · Offline installation unavailable: ${error}`);});
+  void navigator.serviceWorker.register(new URL('sw.js', scope), {scope: new URL(scope).pathname})
+    .catch(error => console.warn('Offline installation unavailable', error));
 }
 // Raw operational links remain useful on a static host, without pretending to be HTTP endpoints.
 const desks = /^\/(?:fizzbuzz|capacity\/forecast|healthz|readyz|cache\/status|operations\/|audit\/)/;

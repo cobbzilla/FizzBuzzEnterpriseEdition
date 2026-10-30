@@ -19,12 +19,15 @@ function resolve(spec: Spec, value?: Schema): Schema | undefined {
   let node: unknown = spec; for (const key of value.$ref.slice(2).split('/')) node = (node as Record<string, unknown>)?.[key]; return node as Schema | undefined;
 }
 
-function table(headers: string[], rows: (string | undefined)[][]) {
+function table(name: string, headers: string[], rows: (string | undefined)[][]) {
   const wrap = element('div', 'api-table-wrap');
+  wrap.tabIndex = 0;
+  wrap.setAttribute('role','region');
+  wrap.setAttribute('aria-label', name);
   const grid = element('table', 'api-table');
   const heading = element('thead');
   const headerRow = element('tr');
-  headers.forEach((name) => headerRow.append(element('th', '', name)));
+  headers.forEach((name) => {const th = element('th', '', name); th.scope = 'col'; headerRow.append(th);});
   heading.append(headerRow);
   grid.append(heading);
   const body = element('tbody');
@@ -38,7 +41,7 @@ function table(headers: string[], rows: (string | undefined)[][]) {
   return wrap;
 }
 
-function schemaFields(spec: Spec, response: Schema) {
+function schemaFields(spec: Spec, response: Schema, name: string) {
   const content = response.content || {};
   const media = Object.keys(content)[0];
   const schema = resolve(spec, content[media]?.schema);
@@ -46,7 +49,7 @@ function schemaFields(spec: Spec, response: Schema) {
   const detail = element('details', 'api-schema-detail');
   detail.append(element('summary', '', `Response fields · ${media}`));
   const required = new Set(schema.required || []);
-  detail.append(table(['Field', 'Type', 'Meaning'], Object.entries(schema.properties).map(([name, field]) => [
+  detail.append(table(`${name} response fields`, ['Field', 'Type', 'Meaning'], Object.entries(schema.properties).map(([name, field]) => [
     `${name}${required.has(name) ? ' *' : ''}`,
     field.type || (field.$ref ? 'object' : 'value'),
     field.description || (field.enum ? field.enum.join(' · ') : field.const === undefined ? '—' : String(field.const)),
@@ -65,11 +68,15 @@ function tryDesk(path: string, method: string, operation: Operation) {
     : `curl -i '${config.mode === 'server' ? new URL(config.apiBaseUrl || '/', location.origin).href.replace(/\/$/, '') : 'http://localhost:18089'}${requestedPath}'`;
   panel.append(element('p', '', 'Server deployment example (cURL cannot call an in-browser runtime):'));
   panel.append(element('code', '', command));
+  const id = `request-${method}-${path.replace(/[^a-z0-9]/gi,'-')}`;
   const controls = element('div', 'api-try-controls');
   let input: HTMLInputElement | null = null;
   if (hasLimit) {
     const label = element('label', '', 'Upper limit');
     input = element('input');
+    input.id = `${id}-limit`;
+    input.setAttribute('aria-describedby', `${id}-status`);
+    input.addEventListener('input', () => input!.removeAttribute('aria-invalid'));
     input.type = 'number';
     input.min = '0'; input.max = '1000'; input.step = '1'; input.value = '15';
     label.append(input);
@@ -77,28 +84,36 @@ function tryDesk(path: string, method: string, operation: Operation) {
   }
   const button = element('button', '', method === 'post' ? 'Send POST request' : 'Send GET request');
   button.type = 'button';
+  button.setAttribute('aria-label', `${button.textContent} to ${path}`);
+  button.setAttribute('aria-controls', `${id}-output`);
   controls.append(button);
   panel.append(controls);
   const report = element('p', 'api-try-status', method === 'post'
     ? 'This explicit action may update process-local state or add audit entries.'
     : 'The response comes from the configured runtime.');
+  report.id = `${id}-status`;
+  report.setAttribute('aria-atomic','true');
   report.setAttribute('role', 'status');
   report.setAttribute('aria-live', 'polite');
   panel.append(report);
   const output = element('pre', 'api-try-output');
+  output.id = `${id}-output`;
   output.hidden = true;
   output.tabIndex = 0;
   output.setAttribute('role', 'region');
   output.setAttribute('aria-label', `${method.toUpperCase()} ${path} response`);
   panel.append(output);
   button.addEventListener('click', async () => {
+    if (button.getAttribute('aria-disabled') === 'true') return;
     if (input && (!/^\d+$/.test(input.value) || Number(input.value) > 1000)) {
       report.textContent = 'Enter a whole number from 0 through 1000.';
+      input.setAttribute('aria-invalid', 'true');
       input.focus();
       return;
     }
+    input?.removeAttribute('aria-invalid');
     const url = input ? `${path}?limit=${input.value}` : path;
-    button.disabled = true;
+    button.setAttribute('aria-disabled', 'true');
     report.textContent = 'The desk is reviewing your request…';
     const started = performance.now();
     const controller = new AbortController();
@@ -118,7 +133,7 @@ function tryDesk(path: string, method: string, operation: Operation) {
         : `The request failed: ${error.message}`;
     } finally {
       clearTimeout(timer);
-      button.disabled = false;
+      button.removeAttribute('aria-disabled');
     }
   });
   return panel;
@@ -133,11 +148,12 @@ function renderOperation(spec: Spec, path: string, method: string, operation: Op
   header.append(element('span', 'api-summary', operation.summary || path));
   card.append(header);
   const body = element('div', 'api-card-body');
+  body.append(element('h3', 'api-operation-title', `${method.toUpperCase()} ${path}: ${operation.summary || 'Operation'}`));
   body.append(element('p', 'api-description', operation.description || 'No additional guidance.'));
   const parameters = (operation.parameters || []).map((parameter) => resolve(spec, parameter)).filter((value): value is Schema => !!value);
   if (parameters.length) {
     body.append(element('h4', '', 'Parameters'));
-    body.append(table(['Name', 'Location', 'Requirement'], parameters.map((parameter) => [
+    body.append(table(`${method.toUpperCase()} ${path} parameters`, ['Name', 'Location', 'Requirement'], parameters.map((parameter) => [
       parameter.name, parameter.in, `${parameter.required ? 'Required' : 'Optional'} · ${parameter.description || ''}`,
     ])));
   }
@@ -155,12 +171,12 @@ function renderOperation(spec: Spec, path: string, method: string, operation: Op
     if (response.headers && Object.keys(response.headers).length) {
       const headerDetail = element('details', 'api-schema-detail');
       headerDetail.append(element('summary', '', `HTTP ${code} response headers`));
-      headerDetail.append(table(['Header', 'Meaning'], Object.entries(response.headers).map(([name, value]) => [
+      headerDetail.append(table(`${method.toUpperCase()} ${path} HTTP ${code} headers`, ['Header', 'Meaning'], Object.entries(response.headers).map(([name, value]) => [
         name, resolve(spec, value)?.description || 'See the machine-readable charter.',
       ])));
       responses.append(headerDetail);
     }
-    const fields = schemaFields(spec, response);
+    const fields = schemaFields(spec, response, `${method.toUpperCase()} ${path} HTTP ${code}`);
     if (fields) responses.append(fields);
   });
   body.append(responses);
@@ -180,6 +196,7 @@ function filterCards() {
       if (match) groupVisible++;
     });
     department.hidden = groupVisible === 0;
+    sections.querySelector<HTMLAnchorElement>(`a[href="#${department.id}"]`)!.hidden = department.hidden;
     visible += groupVisible;
   });
   status.textContent = `${visible} of ${cards.length} operations shown${needle ? ` for “${search.value.trim()}”` : ''}.`;
