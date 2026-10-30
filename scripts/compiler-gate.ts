@@ -5,7 +5,7 @@ import {createHash} from 'node:crypto';
 import {chromium} from '@playwright/test';
 import {execFileSync} from 'node:child_process';
 execFileSync('mvn',['-q','-f','browser/pom.xml','package','-Dbrowser.mainClass=com.seriouscompany.browser.CompilerGate',`-Dbrowser.outputDirectory=${resolve('browser/target/compiler-gate')}`],{stdio:'inherit'});
-execFileSync('pnpm',['exec','tsc','browser/gate-host.ts','--target','ES2022','--module','ES2022','--outDir','browser/target/host','--skipLibCheck'],{stdio:'inherit'});
+execFileSync('pnpm',['exec','tsc','--ignoreConfig','browser/gate-host.ts','--target','ES2022','--module','ES2022','--outDir','browser/target/host','--skipLibCheck'],{stdio:'inherit'});
 const host = await readFile('browser/target/host/gate-host.js','utf8');
 const server = createServer(async (request, response) => {
   try {
