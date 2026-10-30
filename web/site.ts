@@ -1,3 +1,4 @@
+import {parseMandate,autocorrectMandate,addOrdinals,windowCount,chooseMagnitudeWarning,type MandateInteger} from './mandate-input';
 import {trackUsage} from './telemetry';
 import { request, config } from './runtime';
 const byId = <T extends HTMLElement = HTMLElement>(id: string): T => { const node = document.getElementById(id); if (!node) throw new Error(`Missing element ${id}`); return node as T; };
@@ -11,12 +12,16 @@ const recoveryButton = byId<HTMLButtonElement>('recovery-button');
 let mandateSequence = 0;
 const pauseButton = byId<HTMLButtonElement>('pause-reading');
 const revealButton = byId<HTMLButtonElement>('reveal-all');
+const stopButton = byId<HTMLButtonElement>('stop-reading');
+let streaming = false;
 const followOutput = byId<HTMLInputElement>('follow-output');
 let reading = false;
 let paused = false;
 let revealAll = false;
 let wakeReading: (() => void) | undefined;
 function readingControls() {
+  stopButton.setAttribute('aria-disabled', String(!reading));
+  revealButton.textContent = streaming ? 'Waive disclosure delays' : 'Reveal complete output';
   pauseButton.setAttribute('aria-disabled', String(!reading));
   revealButton.setAttribute('aria-disabled', String(!reading));
   pauseButton.textContent = paused ? 'Resume reading' : 'Pause reading';
@@ -97,19 +102,40 @@ function setText(id: string, value: unknown) {
   byId(id).textContent = String(value);
 }
 
-function validateLimit() {
-  const raw = limitInput.value.trim();
-  const number = Number(raw);
-  if (!/^\d+$/.test(raw) || !Number.isInteger(number) || number < 0 || number > 1000) {
-    limitInput.setAttribute('aria-invalid', 'true');
-    setText('limit-error', 'Enter a whole number from 0 through 1000.');
-    limitInput.focus();
-    return null;
-  }
-  limitInput.removeAttribute('aria-invalid');
-  setText('limit-error', '');
-  return number;
+const autocorrect = byId<HTMLInputElement>('numeric-autocorrect');
+let warnedValue = '';
+let warningIndex = -1;
+function inspectMagnitude() {
+ if (autocorrect.checked) {
+  const before = limitInput.value;const caret = limitInput.selectionStart;
+  limitInput.value = autocorrectMandate(before);
+  if (caret !== null) {const position=autocorrectMandate(before.slice(0,caret)).length;limitInput.setSelectionRange(position,position);}
+ }
+ let limit: MandateInteger | null;
+ try {limit=parseMandate(limitInput.value);} catch {limit=null;}
+ const warning=byId('magnitude-warning');
+ warning.hidden=typeof limit!=='bigint';
+ if(typeof limit==='bigint'&&limitInput.value!==warnedValue) {
+  const selected=chooseMagnitudeWarning(warningIndex);warningIndex=selected.index;
+  warning.textContent=selected.text;warnedValue=limitInput.value;
+ } else if(typeof limit!=='bigint') warnedValue='';
+ return limit;
 }
+limitInput.addEventListener('input',()=>{inspectMagnitude();limitInput.removeAttribute('aria-invalid');setText('limit-error','');});
+autocorrect.addEventListener('change',()=>{inspectMagnitude();limitInput.removeAttribute('aria-invalid');setText('limit-error','');});
+function validateLimit() {
+ const limit=inspectMagnitude();
+ if(limit===null) {
+  limitInput.setAttribute('aria-invalid','true');setText('limit-error','Enter a non-negative whole number using digits 0–9.');limitInput.focus();return null;
+ }
+ limitInput.removeAttribute('aria-invalid');setText('limit-error','');return limit;
+}
+stopButton.addEventListener('click',()=>{
+ if(!reading)return;
+ ++mandateSequence;reading=false;streaming=false;paused=false;wakeReading?.();readingControls();
+ runButton.removeAttribute('aria-disabled');byId('output').removeAttribute('aria-busy');
+ setText('run-status','Proceedings stopped. Already disclosed lines remain visible.');
+});
 
 function showForecast(forecast: Forecast) {
   setText('forecast-numerals', forecast.numeralLines);
@@ -119,8 +145,9 @@ function showForecast(forecast: Forecast) {
   setText('forecast-units', forecast.workloadUnits);
 }
 
-async function loadForecast(limit: number, sequence = mandateSequence) {
-  const reply = await request(`/capacity/forecast?limit=${limit}`);
+async function loadForecast(limit: MandateInteger, sequence = mandateSequence) {
+  const desk=typeof limit==='number'&&limit<=1000?'/capacity/forecast':'/capacity/forecast/extended';
+  const reply = await request(`${desk}?limit=${limit}`);
   if (!reply.ok) throw new Error(`Forecast desk returned ${reply.status}.`);
   const forecast = await reply.json();
   if (sequence === mandateSequence) showForecast(forecast);
@@ -168,13 +195,60 @@ async function revealOutput(text: string, sequence: number, serviceMillis: numbe
   }
 }
 
+async function streamMandate(limit: MandateInteger, sequence: number, started: number) {
+ let next: MandateInteger=typeof limit==='bigint'?1n:1;
+ let disclosed: MandateInteger=typeof limit==='bigint'?0n:0;
+ let first=true;
+ streaming=true;reading=true;paused=false;revealAll=false;readingControls();
+ const output=byId('output');output.textContent='';
+ function append(lines:string[]) {
+  const top=output.scrollTop;const height=parseFloat(getComputedStyle(output).lineHeight)||20;
+  const fragment=document.createDocumentFragment();for(const line of lines)fragment.append(document.createTextNode(line+'\n'));output.append(fragment);
+  let removed=0;while(output.childNodes.length>1000){output.firstChild!.remove();removed++;}
+  if(followOutput.checked)followLatest();else output.scrollTop=Math.max(0,top-removed*height);
+  disclosed=addOrdinals(disclosed,lines.length);
+  setText('output-count',`${disclosed} of ${limit} lines · latest ${Math.min(1000,output.childNodes.length)} retained`);
+ }
+ while(sequence===mandateSequence) {
+  while(paused&&sequence===mandateSequence)await waitForPace();
+  if(sequence!==mandateSequence)return;
+  const count=windowCount(next,limit);
+  const answer=await request(`/fizzbuzz/window?start=${next}&count=${count}`);
+  if(!answer.ok)throw new Error(`Extended proclamation desk returned ${answer.status}.`);
+  const lines=(await answer.text()).trimEnd().split('\n');
+  if(lines.length!==count)throw new Error('The response did not contain the authorized number of lines.');
+  if(sequence!==mandateSequence)return;
+  if(first) {
+   first=false;const elapsed=Math.round(performance.now()-started);
+   setText('latency',`${elapsed} ms · first batch`);setText('cache-result','BYPASS');runButton.removeAttribute('aria-disabled');output.removeAttribute('aria-busy');
+   trackUsage({event:'slopbuzz_demo_run',outcome:'success',runtime_mode:config.mode,duration_ms:elapsed,cache_outcome:'BYPASS'});
+  }
+  setText('trace-result',answer.headers.get('X-SlopBuzz-Trace-Id')||'UNAVAILABLE');
+  for(let i=0;i<lines.length;) {
+   while(paused&&sequence===mandateSequence)await waitForPace();
+   if(sequence!==mandateSequence)return;
+   if(revealAll||Number(speedControl.value)===0) {append(lines.slice(i));i=lines.length;}
+   else {append([lines[i++]]);if(disclosed!==limit)await waitForPace(Number(speedControl.value));}
+  }
+  if(disclosed===limit)break;
+  next=addOrdinals(next,count);
+  setText('run-status',`Extended proceedings in progress. ${disclosed} lines disclosed; use Stop proceedings to adjourn.`);
+  // Even Executive Fiat must return the floor to the browser between finite batches.
+  await new Promise(resolve=>setTimeout(resolve,0));
+ }
+ if(sequence===mandateSequence) {
+  reading=false;streaming=false;readingControls();
+  setText('run-status',`Mandate complete. ${disclosed} lines disclosed; the latest ${output.childNodes.length} remain visible. Extended proceedings are transient.`);
+ }
+}
+
 async function runMandate(event: Event) {
   event.preventDefault();
   if (runButton.getAttribute('aria-disabled') === 'true') return;
   const limit = validateLimit();
   if (limit === null) return;
   const sequence = ++mandateSequence;
-  wakeReading?.(); reading = false; readingControls();
+  wakeReading?.(); reading = false; streaming=false; readingControls();
   runButton.setAttribute('aria-disabled', 'true');
   byId('output').setAttribute('aria-busy', 'true');
   setText('run-status', `The committee is considering ${limit} numbers…`);
@@ -186,6 +260,7 @@ async function runMandate(event: Event) {
   });
   const started = performance.now();
   try {
+    if(typeof limit==='bigint'||limit>1000) {await streamMandate(limit,sequence,started);return;}
     const answer = await request(`/fizzbuzz?limit=${limit}`);
     const elapsed = performance.now() - started;
     if (!answer.ok) throw new Error(`Proclamation desk returned ${answer.status}.`);
@@ -202,6 +277,7 @@ async function runMandate(event: Event) {
   } catch (error) {
     trackUsage({event:'slopbuzz_demo_run',outcome:'failure',runtime_mode:config.mode,duration_ms:performance.now()-started});
     if (sequence === mandateSequence) {
+      reading=false;streaming=false;readingControls();
       setText('run-status', error.name === 'AbortError'
         ? 'The desk did not answer within eight seconds. Please try again.'
         : `The mandate could not be completed: ${error.message}`);
@@ -329,7 +405,7 @@ void refreshOperations();
 
 interface Canary {state: string;sequence: number;finding: string;observedLines: number;durationMicros: number;auditChainValid: boolean}
 interface Recovery {state: string;sequence: number;finding: string;storedEntries: number;durationMicros: number;durable: boolean}
-interface Forecast {numeralLines: number;fizzLines: number;buzzLines: number;fizzBuzzLines: number;workloadUnits: number}
+interface Forecast {numeralLines: number|string;fizzLines: number|string;buzzLines: number|string;fizzBuzzLines: number|string;workloadUnits: number|string}
 
 interface ProcurementDossier {
  product: string; text: string; assembly: string; demonstration: boolean; auditTransactions: number;

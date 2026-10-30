@@ -48,6 +48,11 @@ export async function verifyPublic(origin: string, revision: string) {
    assert.deepEqual((await page.locator('#output').textContent())?.trim().split('\n'), expected);
    await page.click('#run-button');
    await expect(page.locator('#cache-result')).toHaveText('HIT');
+   await page.fill('#limit','1001');await page.click('#run-button');
+   await expect(page.locator('#run-status')).toContainText('Mandate complete. 1001 lines disclosed');
+   await page.fill('#limit','9007199254740993');await expect(page.locator('#magnitude-warning')).toBeVisible();
+   await page.click('#run-button');await expect(page.locator('#output-count')).toContainText('of 9007199254740993 lines');
+   await page.click('#stop-reading');await expect(page.locator('#run-status')).toContainText('Proceedings stopped');
    await page.click('#procurement-button');
    await expect(page.locator('#procurement-status')).toContainText('8 separate line items');
    await expect(page.locator('#procurement-items li')).toHaveCount(8);

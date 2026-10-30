@@ -110,3 +110,13 @@ fresh browser contexts isolate verification from the deployed audit volume.
 browser database against bundled JVM fixtures. That local rehearsal is not a
 new JVM execution or a CI certification. A missing or mismatched report is
 shown as NOT_RUN, never inherited as a pass from another release.
+
+## Extended numerical mandates
+
+The main demo has no upper magnitude cap. It uses Number through the safe integer
+boundary and native BigInt beyond it, with optional numeric-character correction.
+Extended runs use the shared Java BigInteger window and forecast bureaus; they
+work offline and in server mode. These windows are transient and do not grow the
+retained audit/cache repository. Output retains the latest 1000 displayed lines,
+with pause, expedited disclosure and Stop controls. See
+[ADR 0023](ADR-0023-unbounded-mandates.md) for contracts and precision guarantees.

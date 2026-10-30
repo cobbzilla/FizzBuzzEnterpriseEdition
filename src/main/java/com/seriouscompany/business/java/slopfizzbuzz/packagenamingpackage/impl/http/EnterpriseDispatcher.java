@@ -39,6 +39,25 @@ public final class EnterpriseDispatcher {
  this(service,transactions,journal,cache,release,clock,new com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.runtime.RuntimeIdentity(){public String toJson(){return "{\"mode\":\"server\",\"engine\":\"JVM\",\"storage\":\"configured JVM audit repository\",\"cache\":\"Redis adapter\",\"protocol\":1}";}});
  }
  public EnterpriseDispatcher(SlopFizzBuzz service, OutputTransactionCoordinator transactions, OutputAuditJournal journal, OutputCache cache, ReleaseCustodyReport release, final RuntimeClock clock, final com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.runtime.RuntimeIdentity identity) {
+  final com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.capacity.ExtendedMagnitudeBureau magnitude=new com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.capacity.ExtendedMagnitudeBureau();
+  register("/fizzbuzz/window",new DeskHandler(){public void handle(EnterpriseExchange exchange)throws IOException {
+   if(!"GET".equals(exchange.getRequestMethod())) {exchange.headers.set("Allow","GET");respond(exchange,405,"Method not authorized\n");return;}
+   String query=exchange.getRequestURI().getRawQuery();
+   int split=query==null?-1:query.indexOf("&count=");
+   if(query==null||!query.startsWith("start=")||split<6||!com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.capacity.ExtendedMagnitudeBureau.isDecimal(query.substring(6,split))||!com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.capacity.ExtendedMagnitudeBureau.isDecimal(query.substring(split+7))||query.substring(split+7).length()>3) {respond(exchange,400,"Use a positive decimal start and a count from 1 through 100\n");return;}
+   try {
+    java.math.BigInteger start=new java.math.BigInteger(query.substring(6,split));int count=Integer.parseInt(query.substring(split+7));
+    String body=magnitude.window(start,count);
+    exchange.headers.set("Cache-Control","no-store");exchange.headers.set("X-SlopBuzz-Cache","BYPASS");exchange.headers.set("X-SlopBuzz-Proceedings","TRANSIENT");
+    respond(exchange,200,body);
+   } catch(IllegalArgumentException invalid) {respond(exchange,400,"Use a positive decimal start and a count from 1 through 100\n");}
+  }});
+  register("/capacity/forecast/extended",new DeskHandler(){public void handle(EnterpriseExchange exchange)throws IOException {
+   if(!"GET".equals(exchange.getRequestMethod())) {exchange.headers.set("Allow","GET");respond(exchange,405,"Method not authorized\n");return;}
+   String query=exchange.getRequestURI().getRawQuery();
+   if(query==null||!query.startsWith("limit=")||!com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.capacity.ExtendedMagnitudeBureau.isDecimal(query.substring(6))) {respond(exchange,400,"Use a non-negative decimal limit\n");return;}
+   exchange.headers.set("Cache-Control","no-store");respond(exchange,200,magnitude.forecast(new java.math.BigInteger(query.substring(6))),"application/json; charset=UTF-8");
+  }});
   register("/procurement/dossier",new DeskHandler(){public void handle(EnterpriseExchange exchange)throws IOException {
    if(!"GET".equals(exchange.getRequestMethod())) {exchange.headers.set("Allow","GET");respond(exchange,405,"Method not authorized\n");return;}
    String query=exchange.getRequestURI().getRawQuery();

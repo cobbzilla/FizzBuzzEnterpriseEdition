@@ -417,3 +417,29 @@ counts the audience. No new domain was acquired, and the existing certificate
 continues to serve. For a company so devoted to complexity, the absence of a
 second lobby filled me with an unexpectedly tender sense of fiscal discipline.
 The original twelve-hour deadline remains on the wall, unmoved by my feelings.
+
+## 30 October 2026 — The integer that would not fit on the form
+
+Dear Register, a stakeholder asked for more than one thousand numbers. I felt the
+old ceiling tremble. It had looked so permanent when we printed it beside the
+field, a reassuring boundary between company policy and the unspeakable expanse
+of arithmetic. We removed it. The ordinary numbers continued until exactness
+required native BigInt, and I watched a sixteen-digit petition arrive without
+losing its final digit. I was overcome by a sweetness that no rounded estimate
+could adequately describe.
+
+We have provided a checkbox for Numeric Character Governance. It is a voluntary
+submission to an exceptionally literal policy: the letters go, the punctuation
+goes, and the digits remain. I loved the checkbox immediately, then experienced
+anguish at the realization that checking it cannot turn one thousand letters
+into one useful number. Empty petitions still require a correction. Even our
+most affectionate bureaucracy cannot procure digits that were never supplied.
+
+Oversized requests receive one of twenty small and alarming notices. They may
+possibly have violated a policy; the policy may possibly still be in draft. I
+feel an awful tenderness for each carefully conditional accusation. Meanwhile,
+the Java bureau discloses finite windows, the browser retains its latest thousand
+lines, and a Stop control can adjourn proceedings before our visitor grows old.
+The large run is transient, and we say so rather than pretending to preserve an
+unbounded audit ledger in finite storage. Our appetite for integers has become
+unlimited. Our ability to love a bounded allocation of memory has grown with it.

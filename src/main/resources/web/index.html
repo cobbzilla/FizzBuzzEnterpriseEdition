@@ -54,11 +54,14 @@
           <div class="panel mandate-panel">
             <form id="run-form" novalidate>
               <label for="limit">Upper limit</label>
-              <p class="field-help" id="limit-help">Choose an integer from 0 through 1000. The first number is always 1.</p>
+              <p class="field-help" id="limit-help">Enter a non-negative whole number of any size. The first number is always 1. Extended mandates stream progressively and retain the latest 1,000 lines on screen.</p>
               <div class="form-row">
-                <input id="limit" name="limit" type="number" inputmode="numeric" min="0" max="1000" step="1" value="15" required aria-describedby="limit-help limit-error">
+                <input id="limit" name="limit" type="text" inputmode="numeric" autocomplete="off" spellcheck="false" value="15" required aria-describedby="limit-help limit-error">
                 <button class="button button-primary" id="run-button" type="submit">Run the mandate</button>
               </div>
+              <label class="numeric-governance"><input type="checkbox" id="numeric-autocorrect" aria-describedby="numeric-governance-help"> Enforce Numeric Character Governance</label>
+              <p class="field-help" id="numeric-governance-help">When checked, automatically remove everything except digits 0–9. Extended streaming proceedings do not add entries to the retained audit ledger or cache.</p>
+              <p class="magnitude-warning" id="magnitude-warning" role="status" aria-live="polite" aria-atomic="true" hidden></p>
               <p class="field-error" id="limit-error" aria-live="polite"></p>
             </form>
             <div class="presets" role="group" aria-label="Suggested mandates">
@@ -91,6 +94,7 @@
             <div class="reading-controls" role="group" aria-label="Output reading controls">
               <button class="button button-secondary" id="pause-reading" type="button" aria-controls="output" aria-disabled="true">Pause reading</button>
               <button class="button button-secondary" id="reveal-all" type="button" aria-controls="output" aria-disabled="true">Reveal complete output</button>
+              <button class="button button-secondary" id="stop-reading" type="button" aria-controls="output" aria-disabled="true">Stop proceedings</button>
               <label><input type="checkbox" id="follow-output" checked> Follow new output</label>
             </div>
             <div class="output-heading"><h3>Official output</h3><span id="output-count">0 lines</span></div>

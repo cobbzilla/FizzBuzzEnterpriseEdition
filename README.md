@@ -169,3 +169,9 @@ The [Glyph Procurement Directorate](docs/ADR-0022-glyph-procurement.md) requires
 position-specific receiving certificates for every Fizz/Buzz character. Inspect
 its bill of materials in the website’s Operations section or through
 `GET /procurement/dossier?product=FizzBuzz` in the configured runtime.
+
+The web demo also accepts [arbitrary-magnitude upper limits](docs/ADR-0023-unbounded-mandates.md),
+using native BigInt when Number would lose precision. Optional Numeric Character
+Governance corrects pasted values; extended transient runs can be paused or stopped
+and retain the latest 1000 lines. Twenty provisional policy warnings attend
+requests beyond the ordinary-number jurisdiction.

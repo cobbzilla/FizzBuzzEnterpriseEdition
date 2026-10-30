@@ -151,8 +151,9 @@ function schemaFields(spec, response, name) {
 function tryDesk(spec, path, method, operation) {
   const panel = element("div", "api-try");
   panel.append(element("h4", "", "Live request desk"));
-  const hasLimit = (operation.parameters || []).some((parameter) => parameter.$ref?.endsWith("/Limit") || parameter.name === "limit");
-  const requestedPath = hasLimit ? `${path}?limit=15` : path;
+  const hasLimit = (operation.parameters || []).some((parameter) => parameter.$ref?.endsWith("/Limit") || parameter.name === "limit" && parameter.schema?.type !== "string");
+  const magnitudeFields = path === "/fizzbuzz/window" ? [{ name: "start", label: "Starting ordinal", value: "9007199254740990", minimum: 1 }, { name: "count", label: "Window lines", value: "15", minimum: 1, maximum: 100 }] : path === "/capacity/forecast/extended" ? [{ name: "limit", label: "Upper limit", value: "9007199254740993", minimum: 0 }] : [];
+  const requestedPath = hasLimit ? `${path}?limit=15` : magnitudeFields.length ? `${path}?${new URLSearchParams(magnitudeFields.map((field) => [field.name, field.value]))}` : path;
   const command = method === "post" ? `curl -i -X POST '${config.mode === "server" ? new URL(config.apiBaseUrl || "/", location.origin).href.replace(/\/$/, "") : "http://localhost:18089"}${path}'` : `curl -i '${config.mode === "server" ? new URL(config.apiBaseUrl || "/", location.origin).href.replace(/\/$/, "") : "http://localhost:18089"}${requestedPath}'`;
   panel.append(element("p", "", "Server deployment example (cURL cannot call an in-browser runtime):"));
   panel.append(element("code", "", command));
@@ -173,6 +174,24 @@ function tryDesk(spec, path, method, operation) {
     label.append(input);
     controls.append(label);
   }
+  const magnitudeInputs = magnitudeFields.map((field) => {
+    const label = element("label", "", field.label);
+    const input2 = element("input");
+    input2.type = field.maximum ? "number" : "text";
+    input2.inputMode = "numeric";
+    input2.value = field.value;
+    input2.id = `${id}-${field.name}`;
+    input2.setAttribute("aria-describedby", `${id}-status`);
+    if (field.maximum) {
+      input2.min = String(field.minimum);
+      input2.max = String(field.maximum);
+      input2.step = "1";
+    }
+    input2.addEventListener("input", () => input2.removeAttribute("aria-invalid"));
+    label.append(input2);
+    controls.append(label);
+    return { field, input: input2 };
+  });
   const productParameter = (operation.parameters || []).map((parameter) => resolve(spec, parameter)).find((parameter) => parameter?.name === "product");
   let productSelect = null;
   if (productParameter) {
@@ -216,8 +235,18 @@ function tryDesk(spec, path, method, operation) {
       input.focus();
       return;
     }
+    for (const { field, input: decimal } of magnitudeInputs) {
+      const value = decimal.value.trim();
+      if (!/^[0-9]+$/.test(value) || field.minimum === 1 && /^0+$/.test(value) || field.maximum && Number(value) > field.maximum) {
+        report.textContent = field.maximum ? "Enter a window count from 1 through 100." : field.minimum === 1 ? "Enter a positive whole number using digits 0\u20139." : "Enter a non-negative whole number using digits 0\u20139.";
+        decimal.setAttribute("aria-invalid", "true");
+        decimal.focus();
+        return;
+      }
+      decimal.removeAttribute("aria-invalid");
+    }
     input?.removeAttribute("aria-invalid");
-    const url = input ? `${path}?limit=${input.value}` : productSelect ? `${path}?product=${encodeURIComponent(productSelect.value)}` : path;
+    const url = magnitudeInputs.length ? `${path}?${new URLSearchParams(magnitudeInputs.map(({ field, input: input2 }) => [field.name, input2.value.trim()]))}` : input ? `${path}?limit=${input.value}` : productSelect ? `${path}?product=${encodeURIComponent(productSelect.value)}` : path;
     button.setAttribute("aria-disabled", "true");
     report.textContent = "The desk is reviewing your request\u2026";
     const started = performance.now();
