@@ -13,7 +13,7 @@ async function initialize() {
  const pageUrl=new URL(location.href);let active=false;
  const properties={application:'slopbuzz',environment:local?'preview':config.environment,release:config.revision,$current_url:cleanUrl(location.href),$pathname:location.pathname,$referrer:document.referrer?new URL(document.referrer).origin:'',$referring_domain:document.referrer?new URL(document.referrer).hostname:'$direct',...Object.fromEntries(['utm_source','utm_medium','utm_campaign'].filter(k=>pageUrl.searchParams.has(k)).map(k=>[k,pageUrl.searchParams.get(k)!.slice(0,150)]))};
  posthog.init(config.token,{
-  api_host:'https://us.i.posthog.com',cookieless_mode:'always',person_profiles:'never',respect_dnt:false,
+  api_host:new URL(config.apiHost||'https://us.i.posthog.com',scope).href.replace(/\/$/,''),ui_host:'https://us.posthog.com',cookieless_mode:'always',person_profiles:'never',respect_dnt:false,
   autocapture:false,capture_pageview:false,capture_pageleave:false,disable_session_recording:true,disable_surveys:true,
   capture_heatmaps:false,capture_dead_clicks:false,capture_exceptions:false,capture_performance:false,
   advanced_disable_flags:true,disable_external_dependency_loading:true,persistence:'memory',disable_persistence:true,

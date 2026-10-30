@@ -1,3 +1,4 @@
+import {verifyAnalytics} from './verify-analytics.ts';
 import assert from 'node:assert/strict';
 import {chromium, firefox, webkit, expect} from '@playwright/test';
 
@@ -78,4 +79,5 @@ export async function verifyPublic(origin: string, revision: string) {
    await browser.close();
   }
  }
+ if ((await get('/analytics-config.json')).enabled) await verifyAnalytics(origin, revision);
 }

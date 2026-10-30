@@ -82,8 +82,9 @@ TeaVM's generated WebAssembly JSO wrappers use dynamic JavaScript functions.
 The supplied hosts allow `unsafe-eval` **only in the runtime worker's response
 CSP**. The HTML document retains its stricter policy. A host that forbids those
 wrappers selects the JavaScript fallback. Serve `.wasm` as `application/wasm`.
-There are no remote runtime scripts, fonts, analytics, or business API calls
-in browser mode.
+Runtime scripts and fonts are bundled, and business operations stay local.
+Optional cookieless analytics is forwarded to PostHog through the first-party
+intake proxy; it is not required for offline operation.
 
 ## Evidence
 

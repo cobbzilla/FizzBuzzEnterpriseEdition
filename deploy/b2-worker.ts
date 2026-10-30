@@ -1,7 +1,9 @@
+import {proxyIntake} from './intake-proxy.ts';
 export interface Env {B2_ORIGIN:string}
 export async function serve(request:Request,env:Env,fetchOrigin:typeof fetch=fetch):Promise<Response>{
  const url=new URL(request.url);
  if(url.protocol!=='https:'){url.protocol='https:';return Response.redirect(url.href,308);}
+ if(url.pathname.startsWith('/intake/'))return proxyIntake(request,fetchOrigin,request.headers.get('CF-Connecting-IP')||undefined);
  if(!['GET','HEAD'].includes(request.method))return new Response('Method not allowed',{status:405,headers:{Allow:'GET, HEAD'}});
  let path:string;try{path=decodeURIComponent(url.pathname);}catch{return new Response('Invalid path',{status:400});}
  if(path.startsWith('//')||path.split('/').some(p=>p==='..'||p==='.'||p.includes('\\')||p.includes('\0')))return new Response('Invalid path',{status:400});
@@ -19,7 +21,7 @@ export async function serve(request:Request,env:Env,fetchOrigin:typeof fetch=fet
  const result=new Headers();for(const name of ['content-type','content-length','etag','last-modified','content-range','accept-ranges']){const value=upstream.headers.get(name);if(value)result.set(name,value);}
  result.set('Cache-Control',immutable?'public, max-age=31536000, immutable':'no-cache');
  result.set('X-Content-Type-Options','nosniff');result.set('Referrer-Policy','strict-origin-when-cross-origin');
- result.set('Content-Security-Policy',path.endsWith('/runtime-worker.js')?"default-src 'self'; script-src 'self' 'unsafe-eval'; connect-src 'self'":"default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self'; img-src 'self' data:; connect-src 'self' https://us.i.posthog.com; worker-src 'self'; base-uri 'none'; frame-ancestors 'none'");
+ result.set('Content-Security-Policy',path.endsWith('/runtime-worker.js')?"default-src 'self'; script-src 'self' 'unsafe-eval'; connect-src 'self'":"default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self'; img-src 'self' data:; connect-src 'self'; worker-src 'self'; base-uri 'none'; frame-ancestors 'none'");
  return new Response(request.method==='HEAD'?null:upstream.body,{status:upstream.status,headers:result});
 }
 export default {fetch:(request:Request,env:Env)=>serve(request,env)};

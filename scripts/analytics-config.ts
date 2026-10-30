@@ -6,5 +6,5 @@ export async function analyticsConfig() {
  const enabled=process.env.SLOPBUZZ_ANALYTICS_ENABLED==='true';
  const token=process.env.POSTHOG_TOKEN||values.POSTHOG_TOKEN||'';
  if(enabled&&!/^phc_[\w-]+$/.test(token))throw new Error('Analytics requires a public PostHog project token');
- return {enabled,token:enabled?token:'',apiHost:'https://us.i.posthog.com',environment:process.env.SLOPBUZZ_ANALYTICS_ENVIRONMENT==='preview'?'preview':'production',allowLocal:process.env.SLOPBUZZ_ANALYTICS_ALLOW_LOCAL==='true'};
+ return {enabled,token:enabled?token:'',apiHost:'/intake',environment:process.env.SLOPBUZZ_ANALYTICS_ENVIRONMENT==='preview'?'preview':'production',allowLocal:process.env.SLOPBUZZ_ANALYTICS_ALLOW_LOCAL==='true'};
 }
