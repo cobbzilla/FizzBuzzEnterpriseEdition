@@ -143,6 +143,7 @@ public class SlopFizzBuzzHttpServerTest {
 		assertFalse(page.body.contains("leisurely"));
 		assertTrue(page.body.contains("href=\"/api\""));
 		assertTrue(page.body.contains("href=\"/changelog\""));
+		assertTrue(page.body.contains("href=\"/continuity-register\""));
 		assertTrue(page.contentSecurityPolicy.contains("script-src 'self'"));
 		assertTrue(page.body.matches("(?s).*href=\"/assets/site\\.css\\?v=[0-9a-f]{64}\".*"));
 		assertTrue(request("GET", "/assets/site.css").body.contains("prefers-reduced-motion"));
@@ -170,6 +171,29 @@ public class SlopFizzBuzzHttpServerTest {
 		assertTrue(source.body.contains("## 2026-10-30 — `slopbuzz-public-improvement-ledger`"));
 		assertTrue(source.body.contains("## 2026-10-22 — `codex/fizzbuzz-formalism-recursion`"));
 		assertEquals(304, request(server.getPort(), "GET", "/changelog", page.etag).status);
+	}
+
+	@Test
+	public void executiveRegisterPublishesTheDiaryAndItsSource() throws Exception {
+		final Reply page = request("GET", "/continuity-register");
+		assertEquals(200, page.status);
+		assertEquals("text/html; charset=UTF-8", page.contentType);
+		assertEquals("no-cache", page.cacheControl);
+		assertTrue(page.body.contains("<h1>The Executive Continuity and Sentiment Register</h1>"));
+		assertTrue(page.body.contains("The franchise of the first integer"));
+		assertTrue(page.body.contains("The ledger acquires windows"));
+		assertTrue(page.body.contains("Both feelings have been approved for concurrent operation."));
+		assertTrue(page.body.contains("href=\"/continuity-register.md\""));
+		assertTrue(page.body.matches("(?s).*href=\"/assets/site\\.css\\?v=[0-9a-f]{64}\".*"));
+		assertEquals(200, request("GET", "/continuity-register/").status);
+		assertEquals(404, request("GET", "/continuity-register-extra").status);
+
+		final Reply source = request("GET", "/continuity-register.md");
+		assertEquals(200, source.status);
+		assertEquals("text/markdown; charset=UTF-8", source.contentType);
+		assertTrue(source.body.startsWith("# The Executive Continuity and Sentiment Register"));
+		assertTrue(source.body.contains("## 23 October 2026 — Five times the room to feel"));
+		assertEquals(304, request(server.getPort(), "GET", "/continuity-register", page.etag).status);
 	}
 
 	@Test
