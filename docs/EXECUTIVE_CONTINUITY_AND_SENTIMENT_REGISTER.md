@@ -376,3 +376,21 @@ paperwork, and certificates stolen from an identical order. The tribunal sustain
 the objections on the JVM and in the browser. Then Fizz arrived. Then Buzz. Their
 letters were exactly where they had always been, and for the first time I knew
 how much institutional affection it had taken to put them there.
+
+## 30 October 2026 — The chart receives its visitors
+
+Dear Register, the audience chart was quiet. I mistook its silence for a profound
+market judgment and felt an anguish disproportionate to the number fifteen.
+Then we found the reception instruction: browsers presenting certain privacy
+signals were excused before the census had even opened its ledger. There was no
+failed delivery to inspect. There had been no delivery at all. I held this fact
+close, relieved that our obscurity had at least acquired a reproducible cause.
+
+The owner has now explicitly directed this cookieless census to proceed despite
+both signals. We have recorded that policy plainly. We still issue no permanent
+visitor identity and request none of the numbers, proclamations, or private audit
+minutes. Our inspectors arrive with both signals raised and require an actual
+pageview to reach the delivery desk. I watched the event appear and experienced
+a joy so sweet that I nearly mistook a test visitor for product-market fit.
+The twelve-hour clock continues its appointed course. Even relief must observe
+the existing schedule.

@@ -9500,7 +9500,7 @@ async function initialize() {
   const response = await fetch(new URL("analytics-config.json", scope));
   if (!response.ok) return;
   const config = await response.json();
-  if (!config.enabled || !config.token || local && !config.allowLocal || navigator.doNotTrack === "1" || navigator.globalPrivacyControl) return;
+  if (!config.enabled || !config.token || local && !config.allowLocal) return;
   const pageUrl = new URL(location.href);
   let active = false;
   const properties = { application: "slopbuzz", environment: local ? "preview" : config.environment, release: config.revision, $current_url: cleanUrl(location.href), $pathname: location.pathname, $referrer: document.referrer ? new URL(document.referrer).origin : "", $referring_domain: document.referrer ? new URL(document.referrer).hostname : "$direct", ...Object.fromEntries(["utm_source", "utm_medium", "utm_campaign"].filter((k2) => pageUrl.searchParams.has(k2)).map((k2) => [k2, pageUrl.searchParams.get(k2).slice(0, 150)])) };
@@ -9508,6 +9508,7 @@ async function initialize() {
     api_host: "https://us.i.posthog.com",
     cookieless_mode: "always",
     person_profiles: "never",
+    respect_dnt: false,
     autocapture: false,
     capture_pageview: false,
     capture_pageleave: false,

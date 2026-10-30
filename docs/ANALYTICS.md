@@ -4,7 +4,8 @@ PostHog counts page visits and completed demo/API requests. Tracking is cookiele
 no identification, session replay, automatic click capture, or analytics storage.
 Daily visitors are estimates, not cross-day unique people. Numerical inputs,
 outputs, audit records, and receipts are excluded. Do Not Track and Global Privacy
-Control prevent initialization. Offline use never depends on analytics.
+Control do not disable this cookieless census. This is an explicit site policy;
+collection can still be disabled through the analytics configuration. Offline use never depends on analytics.
 
 Production static build:
 
