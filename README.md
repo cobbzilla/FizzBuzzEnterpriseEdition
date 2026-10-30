@@ -119,12 +119,17 @@ repository is file-backed; it does not restore a backup.
 
 ## Interactive world showcase
 
-Run `docker compose up --build -d` and open `http://localhost:8080/` to see
-the [interactive website](docs/ADR-0012-world-showcase.md), including a live
-FizzBuzz demo, forecast, operational desks, evidence dossier, and an About
-section for The Serious Business Company, Inc. The stack uses a private Redis
-cache and a durable H2 audit volume. See the [showcase runbook](docs/SHOWCASE_RUNBOOK.md)
-for deployment and verification notes.
+The showcase now defaults to a **static site running the real Java enterprise
+inside the browser**, compiled to WebAssembly GC with a same-source JavaScript
+fallback. Run `pnpm install --frozen-lockfile`, `pnpm build`, and `pnpm preview`,
+then open http://localhost:18090/. Publish `dist/` to a static host.
+
+The [browser residency charter](docs/BROWSER_RUNTIME.md) documents builds,
+offline operation, persistent IndexedDB custody, cross-tab ownership, the
+optional Java server configuration, and the comprehensive equivalence suite.
+The public `/validation/` page shows release evidence and offers an isolated
+rehearsal against JVM fixtures. `docker compose up --build -d` still runs the
+Spring/Redis/H2 deployment.
 
 The demo's mandatory disclosure cadence defaults to **Full Board Ratification**
 and scrolls as each line appears. Choose **Executive Fiat** for immediate display with
@@ -144,7 +149,7 @@ include it for individual lines. A receipt is a search key, not an identity or
 external tracing service.
 
 In this shared workspace, run `./scripts/deploy-preview.sh` to update the
-long-lived local demo at `http://localhost:18088/` after a merge. It recreates
-the app container in place and preserves the Redis service and H2 audit volume.
+long-lived local demo at `http://localhost:18088/` after a merge. It publishes the static site on port 18088, retains the Java service on port
+18089, and preserves the existing Redis service and H2 audit volume.
 The [release custody desk](docs/ADR-0016-release-custody.md) verifies readiness
 and the deployed Git revision; the site displays that revision in Operations.

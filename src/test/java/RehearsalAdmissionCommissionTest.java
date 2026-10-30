@@ -1,3 +1,4 @@
+import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.audit.JvmAuditJournalFactory;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -17,7 +18,7 @@ public class RehearsalAdmissionCommissionTest {
 	@Test
 	public void repeatedHearingBorrowsTheVerdictUntilTheLeaseExpires() {
 		final MutableNanoClock clock = new MutableNanoClock();
-		final OutputAuditJournal journal = new OutputAuditJournal(new EphemeralAuditStore());
+		final OutputAuditJournal journal = JvmAuditJournalFactory.create(new EphemeralAuditStore());
 		final SlopFizzBuzz silentService = new SlopFizzBuzz() {
 			@Override public void slopFizzBuzz(final int limit) { }
 		};

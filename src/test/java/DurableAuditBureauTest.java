@@ -1,3 +1,4 @@
+import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.audit.JvmAuditJournalFactory;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -30,18 +31,18 @@ public class DurableAuditBureauTest {
 	@Test
 	public void closedAndReopenedRepositoryRemembersCommittedAndAbortedEntries() throws Exception {
 		final String url = jdbcUrl();
-		final OutputAuditJournal first = new OutputAuditJournal(new H2AuditStore(url));
+		final OutputAuditJournal first = JvmAuditJournalFactory.create(new H2AuditStore(url));
 		first.record(1, "1\n", OutputDisposition.COMMITTED);
 		first.record(2, "unfinished", OutputDisposition.ABORTED);
 
-		final OutputAuditJournal reopened = new OutputAuditJournal(new H2AuditStore(url));
+		final OutputAuditJournal reopened = JvmAuditJournalFactory.create(new H2AuditStore(url));
 		assertEquals(2, reopened.snapshot().size());
 		assertEquals("1\n", reopened.snapshot().get(0).getPayload());
 		assertEquals(OutputDisposition.ABORTED, reopened.snapshot().get(1).getDisposition());
 		assertTrue(reopened.verifyChain());
 
 		reopened.record(3, "Fizz\n", OutputDisposition.COMMITTED);
-		final OutputAuditJournal thirdShift = new OutputAuditJournal(new H2AuditStore(url));
+		final OutputAuditJournal thirdShift = JvmAuditJournalFactory.create(new H2AuditStore(url));
 		assertEquals(3, thirdShift.snapshot().size());
 		assertEquals(3L, thirdShift.snapshot().get(2).getSequence());
 		assertTrue(thirdShift.verifyChain());
@@ -50,14 +51,14 @@ public class DurableAuditBureauTest {
 	@Test
 	public void tamperedDatabaseIsRejectedAtTheDoor() throws Exception {
 		final String url = jdbcUrl();
-		final OutputAuditJournal journal = new OutputAuditJournal(new H2AuditStore(url));
+		final OutputAuditJournal journal = JvmAuditJournalFactory.create(new H2AuditStore(url));
 		journal.record(15, "FizzBuzz\n", OutputDisposition.COMMITTED);
 		try (Connection connection = DriverManager.getConnection(url);
 				Statement statement = connection.createStatement()) {
 			statement.executeUpdate("UPDATE output_audit SET payload = 'forged' WHERE sequence_number = 1");
 		}
 		try {
-			new OutputAuditJournal(new H2AuditStore(url));
+			JvmAuditJournalFactory.create(new H2AuditStore(url));
 			fail("The forged chain must not be accepted.");
 		} catch (final IllegalStateException expected) {
 			assertEquals("The existing audit chain failed verification.", expected.getMessage());
@@ -66,7 +67,7 @@ public class DurableAuditBureauTest {
 
 	@Test
 	public void recoveryRehearsalReopensDurableMemoryWithoutWritingAnotherCertificate() {
-		final OutputAuditJournal journal = new OutputAuditJournal(new H2AuditStore(jdbcUrl()));
+		final OutputAuditJournal journal = JvmAuditJournalFactory.create(new H2AuditStore(jdbcUrl()));
 		journal.record(15, "FizzBuzz\n", OutputDisposition.COMMITTED);
 		final RecoveryRehearsalBureau bureau = new RecoveryRehearsalBureau(journal);
 		assertEquals(RecoveryVerdict.State.NOT_RUN, bureau.latest().getState());
@@ -82,7 +83,7 @@ public class DurableAuditBureauTest {
 	@Test
 	public void recoveryRehearsalFindsTamperingAfterTheProcessHasStarted() throws Exception {
 		final String url = jdbcUrl();
-		final OutputAuditJournal journal = new OutputAuditJournal(new H2AuditStore(url));
+		final OutputAuditJournal journal = JvmAuditJournalFactory.create(new H2AuditStore(url));
 		journal.record(15, "FizzBuzz\n", OutputDisposition.COMMITTED);
 		try (Connection connection = DriverManager.getConnection(url);
 				Statement statement = connection.createStatement()) {
@@ -101,7 +102,7 @@ public class DurableAuditBureauTest {
 			@Override public List<OutputAuditEntry> load() { return java.util.Collections.emptyList(); }
 			@Override public void append(final OutputAuditEntry entry) { }
 		};
-		final OutputAuditJournal journal = new OutputAuditJournal(vanishingStore);
+		final OutputAuditJournal journal = JvmAuditJournalFactory.create(vanishingStore);
 		journal.record(1, "1\n", OutputDisposition.COMMITTED);
 		final RecoveryVerdict verdict = new RecoveryRehearsalBureau(journal).rehearse();
 		assertEquals(RecoveryVerdict.State.FAILED, verdict.getState());
@@ -121,7 +122,7 @@ public class DurableAuditBureauTest {
 				throw new IllegalStateException("The filing cabinet is locked.");
 			}
 		};
-		final OutputAuditJournal journal = new OutputAuditJournal(refusingStore);
+		final OutputAuditJournal journal = JvmAuditJournalFactory.create(refusingStore);
 		try {
 			journal.record(1, "1\n", OutputDisposition.COMMITTED);
 			fail("The filing refusal must reach the caller.");

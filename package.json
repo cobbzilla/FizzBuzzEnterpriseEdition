@@ -1,0 +1,22 @@
+{
+  "name": "slopbuzz-enterprise-showcase",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.20.0",
+  "devDependencies": {
+    "@playwright/test": "^1.64.1",
+    "@types/node": "^26.6.6",
+    "esbuild": "^0.28.2",
+    "marked": "^18.1.2",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.5"
+  },
+  "scripts": {
+    "build": "node scripts/build.ts",
+    "typecheck": "tsc --noEmit",
+    "preview": "node scripts/serve.ts",
+    "test:parity": "node scripts/parity.ts",
+    "test:e2e": "node scripts/e2e.ts",
+    "test:compiler-gate": "node scripts/compiler-gate.ts"
+  }
+}

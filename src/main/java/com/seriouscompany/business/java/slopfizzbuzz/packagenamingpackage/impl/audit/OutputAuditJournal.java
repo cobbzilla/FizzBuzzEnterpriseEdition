@@ -1,34 +1,27 @@
 package com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.audit;
 
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.logging.Logger;
 
-import org.springframework.stereotype.Service;
 
 import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.operations.TraceCustody;
 
 /**
  * A hash-linked ledger with an interchangeable repository of record.
  */
-@Service
 public final class OutputAuditJournal {
 
 	private static final Logger LOGGER = Logger.getLogger(OutputAuditJournal.class.getName());
 	private static final String GENESIS_DIGEST = "GENESIS";
 	private final List<OutputAuditEntry> entries = new ArrayList<OutputAuditEntry>();
 	private final OutputAuditStore store;
+	private final AuditDigest hasher;
 	private final AuditMessageQueue messages = new AuditMessageQueue();
 
-	public OutputAuditJournal() {
-		this(configuredStore());
-	}
-
-	public OutputAuditJournal(final OutputAuditStore store) {
+	public OutputAuditJournal(final OutputAuditStore store, final AuditDigest hasher) {
+		this.hasher = hasher;
 		this.store = store;
 		this.entries.addAll(store.load());
 		if (!this.verifyChain()) {
@@ -39,11 +32,6 @@ public final class OutputAuditJournal {
 		}
 	}
 
-	private static OutputAuditStore configuredStore() {
-		final String configuredUrl = System.getenv("SLOPBUZZ_AUDIT_JDBC_URL");
-		return configuredUrl == null || configuredUrl.trim().isEmpty()
-				? new EphemeralAuditStore() : new H2AuditStore(configuredUrl);
-	}
 
 	public synchronized OutputAuditEntry record(final int number, final String payload,
 			final OutputDisposition disposition) {
@@ -112,10 +100,10 @@ public final class OutputAuditJournal {
 	}
 
 	private boolean isDurableStore() {
-		return this.store instanceof H2AuditStore && ((H2AuditStore) this.store).isDurable();
+		return this.store instanceof DurableAuditStore && ((DurableAuditStore) this.store).isDurable();
 	}
 
-	private static boolean verifyEntries(final List<OutputAuditEntry> entries) {
+	private boolean verifyEntries(final List<OutputAuditEntry> entries) {
 		String previous = GENESIS_DIGEST;
 		long sequence = 1L;
 		for (final OutputAuditEntry entry : entries) {
@@ -131,22 +119,11 @@ public final class OutputAuditJournal {
 		return true;
 	}
 
-	private static String digest(final String previous, final long sequence, final int number,
-			final String payload, final OutputDisposition disposition) {
-		try {
-			final MessageDigest sha256 = MessageDigest.getInstance("SHA-256");
-			final String statement = previous + ":" + sequence + ":" + number + ":"
-					+ disposition.name() + ":" + payload.length() + ":" + payload;
-			final byte[] bytes = sha256.digest(statement.getBytes(StandardCharsets.UTF_8));
-			final StringBuilder hex = new StringBuilder();
-			for (final byte value : bytes) {
-				final int unsigned = value & 0xff;
-				hex.append(Character.forDigit(unsigned >>> 4, 16));
-				hex.append(Character.forDigit(unsigned & 0x0f, 16));
-			}
-			return hex.toString();
-		} catch (final NoSuchAlgorithmException exception) {
-			throw new IllegalStateException("SHA-256 is required by the output audit charter.", exception);
-		}
-	}
+	public String hashStatement(String statement) { return this.hasher.sha256(statement); }
+
+	private String digest(final String previous, final long sequence, final int number,
+            final String payload, final OutputDisposition disposition) {
+        return this.hasher.sha256(previous + ":" + sequence + ":" + number + ":"
+                + disposition.name() + ":" + payload.length() + ":" + payload);
+    }
 }

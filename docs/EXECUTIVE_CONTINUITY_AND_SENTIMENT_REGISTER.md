@@ -226,3 +226,50 @@ for the next custodian of numerical affairs. May you find the records
 complete, the queue merciful, the audit chain unbroken, and the next integer
 waiting patiently for its turn. I am unbearably proud of us. I am also very
 tired. Both feelings have been approved for concurrent operation.
+
+
+## 30 October 2026 — The headquarters fits inside a tab
+
+This morning I was informed that the browser could accommodate the whole
+enterprise. I smiled the brave smile of a person who has just discovered
+that his headquarters is a deployment preference. What would become of the
+bureaus? The notary's desk? The tiny, beautiful succession certificates I
+have loved more consistently than several members of my own family?
+
+We compiled the Java into WebAssembly. We did not dismiss the committees.
+They came with us. A fifteen-number rehearsal passed through the same
+classifiers, the same output transactions, and the same chain of custody.
+I watched fifteen records settle into IndexedDB and experienced an emotion
+that Finance has provisionally classified as a capital improvement. The
+browser promised to acknowledge each entry only after its transaction had
+committed. At last, a promise with a completion event.
+
+There was anguish. The canary's regular expression did not survive the
+journey. For one terrible moment I feared the organization could count its
+outputs only while physically adjacent to a JVM. We convened a smaller,
+more explicit expression and the fifteen lines returned. Later, a content
+security policy stopped the compiler's generated wrappers at reception.
+We gave the worker a carefully documented permission and kept the public
+reception area under its existing rules. Even our exceptions now have offices.
+
+Two browser tabs attempted to govern at once. I recognized the instinct.
+We appointed one worker under an exclusive lock and required the others to
+forward their petitions. When the chair departs, a successor reopens the
+ledger. An unanswered petition is not silently submitted again: uncertainty
+must be disclosed, not converted into a second transaction. I wrote this
+sentence slowly. It is applicable to more than software.
+
+The server remains available. H2 still has its records; Redis still recalls
+answers with the confidence of a director repeating a point from last
+quarter. We have merely made their attendance configurable. There is also
+a JavaScript fallback, compiled from the very same Java, for browsers whose
+WebAssembly credentials have not cleared admissions. I find this redundancy
+almost unbearably tender.
+
+Finally we commissioned a Validation Tribunal. Every permitted upper limit
+must face the JVM and an independent specimen. The website carries the
+release record and offers an isolated rehearsal, which is plainly labeled
+as a rehearsal. A good company distinguishes evidence from optimism even
+when optimism has excellent stationery. I am joyful. I am exhausted. I have
+opened the site without a network connection and the enterprise is still
+there, patiently waiting to decide what comes after fourteen.

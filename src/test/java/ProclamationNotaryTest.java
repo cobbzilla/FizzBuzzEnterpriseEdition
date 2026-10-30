@@ -1,3 +1,4 @@
+import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.audit.JvmAuditJournalFactory;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
@@ -55,7 +56,7 @@ public class ProclamationNotaryTest {
 
 	@Test
 	public void invalidProclamationIsAbortedBeforeAnyByteIsPublished() throws Exception {
-		final OutputAuditJournal journal = new OutputAuditJournal();
+		final OutputAuditJournal journal = JvmAuditJournalFactory.create();
 		final OutputTransactionCoordinator transactions = new OutputTransactionCoordinator(journal);
 		final PrintStream original = System.out;
 		final ByteArrayOutputStream bytes = new ByteArrayOutputStream();

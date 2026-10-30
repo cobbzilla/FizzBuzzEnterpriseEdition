@@ -1,3 +1,4 @@
+import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.audit.JvmAuditJournalFactory;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -18,7 +19,7 @@ public class AuditMessageQueueTest {
 
 	@Test
 	public void failedDeliveryCanBeRetriedOnTheNextPoll() {
-		final OutputAuditJournal journal = new OutputAuditJournal();
+		final OutputAuditJournal journal = JvmAuditJournalFactory.create();
 		journal.record(1, "1\n", OutputDisposition.COMMITTED);
 		final AuditMessageQueue queue = journal.messages();
 		final AuditStatusProjection projection = new AuditStatusProjection();
@@ -44,7 +45,7 @@ public class AuditMessageQueueTest {
 
 	@Test
 	public void thirdFailureMovesTheMessageToDeadLetters() {
-		final OutputAuditJournal journal = new OutputAuditJournal();
+		final OutputAuditJournal journal = JvmAuditJournalFactory.create();
 		journal.record(2, "2\n", OutputDisposition.COMMITTED);
 		final AuditMessageQueue queue = journal.messages();
 		final AuditEventConsumer refusing = new AuditEventConsumer() {
@@ -67,7 +68,7 @@ public class AuditMessageQueueTest {
 
 	@Test
 	public void oneFailedMessageDoesNotBlockAnother() {
-		final OutputAuditJournal journal = new OutputAuditJournal();
+		final OutputAuditJournal journal = JvmAuditJournalFactory.create();
 		journal.record(1, "1\n", OutputDisposition.COMMITTED);
 		journal.record(2, "2\n", OutputDisposition.COMMITTED);
 		final AuditMessageQueue queue = journal.messages();
@@ -88,7 +89,7 @@ public class AuditMessageQueueTest {
 
 	@Test
 	public void projectionIgnoresDuplicateDeliveryOfOneCertificate() {
-		final OutputAuditJournal journal = new OutputAuditJournal();
+		final OutputAuditJournal journal = JvmAuditJournalFactory.create();
 		final OutputAuditEntry entry = journal.record(3, "Fizz\n", OutputDisposition.COMMITTED);
 		final AuditStatusProjection projection = new AuditStatusProjection();
 		projection.accept(entry);
@@ -100,10 +101,10 @@ public class AuditMessageQueueTest {
 	@Test
 	public void newShiftQueuesItsInheritedMinutesForProjection() {
 		final EphemeralAuditStore store = new EphemeralAuditStore();
-		final OutputAuditJournal firstShift = new OutputAuditJournal(store);
+		final OutputAuditJournal firstShift = JvmAuditJournalFactory.create(store);
 		firstShift.record(1, "1\n", OutputDisposition.COMMITTED);
 		firstShift.record(2, "unfinished", OutputDisposition.ABORTED);
-		final OutputAuditJournal secondShift = new OutputAuditJournal(store);
+		final OutputAuditJournal secondShift = JvmAuditJournalFactory.create(store);
 		assertEquals(2, secondShift.messages().pendingCount());
 		final AuditStatusProjection projection = new AuditStatusProjection();
 		assertEquals(2, secondShift.messages().dispatch(projection));

@@ -1,10 +1,6 @@
 package com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.loop;
 
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.ConfigurableApplicationContext;
-import org.springframework.context.support.ClassPathXmlApplicationContext;
 
-import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.Constants;
 import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.factories.LoopComponentFactory;
 import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.interfaces.loop.LoopContextStateManipulation;
 import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.interfaces.loop.LoopContextStateRetrieval;
@@ -24,15 +20,18 @@ public final class LoopContext implements LoopContextStateManipulation, LoopCont
 	 * @param nLoopControlParameterFinalValue int
 	 */
 	public LoopContext(final int nLoopControlParameterFinalValue) {
-		super();
-		final ApplicationContext context = new ClassPathXmlApplicationContext(Constants.SPRING_XML);
-		final LoopComponentFactory myLoopComponentFactory = context.getBean(Constants.LOOP_COMPONENT_FACTORY,
-				LoopComponentFactory.class);
+        this(nLoopControlParameterFinalValue, standardComponents());
+    }
+    public static LoopComponentFactory standardComponents(){return new LoopComponentFactory(
+                new LoopCondition(new InclusiveBoundaryQuorum(new PreBoundaryContinuationElector(), new AtBoundaryContinuationElector())),
+                new LoopInitializer(), new LoopStep(new com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.loop.succession.OrdinalSuccessionExecutor(
+                    new com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.loop.succession.UnitAdvancementAuthority(),
+                    new com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.loop.succession.SuccessionCertificateAuditor())));}
+    public LoopContext(final int nLoopControlParameterFinalValue,final LoopComponentFactory myLoopComponentFactory) {
 		this.myLoopInitializer = myLoopComponentFactory.createLoopInitializer();
 		this.myLoopFinalizer = myLoopComponentFactory.createLoopFinalizer(nLoopControlParameterFinalValue);
 		this.myLoopCondition = myLoopComponentFactory.createLoopCondition();
 		this.myLoopStep = myLoopComponentFactory.createLoopStep();
-		((ConfigurableApplicationContext) context).close();
 	}
 
 	/**

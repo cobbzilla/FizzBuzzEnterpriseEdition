@@ -1,3 +1,4 @@
+import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.audit.JvmAuditJournalFactory;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -39,7 +40,7 @@ public class SyntheticAssuranceBureauTest {
 	}
 
 	private static SyntheticAssuranceBureau bureau(final SlopFizzBuzz service) {
-		final OutputAuditJournal journal = new OutputAuditJournal(new EphemeralAuditStore());
+		final OutputAuditJournal journal = JvmAuditJournalFactory.create(new EphemeralAuditStore());
 		return new SyntheticAssuranceBureau(service, new OutputTransactionCoordinator(journal), journal);
 	}
 }

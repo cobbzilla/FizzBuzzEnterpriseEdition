@@ -178,3 +178,8 @@ pip-log.txt
 
 .class
 target/
+node_modules/
+playwright-report/
+test-results/
+
+validation/*.json

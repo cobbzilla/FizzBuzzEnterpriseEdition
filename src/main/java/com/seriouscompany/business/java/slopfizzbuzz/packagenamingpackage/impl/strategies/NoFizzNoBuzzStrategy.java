@@ -11,23 +11,28 @@ import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.m
  */
 @Service
 public class NoFizzNoBuzzStrategy implements IsEvenlyDivisibleStrategy {
+    private final NumberIsMultipleOfAnotherNumberVerifier verifier;
+    public NoFizzNoBuzzStrategy(){this(new NumberIsMultipleOfAnotherNumberVerifier());}
+    @org.springframework.beans.factory.annotation.Autowired
+    public NoFizzNoBuzzStrategy(NumberIsMultipleOfAnotherNumberVerifier verifier){this.verifier=verifier;}
+
 
 	/**
 	 * @param theInteger int
 	 * @return boolean
 	 */
 	public boolean isEvenlyDivisible(final int theInteger) {
-		if (!NumberIsMultipleOfAnotherNumberVerifier.numberIsMultipleOfAnotherNumber(theInteger,
+		if (!this.verifier.verify(theInteger,
 				NoFizzNoBuzzStrategyConstants.NO_FIZZ_INTEGER_CONSTANT_VALUE)) {
-			if (!NumberIsMultipleOfAnotherNumberVerifier.numberIsMultipleOfAnotherNumber(theInteger,
+			if (!this.verifier.verify(theInteger,
 					NoFizzNoBuzzStrategyConstants.NO_BUZZ_INTEGER_CONSTANT_VALUE)) {
 				return true;
 			} else {
 				return false;
 			}
-		} else if (!NumberIsMultipleOfAnotherNumberVerifier.numberIsMultipleOfAnotherNumber(theInteger,
+		} else if (!this.verifier.verify(theInteger,
 				NoFizzNoBuzzStrategyConstants.NO_BUZZ_INTEGER_CONSTANT_VALUE)) {
-			if (!NumberIsMultipleOfAnotherNumberVerifier.numberIsMultipleOfAnotherNumber(theInteger,
+			if (!this.verifier.verify(theInteger,
 					NoFizzNoBuzzStrategyConstants.NO_FIZZ_INTEGER_CONSTANT_VALUE)) {
 				return true;
 			} else {

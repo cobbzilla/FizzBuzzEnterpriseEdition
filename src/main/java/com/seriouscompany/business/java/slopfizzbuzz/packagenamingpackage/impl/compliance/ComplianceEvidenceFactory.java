@@ -1,8 +1,5 @@
 package com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.compliance;
 
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.List;
 
 import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.audit.OutputAuditEntry;
@@ -51,19 +48,5 @@ public final class ComplianceEvidenceFactory {
 				chainControl, deliveryControl);
 	}
 
-	private static String sha256(final String statement) {
-		try {
-			final byte[] bytes = MessageDigest.getInstance("SHA-256")
-					.digest(statement.getBytes(StandardCharsets.UTF_8));
-			final StringBuilder hex = new StringBuilder();
-			for (final byte value : bytes) {
-				final int unsigned = value & 0xff;
-				hex.append(Character.forDigit(unsigned >>> 4, 16));
-				hex.append(Character.forDigit(unsigned & 0x0f, 16));
-			}
-			return hex.toString();
-		} catch (final NoSuchAlgorithmException exception) {
-			throw new IllegalStateException("The evidence seal requires SHA-256.", exception);
-		}
-	}
+	private String sha256(final String statement) { return this.journal.hashStatement(statement); }
 }

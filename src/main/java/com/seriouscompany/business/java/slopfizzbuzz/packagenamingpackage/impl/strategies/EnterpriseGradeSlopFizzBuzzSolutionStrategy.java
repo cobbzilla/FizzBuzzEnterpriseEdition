@@ -15,14 +15,17 @@ import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.interf
 public class EnterpriseGradeSlopFizzBuzzSolutionStrategy implements SlopFizzBuzzSolutionStrategy {
 
 	private final LoopPayloadExecution _loopPayloadExecution;
+    private final com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.factories.LoopComponentFactory loopComponents;
 
 	/**
 	 * @param _loopPayloadExecution LoopPayloadExecution
 	 */
-	@Autowired
-	public EnterpriseGradeSlopFizzBuzzSolutionStrategy(final LoopPayloadExecution _loopPayloadExecution) {
+	public EnterpriseGradeSlopFizzBuzzSolutionStrategy(final LoopPayloadExecution payload){this(payload,LoopContext.standardComponents());}
+    @Autowired
+    public EnterpriseGradeSlopFizzBuzzSolutionStrategy(final LoopPayloadExecution _loopPayloadExecution, final com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.factories.LoopComponentFactory components) {
 		super();
 		this._loopPayloadExecution = _loopPayloadExecution;
+        this.loopComponents=components;
 	}
 
 	/**
@@ -31,7 +34,7 @@ public class EnterpriseGradeSlopFizzBuzzSolutionStrategy implements SlopFizzBuzz
 	 */
 	@Override
 	public void runSolution(final int nSlopFizzBuzzUpperLimit) {
-		final LoopContext loopContext = new LoopContext(nSlopFizzBuzzUpperLimit);
+		final LoopContext loopContext = new LoopContext(nSlopFizzBuzzUpperLimit,this.loopComponents);
 		final LoopRunner loopRunner = new LoopRunner(loopContext, loopContext, this._loopPayloadExecution);
 		loopRunner.runLoop();
 	}

@@ -1,3 +1,4 @@
+import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.audit.JvmAuditJournalFactory;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -24,7 +25,7 @@ public class AuditedOutputTransactionTest {
 
 	@Test
 	public void fragmentsArePublishedAsOneCertifiedLine() throws Exception {
-		final OutputAuditJournal journal = new OutputAuditJournal();
+		final OutputAuditJournal journal = JvmAuditJournalFactory.create();
 		final OutputTransactionCoordinator transactions = new OutputTransactionCoordinator(journal);
 		final PrintStream original = System.out;
 		final ByteArrayOutputStream bytes = new ByteArrayOutputStream();
@@ -51,7 +52,7 @@ public class AuditedOutputTransactionTest {
 
 	@Test
 	public void abortedFragmentsNeverReachThePublicRecord() throws Exception {
-		final OutputAuditJournal journal = new OutputAuditJournal();
+		final OutputAuditJournal journal = JvmAuditJournalFactory.create();
 		final OutputTransactionCoordinator transactions = new OutputTransactionCoordinator(journal);
 		final PrintStream original = System.out;
 		final ByteArrayOutputStream bytes = new ByteArrayOutputStream();
@@ -72,7 +73,7 @@ public class AuditedOutputTransactionTest {
 	@Test(expected = IllegalStateException.class)
 	public void aSecondTransactionCannotOccupyTheSameThread() {
 		final OutputTransactionCoordinator transactions =
-				new OutputTransactionCoordinator(new OutputAuditJournal());
+				new OutputTransactionCoordinator(JvmAuditJournalFactory.create());
 		transactions.begin(1);
 		try {
 			transactions.begin(2);
@@ -83,7 +84,7 @@ public class AuditedOutputTransactionTest {
 
 	@Test
 	public void ledgerLinksEachEntryToItsPredecessor() {
-		final OutputAuditJournal journal = new OutputAuditJournal();
+		final OutputAuditJournal journal = JvmAuditJournalFactory.create();
 		final OutputAuditEntry first = journal.record(1, "1\n", OutputDisposition.COMMITTED);
 		final OutputAuditEntry second = journal.record(2, "2\n", OutputDisposition.COMMITTED);
 		assertEquals(1L, first.getSequence());
@@ -96,7 +97,7 @@ public class AuditedOutputTransactionTest {
 
 	@Test
 	public void failedPublicationIsRecordedAsAborted() throws Exception {
-		final OutputAuditJournal journal = new OutputAuditJournal();
+		final OutputAuditJournal journal = JvmAuditJournalFactory.create();
 		final OutputTransactionCoordinator transactions = new OutputTransactionCoordinator(journal);
 		final PrintStream original = System.out;
 		final PrintStream broken = new PrintStream(new ByteArrayOutputStream()) {
@@ -126,7 +127,7 @@ public class AuditedOutputTransactionTest {
 
 	@Test(expected = UnsupportedOperationException.class)
 	public void snapshotCannotBeAmendedByAnOutsideCommittee() {
-		final OutputAuditJournal journal = new OutputAuditJournal();
+		final OutputAuditJournal journal = JvmAuditJournalFactory.create();
 		journal.snapshot().clear();
 	}
 

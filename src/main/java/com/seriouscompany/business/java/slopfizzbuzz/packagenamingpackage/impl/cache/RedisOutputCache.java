@@ -5,20 +5,17 @@ import java.nio.charset.StandardCharsets;
 import java.util.logging.Logger;
 
 /** A bounded, expiring shared memory for deterministic FizzBuzz responses. */
-public final class RedisOutputCache {
+public final class RedisOutputCache implements OutputCache {
 
-	private static final Logger LOGGER = Logger.getLogger(RedisOutputCache.class.getName());
-	private static final int TTL_SECONDS = 86400;
-	private final RedisProtocol protocol;
-	private long hits;
-	private long misses;
-	private long bypasses;
-	private long errors;
-
-	public RedisOutputCache(final String host, final int port) {
-		this.protocol = host == null || host.trim().isEmpty()
-				? null : new RedisProtocol(host, port);
-	}
+ private final CacheAuthority authority;
+ public RedisOutputCache(final String host, final int port){
+  final RedisProtocol protocol=host==null||host.trim().isEmpty()?null:new RedisProtocol(host,port);
+  authority=new CacheAuthority(new CacheRepository(){
+   public boolean enabled(){return protocol!=null;}
+   public String get(int limit)throws IOException {byte[] result=protocol.command(ascii("GET"),ascii(key(limit)));return result==null?null:new String(result,StandardCharsets.UTF_8);}
+   public void put(int limit,String body,int ttl)throws IOException {byte[] result=protocol.command(ascii("SET"),ascii(key(limit)),body.getBytes(StandardCharsets.UTF_8),ascii("EX"),ascii(ttl));if(result==null||!"OK".equals(new String(result,StandardCharsets.US_ASCII)))throw new IOException("Redis rejected cache write");}
+  });
+ }
 
 	public static RedisOutputCache configured() {
 		final String host = System.getenv("SLOPBUZZ_REDIS_HOST");
@@ -30,62 +27,9 @@ public final class RedisOutputCache {
 		return new RedisOutputCache(host, port);
 	}
 
-	public CacheLookup lookup(final int limit) {
-		if (this.protocol == null) {
-			countBypass(false);
-			return new CacheLookup(CacheLookup.State.BYPASS, null);
-		}
-		try {
-			final byte[] value = this.protocol.command(ascii("GET"), ascii(key(limit)));
-			if (value == null) {
-				countMiss();
-				return new CacheLookup(CacheLookup.State.MISS, null);
-			}
-			countHit();
-			return new CacheLookup(CacheLookup.State.HIT,
-					new String(value, StandardCharsets.UTF_8));
-		} catch (final IOException failure) {
-			LOGGER.warning("The Redis memory bureau is unavailable: " + failure.getMessage());
-			countBypass(true);
-			return new CacheLookup(CacheLookup.State.BYPASS, null);
-		}
-	}
-
-	public void store(final int limit, final String body) {
-		if (this.protocol == null) {
-			return;
-		}
-		try {
-			final byte[] reply = this.protocol.command(ascii("SET"), ascii(key(limit)),
-					body.getBytes(StandardCharsets.UTF_8), ascii("EX"), ascii(TTL_SECONDS));
-			if (reply == null || !"OK".equals(new String(reply, StandardCharsets.US_ASCII))) {
-				throw new IOException("Redis did not approve a cache write.");
-			}
-		} catch (final IOException failure) {
-			LOGGER.warning("The Redis memory bureau could not retain a result: "
-					+ failure.getMessage());
-			synchronized (this) {
-				this.errors++;
-			}
-		}
-	}
-
-	public synchronized String statusJson() {
-		return "{\"schema\":\"slopbuzz-cache/v1\",\"enabled\":"
-				+ (this.protocol != null) + ",\"hits\":" + this.hits
-				+ ",\"misses\":" + this.misses
-				+ ",\"bypasses\":" + this.bypasses
-				+ ",\"errors\":" + this.errors
-				+ ",\"ttlSeconds\":" + TTL_SECONDS + "}";
-	}
-
-	private synchronized void countHit() { this.hits++; }
-	private synchronized void countMiss() { this.misses++; }
-	private synchronized void countBypass(final boolean error) {
-		this.bypasses++;
-		if (error) { this.errors++; }
-	}
-
+ public CacheLookup lookup(int limit){return authority.lookup(limit);}
+ public void store(int limit,String body){authority.store(limit,body);}
+ public String statusJson(){return authority.statusJson();}
 	private static String key(final int limit) {
 		return "slopbuzz:fizzbuzz:v1:limit:" + limit;
 	}

@@ -1,0 +1,10 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.static
+    ports:
+      - "127.0.0.1:${SLOPBUZZ_HTTP_PORT:-18088}:8080"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped

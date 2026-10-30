@@ -2,3 +2,10 @@
 target
 DIRECTIVE.md
 DIRECTIVE.md~
+node_modules
+browser/target
+core/target
+server/target
+validation
+test-results
+playwright-report

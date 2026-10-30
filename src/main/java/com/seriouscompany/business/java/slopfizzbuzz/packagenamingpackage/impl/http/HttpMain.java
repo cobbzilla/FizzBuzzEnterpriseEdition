@@ -36,6 +36,7 @@ public final class HttpMain {
 				}
 			}, "slopbuzz-shutdown-committee"));
 			server.start();
+            System.out.println("SLOPBUZZ_LISTENING=" + server.getPort());
 		} catch (final Exception failure) {
 			context.close();
 			throw failure;

@@ -1,3 +1,4 @@
+import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.audit.JvmAuditJournalFactory;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -147,7 +148,7 @@ public class SlopFizzBuzzHttpServerTest {
 		assertTrue(page.contentSecurityPolicy.contains("script-src 'self'"));
 		assertTrue(page.body.matches("(?s).*href=\"/assets/site\\.css\\?v=[0-9a-f]{64}\".*"));
 		assertTrue(request("GET", "/assets/site.css").body.contains("prefers-reduced-motion"));
-		assertTrue(request("GET", "/assets/site.js").body.contains("fetch(path"));
+		assertTrue(request("GET", "/assets/site.js").body.contains("runtime-config.json"));
 		assertEquals(404, request("GET", "/assets/unknown.js").status);
 	}
 
@@ -206,7 +207,7 @@ public class SlopFizzBuzzHttpServerTest {
 		assertTrue(guide.body.matches("(?s).*src=\"/assets/api\\.js\\?v=[0-9a-f]{64}\".*"));
 		assertEquals(200, request("GET", "/api/").status);
 		assertEquals(404, request("GET", "/api-extra").status);
-		assertTrue(request("GET", "/assets/api.js").body.contains("fetch('/openapi.json'"));
+		assertTrue(request("GET", "/assets/api.js").body.contains("openapi.json"));
 		assertTrue(request("GET", "/assets/api.css").body.contains("api-card"));
 
 		final Reply charter = request("GET", "/openapi.json");
@@ -223,7 +224,7 @@ public class SlopFizzBuzzHttpServerTest {
 		assertEquals(new HashSet<String>(Arrays.asList("/fizzbuzz", "/capacity/forecast",
 				"/healthz", "/readyz", "/operations/scorecard", "/operations/release",
 				"/operations/canary", "/operations/recovery", "/cache/status",
-				"/audit/status", "/audit/evidence", "/openapi.json")), paths);
+				"/audit/status", "/audit/evidence", "/openapi.json", "/operations/runtime")), paths);
 		for (final String path : paths) {
 			final String target = ("/fizzbuzz".equals(path) || "/capacity/forecast".equals(path))
 					? path + "?limit=0" : path;
@@ -310,7 +311,7 @@ public class SlopFizzBuzzHttpServerTest {
 				new InetSocketAddress("127.0.0.1", 0),
 				(SlopFizzBuzz) context.getBean(TestConstants.STANDARD_SLOP_FIZZ_BUZZ),
 				context.getBean(OutputTransactionCoordinator.class),
-				new OutputAuditJournal(disappearingStore));
+				JvmAuditJournalFactory.create(disappearingStore));
 		failingServer.start();
 		try {
 			final Reply rehearsal = request(failingServer.getPort(), "POST", "/operations/recovery");
@@ -357,7 +358,7 @@ public class SlopFizzBuzzHttpServerTest {
 		final SlopFizzBuzzHttpServer failingServer = new SlopFizzBuzzHttpServer(
 				new InetSocketAddress("127.0.0.1", 0), silentService,
 				context.getBean(OutputTransactionCoordinator.class),
-				new OutputAuditJournal(new EphemeralAuditStore()));
+				JvmAuditJournalFactory.create(new EphemeralAuditStore()));
 		failingServer.start();
 		try {
 			final Reply rehearsal = request(failingServer.getPort(), "POST", "/operations/canary");
@@ -376,7 +377,7 @@ public class SlopFizzBuzzHttpServerTest {
 				new InetSocketAddress("127.0.0.1", 0),
 				(SlopFizzBuzz) context.getBean(TestConstants.STANDARD_SLOP_FIZZ_BUZZ),
 				context.getBean(OutputTransactionCoordinator.class),
-				new OutputAuditJournal(new EphemeralAuditStore()),
+				JvmAuditJournalFactory.create(new EphemeralAuditStore()),
 				new RedisOutputCache("127.0.0.1", 1));
 		fallback.start();
 		try {
@@ -449,7 +450,7 @@ public class SlopFizzBuzzHttpServerTest {
 		final SlopFizzBuzzHttpServer failingServer = new SlopFizzBuzzHttpServer(
 				new InetSocketAddress("127.0.0.1", 0), failingService,
 				context.getBean(OutputTransactionCoordinator.class),
-				new OutputAuditJournal(new EphemeralAuditStore()));
+				JvmAuditJournalFactory.create(new EphemeralAuditStore()));
 		failingServer.start();
 		try {
 			assertEquals(500, request(failingServer.getPort(), "GET", "/fizzbuzz?limit=1").status);
@@ -463,7 +464,7 @@ public class SlopFizzBuzzHttpServerTest {
 
 	@Test
 	public void deadLetterVetoesReadinessButNotLiveness() throws Exception {
-		final OutputAuditJournal failedJournal = new OutputAuditJournal(new EphemeralAuditStore());
+		final OutputAuditJournal failedJournal = JvmAuditJournalFactory.create(new EphemeralAuditStore());
 		failedJournal.record(1, "1\n", OutputDisposition.COMMITTED);
 		final AuditEventConsumer refusingOffice = new AuditEventConsumer() {
 			@Override
