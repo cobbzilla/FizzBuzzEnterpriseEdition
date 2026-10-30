@@ -67,5 +67,8 @@ async function files(directory: string): Promise<string[]> {
 }
 const paths = await files('dist');
 paths.push('', 'api/', 'changelog/', 'continuity-register/', 'response/', 'validation/');
-await build({entryPoints:['web/sw.ts'],outfile:'dist/sw.js',bundle:true,format:'iife',define:{RELEASE:JSON.stringify(identity),FILES:JSON.stringify(paths)}});
+// Evidence can arrive after the first preview of the same source revision.
+// Give that complete bundle a new cache so installed previews receive the sealed report.
+const evidenceSeal = createHash('sha256').update(await readFile('dist/validation/report.json')).digest('hex').slice(0,12);
+await build({entryPoints:['web/sw.ts'],outfile:'dist/sw.js',bundle:true,format:'iife',define:{RELEASE:JSON.stringify(`${identity}-${evidenceSeal}`),FILES:JSON.stringify(paths)}});
 console.log(`Static enterprise ratified in dist/ (${revision}${dirty ? ', working tree' : ''}).`);
