@@ -24,6 +24,8 @@ The [Accessibility page](http://localhost:18088/accessibility/) describes keyboa
 and reading controls; [the review record](docs/ACCESSIBILITY_REVIEW.md) documents
 repeatable checks and remaining assistive-technology testing.
 
+See [Audience Measurement](docs/ANALYTICS.md) for optional PostHog configuration and dashboards.
+
 ## FizzBuzz
 
 FizzBuzz is a game that has gained in popularity as a programming assignment to

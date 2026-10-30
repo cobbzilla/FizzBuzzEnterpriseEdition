@@ -17,7 +17,7 @@ return createServer(async(req,res)=>{
     }
     let data=await readFile(path);
     if(path.endsWith('/runtime-config.json') && configOverride) data=Buffer.from(JSON.stringify({...JSON.parse(data.toString()),...configOverride}));
-    res.writeHead(200,{'Content-Type':types[extname(path)]||'application/octet-stream','Cache-Control':'no-cache','X-Content-Type-Options':'nosniff','Content-Security-Policy':(path.endsWith('/runtime-worker.js') ? "default-src 'self'; script-src 'self' 'unsafe-eval'; connect-src 'self'" : "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self'; img-src 'self' data:; connect-src 'self'; worker-src 'self'; base-uri 'none'; frame-ancestors 'none'")});
+    res.writeHead(200,{'Content-Type':types[extname(path)]||'application/octet-stream','Cache-Control':'no-cache','X-Content-Type-Options':'nosniff','Content-Security-Policy':(path.endsWith('/runtime-worker.js') ? "default-src 'self'; script-src 'self' 'unsafe-eval'; connect-src 'self'" : "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self'; img-src 'self' data:; connect-src 'self' https://us.i.posthog.com; worker-src 'self'; base-uri 'none'; frame-ancestors 'none'")});
     res.end(req.method==='HEAD'?undefined:data);
   } catch {res.writeHead(404);res.end('Unknown desk\n');}
 });

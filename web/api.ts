@@ -1,3 +1,4 @@
+import {trackUsage} from './telemetry';
 import { request, config, scope } from './runtime';
 const byId = <T extends HTMLElement = HTMLElement>(id: string): T => document.getElementById(id) as T;
 const operations = byId('api-operations');
@@ -122,6 +123,7 @@ function tryDesk(path: string, method: string, operation: Operation) {
       const reply = await request(url, { method: method.toUpperCase(), cache: 'no-store', signal: controller.signal });
       const body = await reply.text();
       const elapsed = Math.round(performance.now() - started);
+      trackUsage({event:'slopbuzz_api_request',outcome:reply.ok?'success':'failure',runtime_mode:config.mode,duration_ms:elapsed,endpoint:path,method:method.toUpperCase(),status:reply.status});
       const trace = reply.headers.get('X-SlopBuzz-Trace-Id') || 'unavailable';
       const span = reply.headers.get('X-SlopBuzz-Span-Id') || 'unavailable';
       report.textContent = `HTTP ${reply.status} · ${elapsed} ms · ${reply.headers.get('content-type') || 'unknown type'} · receipt ${trace.slice(0, 12)}`;
@@ -129,6 +131,7 @@ function tryDesk(path: string, method: string, operation: Operation) {
       output.textContent = `X-SlopBuzz-Trace-Id: ${trace}\nX-SlopBuzz-Span-Id: ${span}\n\n${visibleBody}`;
       output.hidden = false;
     } catch (error) {
+      trackUsage({event:'slopbuzz_api_request',outcome:'failure',runtime_mode:config.mode,duration_ms:performance.now()-started,endpoint:path,method:method.toUpperCase()});
       report.textContent = error.name === 'AbortError' ? 'The desk did not answer within eight seconds.'
         : `The request failed: ${error.message}`;
     } finally {

@@ -18,12 +18,19 @@ import com.sun.net.httpserver.HttpHandler;
 final class StaticSiteHandler implements HttpHandler {
 
 	private static final String CSP = "default-src 'self'; script-src 'self'; style-src 'self'; "
-			+ "img-src 'self' data:; connect-src 'self'; base-uri 'none'; "
+			+ "img-src 'self' data:; connect-src 'self' https://us.i.posthog.com; base-uri 'none'; "
 			+ "form-action 'self'; frame-ancestors 'none'";
 	private final Map<String, Asset> assets;
 
 	StaticSiteHandler() {
 		final Map<String, Asset> loaded = new HashMap<String, Asset>();
+        final String token = System.getenv("POSTHOG_TOKEN");
+        final boolean analyticsEnabled = "true".equals(System.getenv("SLOPBUZZ_ANALYTICS_ENABLED")) && token != null && token.matches("phc_[A-Za-z0-9_-]+");
+        final String release = System.getenv("SLOPBUZZ_RELEASE_SHA");
+        final String revision = release != null && release.matches("[0-9a-f]{40}") ? release : "unknown";
+        final String analytics = "{\"revision\":\"" + revision + "\",\"enabled\":" + analyticsEnabled + ",\"token\":\"" + (analyticsEnabled ? token : "") + "\",\"environment\":\"" + ("preview".equals(System.getenv("SLOPBUZZ_ANALYTICS_ENVIRONMENT")) ? "preview" : "production") + "\",\"allowLocal\":" + "true".equals(System.getenv("SLOPBUZZ_ANALYTICS_ALLOW_LOCAL")) + "}";
+        loaded.put("/analytics-config.json", new Asset(analytics.getBytes(StandardCharsets.UTF_8), "application/json", false));
+        loaded.put("/assets/analytics.js", asset("/web/analytics.js", "text/javascript", false));
         loaded.put("/runtime-config.json",new Asset("{\"mode\":\"server\",\"revision\":\"unknown\",\"assets\":\"assets/\"}".getBytes(StandardCharsets.UTF_8),"application/json; charset=UTF-8",false));
 		final Asset css = asset("/web/site.css", "text/css; charset=UTF-8", true);
 		final Asset javascript = asset("/web/site.js", "text/javascript; charset=UTF-8", true);

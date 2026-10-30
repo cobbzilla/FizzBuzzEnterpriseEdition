@@ -9,3 +9,7 @@ server/target
 validation
 test-results
 playwright-report
+
+.env.posthog*
+**/.env.posthog*
+tmp/
