@@ -8,11 +8,12 @@ async function initialize() {
  const response=await fetch(new URL('analytics-config.json',scope));
  if(!response.ok) return;
  const config=await response.json();
- if(!config.enabled || !config.token || (local&&!config.allowLocal) || navigator.doNotTrack==='1' || (navigator as Navigator & {globalPrivacyControl?:boolean}).globalPrivacyControl) return;
+ // Explicit site policy: DNT and GPC do not suppress this cookieless census.
+ if(!config.enabled || !config.token || (local&&!config.allowLocal)) return;
  const pageUrl=new URL(location.href);let active=false;
  const properties={application:'slopbuzz',environment:local?'preview':config.environment,release:config.revision,$current_url:cleanUrl(location.href),$pathname:location.pathname,$referrer:document.referrer?new URL(document.referrer).origin:'',$referring_domain:document.referrer?new URL(document.referrer).hostname:'$direct',...Object.fromEntries(['utm_source','utm_medium','utm_campaign'].filter(k=>pageUrl.searchParams.has(k)).map(k=>[k,pageUrl.searchParams.get(k)!.slice(0,150)]))};
  posthog.init(config.token,{
-  api_host:'https://us.i.posthog.com',cookieless_mode:'always',person_profiles:'never',
+  api_host:'https://us.i.posthog.com',cookieless_mode:'always',person_profiles:'never',respect_dnt:false,
   autocapture:false,capture_pageview:false,capture_pageleave:false,disable_session_recording:true,disable_surveys:true,
   capture_heatmaps:false,capture_dead_clicks:false,capture_exceptions:false,capture_performance:false,
   advanced_disable_flags:true,disable_external_dependency_loading:true,persistence:'memory',disable_persistence:true,

@@ -5,6 +5,17 @@ portfolio. Each iteration branch receives its own entry before integration,
 so future generations can trace how a modest numerical exercise became a
 strategic operating capability.
 
+## 2026-10-30 — `slopbuzz-analytics-signal-policy`
+
+**Audience Census Activation and Explicit Signal Interpretation Policy.**
+Retired the initialization gates that silently dismissed visitors carrying Do Not
+Track or Global Privacy Control signals. The approved cookieless census now opens
+its reception desk for those browsers, while configuration-based disablement,
+local-development exclusions, and the prohibition on personal identification
+continue to govern proceedings. Regression inspectors now arrive bearing both
+signals and demand proof of an actual event, permitting leadership to distinguish
+an empty audience chart from an audience that was never admitted to the count.
+
 ## 2026-10-30 — `slopbuzz-glyph-procurement`
 
 **Enterprise Glyph Procurement and Individually Accountable Character Acquisition.**
