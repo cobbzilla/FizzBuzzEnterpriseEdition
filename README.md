@@ -15,6 +15,9 @@ The [enterprise improvement ledger](CHANGELOG.md) records each formalized
 investment as it enters the `slopbuzz` portfolio. The same journal is published
 as a [readable website page](http://localhost:18088/changelog) and as
 [`CHANGELOG.md`](http://localhost:18088/CHANGELOG.md) in the shared preview.
+The [Executive Continuity and Sentiment Register](docs/EXECUTIVE_CONTINUITY_AND_SENTIMENT_REGISTER.md)
+is its fictional diary companion, also readable at
+`http://localhost:18088/continuity-register`.
 
 ## FizzBuzz
 

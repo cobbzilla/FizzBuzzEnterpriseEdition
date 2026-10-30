@@ -166,6 +166,10 @@ input[aria-invalid=true] { border-color: #a94323; }
 .ledger-aside { padding: 25px; border-top: 3px solid var(--ink); background: var(--paper-deep); }
 .ledger-aside h2 { font-size: 1.4rem; line-height: 1.25; }
 .ledger-aside p:not(.eyebrow) { color: var(--ink-soft); font-size: .88rem; }
+.ledger-companion { margin-top: 26px; padding-top: 20px; border-top: 1px solid var(--line); }
+.sentiment-document .ledger-entry { border-left-color: var(--accent-deep); }
+.sentiment-document .ledger-entry p + p { margin-top: 16px; }
+.sentiment-document .ledger-entry p { max-width: 70ch; font-size: 1rem; line-height: 1.72; }
 
 @media (max-width: 900px) {
   .hero-grid { grid-template-columns: 1fr; }

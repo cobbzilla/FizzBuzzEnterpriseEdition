@@ -26,6 +26,9 @@ Open `/changelog` for the public improvement ledger. Its content is rendered
 from the release's `CHANGELOG.md`, also available directly at `/CHANGELOG.md`.
 Check the newest branch entry after each deployment to confirm that the
 institution's account of its own progress has reached the website.
+The companion `/continuity-register` presents the Acting Chief Numerical
+Officer's fictional diary from `docs/EXECUTIVE_CONTINUITY_AND_SENTIMENT_REGISTER.md`;
+`/continuity-register.md` serves that source document.
 
 Run the mandate for 15 twice. The first response should report `MISS` in the
 page and `X-SlopBuzz-Cache` header; the second should report `HIT`. The

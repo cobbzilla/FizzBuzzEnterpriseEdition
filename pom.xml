@@ -67,6 +67,12 @@
 	    </includes>
 	  </resource>
 	  <resource>
+	    <directory>${project.basedir}/docs</directory>
+	    <includes>
+	      <include>EXECUTIVE_CONTINUITY_AND_SENTIMENT_REGISTER.md</include>
+	    </includes>
+	  </resource>
+	  <resource>
 	    <directory>src/main/resources</directory>
 	  </resource>
 	  <resource>
