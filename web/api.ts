@@ -62,8 +62,11 @@ function tryDesk(spec: Spec, path: string, method: string, operation: Operation)
   const panel = element('div', 'api-try');
   panel.append(element('h4', '', 'Live request desk'));
   const hasLimit = (operation.parameters || []).some((parameter) =>
-    parameter.$ref?.endsWith('/Limit') || parameter.name === 'limit');
-  const requestedPath = hasLimit ? `${path}?limit=15` : path;
+    parameter.$ref?.endsWith('/Limit') || (parameter.name === 'limit' && parameter.schema?.type !== 'string'));
+  const magnitudeFields: {name:string;label:string;value:string;minimum:number;maximum?:number}[] = path === '/fizzbuzz/window'
+    ? [{name:'start',label:'Starting ordinal',value:'9007199254740990',minimum:1},{name:'count',label:'Window lines',value:'15',minimum:1,maximum:100}]
+    : path === '/capacity/forecast/extended' ? [{name:'limit',label:'Upper limit',value:'9007199254740993',minimum:0}] : [];
+  const requestedPath = hasLimit ? `${path}?limit=15` : magnitudeFields.length ? `${path}?${new URLSearchParams(magnitudeFields.map(field=>[field.name,field.value]))}` : path;
   const command = method === 'post'
     ? `curl -i -X POST '${config.mode === 'server' ? new URL(config.apiBaseUrl || '/', location.origin).href.replace(/\/$/, '') : 'http://localhost:18089'}${path}'`
     : `curl -i '${config.mode === 'server' ? new URL(config.apiBaseUrl || '/', location.origin).href.replace(/\/$/, '') : 'http://localhost:18089'}${requestedPath}'`;
@@ -83,6 +86,14 @@ function tryDesk(spec: Spec, path: string, method: string, operation: Operation)
     label.append(input);
     controls.append(label);
   }
+  const magnitudeInputs = magnitudeFields.map(field => {
+    const label=element('label','',field.label);const input=element('input');
+    input.type=field.maximum?'number':'text';input.inputMode='numeric';input.value=field.value;
+    input.id=`${id}-${field.name}`;input.setAttribute('aria-describedby',`${id}-status`);
+    if(field.maximum){input.min=String(field.minimum);input.max=String(field.maximum);input.step='1';}
+    input.addEventListener('input',()=>input.removeAttribute('aria-invalid'));
+    label.append(input);controls.append(label);return {field,input};
+  });
   const productParameter = (operation.parameters || []).map(parameter => resolve(spec, parameter)).find(parameter => parameter?.name === 'product');
   let productSelect: HTMLSelectElement | null = null;
   if (productParameter) {
@@ -124,8 +135,16 @@ function tryDesk(spec: Spec, path: string, method: string, operation: Operation)
       input.focus();
       return;
     }
+    for(const {field,input:decimal} of magnitudeInputs) {
+      const value=decimal.value.trim();
+      if(!/^[0-9]+$/.test(value)||(field.minimum===1&&/^0+$/.test(value))||(field.maximum&&Number(value)>field.maximum)) {
+        report.textContent=field.maximum?'Enter a window count from 1 through 100.':field.minimum===1?'Enter a positive whole number using digits 0–9.':'Enter a non-negative whole number using digits 0–9.';
+        decimal.setAttribute('aria-invalid','true');decimal.focus();return;
+      }
+      decimal.removeAttribute('aria-invalid');
+    }
     input?.removeAttribute('aria-invalid');
-    const url = input ? `${path}?limit=${input.value}` : productSelect ? `${path}?product=${encodeURIComponent(productSelect.value)}` : path;
+    const url = magnitudeInputs.length ? `${path}?${new URLSearchParams(magnitudeInputs.map(({field,input})=>[field.name,input.value.trim()]))}` : input ? `${path}?limit=${input.value}` : productSelect ? `${path}?product=${encodeURIComponent(productSelect.value)}` : path;
     button.setAttribute('aria-disabled', 'true');
     report.textContent = 'The desk is reviewing your request…';
     const started = performance.now();

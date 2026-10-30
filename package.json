@@ -21,7 +21,8 @@
     "test:compiler-gate": "node scripts/compiler-gate.ts",
     "analytics:setup": "node scripts/setup-posthog.ts",
     "test:publish": "node --test scripts/b2-publishing.test.ts",
-    "publish:b2": "node scripts/publish-b2.ts"
+    "publish:b2": "node scripts/publish-b2.ts",
+    "test:mandate": "node --test scripts/mandate-input.test.ts"
   },
   "dependencies": {
     "posthog-js": "^1.442.1"

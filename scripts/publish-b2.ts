@@ -34,7 +34,7 @@ async function main(){
  console.log(`${c.dry?'Dry run':'Publishing'} ${c.url.origin} from ${bucket.bucketName}/${c.prefix}`);
  const childEnv={...process.env,SLOPBUZZ_RUNTIME:'browser',SLOPBUZZ_ENGINE:'auto',SLOPBUZZ_API_BASE_URL:'',SLOPBUZZ_RELEASE_SHA:git('rev-parse','HEAD'),SLOPBUZZ_ANALYTICS_ENABLED:e.SLOPBUZZ_ANALYTICS_ENABLED||'true',SLOPBUZZ_ANALYTICS_ENVIRONMENT:'production',SLOPBUZZ_ANALYTICS_ALLOW_LOCAL:'false',SLOPBUZZ_POSTHOG_ENV_FILE:e.SLOPBUZZ_POSTHOG_ENV_FILE||(e.SLOPBUZZ_ANALYTICS_ENABLED==='false'?'':'tmp/.env.posthog')};
  const run=(...args:string[])=>execFileSync('pnpm',args,{stdio:'inherit',env:childEnv});
- run('typecheck');run('test:publish');run('build');run('test:parity');run('test:e2e');execFileSync('node',['scripts/build.ts','--assets-only'],{stdio:'inherit',env:childEnv});
+ run('typecheck');run('test:mandate');run('test:publish');run('build');run('test:parity');run('test:e2e');execFileSync('node',['scripts/build.ts','--assets-only'],{stdio:'inherit',env:childEnv});
  if(!c.dry&&git('status','--porcelain','--untracked-files=no'))throw new Error('Build changed tracked sources; commit generated assets before publishing');
  async function files(directory:string):Promise<string[]>{const result:string[]=[];for(const d of await readdir(directory,{withFileTypes:true})){if(d.isSymbolicLink())throw new Error('Symlink in publication tree');const p=directory+'/'+d.name;if(d.isDirectory())result.push(...await files(p));else result.push(p.slice(5));}return result;}
  const privateValues=[e.B2_APP_KEY,e.CLOUDFLARE_API_TOKEN];

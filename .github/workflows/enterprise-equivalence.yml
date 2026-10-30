@@ -20,6 +20,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm exec playwright install --with-deps chromium firefox webkit
       - run: pnpm typecheck
+      - run: pnpm test:mandate
       - run: pnpm build
       - run: pnpm test:parity
       - run: pnpm test:e2e

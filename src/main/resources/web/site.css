@@ -81,7 +81,7 @@ h1 em { color: #ee9a75; font-weight: 500; }
 label { display: block; font-weight: 850; font-size: 1rem; }
 .field-help { margin: 5px 0 15px; color: var(--ink-soft); font-size: .88rem; }
 .form-row { display: flex; gap: 10px; align-items: stretch; }
-input[type=number] { width: min(170px, 36%); min-height: 52px; background: #fff; color: var(--ink); border: 2px solid var(--ink); border-radius: 3px; padding: 8px 12px; font-weight: 800; font-size: 1.15rem; }
+input#limit { flex: 1; min-width: 0; width: 100%; min-height: 52px; background: #fff; color: var(--ink); border: 2px solid var(--ink); border-radius: 3px; padding: 8px 12px; font-weight: 800; font-size: 1.15rem; }
 input[aria-invalid=true] { border-color: #a94323; }
 .field-error { min-height: 1.3em; margin: 8px 0 0; color: #92351d; font-size: .84rem; font-weight: 750; }
 .presets { display: flex; align-items: center; flex-wrap: wrap; gap: 9px; padding: 19px 0 22px; border-bottom: 1px solid var(--line); color: var(--ink-soft); font-size: .82rem; }
@@ -192,7 +192,7 @@ input[aria-invalid=true] { border-color: #a94323; }
   .section-heading, .about-grid { display: block; }
   .section-heading > p, .section-heading > div:last-child:not(:first-child) { margin-top: 14px; }
   .form-row { flex-direction: column; }
-  input[type=number] { width: 100%; }
+  input#limit { width: 100%; }
   .operations-grid, .audit-grid { grid-template-columns: 1fr; }
   .operation-card { min-height: 190px; }
   .about-copy { margin-top: 30px; }
@@ -259,3 +259,10 @@ body { overflow-wrap: anywhere; }
 .procurement-panel li strong { font-size: 1.35em; }
 .procurement-panel li span { display: block; color: var(--ink-soft); }
 .procurement-panel pre { max-width: 100%; max-height: 24rem; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; padding: 16px; background: var(--paper); }
+
+.numeric-governance { display: flex; gap: 10px; align-items: center; min-height: 44px; margin-top: 14px; font-size: .9rem; }
+.numeric-governance input { width: 22px; height: 22px; flex-shrink: 0; accent-color: var(--ink); }
+.magnitude-warning { font-size: .78rem; line-height: 1.5; color: var(--warning); border-left: 3px solid currentColor; padding-left: 10px; overflow-wrap: anywhere; }
+.forecast-list dd, #output-count, #run-status { overflow-wrap: anywhere; }
+
+.form-row > .button { flex-shrink: 0; }

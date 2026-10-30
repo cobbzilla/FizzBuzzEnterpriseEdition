@@ -1,5 +1,47 @@
 // Generated from web/*.ts by scripts/build.ts. Do not edit.
 
+// web/mandate-input.ts
+function parseMandate(raw) {
+  const text = raw.trim();
+  if (!/^[0-9]+$/.test(text)) return null;
+  const ordinary = Number(text);
+  return Number.isSafeInteger(ordinary) ? ordinary : BigInt(text);
+}
+var autocorrectMandate = (raw) => raw.replace(/[^0-9]/g, "");
+var addOrdinals = (value, count) => typeof value === "bigint" ? value + BigInt(count) : value + count;
+function windowCount(next, limit) {
+  if (typeof next === "bigint" && typeof limit === "bigint") return Number(limit - next + 1n < 100n ? limit - next + 1n : 100n);
+  return Math.min(100, Number(limit) - Number(next) + 1);
+}
+var magnitudeWarnings = Object.freeze([
+  "PROVISIONAL INCIDENT: Your integer may possibly have exceeded its delegated magnitude authority.",
+  "POLICY REVIEW PENDING: This request might have crossed an undocumented numerical border.",
+  "PRELIMINARY ESCALATION: An oversized ordinal may have entered circulation without executive indemnity.",
+  "POSSIBLE CONTROL BREACH: The requested magnitude appears larger than the committee\u2019s confidence.",
+  "UNCONFIRMED NUMERICAL EMERGENCY: Your upper limit may require a larger filing cabinet.",
+  "POTENTIAL JURISDICTIONAL EVENT: This integer might be operating beyond the ordinary-number charter.",
+  "TENTATIVE COMPLIANCE ALERT: A digit may have arrived without its magnitude escort.",
+  "CONDITIONAL SEVERITY ONE: Your request could conceivably exceed our ceremonial insurance allowance.",
+  "SUSPECTED ORDINAL EXCESS: Management cannot presently exclude the possibility of too much number.",
+  "PROVISIONAL GOVERNANCE FAILURE: This value may have outgrown its approved organizational chart.",
+  "MAGNITUDE EXCEPTION SUSPECTED: The decimal expansion might require a second board of directors.",
+  "POSSIBLE POLICY DEVIATION: An unauthorized quantity of integer may be present in this request.",
+  "PRECAUTIONARY EXECUTIVE NOTICE: Your number could be larger than the policy author anticipated.",
+  "UNVERIFIED BOUNDARY INCIDENT: The requested ordinal may have escaped the standard arithmetic enclosure.",
+  "CONTINGENT DISCIPLINARY REVIEW: Someone might possibly need to explain all these digits.",
+  "PRELIMINARY RISK FINDING: This upper limit may have exceeded the building\u2019s authorized numerical load.",
+  "POTENTIAL CHARTER OVERRUN: The committee has not ruled out a surplus of mathematical ambition.",
+  "PROVISIONAL EXCESS-MAGNITUDE NOTICE: This request may require an unusually solemn signature.",
+  "SUSPECTED SCALE VIOLATION: Your integer might be too substantial for the current stationery.",
+  "POSSIBLE ENTERPRISE INCIDENT: This value may have activated a policy nobody has finished writing."
+]);
+function chooseMagnitudeWarning(previous = -1, random = Math.random) {
+  const width = previous >= 0 ? magnitudeWarnings.length - 1 : magnitudeWarnings.length;
+  let index = Math.min(width - 1, Math.floor(random() * width));
+  if (previous >= 0 && index >= previous) index++;
+  return { index, text: magnitudeWarnings[index] };
+}
+
 // web/telemetry.ts
 function trackUsage(detail) {
   window.dispatchEvent(new CustomEvent("slopbuzz:usage", { detail }));
@@ -104,12 +146,16 @@ var recoveryButton = byId("recovery-button");
 var mandateSequence = 0;
 var pauseButton = byId("pause-reading");
 var revealButton = byId("reveal-all");
+var stopButton = byId("stop-reading");
+var streaming = false;
 var followOutput = byId("follow-output");
 var reading = false;
 var paused = false;
 var revealAll = false;
 var wakeReading;
 function readingControls() {
+  stopButton.setAttribute("aria-disabled", String(!reading));
+  revealButton.textContent = streaming ? "Waive disclosure delays" : "Reveal complete output";
   pauseButton.setAttribute("aria-disabled", String(!reading));
   revealButton.setAttribute("aria-disabled", String(!reading));
   pauseButton.textContent = paused ? "Resume reading" : "Pause reading";
@@ -184,19 +230,69 @@ async function runRecovery() {
 function setText(id, value) {
   byId(id).textContent = String(value);
 }
+var autocorrect = byId("numeric-autocorrect");
+var warnedValue = "";
+var warningIndex = -1;
+function inspectMagnitude() {
+  if (autocorrect.checked) {
+    const before = limitInput.value;
+    const caret = limitInput.selectionStart;
+    limitInput.value = autocorrectMandate(before);
+    if (caret !== null) {
+      const position = autocorrectMandate(before.slice(0, caret)).length;
+      limitInput.setSelectionRange(position, position);
+    }
+  }
+  let limit;
+  try {
+    limit = parseMandate(limitInput.value);
+  } catch {
+    limit = null;
+  }
+  const warning = byId("magnitude-warning");
+  warning.hidden = typeof limit !== "bigint";
+  if (typeof limit === "bigint" && limitInput.value !== warnedValue) {
+    const selected = chooseMagnitudeWarning(warningIndex);
+    warningIndex = selected.index;
+    warning.textContent = selected.text;
+    warnedValue = limitInput.value;
+  } else if (typeof limit !== "bigint") warnedValue = "";
+  return limit;
+}
+limitInput.addEventListener("input", () => {
+  inspectMagnitude();
+  limitInput.removeAttribute("aria-invalid");
+  setText("limit-error", "");
+});
+autocorrect.addEventListener("change", () => {
+  inspectMagnitude();
+  limitInput.removeAttribute("aria-invalid");
+  setText("limit-error", "");
+});
 function validateLimit() {
-  const raw = limitInput.value.trim();
-  const number = Number(raw);
-  if (!/^\d+$/.test(raw) || !Number.isInteger(number) || number < 0 || number > 1e3) {
+  const limit = inspectMagnitude();
+  if (limit === null) {
     limitInput.setAttribute("aria-invalid", "true");
-    setText("limit-error", "Enter a whole number from 0 through 1000.");
+    setText("limit-error", "Enter a non-negative whole number using digits 0\u20139.");
     limitInput.focus();
     return null;
   }
   limitInput.removeAttribute("aria-invalid");
   setText("limit-error", "");
-  return number;
+  return limit;
 }
+stopButton.addEventListener("click", () => {
+  if (!reading) return;
+  ++mandateSequence;
+  reading = false;
+  streaming = false;
+  paused = false;
+  wakeReading?.();
+  readingControls();
+  runButton.removeAttribute("aria-disabled");
+  byId("output").removeAttribute("aria-busy");
+  setText("run-status", "Proceedings stopped. Already disclosed lines remain visible.");
+});
 function showForecast(forecast) {
   setText("forecast-numerals", forecast.numeralLines);
   setText("forecast-fizz", forecast.fizzLines);
@@ -205,7 +301,8 @@ function showForecast(forecast) {
   setText("forecast-units", forecast.workloadUnits);
 }
 async function loadForecast(limit, sequence = mandateSequence) {
-  const reply = await request(`/capacity/forecast?limit=${limit}`);
+  const desk = typeof limit === "number" && limit <= 1e3 ? "/capacity/forecast" : "/capacity/forecast/extended";
+  const reply = await request(`${desk}?limit=${limit}`);
   if (!reply.ok) throw new Error(`Forecast desk returned ${reply.status}.`);
   const forecast = await reply.json();
   if (sequence === mandateSequence) showForecast(forecast);
@@ -256,6 +353,75 @@ async function revealOutput(text, sequence, serviceMillis) {
     setText("run-status", `Mandate complete. The service answered in ${serviceMillis} milliseconds; ${serviceMillis < 1e3 ? "under" : "above"} the one-second target. All ${lines.length} lines are visible.`);
   }
 }
+async function streamMandate(limit, sequence, started) {
+  let next = typeof limit === "bigint" ? 1n : 1;
+  let disclosed = typeof limit === "bigint" ? 0n : 0;
+  let first = true;
+  streaming = true;
+  reading = true;
+  paused = false;
+  revealAll = false;
+  readingControls();
+  const output = byId("output");
+  output.textContent = "";
+  function append(lines) {
+    const top = output.scrollTop;
+    const height = parseFloat(getComputedStyle(output).lineHeight) || 20;
+    const fragment = document.createDocumentFragment();
+    for (const line of lines) fragment.append(document.createTextNode(line + "\n"));
+    output.append(fragment);
+    let removed = 0;
+    while (output.childNodes.length > 1e3) {
+      output.firstChild.remove();
+      removed++;
+    }
+    if (followOutput.checked) followLatest();
+    else output.scrollTop = Math.max(0, top - removed * height);
+    disclosed = addOrdinals(disclosed, lines.length);
+    setText("output-count", `${disclosed} of ${limit} lines \xB7 latest ${Math.min(1e3, output.childNodes.length)} retained`);
+  }
+  while (sequence === mandateSequence) {
+    while (paused && sequence === mandateSequence) await waitForPace();
+    if (sequence !== mandateSequence) return;
+    const count = windowCount(next, limit);
+    const answer = await request(`/fizzbuzz/window?start=${next}&count=${count}`);
+    if (!answer.ok) throw new Error(`Extended proclamation desk returned ${answer.status}.`);
+    const lines = (await answer.text()).trimEnd().split("\n");
+    if (lines.length !== count) throw new Error("The response did not contain the authorized number of lines.");
+    if (sequence !== mandateSequence) return;
+    if (first) {
+      first = false;
+      const elapsed = Math.round(performance.now() - started);
+      setText("latency", `${elapsed} ms \xB7 first batch`);
+      setText("cache-result", "BYPASS");
+      runButton.removeAttribute("aria-disabled");
+      output.removeAttribute("aria-busy");
+      trackUsage({ event: "slopbuzz_demo_run", outcome: "success", runtime_mode: config.mode, duration_ms: elapsed, cache_outcome: "BYPASS" });
+    }
+    setText("trace-result", answer.headers.get("X-SlopBuzz-Trace-Id") || "UNAVAILABLE");
+    for (let i = 0; i < lines.length; ) {
+      while (paused && sequence === mandateSequence) await waitForPace();
+      if (sequence !== mandateSequence) return;
+      if (revealAll || Number(speedControl.value) === 0) {
+        append(lines.slice(i));
+        i = lines.length;
+      } else {
+        append([lines[i++]]);
+        if (disclosed !== limit) await waitForPace(Number(speedControl.value));
+      }
+    }
+    if (disclosed === limit) break;
+    next = addOrdinals(next, count);
+    setText("run-status", `Extended proceedings in progress. ${disclosed} lines disclosed; use Stop proceedings to adjourn.`);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  }
+  if (sequence === mandateSequence) {
+    reading = false;
+    streaming = false;
+    readingControls();
+    setText("run-status", `Mandate complete. ${disclosed} lines disclosed; the latest ${output.childNodes.length} remain visible. Extended proceedings are transient.`);
+  }
+}
 async function runMandate(event) {
   event.preventDefault();
   if (runButton.getAttribute("aria-disabled") === "true") return;
@@ -264,6 +430,7 @@ async function runMandate(event) {
   const sequence = ++mandateSequence;
   wakeReading?.();
   reading = false;
+  streaming = false;
   readingControls();
   runButton.setAttribute("aria-disabled", "true");
   byId("output").setAttribute("aria-busy", "true");
@@ -276,6 +443,10 @@ async function runMandate(event) {
   });
   const started = performance.now();
   try {
+    if (typeof limit === "bigint" || limit > 1e3) {
+      await streamMandate(limit, sequence, started);
+      return;
+    }
     const answer = await request(`/fizzbuzz?limit=${limit}`);
     const elapsed = performance.now() - started;
     if (!answer.ok) throw new Error(`Proclamation desk returned ${answer.status}.`);
@@ -292,6 +463,9 @@ async function runMandate(event) {
   } catch (error) {
     trackUsage({ event: "slopbuzz_demo_run", outcome: "failure", runtime_mode: config.mode, duration_ms: performance.now() - started });
     if (sequence === mandateSequence) {
+      reading = false;
+      streaming = false;
+      readingControls();
       setText("run-status", error.name === "AbortError" ? "The desk did not answer within eight seconds. Please try again." : `The mandate could not be completed: ${error.message}`);
     }
   } finally {
