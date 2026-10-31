@@ -36,6 +36,11 @@ to the server artifact. Browser hashing uses Web Crypto through `AuditDigest`.
 
 ## Optional server deployment
 
+The interactive mandate desk lives at `/demo/`. Its controls and official output
+share two desktop columns, with the advisory inventory below; narrow screens
+present controls, output, then advisory. The home page retains Operations and the
+company profile. Both pages use the same runtime namespace, journal, and cache.
+
 ```
 SLOPBUZZ_RUNTIME=server SLOPBUZZ_API_BASE_URL=/java-api pnpm build
 ```

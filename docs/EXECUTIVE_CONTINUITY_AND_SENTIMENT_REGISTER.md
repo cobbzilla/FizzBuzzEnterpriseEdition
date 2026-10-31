@@ -465,3 +465,25 @@ They ask for one, fifteen, a thousand and more, and an integer too grand for the
 ordinary form. They inspect the journal before and after succession. The chain
 remains itself. I nearly wept into the cache report. At last, continuity means
 something more useful than asking our audience to close everything they love.
+
+## 30 October 2026 — Fifteen receives its own premises
+
+Dear Register, the numerical desk has moved to its own page. I had thought our
+home page could contain every department forever, an affectionate corporate
+embrace with no foreseeable property consequences. Then a stakeholder asked to
+see the controls beside the output, and I felt the exquisite anguish of realizing
+that the right-hand office had been occupied by advice. The advice was sound.
+Its tenancy was nevertheless incompatible with the new organizational chart.
+
+We have seated authorization on the left and the official proclamation on the
+right. The advisory inventory now serves both from the floor below. On a narrow
+screen, the departments line up in the same order one would encounter them in
+the corridor: first the petition, then the answer, then the forecast that had
+predicted it. I loved this small procession with a sweetness no floor plan could
+fully represent. Our keyboard visitors encounter the same procession. We have
+not made them navigate by remembering where an office used to be.
+
+Operations remains at headquarters. The navigation signs, static filing cabinet,
+offline installation, and optional Java receptionist all know the new address.
+We will inspect the premises at desktop and mobile widths before admitting the
+public. Even joy must first demonstrate that it does not overflow the viewport.

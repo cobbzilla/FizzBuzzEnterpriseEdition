@@ -2,7 +2,7 @@ import {test, expect, type Page} from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 // These DOM tests mock fixtures; offline cache behavior has its own lifecycle suite.
 test.use({serviceWorkers:'block'});
-const routes = ['', 'api/', 'company-history/', 'changelog/', 'continuity-register/', 'validation/', 'response/', 'accessibility/'];
+const routes = ['', 'demo/', 'api/', 'company-history/', 'changelog/', 'continuity-register/', 'validation/', 'response/', 'accessibility/'];
 async function audit(page: Page) {
   const result = await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21a','wcag21aa','wcag22aa','best-practice']).analyze();
   expect(result.violations.map(v=>({id:v.id,nodes:v.nodes.map(n=>n.target)}))).toEqual([]);
@@ -38,7 +38,7 @@ for (const route of routes) {
   });
 }
 test('keyboard reading controls preserve focus, pause output and allow immediate completion',async({page})=>{
-  await page.goto('/'); await expect(page.locator('#health-value')).toHaveText('LIVE');
+  await page.goto('/demo/'); await expect(page.locator('#health-value')).toHaveText('LIVE');
   await page.fill('#limit','100');
   await page.locator('#run-button').focus(); await page.keyboard.press('Enter');
   await expect(page.locator('#output-count')).toContainText('of 100');
@@ -85,7 +85,7 @@ test('expanded API schemas, invalid parameters, filtering and response regions',
 });
 test('reduced motion and forced colors preserve keyboard focus and controls',async({page})=>{
   await page.emulateMedia({reducedMotion:'reduce',forcedColors:'active'});
-  await page.goto('/');
+  await page.goto('/demo/');
   expect(await page.locator('html').evaluate(e=>getComputedStyle(e).scrollBehavior)).toBe('auto');
   await page.locator('#run-button').focus();
   expect(await page.locator('#run-button').evaluate(e=>getComputedStyle(e).outlineStyle)).not.toBe('none');

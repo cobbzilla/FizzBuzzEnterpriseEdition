@@ -11,7 +11,7 @@ test('cookieless traffic and explicit usage are sanitized and non-blocking',asyn
   if(raw){try{const data=JSON.parse(raw[0]===31&&raw[1]===139?gunzipSync(raw).toString():raw.toString());events.push(...(data.batch|| (Array.isArray(data)?data:[data])));}catch{}}
   await route.fulfill({json:{status:1}});
  });
- await page.goto('/?secret=do-not-send&utm_campaign=launch');
+ await page.goto('/demo/?secret=do-not-send&utm_campaign=launch');
  await expect.poll(()=>events.filter(e=>e.event==='$pageview').length).toBe(1);
  await expect(page.locator('#health-value')).toHaveText('LIVE');
  await page.fill('#limit','3');await page.click('#run-button');
@@ -26,7 +26,7 @@ test('cookieless traffic and explicit usage are sanitized and non-blocking',asyn
  const card=page.locator('.api-card').first();await card.locator('summary').first().click();await card.getByRole('button').click();
  await expect.poll(()=>events.filter(e=>e.event==='slopbuzz_api_request').length).toBe(1);
  await page.route('**/intake/e/**',route=>route.abort());
- await page.goto('/');await page.selectOption('#display-speed','0');await page.click('#run-button');await expect(page.locator('#run-status')).toContainText('Mandate complete');
+ await page.goto('/demo/');await page.selectOption('#display-speed','0');await page.click('#run-button');await expect(page.locator('#run-status')).toContainText('Mandate complete');
 });
 test('cookieless delivery continues when DNT and GPC are both enabled',async({page})=>{
  await page.addInitScript(()=>{
@@ -43,7 +43,7 @@ test('cookieless delivery continues when DNT and GPC are both enabled',async({pa
   if(raw){const data=JSON.parse(raw[0]===31&&raw[1]===139?gunzipSync(raw).toString():raw.toString());events.push(...(data.batch||(Array.isArray(data)?data:[data])));}
   await route.fulfill({json:{status:1}});
  });
- await page.goto('/');await expect(page.locator('#health-value')).toHaveText('LIVE');
+ await page.goto('/demo/');await expect(page.locator('#health-value')).toHaveText('LIVE');
  await expect.poll(()=>events.filter(e=>e.event==='$pageview').length).toBe(1);
  await page.selectOption('#display-speed','0');await page.click('#run-button');
  await expect.poll(()=>events.filter(e=>e.event==='slopbuzz_demo_run').length).toBe(1);
@@ -59,7 +59,7 @@ test('explicit analytics disablement and default localhost policy prevent initia
  page.on('request',r=>{if(new URL(r.url()).pathname.startsWith('/intake/') || r.url().includes('posthog.com'))requests.push(r.url());});
  for(const config of [{enabled:false,token:'phc_test',allowLocal:true,apiHost:'/intake'},{enabled:true,token:'phc_test',allowLocal:false,apiHost:'/intake'}]) {
   await page.route('**/analytics-config.json',r=>r.fulfill({json:config}));
-  await page.goto('/');await expect(page.locator('#health-value')).toHaveText('LIVE');
+  await page.goto('/demo/');await expect(page.locator('#health-value')).toHaveText('LIVE');
   expect(requests).toEqual([]);
   await page.unroute('**/analytics-config.json');
  }

@@ -9,9 +9,10 @@ test('generated TypeScript interface runs against the optional Spring JVM server
   const child=spawn('java',['-cp',classpath,'com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.http.HttpMain'],{env:{...process.env,PORT:'0',SLOPBUZZ_REDIS_HOST:'',SLOPBUZZ_AUDIT_JDBC_URL:`jdbc:h2:file:${directory}/audit;DB_CLOSE_DELAY=-1`},stdio:'pipe'});
   try {
     const port=await new Promise<string>((resolve,reject)=>{child.stdout.on('data',data=>{const match=String(data).match(/SLOPBUZZ_LISTENING=(\d+)/);if(match)resolve(match[1]);});child.once('exit',code=>reject(new Error(`Server exited ${code}`)));child.once('error',reject);});
-    await page.goto(`http://127.0.0.1:${port}/`);await expect(page.locator('#health-value')).toHaveText('LIVE');
+    await page.goto(`http://127.0.0.1:${port}/demo/`);await expect(page.locator('#health-value')).toHaveText('LIVE');
     await page.selectOption('#display-speed','0');await page.click('#run-button');await expect(page.locator('#run-status')).toContainText('Mandate complete');await expect(page.locator('#cache-result')).toHaveText('BYPASS');
     await page.fill('#limit','1001');await page.click('#run-button');await expect(page.locator('#run-status')).toContainText('Mandate complete. 1001 lines disclosed');
+    await page.goto(`http://127.0.0.1:${port}/#operations`);
     await page.click('#procurement-button');await expect(page.locator('#procurement-status')).toContainText('8 separate line items');
     await page.click('#recovery-button');await expect(page.locator('#recovery-value')).toHaveText('COPY MATCHED');
     await page.goto(`http://127.0.0.1:${port}/api/`);await expect(page.locator('#api-total')).toContainText('ratified operations');

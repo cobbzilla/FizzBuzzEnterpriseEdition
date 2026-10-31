@@ -26,7 +26,7 @@ async function installLegacy(page:Page,engine:string,unsupported=false){
     const response=await route.fetch();await route.fulfill({json:{...await response.json(),revision:legacyRevision,engine}});
   });
   await page.route('**/runtime-worker.js',route=>route.fulfill({contentType:'text/javascript',body:unsupported?unsupportedWorker:legacyWorker}));
-  await page.goto('/');await expect(page.locator('#health-value')).toHaveText('LIVE');
+  await page.goto('/demo/');await expect(page.locator('#health-value')).toHaveText('LIVE');
 }
 test.beforeEach(async({context},info)=>{
   await context.route('**/runtime-config.json',async route=>{
@@ -37,7 +37,7 @@ test('hard reload beside a frozen legacy owner keeps demo, BigInt and one durabl
   await installLegacy(page,info.project.metadata.engine);
   await page.selectOption('#display-speed','0');await page.fill('#limit','17');await page.click('#run-button');
   await expect(page.locator('#run-status')).toContainText('Mandate complete');
-  const next=await context.newPage();await next.goto('/');await next.reload();
+  const next=await context.newPage();await next.goto('/demo/');await next.reload();
   await expect(next.locator('#health-value')).toHaveText('LIVE');
   await next.selectOption('#display-speed','0');
   for(const limit of ['1','15','1234']){
@@ -52,7 +52,9 @@ test('hard reload beside a frozen legacy owner keeps demo, BigInt and one durabl
   expect(window.status).toBe(200);expect(window.body).toBe('Fizz\n9007199254740994\n');expect(window.revision).toBe(currentRevision);
   const forecast=await invoke(next,'/capacity/forecast/extended?limit=9007199254740993');
   expect(JSON.parse(forecast.body).totalLines).toBe('9007199254740993');expect(forecast.revision).toBe(currentRevision);
+  await next.goto('/#operations');
   await next.click('#procurement-button');await expect(next.locator('#procurement-status')).toContainText('8 separate line items');
+  await next.goto('/demo/');
   await next.fill('#limit','9007199254740993');await next.selectOption('#display-speed','1800');await next.click('#run-button');
   await expect(next.locator('#output-count')).toContainText('of 9007199254740993 lines');await next.click('#stop-reading');
   // Release-local desks have not created a second persistent journal or even a DB.
@@ -67,13 +69,13 @@ test('hard reload beside a frozen legacy owner keeps demo, BigInt and one durabl
 });
 test('an unknown legacy protocol is refused before a mandate is submitted',async({page,context},info)=>{
   await installLegacy(page,info.project.metadata.engine,true);
-  const next=await context.newPage();await next.goto('/');
+  const next=await context.newPage();await next.goto('/demo/');
   await expect(next.locator('#health-value')).toHaveText('UNAVAILABLE');
   await next.click('#run-button');await expect(next.locator('#run-status')).toContainText('unsupported protocol');
   expect(JSON.parse((await invoke(page,'/audit/evidence')).body).journalEntries).toBe(0);
 });
 test('a transient release worker refuses retained operations',async({page})=>{
-  await page.goto('/');await expect(page.locator('#health-value')).toHaveText('LIVE');
+  await page.goto('/demo/');await expect(page.locator('#health-value')).toHaveText('LIVE');
   const error=await page.evaluate(async()=>{
     const m=await import(new URL('/assets/tribunal.js',location.href).href);
     const client=new m.BrowserRuntimeClient(m.config,crypto.randomUUID(),true);
