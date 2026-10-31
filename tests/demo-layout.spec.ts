@@ -4,20 +4,33 @@ test('dedicated demo navigates from home and preserves desktop and mobile readin
  test.skip(info.project.metadata.engine==='js','Layout is covered once per browser; functionality exercises both compiled engines.');
  const errors:string[]=[];page.on('pageerror',error=>errors.push(error.message));
  await page.goto('/');await expect(page.locator('#health-value')).toHaveText('LIVE');
+ // Keep an obsolete stable asset in the installed worker's cache. New pages must
+ // select their release's CSS rather than inherit this previous layout.
+ await page.evaluate(async()=>{
+  await navigator.serviceWorker.ready;
+  if(!navigator.serviceWorker.controller)await new Promise<void>(resolve=>navigator.serviceWorker.addEventListener('controllerchange',()=>resolve(),{once:true}));
+  for(const key of await caches.keys())await (await caches.open(key)).put(new URL('/assets/site.css',location.href),new Response('/* Previous release omits output-panel padding and advisory spacing. */',{headers:{'Content-Type':'text/css'}}));
+ });
  await expect(page.locator('#run-form')).toHaveCount(0);
  await page.getByRole('link',{name:'Convene the demo'}).click();await expect(page).toHaveURL(/\/demo\/$/);
  await expect(page.locator('#health-value')).toHaveText('LIVE');
  await expect(page.getByRole('navigation',{name:'Primary navigation'}).getByRole('link',{name:'Live demo'})).toHaveAttribute('aria-current','page');
  await expect(page.locator('main h1')).toHaveText('Issue a numerical mandate');
+ expect(await page.locator('link[rel=stylesheet]').first().getAttribute('href')).toMatch(/assets\/[a-f0-9]{16}\/site\.css$/);
  const controls=page.locator('#mandate-controls'),output=page.locator('#mandate-output'),advisory=page.locator('#advisory-inventory');
  await page.setViewportSize({width:1280,height:900});
  const left=(await controls.boundingBox())!,right=(await output.boundingBox())!,below=(await advisory.boundingBox())!;
  expect(left.x+left.width).toBeLessThan(right.x);expect(Math.abs(left.y-right.y)).toBeLessThan(2);
- expect(below.y).toBeGreaterThanOrEqual(Math.max(left.y+left.height,right.y+right.height));
+ expect(below.y).toBeGreaterThanOrEqual(Math.max(left.y+left.height,right.y+right.height)+31);
+ const typography=await page.evaluate(()=>{
+  const heading=getComputedStyle(document.querySelector('#output-title')!),controls=getComputedStyle(document.querySelector('#mandate-title')!),panel=getComputedStyle(document.querySelector('#mandate-output')!);
+  return {headingFamily:heading.fontFamily,controlsFamily:controls.fontFamily,headingSize:heading.fontSize,controlsSize:controls.fontSize,padding:parseFloat(panel.paddingLeft)};
+ });
+ expect(typography.headingFamily).toBe(typography.controlsFamily);expect(typography.headingSize).toBe(typography.controlsSize);expect(typography.padding).toBeGreaterThanOrEqual(22);
  for(const width of [390,320]){
   await page.setViewportSize({width,height:844});
   const top=(await controls.boundingBox())!,middle=(await output.boundingBox())!,bottom=(await advisory.boundingBox())!;
-  expect(middle.y).toBeGreaterThanOrEqual(top.y+top.height);expect(bottom.y).toBeGreaterThanOrEqual(middle.y+middle.height);
+  expect(middle.y).toBeGreaterThanOrEqual(top.y+top.height);expect(bottom.y).toBeGreaterThanOrEqual(middle.y+middle.height+31);
   expect(Math.abs(top.x-middle.x)).toBeLessThan(2);expect(Math.abs(middle.x-bottom.x)).toBeLessThan(2);
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
  }

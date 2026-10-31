@@ -99,6 +99,12 @@ Protocol 1 must change if the journal schema or retained operation contracts
 become incompatible. Closing all site tabs still permits an installed offline
 release to activate, but is no longer required to use compatible demo updates.
 
+Static HTML references release-specific stylesheet paths under its asset directory.
+The offline worker caches by pathname, so query-string revisions alone cannot
+prevent older styling from being applied to newly fetched HTML. Both common and
+API stylesheets are uploaded before pages, included in offline installation, and
+served as immutable assets. Stable CSS aliases remain available for older pages.
+
 TeaVM's generated WebAssembly JSO wrappers use dynamic JavaScript functions.
 The supplied hosts allow `unsafe-eval` **only in the runtime worker's response
 CSP**. The HTML document retains its stricter policy. A host that forbids those

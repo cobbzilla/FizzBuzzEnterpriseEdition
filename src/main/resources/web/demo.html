@@ -20,61 +20,62 @@
           <div><p class="eyebrow">Live proceedings / Mandate execution desk</p><h1 id="demo-title">Issue a numerical mandate</h1></div>
           <p>Run the real Java service. Repeat a mandate to observe Redis remember what the committee already decided.</p>
         </div>
-        <div class="demo-grid">
-          <section class="panel mandate-panel" id="mandate-controls" aria-labelledby="mandate-title">
-            <h2 id="mandate-title">Mandate controls</h2>
-            <form id="run-form" novalidate>
-              <label for="limit">Upper limit</label>
-              <p class="field-help" id="limit-help">Enter a non-negative whole number of any size. The first number is always 1. Extended mandates stream progressively and retain the latest 1,000 lines on screen.</p>
-              <div class="form-row">
-                <input id="limit" name="limit" type="text" inputmode="numeric" autocomplete="off" spellcheck="false" value="15" required aria-describedby="limit-help limit-error">
-                <button class="button button-primary" id="run-button" type="submit">Run the mandate</button>
+        <div class="demo-workspace">
+          <div class="demo-grid">
+            <section class="panel mandate-panel" id="mandate-controls" aria-labelledby="mandate-title">
+              <h2 id="mandate-title">Mandate controls</h2>
+              <form id="run-form" novalidate>
+                <label for="limit">Upper limit</label>
+                <p class="field-help" id="limit-help">Enter a non-negative whole number of any size. The first number is always 1. Extended mandates stream progressively and retain the latest 1,000 lines on screen.</p>
+                <div class="form-row">
+                  <input id="limit" name="limit" type="text" inputmode="numeric" autocomplete="off" spellcheck="false" value="15" required aria-describedby="limit-help limit-error">
+                  <button class="button button-primary" id="run-button" type="submit">Run the mandate</button>
+                </div>
+                <label class="numeric-governance"><input type="checkbox" id="numeric-autocorrect" aria-describedby="numeric-governance-help"> Enforce Numeric Character Governance</label>
+                <p class="field-help" id="numeric-governance-help">When checked, automatically remove everything except digits 0–9. Extended streaming proceedings do not add entries to the retained audit ledger or cache.</p>
+                <p class="magnitude-warning" id="magnitude-warning" role="status" aria-live="polite" aria-atomic="true" hidden></p>
+                <p class="field-error" id="limit-error" aria-live="polite"></p>
+              </form>
+              <div class="presets" role="group" aria-label="Suggested mandates">
+                <span>Try a brief:</span>
+                <button type="button" data-limit="15" aria-label="Run mandate for 15 numbers">15</button>
+                <button type="button" data-limit="100" aria-label="Run mandate for 100 numbers">100</button>
+                <button type="button" data-limit="1000" aria-label="Run mandate for 1000 numbers">1000</button>
               </div>
-              <label class="numeric-governance"><input type="checkbox" id="numeric-autocorrect" aria-describedby="numeric-governance-help"> Enforce Numeric Character Governance</label>
-              <p class="field-help" id="numeric-governance-help">When checked, automatically remove everything except digits 0–9. Extended streaming proceedings do not add entries to the retained audit ledger or cache.</p>
-              <p class="magnitude-warning" id="magnitude-warning" role="status" aria-live="polite" aria-atomic="true" hidden></p>
-              <p class="field-error" id="limit-error" aria-live="polite"></p>
-            </form>
-            <div class="presets" role="group" aria-label="Suggested mandates">
-              <span>Try a brief:</span>
-              <button type="button" data-limit="15" aria-label="Run mandate for 15 numbers">15</button>
-              <button type="button" data-limit="100" aria-label="Run mandate for 100 numbers">100</button>
-              <button type="button" data-limit="1000" aria-label="Run mandate for 1000 numbers">1000</button>
-            </div>
-            <div class="pace-control">
-              <label for="display-speed">Mandatory disclosure cadence</label>
-              <select id="display-speed" aria-describedby="pace-help">
-                <option value="1800" selected>Full Board Ratification</option>
-                <option value="800">Interdepartmental Sign-Off</option>
-                <option value="225">Emergency Delegated Authority</option>
-                <option value="0">Executive Fiat</option>
-              </select>
-              <p id="pace-help">Every line must clear its assigned approval queue before appearing. Executive Fiat waives the queue for real-time disclosure. Change authority mid-proclamation and the next line obeys. The service response is timed separately.</p>
-            </div>
-            <div class="run-meta" role="group" aria-label="Latest response measurements">
-              <div><span class="meta-label">Elapsed</span><strong id="latency">—</strong></div>
-              <div><span class="meta-label">Redis</span><strong id="cache-result">—</strong></div>
-              <div><span class="meta-label">Target</span><strong>&lt; 1 second</strong></div>
-              <div><span class="meta-label">Proclamation desk</span><strong id="health-value">Checking…</strong></div>
-            </div>
-            <div class="trace-receipt">
-              <span class="meta-label">Trace receipt</span>
-              <code id="trace-result">Awaiting a mandate</code>
-              <small>Give this ID to the logging department to locate the request proceedings.</small>
-            </div>
-            <div class="reading-controls" role="group" aria-label="Output reading controls">
-              <button class="button button-secondary" id="pause-reading" type="button" aria-controls="output" aria-disabled="true">Pause reading</button>
-              <button class="button button-secondary" id="reveal-all" type="button" aria-controls="output" aria-disabled="true">Reveal complete output</button>
-              <button class="button button-secondary" id="stop-reading" type="button" aria-controls="output" aria-disabled="true">Stop proceedings</button>
-              <label><input type="checkbox" id="follow-output" checked> Follow new output</label>
-            </div>
-          </section>
-          <section class="panel output-panel" id="mandate-output" aria-labelledby="output-title">
-            <div class="output-heading"><h2 id="output-title">Official output</h2><span id="output-count">0 lines</span></div>
-            <p class="inline-status" id="run-status" role="status" aria-live="polite" aria-atomic="true">Ready to receive a mandate.</p>
-            <pre class="terminal" id="output" tabindex="0" role="region" aria-label="FizzBuzz output">Awaiting a duly authorized number.</pre>
-          </section>
-        </div>
+              <div class="pace-control">
+                <label for="display-speed">Mandatory disclosure cadence</label>
+                <select id="display-speed" aria-describedby="pace-help">
+                  <option value="1800" selected>Full Board Ratification</option>
+                  <option value="800">Interdepartmental Sign-Off</option>
+                  <option value="225">Emergency Delegated Authority</option>
+                  <option value="0">Executive Fiat</option>
+                </select>
+                <p id="pace-help">Every line must clear its assigned approval queue before appearing. Executive Fiat waives the queue for real-time disclosure. Change authority mid-proclamation and the next line obeys. The service response is timed separately.</p>
+              </div>
+              <div class="run-meta" role="group" aria-label="Latest response measurements">
+                <div><span class="meta-label">Elapsed</span><strong id="latency">—</strong></div>
+                <div><span class="meta-label">Redis</span><strong id="cache-result">—</strong></div>
+                <div><span class="meta-label">Target</span><strong>&lt; 1 second</strong></div>
+                <div><span class="meta-label">Proclamation desk</span><strong id="health-value">Checking…</strong></div>
+              </div>
+              <div class="trace-receipt">
+                <span class="meta-label">Trace receipt</span>
+                <code id="trace-result">Awaiting a mandate</code>
+                <small>Give this ID to the logging department to locate the request proceedings.</small>
+              </div>
+              <div class="reading-controls" role="group" aria-label="Output reading controls">
+                <button class="button button-secondary" id="pause-reading" type="button" aria-controls="output" aria-disabled="true">Pause reading</button>
+                <button class="button button-secondary" id="reveal-all" type="button" aria-controls="output" aria-disabled="true">Reveal complete output</button>
+                <button class="button button-secondary" id="stop-reading" type="button" aria-controls="output" aria-disabled="true">Stop proceedings</button>
+                <label><input type="checkbox" id="follow-output" checked> Follow new output</label>
+              </div>
+            </section>
+            <section class="panel output-panel" id="mandate-output" aria-labelledby="output-title">
+              <div class="output-heading"><h2 id="output-title">Official output</h2><span id="output-count">0 lines</span></div>
+              <p class="inline-status" id="run-status" role="status" aria-live="polite" aria-atomic="true">Ready to receive a mandate.</p>
+              <pre class="terminal" id="output" tabindex="0" role="region" aria-label="FizzBuzz output">Awaiting a duly authorized number.</pre>
+            </section>
+          </div>
           <aside class="panel forecast-panel" id="advisory-inventory" aria-labelledby="forecast-title">
             <p class="eyebrow">Advisory inventory</p>
             <h2 id="forecast-title">Before the first number is printed</h2>
@@ -89,6 +90,7 @@
             <p class="fine-print">Workload units are fictional internal planning measures. They are not prices or observed compute costs.</p>
             <a class="text-link" href="/capacity/forecast?limit=15">View the forecast API <span aria-hidden="true">↗</span></a>
           </aside>
+        </div>
       </div>
     </section>
 

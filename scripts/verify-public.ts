@@ -41,6 +41,10 @@ export async function verifyPublic(origin: string, revision: string) {
    });
    await page.goto(origin + '/demo/');
    await expect(page.locator('#health-value')).toHaveText('LIVE');
+   const stylesheet = new URL(await page.locator('link[rel=stylesheet]').first().getAttribute('href') || '', page.url());
+   assert.equal(stylesheet.pathname, '/' + config.assets + 'site.css', 'Page must use its release-specific stylesheet');
+   const spacing = await page.evaluate(() => ({padding:parseFloat(getComputedStyle(document.querySelector('#mandate-output')!).paddingLeft),gap:parseFloat(getComputedStyle(document.querySelector('.demo-workspace')!).rowGap)}));
+   assert.ok(spacing.padding >= 22 && spacing.gap >= 32, 'Published demo must retain its output padding and advisory spacing');
    await page.selectOption('#display-speed', '0');
    await page.click('#run-button');
    await expect(page.locator('#run-status')).toContainText('Mandate complete');
