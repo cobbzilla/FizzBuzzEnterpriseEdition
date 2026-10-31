@@ -30,7 +30,7 @@ export async function verifyAnalytics(origin: string, expectedRevision?: string,
   });
   const isIntake = (url: string) => {const u=new URL(url);return u.origin===origin&&u.pathname==='/intake/e/';};
   const delivery = page.waitForResponse(response => isIntake(response.url()), {timeout:30000});
-  await page.goto(origin+'/');
+  await page.goto(origin+'/demo/');
   const accepted = await delivery;
   assert.equal(accepted.status(),200,'First-party pageview rejected');
   assert.equal(accepted.headers()['cache-control'],'no-store');

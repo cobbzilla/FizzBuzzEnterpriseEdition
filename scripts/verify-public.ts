@@ -39,7 +39,7 @@ export async function verifyPublic(origin: string, revision: string) {
     const url = new URL(request.url());
     if (url.origin === origin && /^\/(fizzbuzz|healthz|readyz|audit|operations|capacity|cache|procurement)(\/|\?|$)/.test(url.pathname)) businessRequests.push(url.pathname);
    });
-   await page.goto(origin + '/');
+   await page.goto(origin + '/demo/');
    await expect(page.locator('#health-value')).toHaveText('LIVE');
    await page.selectOption('#display-speed', '0');
    await page.click('#run-button');
@@ -53,6 +53,7 @@ export async function verifyPublic(origin: string, revision: string) {
    await page.fill('#limit','9007199254740993');await expect(page.locator('#magnitude-warning')).toBeVisible();
    await page.click('#run-button');await expect(page.locator('#output-count')).toContainText('of 9007199254740993 lines');
    await page.click('#stop-reading');await expect(page.locator('#run-status')).toContainText('Proceedings stopped');
+   await page.goto(origin+'/#operations');
    await page.click('#procurement-button');
    await expect(page.locator('#procurement-status')).toContainText('8 separate line items');
    await expect(page.locator('#procurement-items li')).toHaveCount(8);
@@ -61,19 +62,20 @@ export async function verifyPublic(origin: string, revision: string) {
    await page.click('#recovery-button');
    await expect(page.locator('#recovery-value')).toHaveText('COPY MATCHED');
    await page.waitForFunction(() => !!navigator.serviceWorker.controller, null, {timeout: 120000});
-   for (const route of ['api', 'company-history', 'changelog', 'continuity-register', 'accessibility', 'validation', 'response']) {
+   for (const route of ['demo', 'api', 'company-history', 'changelog', 'continuity-register', 'accessibility', 'validation', 'response']) {
     await page.goto(`${origin}/${route}/`);
     await expect(page.locator('main h1')).toHaveCount(1);
     if (route === 'api') await expect(page.locator('#api-total')).toContainText('ratified operations');
    }
    await context.setOffline(true);
-   await page.goto(origin + '/');
+   await page.goto(origin + '/demo/');
    await expect(page.locator('#health-value')).toHaveText('LIVE');
    await page.selectOption('#display-speed', '0');
    await page.fill('#limit', '16');
    await page.click('#run-button');
    await expect(page.locator('#run-status')).toContainText('Mandate complete');
    assert.equal((await page.locator('#output').textContent())?.trim().split('\n').at(-1), '16');
+   await page.goto(origin+'/#operations');
    await page.click('#procurement-button');
    await expect(page.locator('#procurement-status')).toContainText('8 separate line items');
    await page.goto(origin + '/api/');

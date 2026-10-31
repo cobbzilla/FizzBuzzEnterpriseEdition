@@ -13,7 +13,7 @@ for(const port of [18088,18089]) {
 const browser=await chromium.launch();
 try {
  const page=await browser.newPage();
- await page.goto('http://localhost:18088/');
+ await page.goto('http://localhost:18088/demo/');
  await page.waitForFunction(()=>document.querySelector('#health-value')?.textContent === 'LIVE',null,{timeout:60000});
  const release=await page.request.get('http://localhost:18088/release.json').then(r=>r.json());assert.equal(release.revision,revision);assert.equal(release.dirty,false);
  const evidence=await page.request.get('http://localhost:18088/validation/report.json').then(r=>r.json());assert.equal(evidence.revision,revision);assert.equal(evidence.status,'PASSED');assert.equal(evidence.browserLifecycle.status,'PASSED');
@@ -22,7 +22,7 @@ try {
  assert.equal((await page.locator('#output').textContent())?.split('\n').filter(Boolean).length,15);
  assert.equal(await page.locator('#runtime-status, #offline-status').count(),0);
  for(const port of [18088,18089]) {
-  for(const route of ['company-history','accessibility','api','validation']) {
+  for(const route of ['demo','company-history','accessibility','api','validation']) {
    await page.goto(`http://localhost:${port}/${route}/`);
    assert.equal(await page.getByRole('navigation',{name:'Primary navigation'}).getByRole('link',{name:'Company History',exact:true}).count(),1);
    assert.equal(await page.locator('main h1').count(),1);

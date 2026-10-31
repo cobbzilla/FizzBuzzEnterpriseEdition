@@ -15,7 +15,7 @@ test.beforeEach(async({page},info)=>{
 });
 test('local UI, cache, receipts, docs, cadence and scrolling',async({page})=>{
   const network:string[]=[];page.on('request',request=>network.push(new URL(request.url()).pathname));
-  await page.goto('/');
+  await page.goto('/demo/');
   await expect(page.locator('#health-value')).toHaveText('LIVE');
   await expect(page.locator('#runtime-status, #offline-status')).toHaveCount(0);
   await expect(page.locator('#display-speed')).toHaveValue('1800');
@@ -25,6 +25,7 @@ test('local UI, cache, receipts, docs, cadence and scrolling',async({page})=>{
   await expect(page.locator('#cache-result')).toHaveText('MISS');
   expect(await page.locator('#output').evaluate(e=>e.scrollTop+e.clientHeight>=e.scrollHeight-2)).toBe(true);
   await page.click('#run-button');await expect(page.locator('#cache-result')).toHaveText('HIT');
+  await page.goto('/#operations');await expect(page.locator('#health-value')).toHaveText('LIVE');
   await page.click('#canary-button');await expect(page.locator('#canary-value')).toHaveText('APPROVED');
   await page.click('#recovery-button');await expect(page.locator('#recovery-value')).toHaveText('COPY MATCHED');
   await page.getByRole('link',{name:'Cache report'}).click();await expect(page.locator('pre')).toContainText('slopbuzz-cache/v1');
@@ -34,8 +35,8 @@ test('local UI, cache, receipts, docs, cadence and scrolling',async({page})=>{
   expect(network.filter(p=>/^\/(fizzbuzz|healthz|readyz|audit|operations|capacity|cache)/.test(p))).toEqual([]);
 });
 test('reload, simultaneous tabs and owner death preserve one journal',async({page,context})=>{
-  await page.goto('/');await expect(page.locator('#health-value')).toHaveText('LIVE');
-  const other=await context.newPage();await other.goto('/');await expect(other.locator('#health-value')).toHaveText('LIVE');
+  await page.goto('/demo/');await expect(page.locator('#health-value')).toHaveText('LIVE');
+  const other=await context.newPage();await other.goto('/demo/');await expect(other.locator('#health-value')).toHaveText('LIVE');
   const answers=await Promise.all([invoke(page,'/fizzbuzz?limit=17'),invoke(other,'/fizzbuzz?limit=17')]);
   expect(answers.map(r=>r.cache).sort()).toEqual(['HIT','MISS']);
   const first=JSON.parse((await invoke(page,'/audit/evidence')).body);expect(first.journalEntries).toBe(17);
@@ -46,7 +47,7 @@ test('reload, simultaneous tabs and owner death preserve one journal',async({pag
   const third=JSON.parse((await invoke(other,'/audit/evidence')).body);expect(third.headDigest).toBe(first.headDigest);
 });
 test('fresh recovery detects tampering and restart refuses corrupt data',async({page})=>{
-  await page.goto('/');await expect(page.locator('#health-value')).toHaveText('LIVE');await invoke(page,'/fizzbuzz?limit=3');
+  await page.goto('/demo/');await expect(page.locator('#health-value')).toHaveText('LIVE');await invoke(page,'/fizzbuzz?limit=3');
   await page.evaluate(async()=>{
     const db=await new Promise<IDBDatabase>((resolve,reject)=>{const r=indexedDB.open(`slopbuzz:${location.origin}/`);r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});
     await new Promise<void>((resolve,reject)=>{const tx=db.transaction('entries','readwrite');tx.objectStore('entries').put('1|1|COMMITTED|GENESIS|bad|1\n',1);tx.oncomplete=()=>resolve();tx.onabort=()=>reject(tx.error);});db.close();
@@ -59,7 +60,7 @@ test('whole release works with its origin server stopped',async({page},info)=>{
   await new Promise<void>(resolve=>server.listen(0,'127.0.0.1',resolve));
   const port=(server.address() as {port:number}).port;
   try {
-    await page.goto(`http://127.0.0.1:${port}/`);await expect(page.locator('#health-value')).toHaveText('LIVE');
+    await page.goto(`http://127.0.0.1:${port}/demo/`);await expect(page.locator('#health-value')).toHaveText('LIVE');
     await page.evaluate(async()=>{await navigator.serviceWorker.ready;});
     await page.evaluate(async()=>{await navigator.serviceWorker.ready;if(!navigator.serviceWorker.controller)await new Promise<void>(resolve=>navigator.serviceWorker.addEventListener('controllerchange',()=>resolve(),{once:true}));});
     await page.unroute('**/runtime-config.json');
@@ -68,13 +69,14 @@ test('whole release works with its origin server stopped',async({page},info)=>{
     expect((await invoke(page,'/operations/runtime')).body).toContain(info.project.metadata.engine==='js'?'js':'wasm');
     await page.selectOption('#display-speed','0');await page.click('#run-button');await expect(page.locator('#run-status')).toContainText('Mandate complete');
     await page.fill('#limit','1001');await page.click('#run-button');await expect(page.locator('#run-status')).toContainText('Mandate complete. 1001 lines disclosed');
+    await page.goto(`http://127.0.0.1:${port}/#operations`);
     await page.click('#procurement-button');await expect(page.locator('#procurement-status')).toContainText('8 separate line items');
     await page.goto(`http://127.0.0.1:${port}/api/`);await expect(page.locator('#api-total')).toContainText('ratified operations');
     await page.goto(`http://127.0.0.1:${port}/continuity-register/`);await expect(page.locator('main')).toContainText('WebAssembly');
   }finally{server.close();server.closeAllConnections();}
 });
 test('repository rejection rolls back and cache expiry is honored',async({page})=>{
-  await page.goto('/');await expect(page.locator('#health-value')).toHaveText('LIVE');await invoke(page,'/fizzbuzz?limit=2');
+  await page.goto('/demo/');await expect(page.locator('#health-value')).toHaveText('LIVE');await invoke(page,'/fizzbuzz?limit=2');
   await page.evaluate(async()=>{
     const db=await new Promise<IDBDatabase>(resolve=>{const r=indexedDB.open(`slopbuzz:${location.origin}/`);r.onsuccess=()=>resolve(r.result);});
     await new Promise<void>((resolve,reject)=>{const tx=db.transaction('cache','readwrite');tx.objectStore('cache').put({expires:0,body:'forged stale answer'},'2');tx.oncomplete=()=>resolve();tx.onabort=()=>reject(tx.error);});
@@ -91,14 +93,14 @@ test('subdirectory hosting resolves workers, docs and API assets',async({page},i
   await new Promise<void>(resolve=>server.listen(0,'127.0.0.1',resolve));
   const port=(server.address() as {port:number}).port;
   try {
-    await page.goto(`http://127.0.0.1:${port}/portfolio/slopbuzz/`);
+    await page.goto(`http://127.0.0.1:${port}/portfolio/slopbuzz/demo/`);
     await expect(page.locator('#health-value')).toHaveText('LIVE');
     await page.selectOption('#display-speed','0');await page.click('#run-button');await expect(page.locator('#run-status')).toContainText('Mandate complete');
     await page.getByRole('link',{name:'API charter',exact:true}).click();await expect(page.locator('#api-total')).toContainText('ratified operations');
   }finally{server.close();server.closeAllConnections();}
 });
 test('the owner rejects a request addressed with the wrong execution revision',async({page})=>{
-  await page.goto('/');await expect(page.locator('#health-value')).toHaveText('LIVE');
+  await page.goto('/demo/');await expect(page.locator('#health-value')).toHaveText('LIVE');
   const error=await page.evaluate(async()=>{
     const m=await import(new URL('/assets/tribunal.js',location.href).href);
     const channel=new BroadcastChannel(`slopbuzz:${m.scope}`);
@@ -115,7 +117,7 @@ test('the owner rejects a request addressed with the wrong execution revision',a
   expect(error).toContain('different release');expect(JSON.parse((await invoke(page,'/audit/evidence')).body).journalEntries).toBe(0);
 });
 test('failed audit append is not acknowledged or cached; transaction state is released',async({page})=>{
-  await page.goto('/');await expect(page.locator('#health-value')).toHaveText('LIVE');
+  await page.goto('/demo/');await expect(page.locator('#health-value')).toHaveText('LIVE');
   const inject=async(remove:boolean)=>page.evaluate(async remove=>{
     const db=await new Promise<IDBDatabase>(resolve=>{const r=indexedDB.open(`slopbuzz:${location.origin}/`);r.onsuccess=()=>resolve(r.result);});
     await new Promise<void>((resolve,reject)=>{const tx=db.transaction('entries','readwrite');if(remove)tx.objectStore('entries').delete(1);else tx.objectStore('entries').add('injected conflicting sequence',1);tx.oncomplete=()=>resolve();tx.onabort=()=>reject(tx.error);});db.close();
@@ -133,7 +135,7 @@ test('an installed update waits for the current release to close',async({page,co
   await new Promise<void>(resolve=>server.listen(0,'127.0.0.1',resolve));
   const origin=`http://127.0.0.1:${(server.address() as {port:number}).port}`;
   try {
-    await page.goto(origin);await page.evaluate(async()=>{await navigator.serviceWorker.ready;});
+    await page.goto(origin+'/demo/');await page.evaluate(async()=>{await navigator.serviceWorker.ready;});
     const oldKeys=await page.evaluate(()=>caches.keys());
     const worker=await readFile(`${directory}/sw.js`,'utf8');
     await writeFile(`${directory}/sw.js`,worker.replace(/(var|const) cacheName = ([^;]+);/, '$1 cacheName = $2 + "-successor";'));
@@ -142,7 +144,7 @@ test('an installed update waits for the current release to close',async({page,co
     // The old controller remains authoritative while this tab can submit requests.
     await page.selectOption('#display-speed','0');await page.click('#run-button');await expect(page.locator('#run-status')).toContainText('Mandate complete');
     await page.close();
-    const next=await context.newPage();await next.goto(origin);await expect(next.locator('#health-value')).toHaveText('LIVE');
+    const next=await context.newPage();await next.goto(origin+'/demo/');await expect(next.locator('#health-value')).toHaveText('LIVE');
     await expect.poll(()=>next.evaluate(()=>caches.keys())).not.toEqual(oldKeys);
     await next.close();
   }finally{server.close();server.closeAllConnections();await rm(directory,{recursive:true,force:true});}

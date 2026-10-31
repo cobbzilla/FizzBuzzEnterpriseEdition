@@ -135,12 +135,19 @@ public class SlopFizzBuzzHttpServerTest {
 		assertTrue(page.body.contains("id=\"canary-button\""));
 		assertTrue(page.body.contains("id=\"release-value\""));
 		assertTrue(page.body.contains("id=\"recovery-button\""));
-		assertTrue(page.body.contains("id=\"display-speed\""));
-		assertTrue(page.body.contains("<option value=\"1800\" selected>Full Board Ratification</option>"));
-		assertTrue(page.body.contains("<option value=\"800\">Interdepartmental Sign-Off</option>"));
-		assertTrue(page.body.contains("<option value=\"225\">Emergency Delegated Authority</option>"));
-		assertTrue(page.body.contains("<option value=\"0\">Executive Fiat</option>"));
-		assertTrue(page.body.contains("Executive Fiat waives the queue for real-time disclosure."));
+		assertFalse(page.body.contains("id=\"run-form\""));
+		assertTrue(page.body.contains("href=\"/demo/\""));
+		final Reply demo = request("GET", "/demo/");
+		assertEquals(200, demo.status);
+		assertTrue(demo.body.contains("id=\"run-form\""));
+		assertTrue(demo.body.contains("id=\"mandate-output\""));
+		assertTrue(demo.body.contains("id=\"advisory-inventory\""));
+		assertTrue(demo.body.contains("<option value=\"1800\" selected>Full Board Ratification</option>"));
+		assertTrue(demo.body.contains("<option value=\"800\">Interdepartmental Sign-Off</option>"));
+		assertTrue(demo.body.contains("<option value=\"225\">Emergency Delegated Authority</option>"));
+		assertTrue(demo.body.contains("<option value=\"0\">Executive Fiat</option>"));
+		assertTrue(demo.body.contains("Executive Fiat waives the queue for real-time disclosure."));
+		assertTrue(request("GET", "/assets/demo.js").body.contains("runtime-config.json"));
 		assertFalse(page.body.contains("leisurely"));
 		assertTrue(page.body.contains("href=\"/api\""));
 		assertTrue(page.body.contains("href=\"/company-history/\""));
@@ -154,7 +161,7 @@ public class SlopFizzBuzzHttpServerTest {
 
     @Test
     public void sharedReceptionAndCompanyArchivesAreAvailableOnEveryPage() throws Exception {
-        for (final String path : new String[] {"/", "/api/", "/changelog/", "/continuity-register/", "/company-history/", "/accessibility/", "/validation/", "/response/"}) {
+        for (final String path : new String[] {"/", "/demo/", "/api/", "/changelog/", "/continuity-register/", "/company-history/", "/accessibility/", "/validation/", "/response/"}) {
             final Reply page = request("GET", path);
             assertEquals(200, page.status);
             assertTrue(page.body.contains("aria-label=\"Primary navigation\""));
