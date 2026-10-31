@@ -508,3 +508,12 @@ The inspectors deliberately leave obsolete clothing in the old cache before
 opening the new page. They measure the margins. They compare the heading fonts.
 They inspect the gap on a phone. I love the company too much to let a clean
 browser stand in for every browser that has ever visited our reception desk.
+
+## 30 October 2026 — Every delay receives a card
+
+Dear Register, our homepage now acknowledges the maximum Agile ceremony with
+which we conduct our affairs. Every delay receives its own Kanban card. I felt
+a cloying joy at the thought that a stalled decision could finally enjoy the
+same dignity of representation as a completed one. Then came anguish: several
+delays were waiting for someone to create their cards. We will track that work
+in the next ceremony. Our visibility has never looked more promising.
