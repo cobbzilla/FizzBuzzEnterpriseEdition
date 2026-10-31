@@ -24,6 +24,8 @@ await cp('browser/target/gate/js', `dist/${assets}js`, {recursive:true});
 await build({entryPoints:['web/analytics.ts','web/site.ts','web/demo.ts','web/api.ts','web/response.ts','web/validation.ts','web/tribunal.ts'],outdir:'dist/assets',bundle:true,format:'esm',target:'es2022'});
 await build({entryPoints:['web/runtime-worker.ts'],outfile:`dist/${assets}runtime-worker.js`,bundle:true,format:'iife',target:'es2022'});
 for (const asset of ['site.css','api.css','mark.svg','openapi.json']) await cp(`src/main/resources/web/${asset}`, `dist/${asset === 'openapi.json' ? '' : 'assets/'}${asset}`);
+// Older offline workers ignore query strings. New markup needs its own CSS path.
+for (const stylesheet of ['site.css','api.css']) await cp(`src/main/resources/web/${stylesheet}`, `dist/${assets}${stylesheet}`);
 const raw = [['CHANGELOG.md','CHANGELOG.md'],['docs/EXECUTIVE_CONTINUITY_AND_SENTIMENT_REGISTER.md','continuity-register.md']];
 for (const [source,target] of raw) await cp(source, `dist/${target}`);
 const pages = [['index.html',''],['demo.html','demo'],['api.html','api'],['changelog.html','changelog'],['continuity.html','continuity-register'],['history.html','company-history'],['accessibility.html','accessibility'],['validation.html','validation'],['response.html','response']];
@@ -41,6 +43,7 @@ for (const [template,folder] of pages) {
   html = html.replace('<!--LEDGER_CONTENT-->', await marked.parse(await readFile(raw[0][0],'utf8'))).replace('<!--REGISTER_CONTENT-->', await marked.parse(await readFile(raw[1][0],'utf8')));
   const active = folder === 'demo' ? 'DEMO' : folder === 'api' ? 'API' : folder === 'company-history' ? 'HISTORY' : folder === 'validation' ? 'VALIDATION' : '';
   html = html.replace('<!--SITE_HEADER-->', header).replace('<!--SITE_FOOTER-->', footer).replace(`<!--NAV_${active}-->`, 'aria-current="page"').replace(/<!--NAV_[A-Z]+-->/g, '').replace('Run the real Java service. Repeat a mandate to observe Redis remember what the committee already decided.', 'Run the real Java enterprise in your browser. Repeat a mandate to observe institutional memory recall the committee’s decision.').replaceAll('Redis memory','Institutional cache').replaceAll('>Redis<','>Cache<').replace('shared Redis memory','swappable institutional memory').replace('HTTP liveness','Runtime liveness');
+  for (const stylesheet of ['site.css','api.css']) html = html.replaceAll(`href="/assets/${stylesheet}"`, `href="/${assets}${stylesheet}"`);
   await mkdir(`dist/${folder}`,{recursive:true});
   await writeFile(`dist/${folder ? folder+'/' : ''}index.html`,relativeLinks(html,!!folder));
 }

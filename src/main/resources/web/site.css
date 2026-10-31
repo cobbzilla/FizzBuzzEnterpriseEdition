@@ -76,14 +76,17 @@ h1 em { color: #ee9a75; font-weight: 500; }
 .section-heading > p, .section-heading > div:last-child:not(:first-child) { max-width: 380px; color: var(--ink-soft); }
 .section-heading > div:last-child p { margin-bottom: 15px; }
 .panel { background: var(--white); border: 1px solid var(--line); box-shadow: 0 8px 0 #d8d1c5; }
+.demo-workspace { display: grid; gap: clamp(32px, 4vw, 48px); }
 .demo-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px; align-items: stretch; }
 .mandate-panel, .output-panel, .forecast-panel { padding: clamp(22px, 3vw, 38px); }
 .demo-section .section-heading h1 { margin: 0; font-size: clamp(2.2rem, 4vw, 3.9rem); line-height: 1.12; letter-spacing: -.04em; }
 .mandate-panel h2, .output-panel h2 { font-size: 1.5rem; line-height: 1.2; margin-bottom: 24px; }
 .output-panel { display: flex; flex-direction: column; }
-.output-panel .terminal { flex: 1; min-height: 24rem; height: 0; max-height: none; }
+.output-panel .output-heading { flex-wrap: wrap; align-items: center; margin-bottom: 18px; padding-bottom: 18px; border-bottom: 1px solid var(--line); }
+.output-panel .output-heading h2 { margin: 0; }
+.output-panel .terminal { flex: 1; min-height: 28rem; height: 0; max-height: none; padding: clamp(18px, 2vw, 26px); background: var(--ink); color: var(--white); border-color: var(--ink); font-size: .95rem; line-height: 1.7; }
 .demo-section .run-meta { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-.demo-section .forecast-panel { margin-top: 24px; }
+.demo-section .forecast-panel { margin: 0; }
 .demo-section .forecast-panel h2 { font-size: clamp(1.7rem, 2.4vw, 2.3rem); line-height: 1.12; letter-spacing: -.035em; }
 .demo-section .forecast-list { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 20px; }
 .demo-section .forecast-list div { display: block; border-top: 1px solid var(--line); border-bottom: 0; padding-top: 12px; }

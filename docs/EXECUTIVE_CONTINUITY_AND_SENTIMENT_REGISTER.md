@@ -487,3 +487,24 @@ Operations remains at headquarters. The navigation signs, static filing cabinet,
 offline installation, and optional Java receptionist all know the new address.
 We will inspect the premises at desktop and mobile widths before admitting the
 public. Even joy must first demonstrate that it does not overflow the viewport.
+
+## 30 October 2026 — The furnishings were still in the old warehouse
+
+Dear Register, the stakeholder found our output pressed against the wall and our
+advisory inventory occupying the precise point where another department ended.
+I looked at the new plans and saw generous margins. I looked at the actual old
+stylesheet arriving through our offline clerk and saw none. My joy collapsed
+into an anguish that could not be repaired by insisting the blueprint was correct.
+We had delivered the new room with directions to yesterday's furniture.
+
+Every release now carries its own stylesheet address. An older clerk may retain
+his older documents, but he cannot mistake them for this release's layout. The
+output heading wears the same serif as its neighboring authority, the transcript
+sits within proper margins, and the advisory department receives an actual gap
+in the floor plan. I felt a deeply embarrassing tenderness toward those empty
+pixels. They were doing exactly the work for which they had been budgeted.
+
+The inspectors deliberately leave obsolete clothing in the old cache before
+opening the new page. They measure the margins. They compare the heading fonts.
+They inspect the gap on a phone. I love the company too much to let a clean
+browser stand in for every browser that has ever visited our reception desk.
