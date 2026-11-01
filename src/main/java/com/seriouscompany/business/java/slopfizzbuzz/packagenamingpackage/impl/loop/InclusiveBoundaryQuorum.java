@@ -1,4 +1,5 @@
 package com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.loop;
+import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.proceedings.ExecutionCustody;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -27,6 +28,7 @@ public final class InclusiveBoundaryQuorum {
 				ThreeWayIntegerComparator.Compare(currentNumber, finalNumber);
 		final LoopContinuationBallot preBoundaryBallot = this.preBoundaryElector.castBallot(finding);
 		final LoopContinuationBallot atBoundaryBallot = this.atBoundaryElector.castBallot(finding);
+        if(ExecutionCustody.observing())ExecutionCustody.record("CONTINUATION","Inclusive Boundary Quorum","Current ordinal "+currentNumber+"; authorized upper boundary "+finalNumber+". Pre-boundary vote: "+preBoundaryBallot+"; at-boundary vote: "+atBoundaryBallot+".");
 		return preBoundaryBallot == LoopContinuationBallot.PERMIT
 				|| atBoundaryBallot == LoopContinuationBallot.PERMIT;
 	}

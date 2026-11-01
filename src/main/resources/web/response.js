@@ -3,7 +3,7 @@
 // web/runtime-protocol.ts
 var runtimeProtocol = 1;
 function isTransientOperation(path2, method = "GET") {
-  return method === "GET" && ["/fizzbuzz/window", "/capacity/forecast/extended", "/procurement/dossier", "/onboarding/rehearsal"].includes(path2.split("?")[0]);
+  return method === "GET" && ["/operations/runtime", "/fizzbuzz/window", "/fizzbuzz/window/explained", "/capacity/forecast/extended", "/procurement/dossier", "/onboarding/rehearsal"].includes(path2.split("?")[0]);
 }
 
 // web/release-assets.ts
@@ -34,6 +34,7 @@ var BrowserRuntimeClient = class _BrowserRuntimeClient {
   pending = /* @__PURE__ */ new Map();
   compatibleOwners = /* @__PURE__ */ new Map();
   transientClient;
+  narrativeCapabilities = /* @__PURE__ */ new Map();
   close() {
     this.transientClient?.close();
     this.worker.terminate();
@@ -73,6 +74,21 @@ var BrowserRuntimeClient = class _BrowserRuntimeClient {
     }
     return this.dispatch(owner, path2, options);
   }
+  async proclamation(path2) {
+    const owner = await this.owner();
+    if (owner.error) throw new Error(owner.error);
+    if (owner.revision !== this.configuration.revision) {
+      if (!this.compatibleOwners.has(owner.leader)) this.compatibleOwners.set(owner.leader, this.verifyCompatibility(owner));
+      await this.compatibleOwners.get(owner.leader);
+      if (isTransientOperation(path2)) {
+        this.transientClient ||= new _BrowserRuntimeClient(this.configuration, crypto.randomUUID(), true);
+        return this.transientClient.proclamation(path2);
+      }
+    }
+    if (!this.narrativeCapabilities.has(owner.leader)) this.narrativeCapabilities.set(owner.leader, this.dispatch(owner, "/operations/runtime").then(async (response) => response.ok ? response.json() : {}));
+    const info = await this.narrativeCapabilities.get(owner.leader);
+    return annotate(await this.dispatch(owner, info.narrative === 1 ? explainedPath(path2) : path2), info);
+  }
   async verifyCompatibility(owner) {
     const response = await this.dispatch(owner, "/operations/runtime");
     const runtime2 = response.ok ? await response.json() : {};
@@ -103,10 +119,26 @@ var BrowserRuntimeClient = class _BrowserRuntimeClient {
   }
 };
 var ServerRuntimeClient = class {
+  capabilities;
   request(path2, options = {}) {
     return fetch(`${(config.apiBaseUrl || "").replace(/\/$/, "")}${path2}`, { ...options, cache: "no-store" });
   }
+  async proclamation(path2) {
+    this.capabilities ||= this.request("/operations/runtime").then(async (response) => response.ok ? response.json() : {});
+    const info = await this.capabilities;
+    return annotate(await this.request(info.narrative === 1 ? explainedPath(path2) : path2), info);
+  }
 };
+function explainedPath(path2) {
+  const split = path2.indexOf("?");
+  return (split < 0 ? path2 : path2.slice(0, split)) + "/explained" + (split < 0 ? "" : path2.slice(split));
+}
+function annotate(response, info) {
+  const headers = new Headers(response.headers);
+  const safe = Object.fromEntries(["mode", "engine", "storage", "cache", "revision", "protocol", "narrative"].filter((key) => info[key] !== void 0).map((key) => [key, info[key]]));
+  headers.set("X-SlopBuzz-Execution-Runtime", JSON.stringify(safe).replace(/[^\x20-\x7e]/g, (char) => "\\u" + char.charCodeAt(0).toString(16).padStart(4, "0")));
+  return new Response(response.body, { status: response.status, headers });
+}
 if (!["browser", "server"].includes(config.mode)) throw new Error("Unrecognized runtime mode");
 var runtime = config.mode === "server" ? new ServerRuntimeClient() : new BrowserRuntimeClient();
 var request = (path2, options) => path2 === "/openapi.json" && (!options?.method || options.method === "GET") ? fetch(releaseFile("openapi.json")) : runtime.request(path2, options);

@@ -1,5 +1,10 @@
 # ADR 0024: First Ordinal Onboarding and Probation Directorate
 
+The presentation described here was superseded by
+[ADR 0025](ADR-0025-executive-execution-chronicle.md): output now precedes the
+scrolling execution chronicle, and personnel case papers open separately. The
+request-bound HR evidence and approval policy remain in force.
+
 ## Decision
 
 The production loop initializer obtains its starting ordinal from seven Java

@@ -1,4 +1,5 @@
 package com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.loop;
+import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.proceedings.ExecutionCustody;
 
 
 import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.factories.LoopComponentFactory;
@@ -39,6 +40,7 @@ public final class LoopContext implements LoopContextStateManipulation, LoopCont
 	 */
 	@Override
 	public void start() {
+        ExecutionCustody.ordinal("1");
 		this.myCurrentControlParameterValue =
 				this.myLoopInitializer.getLoopInitializationPoint();
         if(this.myCurrentControlParameterValue!=1)throw new IllegalStateException("The initial ordinal must have commencement clearance for exactly 1.");
@@ -49,6 +51,7 @@ public final class LoopContext implements LoopContextStateManipulation, LoopCont
 	 */
 	@Override
 	public boolean shouldProceed() {
+        if(ExecutionCustody.observing())ExecutionCustody.ordinal(String.valueOf(this.myCurrentControlParameterValue));
 		return this.myLoopCondition.evaluateLoop(this.myCurrentControlParameterValue,
 				this.myLoopFinalizer.getLoopFinalizationPoint());
 	}

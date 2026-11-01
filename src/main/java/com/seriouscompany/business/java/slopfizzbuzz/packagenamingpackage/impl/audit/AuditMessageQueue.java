@@ -1,4 +1,5 @@
 package com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.audit;
+import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.proceedings.ExecutionCustody;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -16,6 +17,7 @@ public final class AuditMessageQueue {
 
 	public synchronized void publish(final OutputAuditEntry entry) {
 		this.pending.addLast(new Envelope(entry));
+        if(ExecutionCustody.observing())ExecutionCustody.record("QUEUE_ENQUEUED","Audit Message Broker","Queued audit sequence "+entry.getSequence()+" for the idempotent status projection. Publication to the mailbox is not delivery acknowledgment.");
 	}
 
 	/**
@@ -28,6 +30,7 @@ public final class AuditMessageQueue {
 			final Envelope envelope = this.pending.removeFirst();
 			try {
 				consumer.accept(envelope.entry);
+                if(ExecutionCustody.observing())ExecutionCustody.record("QUEUE_ACK","Audit Status Projection","Acknowledged audit sequence "+envelope.entry.getSequence()+" after the consumer accepted it.");
 				delivered++;
 			} catch (final RuntimeException failure) {
 				envelope.attempts++;

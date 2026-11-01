@@ -12,6 +12,7 @@ export class BrowserRuntimeClient implements RuntimeClient {
   private pending = new Map<string, (reply: WorkerReply) => void>();
   private compatibleOwners = new Map<string, Promise<void>>();
   private transientClient?: BrowserRuntimeClient;
+  private narrativeCapabilities=new Map<string,Promise<Record<string,unknown>>>();
   constructor(private configuration = config, isolated?: string, transient = false) {
     if (!navigator.locks || !globalThis.crypto?.subtle) throw new Error('This browser requires a secure context, Web Locks, IndexedDB and Web Crypto.');
     this.channel = new BroadcastChannel(`slopbuzz:${scope}${isolated ? `:rehearsal:${isolated}` : ''}`);
@@ -48,6 +49,21 @@ export class BrowserRuntimeClient implements RuntimeClient {
     }
     return this.dispatch(owner, path, options);
   }
+  async proclamation(path:string):Promise<Response>{
+    const owner=await this.owner();if(owner.error)throw new Error(owner.error);
+    if(owner.revision!==this.configuration.revision){
+      if(!this.compatibleOwners.has(owner.leader))this.compatibleOwners.set(owner.leader,this.verifyCompatibility(owner));
+      await this.compatibleOwners.get(owner.leader);
+      if(isTransientOperation(path)){
+        this.transientClient ||=new BrowserRuntimeClient(this.configuration,crypto.randomUUID(),true);
+        return this.transientClient.proclamation(path);
+      }
+    }
+    if(!this.narrativeCapabilities.has(owner.leader))this.narrativeCapabilities.set(owner.leader,this.dispatch(owner,'/operations/runtime').then(async response=>response.ok?response.json():{}));
+    const info=await this.narrativeCapabilities.get(owner.leader)!;
+    // Choose before execution. Never retry a business request to obtain evidence.
+    return annotate(await this.dispatch(owner,info.narrative===1?explainedPath(path):path),info);
+  }
   private async verifyCompatibility(owner: WorkerReply): Promise<void> {
     const response = await this.dispatch(owner, '/operations/runtime');
     const runtime = response.ok ? await response.json() : {};
@@ -74,12 +90,21 @@ export class BrowserRuntimeClient implements RuntimeClient {
   }
 }
 class ServerRuntimeClient implements RuntimeClient {
+  private capabilities?:Promise<Record<string,unknown>>;
   request(path: string, options: RequestInit = {}) {
     return fetch(`${(config.apiBaseUrl || '').replace(/\/$/, '')}${path}`, {...options, cache: 'no-store'});
   }
+  async proclamation(path:string){
+    this.capabilities ||=this.request('/operations/runtime').then(async response=>response.ok?response.json():{});
+    const info=await this.capabilities;
+    return annotate(await this.request(info.narrative===1?explainedPath(path):path),info);
+  }
 }
+function explainedPath(path:string){const split=path.indexOf('?');return (split<0?path:path.slice(0,split))+'/explained'+(split<0?'':path.slice(split));}
+function annotate(response:Response,info:Record<string,unknown>){const headers=new Headers(response.headers);const safe=Object.fromEntries(['mode','engine','storage','cache','revision','protocol','narrative'].filter(key=>info[key]!==undefined).map(key=>[key,info[key]]));headers.set('X-SlopBuzz-Execution-Runtime',JSON.stringify(safe).replace(/[^\x20-\x7e]/g,char=>'\\u'+char.charCodeAt(0).toString(16).padStart(4,'0')));return new Response(response.body,{status:response.status,headers});}
 if (!['browser', 'server'].includes(config.mode)) throw new Error('Unrecognized runtime mode');
 export const runtime: RuntimeClient = config.mode === 'server' ? new ServerRuntimeClient() : new BrowserRuntimeClient();
+export const proclamation=(path:string)=>(runtime as BrowserRuntimeClient|ServerRuntimeClient).proclamation(path);
 export const request = (path: string, options?: RequestInit) => path === '/openapi.json' && (!options?.method || options.method === 'GET') ? fetch(releaseFile('openapi.json')) : runtime.request(path, options);
 // Offline installation is an infrastructure concern, not a site-wide announcement.
 if ('serviceWorker' in navigator && config.mode === 'browser') {

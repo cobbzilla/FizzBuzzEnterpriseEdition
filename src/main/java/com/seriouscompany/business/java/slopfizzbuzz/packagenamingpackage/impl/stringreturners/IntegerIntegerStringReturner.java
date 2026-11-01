@@ -1,4 +1,5 @@
 package com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.stringreturners;
+import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.proceedings.ExecutionCustody;
 
 import org.springframework.stereotype.Service;
 
@@ -18,6 +19,7 @@ public class IntegerIntegerStringReturner implements IntegerStringReturner {
 		final Integer myIntegerToBeConvertedToString = new Integer(theInteger);
 		final StringBuilder myStringBuilder = new StringBuilder(myIntegerToBeConvertedToString.toString());
 		final String myResultingStringFromIntegerToStringConversion = myStringBuilder.toString();
+        if(ExecutionCustody.observing())ExecutionCustody.record("NUMERAL","Integer-to-String Conversion Directorate","The ordinal was boxed as Integer, converted to decimal, copied through StringBuilder and returned as a fresh String: "+myResultingStringFromIntegerToStringConversion+".");
 		return new String(myResultingStringFromIntegerToStringConversion);
 	}
 

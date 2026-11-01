@@ -1,4 +1,5 @@
 package com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.loop.succession;
+import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.proceedings.ExecutionCustody;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -24,6 +25,7 @@ public final class OrdinalSuccessionExecutor {
 		final int nominee = petition.getIncumbent() + petition.getRequestedAdvancement();
 		final SuccessionCertificate certificate = new SuccessionCertificate(petition, nominee);
 		this.auditor.certify(certificate);
+        if(ExecutionCustody.observing())ExecutionCustody.record("SUCCESSION","Ordinal Succession Authority","Incumbent "+petition.getIncumbent()+" petitioned for advancement "+petition.getRequestedAdvancement()+". The independent auditor certified successor "+certificate.getNominatedSuccessor()+".");
 		return certificate.getNominatedSuccessor();
 	}
 }

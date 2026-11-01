@@ -1,4 +1,5 @@
 package com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.audit;
+import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.proceedings.ExecutionCustody;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -43,6 +44,7 @@ public final class OutputAuditJournal {
 				new OutputAuditEntry(sequence, number, payload, disposition, previous, digest);
 		this.store.append(entry);
 		this.entries.add(entry);
+        if(ExecutionCustody.observing())ExecutionCustody.record("AUDIT_APPEND","Audit Repository of Record","Appended sequence "+sequence+" with disposition "+disposition+". Its predecessor and SHA-256 digest bind the payload to the existing chain.","Sequence "+sequence+"; previous "+previous+"; digest "+digest);
 		this.messages.publish(entry);
 		LOGGER.fine("traceId=" + TraceCustody.currentTraceId() + " outputTransaction="
 				+ sequence + " disposition=" + disposition + " number=" + number);

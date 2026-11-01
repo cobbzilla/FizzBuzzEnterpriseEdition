@@ -1,4 +1,5 @@
 package com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.onboarding;
+import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.proceedings.ExecutionCustody;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -33,6 +34,7 @@ public final class FirstOrdinalOnboardingDirectorate {
  }
  public PersonnelDossier inspect(String purpose){
   if(!"MANDATE".equals(purpose)&&!"REHEARSAL".equals(purpose))throw new IllegalArgumentException("Unrecognized personnel purpose.");
+  ExecutionCustody.ordinal("1");
   CaseIdentity scope=new CaseIdentity("HR-"+TraceCustody.currentTraceId());
   List<PersonnelDecision> decisions=new ArrayList<PersonnelDecision>();int stage=0,candidate=1;String received="Initial ordinal vacancy request";
   try {
@@ -60,11 +62,12 @@ public final class FirstOrdinalOnboardingDirectorate {
    pass(decisions,stage++,received,"Approved to start at 1.","Independent audit: matching case custody, complete induction, starting ordinal 1.");
    return new PersonnelDossier(scope.getReference(),purpose,candidate,Integer.valueOf(ordinal),decisions);
   }catch(RuntimeException rejection){
+   ExecutionCustody.record("HR_REJECTED",OFFICES[stage],rejection.getMessage()==null?"The office could not issue a valid decision.":rejection.getMessage());
    decisions.add(new PersonnelDecision(OFFICES[stage],"REJECTED",RULES[stage],received,rejection.getMessage()==null?"The office could not issue a valid decision.":rejection.getMessage(),"Rejection notice: no commencement authorization issued by this office."));
    for(int i=stage+1;i<OFFICES.length;i++)decisions.add(new PersonnelDecision(OFFICES[i],"NOT_REACHED",RULES[i],"No authorized handoff","An earlier office rejected the application.","No document was issued."));
    return new PersonnelDossier(scope.getReference(),purpose,candidate,null,decisions);
   }
  }
- private static void pass(List<PersonnelDecision> decisions,int stage,String received,String finding,String document){decisions.add(new PersonnelDecision(OFFICES[stage],"APPROVED",RULES[stage],received,finding,document));}
+ private static void pass(List<PersonnelDecision> decisions,int stage,String received,String finding,String document){ExecutionCustody.record("HR_APPROVED",OFFICES[stage],finding,document);decisions.add(new PersonnelDecision(OFFICES[stage],"APPROVED",RULES[stage],received,finding,document));}
  private static String join(String[] values){StringBuilder out=new StringBuilder();for(int i=0;i<values.length;i++){if(i>0)out.append(", ");out.append(values[i]);}return out.toString();}
 }

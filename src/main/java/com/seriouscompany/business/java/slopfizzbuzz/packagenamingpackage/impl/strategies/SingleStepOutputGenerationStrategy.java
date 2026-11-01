@@ -1,4 +1,5 @@
 package com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.strategies;
+import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.proceedings.ExecutionCustody;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -72,6 +73,7 @@ public class SingleStepOutputGenerationStrategy implements OutputGenerationStrat
 	 */
 	public void performGenerationForCurrentStep(final SingleStepOutputGenerationParameter generationParameter) {
 		final int nGenerationParameter = generationParameter.retrieveIntegerValue();
+        if(ExecutionCustody.observing()){ExecutionCustody.ordinal(String.valueOf(nGenerationParameter));ExecutionCustody.record("ASSEMBLY","Factories and Strategy Registry","Factory-appointed Fizz, Buzz and numeral contexts and their shared visitor convened for this ordinal.");}
 		this.transactions.begin(nGenerationParameter);
 		try {
 			final ClassificationBallot ballot = this.ballotBox.cast(nGenerationParameter,

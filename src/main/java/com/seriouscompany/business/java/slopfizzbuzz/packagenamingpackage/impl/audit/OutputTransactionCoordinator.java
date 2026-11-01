@@ -1,4 +1,5 @@
 package com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.audit;
+import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.proceedings.ExecutionCustody;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -29,6 +30,7 @@ public final class OutputTransactionCoordinator {
 			throw new IllegalStateException("Nested output transactions require a separate committee.");
 		}
 		this.pending.set(new PendingOutput(number));
+        if(ExecutionCustody.observing())ExecutionCustody.record("TRANSACTION_BEGIN","Output Transaction Coordinator","Opened an isolated staging buffer for ordinal "+number+". Fragments cannot publish a partial line.");
 	}
 
 	public OutputCapture capture() {
@@ -53,6 +55,7 @@ public final class OutputTransactionCoordinator {
 			this.publish(fragment.getBytes(StandardCharsets.UTF_8));
 		} else {
 			transaction.payload.append(fragment);
+            if(ExecutionCustody.observing())ExecutionCustody.record("FRAGMENT","Output Staging Office","Staged "+fragment.length()+" UTF-16 units; line separators remain part of the authorized payload.",fragment);
 		}
 	}
 
@@ -64,15 +67,19 @@ public final class OutputTransactionCoordinator {
 		try {
 			final String payload = transaction.payload.toString();
 			this.notary.certify(transaction.number, payload).authorize(transaction.number, payload);
+            if(ExecutionCustody.observing())ExecutionCustody.record("NOTARY","Independent Proclamation Notary","An independent arithmetic and lexical check authorized this complete payload.",payload);
 			final byte[] bytes = payload.getBytes(StandardCharsets.UTF_8);
 			this.publish(bytes);
+            if(ExecutionCustody.observing())ExecutionCustody.record("PUBLICATION","Output Publication Office","Published the complete UTF-8 line to the request audience.",payload);
 			this.journal.record(transaction.number, payload, OutputDisposition.COMMITTED);
+            ExecutionCustody.record("TRANSACTION_COMMIT","Output Transaction Coordinator","The numerical line and its committed audit entry completed their transaction.");
 		} catch (final RuntimeException failure) {
 			this.journal.record(transaction.number, transaction.payload.toString(), OutputDisposition.ABORTED);
 			LOGGER.warning("Output transaction aborted for number " + transaction.number);
 			throw failure;
 		} finally {
 			this.pending.remove();
+            ExecutionCustody.record("TRANSACTION_CLEANUP","Output Transaction Coordinator","Released this ordinal's staging buffer.");
 		}
 	}
 

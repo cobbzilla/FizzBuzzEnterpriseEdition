@@ -557,3 +557,44 @@ files in each compiler's jurisdiction. The numerical answer remained unchanged.
 That last sentence should sound disappointing. In our company it sounds like
 an employee who has finally passed probation, hung up their little coat, and
 quietly begun to count.
+
+## 1 November 2026 — The answer is allowed to be seen
+
+Dear Register, a visitor informed us that the company’s explanation of itself was
+standing in front of the company’s answer. I had to sit down. We had recruited
+One through seven offices, then stationed the entire personnel department above
+the numerical transcript like a reception queue that had mistaken itself for
+the destination. Somewhere beneath our admirable diligence, the numbers were
+still doing their jobs. Nobody could comfortably see them.
+
+The answer now occupies the first place at Official Output. Beneath it, the
+Executive Chronicle of Numerical Affairs receives a fixed-height chamber whose
+contents scroll. The latest minutes arrive at the bottom. I watched paragraph
+after paragraph enter without the building becoming taller and felt a joy so
+pure that I briefly proposed a second chamber to document the achievement.
+The proposal remains in a drawer, where it can do no immediate architectural harm.
+
+One reports for duty when one appears. The chronicle explains the headcount,
+the classification votes, the appointed strategies and visiting printers. At
+three, Procurement delivers the approved letters. At fifteen, every one of the
+eight character positions has its receiving evidence, including four z’s who
+must each retain their own identity. The notary checks the line independently.
+The ledger binds it to its predecessor. The message broker accepts its minutes
+without pretending that acceptance into a mailbox is the same as delivery.
+Succession authorizes the next ordinal. It is a terrible amount of loving effort
+to expend on an answer that fits in a few characters. I would not have it otherwise.
+
+An older administration sometimes returns a correct result without forwarding
+its personnel receipts. Previously we greeted that visitor with an announcement
+of unavailable evidence. Now we acknowledge what they can see and explain the
+procedure, while admitting which individual decisions were not supplied. I felt
+anguish at how long it had taken us to distinguish helpful honesty from a large
+empty filing cabinet. Then I felt joy: our company had learned a complete sentence
+that did not require the reader to open a second tab before it could become useful.
+
+The observer captures proceedings during the original execution. Replay does
+not hire another one. Inspection does not print another fifteen. Reading an old
+folio does not let a new paragraph drag the page out of one’s hands. Even the
+paperwork dialog returns keyboard focus to the person who opened it. These are
+small courtesies, but I have come to believe that a serious institution is judged
+by whether its enormous process leaves room for another person to understand it.
