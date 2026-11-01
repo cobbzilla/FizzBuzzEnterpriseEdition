@@ -50,12 +50,18 @@ function trackUsage(detail) {
 // web/runtime-protocol.ts
 var runtimeProtocol = 1;
 function isTransientOperation(path, method = "GET") {
-  return method === "GET" && ["/fizzbuzz/window", "/capacity/forecast/extended", "/procurement/dossier"].includes(path.split("?")[0]);
+  return method === "GET" && ["/fizzbuzz/window", "/capacity/forecast/extended", "/procurement/dossier", "/onboarding/rehearsal"].includes(path.split("?")[0]);
 }
 
-// web/runtime.ts
+// web/release-assets.ts
 var scope = new URL("../", import.meta.url).href;
-var config = await fetch(new URL("runtime-config.json", scope), { cache: "no-cache" }).then((r) => {
+var releaseFile = (path) => new URL(
+  (typeof RELEASE_ASSET_DIRECTORY === "string" ? RELEASE_ASSET_DIRECTORY : "") + path,
+  scope
+);
+
+// web/runtime.ts
+var config = await fetch(releaseFile("runtime-config.json"), { cache: "no-cache" }).then((r) => {
   if (!r.ok) throw new Error("Deployment configuration is unavailable");
   return r.json();
 });
@@ -150,11 +156,11 @@ var ServerRuntimeClient = class {
 };
 if (!["browser", "server"].includes(config.mode)) throw new Error("Unrecognized runtime mode");
 var runtime = config.mode === "server" ? new ServerRuntimeClient() : new BrowserRuntimeClient();
-var request = (path, options) => path === "/openapi.json" && (!options?.method || options.method === "GET") ? fetch(new URL("openapi.json", scope)) : runtime.request(path, options);
+var request = (path, options) => path === "/openapi.json" && (!options?.method || options.method === "GET") ? fetch(releaseFile("openapi.json")) : runtime.request(path, options);
 if ("serviceWorker" in navigator && config.mode === "browser") {
   void navigator.serviceWorker.register(new URL("sw.js", scope), { scope: new URL(scope).pathname }).catch((error) => console.warn("Offline installation unavailable", error));
 }
-var desks = /^\/(?:fizzbuzz|procurement\/dossier|capacity\/forecast|healthz|readyz|cache\/status|operations\/|audit\/)/;
+var desks = /^\/(?:fizzbuzz|onboarding\/rehearsal|procurement\/dossier|capacity\/forecast|healthz|readyz|cache\/status|operations\/|audit\/)/;
 if (config.mode === "browser") document.querySelectorAll("a[href]").forEach((link) => {
   const url = new URL(link.href);
   const base = new URL(scope).pathname.replace(/\/$/, "");
@@ -173,6 +179,185 @@ function setText(id, value) {
   byId(id).textContent = String(value);
 }
 
+// web/onboarding.ts
+function parseDossier(value) {
+  const data = value;
+  if (!data || data.schema !== "slopbuzz-onboarding/v1" || typeof data.caseId !== "string" || !["MANDATE", "REHEARSAL"].includes(data.purpose) || !Number.isInteger(data.candidate) || !["APPROVED", "REJECTED"].includes(data.status) || !Array.isArray(data.steps) || data.steps.length !== 7 || data.steps.some((step) => !step || !["APPROVED", "REJECTED", "NOT_REACHED"].includes(step.state) || ["office", "rule", "received", "finding", "document"].some((key) => typeof step[key] !== "string"))) throw new Error("The personnel record has an unsupported format.");
+  if (data.status === "APPROVED" && (data.candidate !== 1 || data.startingOrdinal !== 1 || data.steps.some((step) => step.state !== "APPROVED")) || data.status === "REJECTED" && (data.startingOrdinal !== null || !data.steps.some((step) => step.state === "REJECTED"))) throw new Error("The personnel verdict contradicts its recorded decisions.");
+  return data;
+}
+var PersonnelProceedings = class {
+  dossier;
+  visible = 0;
+  rows = [];
+  source = "";
+  busy = false;
+  synchronizeDisclosure() {
+    const open = this.rows.length > 0 && this.rows.every((row) => row.details.open);
+    byId("personnel-documents").setAttribute("aria-expanded", String(open));
+    setText("personnel-documents", open ? "Fold paperwork" : "Inspect paperwork");
+  }
+  constructor(actions) {
+    document.querySelectorAll("[data-personnel-scenario]").forEach((button) => button.addEventListener("click", () => {
+      if (button.getAttribute("aria-disabled") !== "true") actions.rehearse(button.dataset.personnelScenario);
+    }));
+    byId("personnel-replay").addEventListener("click", () => {
+      if (this.dossier && !this.busy) actions.replay();
+    });
+    byId("personnel-step").addEventListener("click", () => {
+      if (this.dossier && !this.busy) actions.step();
+    });
+    byId("personnel-documents").addEventListener("click", () => {
+      if (!this.dossier || this.busy) return;
+      const open = byId("personnel-documents").getAttribute("aria-expanded") !== "true";
+      this.rows.forEach((row) => row.details.open = open);
+      byId("personnel-documents").setAttribute("aria-expanded", String(open));
+      byId("personnel-documents").textContent = open ? "Fold paperwork" : "Inspect paperwork";
+    });
+    this.updateControls();
+  }
+  get record() {
+    return this.dossier;
+  }
+  get progress() {
+    return this.visible;
+  }
+  setBusy(busy) {
+    this.busy = busy;
+    this.updateControls();
+  }
+  updateControls() {
+    for (const id of ["personnel-replay", "personnel-step", "personnel-documents"]) byId(id).setAttribute("aria-disabled", String(!this.dossier || this.busy));
+    document.querySelectorAll("[data-personnel-scenario]").forEach((button) => button.setAttribute("aria-disabled", String(this.busy)));
+  }
+  loading() {
+    this.clear("Obtaining the personnel file\u2026", "Awaiting response");
+    this.setBusy(true);
+  }
+  clear(message, verdict = "No new proceedings") {
+    this.dossier = void 0;
+    this.rows = [];
+    this.visible = 0;
+    this.busy = false;
+    byId("personnel-steps").replaceChildren();
+    byId("personnel-steps").hidden = true;
+    setText("personnel-origin", message);
+    setText("personnel-verdict", verdict);
+    setText("personnel-status", "No new personnel decisions are available to read.");
+    byId("personnel-step").textContent = "Step through";
+    byId("personnel-documents").setAttribute("aria-expanded", "false");
+    byId("personnel-documents").textContent = "Inspect paperwork";
+    this.updateControls();
+  }
+  responseRecord(response) {
+    const state = response.headers.get("X-SlopBuzz-Onboarding-State");
+    if (state === "CACHE_REUSED" || response.headers.get("X-SlopBuzz-Cache") === "HIT") {
+      this.clear("Institutional memory answered. No new HR proceedings.", "Cache answered");
+      return;
+    }
+    const raw = response.headers.get("X-SlopBuzz-Onboarding-Trace");
+    if (!raw) {
+      this.clear("No personnel record accompanied this response. Submit a rehearsal to inspect the current personnel procedure.", "Evidence unavailable");
+      return;
+    }
+    try {
+      if (raw.length > 8192) throw new Error("Personnel record exceeds the response charter.");
+      const data = parseDossier(JSON.parse(raw));
+      if (data.purpose !== "MANDATE") throw new Error("A mandate needs its own recorded proceedings.");
+      return data;
+    } catch {
+      this.clear("The accompanying personnel record could not be inspected. Numerical output remains independently available.", "Evidence unavailable");
+    }
+  }
+  rehearsalRecord(value) {
+    const data = parseDossier(value);
+    if (data.purpose !== "REHEARSAL") throw new Error("The desk returned an unrecognized rehearsal record.");
+    return data;
+  }
+  prepare(data, source) {
+    this.dossier = data;
+    this.visible = 0;
+    this.source = source || (data.purpose === "REHEARSAL" ? "Read-only rehearsal" : "Mandate record");
+    setText("personnel-origin", `${this.source} \xB7 Applicant ${data.candidate} \xB7 Position: Initial ordinal \xB7 Case ${data.caseId}`);
+    setText("personnel-verdict", "Reading completed record");
+    setText("personnel-status", "Reading completed proceedings \xB7 0 of 7 offices disclosed.");
+    byId("personnel-documents").setAttribute("aria-expanded", "false");
+    setText("personnel-documents", "Inspect paperwork");
+    setText("personnel-step", "Step through");
+    this.rows = data.steps.map((step, index) => {
+      const item = document.createElement("li");
+      item.dataset.read = "false";
+      const details = document.createElement("details");
+      const summary = document.createElement("summary");
+      details.addEventListener("toggle", () => this.synchronizeDisclosure());
+      const number = document.createElement("span");
+      number.className = "personnel-index";
+      number.textContent = String(index + 1).padStart(2, "0");
+      number.setAttribute("aria-hidden", "true");
+      const office = document.createElement("span");
+      office.className = "personnel-office";
+      office.textContent = step.office;
+      const badge = document.createElement("span");
+      badge.className = "personnel-badge";
+      badge.textContent = "Not yet read";
+      summary.append(number, office, badge);
+      details.append(summary);
+      const facts = document.createElement("dl");
+      for (const [label, text] of [["Rule", step.rule], ["Received", step.received], ["Recorded decision", step.state === "APPROVED" ? "Approved" : step.state === "REJECTED" ? "Rejected" : "Not reached"], ["Finding", step.finding], ["Issued document", step.document]]) {
+        const row = document.createElement("div"), term = document.createElement("dt"), value = document.createElement("dd");
+        term.textContent = label;
+        value.textContent = text;
+        row.append(term, value);
+        facts.append(row);
+      }
+      const note = document.createElement("p");
+      note.className = "personnel-record-note";
+      note.textContent = "This is a completed Java decision record. Opening the document does not rerun the office.";
+      details.append(facts, note);
+      item.append(details);
+      return { item, badge, details };
+    });
+    byId("personnel-steps").replaceChildren(...this.rows.map((row) => row.item));
+    byId("personnel-steps").hidden = false;
+    this.setBusy(false);
+  }
+  disclose(count) {
+    if (!this.dossier) return;
+    this.visible = Math.max(0, Math.min(count, 7));
+    this.rows.forEach((row, index) => {
+      const read = index < this.visible;
+      const state = this.dossier.steps[index].state;
+      row.item.dataset.read = String(read);
+      row.item.dataset.verdict = read ? state : "UNREAD";
+      row.badge.textContent = read ? state === "APPROVED" ? "Approved" : state === "REJECTED" ? "Rejected" : "Not reached" : "Not yet read";
+    });
+    const last = this.dossier.steps[Math.max(0, this.visible - 1)];
+    setText("personnel-status", this.visible === 7 ? this.dossier.status === "APPROVED" ? "All seven offices disclosed. Commencement authorized at 1." : `Personnel application rejected by ${this.dossier.steps.find((step) => step.state === "REJECTED").office}. Subsequent offices were not reached.` : `Reading completed proceedings \xB7 ${this.visible} of 7 offices disclosed${this.visible ? `. ${last.office}: ${last.state === "APPROVED" ? "approved" : last.state === "REJECTED" ? "rejected" : "not reached"}` : ""}.`);
+    setText("personnel-verdict", this.visible === 7 ? this.dossier.status === "APPROVED" ? "Approved to start at 1" : "Application rejected" : "Reading completed record");
+    setText("personnel-step", this.visible > 0 && this.visible < 7 ? "Next office" : "Step through");
+  }
+  async read(data, clock, source) {
+    this.prepare(data, source);
+    for (let i = 0; i < data.steps.length; i++) {
+      await clock.waitWhilePaused();
+      if (!clock.current()) return;
+      this.disclose(i + 1);
+      if (i < data.steps.length - 1) await clock.delay();
+    }
+  }
+  startStepThrough() {
+    if (this.dossier) this.prepare(this.dossier, `Step-through inspection of ${this.dossier.purpose === "REHEARSAL" ? "rehearsal" : "mandate record"}`);
+  }
+  step() {
+    this.disclose(this.visible + 1);
+  }
+  stopReading() {
+    this.setBusy(false);
+    if (this.dossier && this.visible < 7) setText("personnel-status", `Reading adjourned after ${this.visible} of 7 offices. Replay or inspect the completed record when ready.`);
+    else if (!this.dossier) this.clear("Proceedings adjourned before a personnel file was disclosed.");
+  }
+};
+
 // web/demo.ts
 var runForm = byId("run-form");
 var limitInput = byId("limit");
@@ -188,9 +373,12 @@ var reading = false;
 var paused = false;
 var revealAll = false;
 var wakeReading;
+var activityMode = "mandate";
+var manualStep = false;
+var personnel = new PersonnelProceedings({ rehearse: (scenario) => void rehearsePersonnel(scenario), replay: () => void replayPersonnel(), step: stepPersonnel });
 function readingControls() {
   stopButton.setAttribute("aria-disabled", String(!reading));
-  revealButton.textContent = streaming ? "Waive disclosure delays" : "Reveal complete output";
+  revealButton.textContent = activityMode === "rehearsal" || activityMode === "replay" ? "Reveal completed proceedings" : streaming ? "Waive disclosure delays" : "Reveal complete output";
   pauseButton.setAttribute("aria-disabled", String(!reading));
   revealButton.setAttribute("aria-disabled", String(!reading));
   pauseButton.textContent = paused ? "Resume reading" : "Pause reading";
@@ -275,6 +463,7 @@ stopButton.addEventListener("click", () => {
   readingControls();
   runButton.removeAttribute("aria-disabled");
   byId("output").removeAttribute("aria-busy");
+  personnel.stopReading();
   setText("run-status", "Proceedings stopped. Already disclosed lines remain visible.");
 });
 function showForecast(forecast) {
@@ -304,9 +493,6 @@ function waitForPace(milliseconds) {
   });
 }
 async function revealOutput(text, sequence, serviceMillis) {
-  reading = true;
-  paused = false;
-  revealAll = false;
   readingControls();
   const lines = text ? text.trimEnd().split(/\r?\n/) : [];
   const output = byId("output");
@@ -369,10 +555,11 @@ async function streamMandate(limit, sequence, started) {
     if (sequence !== mandateSequence) return;
     const count = windowCount(next, limit);
     const answer = await request(`/fizzbuzz/window?start=${next}&count=${count}`);
-    if (!answer.ok) throw new Error(`Extended proclamation desk returned ${answer.status}.`);
-    const lines = (await answer.text()).trimEnd().split("\n");
-    if (lines.length !== count) throw new Error("The response did not contain the authorized number of lines.");
+    const text = await answer.text();
+    const lines = answer.ok ? text.trimEnd().split("\n") : [];
+    if (answer.ok && lines.length !== count) throw new Error("The response did not contain the authorized number of lines.");
     if (sequence !== mandateSequence) return;
+    setText("trace-result", answer.headers.get("X-SlopBuzz-Trace-Id") || "UNAVAILABLE");
     if (first) {
       first = false;
       const elapsed = Math.round(performance.now() - started);
@@ -380,9 +567,15 @@ async function streamMandate(limit, sequence, started) {
       setText("cache-result", "BYPASS");
       runButton.removeAttribute("aria-disabled");
       output.removeAttribute("aria-busy");
-      trackUsage({ event: "slopbuzz_demo_run", outcome: "success", runtime_mode: config.mode, duration_ms: elapsed, cache_outcome: "BYPASS" });
+      if (answer.ok) trackUsage({ event: "slopbuzz_demo_run", outcome: "success", runtime_mode: config.mode, duration_ms: elapsed, cache_outcome: "BYPASS" });
+      const record = personnel.responseRecord(answer);
+      if (record) {
+        setText("run-status", `Service answered in ${elapsed} milliseconds. Reading completed personnel proceedings\u2026`);
+        await personnel.read(record, personnelClock(sequence));
+      }
+      if (sequence !== mandateSequence) return;
     }
-    setText("trace-result", answer.headers.get("X-SlopBuzz-Trace-Id") || "UNAVAILABLE");
+    if (!answer.ok) throw new Error(`Extended proclamation desk returned ${answer.status}.`);
     for (let i = 0; i < lines.length; ) {
       while (paused && sequence === mandateSequence) await waitForPace();
       if (sequence !== mandateSequence) return;
@@ -415,7 +608,10 @@ async function runMandate(event) {
   wakeReading?.();
   reading = false;
   streaming = false;
+  activityMode = "mandate";
+  manualStep = false;
   readingControls();
+  personnel.loading();
   runButton.setAttribute("aria-disabled", "true");
   byId("output").setAttribute("aria-busy", "true");
   setText("run-status", `The committee is considering ${limit} numbers\u2026`);
@@ -433,15 +629,25 @@ async function runMandate(event) {
     }
     const answer = await request(`/fizzbuzz?limit=${limit}`);
     const elapsed = performance.now() - started;
-    if (!answer.ok) throw new Error(`Proclamation desk returned ${answer.status}.`);
     const text = await answer.text();
-    trackUsage({ event: "slopbuzz_demo_run", outcome: "success", runtime_mode: config.mode, duration_ms: elapsed, cache_outcome: answer.headers.get("X-SlopBuzz-Cache") || "UNKNOWN" });
+    if (answer.ok) trackUsage({ event: "slopbuzz_demo_run", outcome: "success", runtime_mode: config.mode, duration_ms: elapsed, cache_outcome: answer.headers.get("X-SlopBuzz-Cache") || "UNKNOWN" });
     if (sequence !== mandateSequence) return;
     setText("latency", `${Math.round(elapsed)} ms`);
     setText("cache-result", answer.headers.get("X-SlopBuzz-Cache") || "UNKNOWN");
     setText("trace-result", answer.headers.get("X-SlopBuzz-Trace-Id") || "UNAVAILABLE");
     runButton.removeAttribute("aria-disabled");
     byId("output").removeAttribute("aria-busy");
+    reading = true;
+    paused = false;
+    revealAll = false;
+    readingControls();
+    const record = personnel.responseRecord(answer);
+    if (record) {
+      setText("run-status", `Service answered in ${Math.round(elapsed)} milliseconds. Reading completed personnel proceedings\u2026`);
+      await personnel.read(record, personnelClock(sequence));
+    }
+    if (sequence !== mandateSequence) return;
+    if (!answer.ok) throw new Error(`Proclamation desk returned ${answer.status}.`);
     await revealOutput(text, sequence, Math.round(elapsed));
   } catch (error) {
     trackUsage({ event: "slopbuzz_demo_run", outcome: "failure", runtime_mode: config.mode, duration_ms: performance.now() - started });
@@ -449,6 +655,8 @@ async function runMandate(event) {
       reading = false;
       streaming = false;
       readingControls();
+      personnel.setBusy(false);
+      if (!personnel.record) personnel.clear("The request failed before any personnel record could be inspected.", "Evidence unavailable");
       setText("run-status", error.name === "AbortError" ? "The desk did not answer within eight seconds. Please try again." : `The mandate could not be completed: ${error.message}`);
     }
   } finally {
@@ -457,6 +665,77 @@ async function runMandate(event) {
       byId("output").removeAttribute("aria-busy");
     }
   }
+}
+function personnelClock(sequence) {
+  return {
+    current: () => sequence === mandateSequence,
+    waitWhilePaused: async () => {
+      while (paused && sequence === mandateSequence) await waitForPace();
+    },
+    delay: async () => {
+      if (!revealAll && Number(speedControl.value) > 0 && sequence === mandateSequence) await waitForPace(Number(speedControl.value));
+    }
+  };
+}
+function beginPersonnelActivity(mode) {
+  const sequence = ++mandateSequence;
+  wakeReading?.();
+  activityMode = mode;
+  manualStep = mode === "inspection";
+  reading = mode !== "inspection";
+  streaming = false;
+  paused = false;
+  revealAll = false;
+  runButton.removeAttribute("aria-disabled");
+  byId("output").removeAttribute("aria-busy");
+  readingControls();
+  return sequence;
+}
+async function rehearsePersonnel(scenario) {
+  const sequence = beginPersonnelActivity("rehearsal");
+  personnel.loading();
+  setText("run-status", "Opening a read-only personnel rehearsal. Numerical output already shown is retained.");
+  try {
+    const response = await request(`/onboarding/rehearsal?scenario=${scenario}`);
+    if (!response.ok) throw new Error(`Personnel desk returned ${response.status}.`);
+    const data = personnel.rehearsalRecord(await response.json());
+    if (sequence !== mandateSequence) return;
+    await personnel.read(data, personnelClock(sequence));
+    if (sequence !== mandateSequence) return;
+    setText("run-status", `Personnel rehearsal ${data.status === "APPROVED" ? "approved" : "rejected"}. No numerical output was requested by this rehearsal.`);
+  } catch (error) {
+    if (sequence === mandateSequence) {
+      personnel.clear("The personnel rehearsal could not be opened.");
+      setText("run-status", `Personnel rehearsal could not be completed: ${error.message}`);
+    }
+  } finally {
+    if (sequence === mandateSequence) {
+      reading = false;
+      personnel.setBusy(false);
+      readingControls();
+    }
+  }
+}
+async function replayPersonnel() {
+  const record = personnel.record;
+  if (!record) return;
+  const sequence = beginPersonnelActivity("replay");
+  setText("run-status", "Replaying recorded personnel proceedings. Numerical output is retained.");
+  await personnel.read(record, personnelClock(sequence), `Replay of ${record.purpose === "REHEARSAL" ? "read-only rehearsal" : "mandate record"}`);
+  if (sequence === mandateSequence) {
+    reading = false;
+    readingControls();
+    setText("run-status", "Personnel replay complete. The recorded business operation was not executed again.");
+  }
+}
+function stepPersonnel() {
+  if (!personnel.record) return;
+  if (!manualStep || personnel.progress === 7) {
+    beginPersonnelActivity("inspection");
+    personnel.startStepThrough();
+  }
+  personnel.step();
+  setText("run-status", `Inspecting recorded personnel paperwork: ${personnel.progress} of 7 offices disclosed. Numerical output is retained.`);
 }
 runForm.addEventListener("submit", runMandate);
 document.querySelectorAll("[data-limit]").forEach((button) => {

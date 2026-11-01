@@ -21,7 +21,9 @@ await mkdir('dist/assets', {recursive:true});
 const assets = `assets/${identity}/`;
 await cp('browser/target/gate/wasm', `dist/${assets}wasm`, {recursive:true});
 await cp('browser/target/gate/js', `dist/${assets}js`, {recursive:true});
-await build({entryPoints:['web/analytics.ts','web/site.ts','web/demo.ts','web/api.ts','web/response.ts','web/validation.ts','web/tribunal.ts'],outdir:'dist/assets',bundle:true,format:'esm',target:'es2022'});
+const entryScripts=['analytics','site','demo','api','response','validation','tribunal'];
+await build({entryPoints:entryScripts.map(name=>`web/${name}.ts`),outdir:'dist/assets',bundle:true,format:'esm',target:'es2022',define:{RELEASE_ASSET_DIRECTORY:JSON.stringify(assets)}});
+for(const name of entryScripts) await cp(`dist/assets/${name}.js`,`dist/assets/${name}.${identity}.js`);
 await build({entryPoints:['web/runtime-worker.ts'],outfile:`dist/${assets}runtime-worker.js`,bundle:true,format:'iife',target:'es2022'});
 for (const asset of ['site.css','api.css','mark.svg','openapi.json']) await cp(`src/main/resources/web/${asset}`, `dist/${asset === 'openapi.json' ? '' : 'assets/'}${asset}`);
 // Older offline workers ignore query strings. New markup needs its own CSS path.
@@ -44,6 +46,8 @@ for (const [template,folder] of pages) {
   const active = folder === 'demo' ? 'DEMO' : folder === 'api' ? 'API' : folder === 'company-history' ? 'HISTORY' : folder === 'validation' ? 'VALIDATION' : '';
   html = html.replace('<!--SITE_HEADER-->', header).replace('<!--SITE_FOOTER-->', footer).replace(`<!--NAV_${active}-->`, 'aria-current="page"').replace(/<!--NAV_[A-Z]+-->/g, '').replace('Run the real Java service. Repeat a mandate to observe Redis remember what the committee already decided.', 'Run the real Java enterprise in your browser. Repeat a mandate to observe institutional memory recall the committee’s decision.').replaceAll('Redis memory','Institutional cache').replaceAll('>Redis<','>Cache<').replace('shared Redis memory','swappable institutional memory').replace('HTTP liveness','Runtime liveness');
   for (const stylesheet of ['site.css','api.css']) html = html.replaceAll(`href="/assets/${stylesheet}"`, `href="/${assets}${stylesheet}"`);
+  for (const script of entryScripts) html = html.replaceAll(`src="/assets/${script}.js"`,`src="/assets/${script}.${identity}.js"`);
+  html=html.replaceAll('href="/openapi.json"',`href="/${assets}openapi.json"`);
   await mkdir(`dist/${folder}`,{recursive:true});
   await writeFile(`dist/${folder ? folder+'/' : ''}index.html`,relativeLinks(html,!!folder));
 }
@@ -57,8 +61,13 @@ try {
   const e2e=JSON.parse(await readFile('validation/e2e-summary.json','utf8'));
   if(e2e.revision===revision && e2e.sourceDigest===sourceDigest) report.browserLifecycle=e2e;
 } catch { /* Unverified builds are explicitly labeled. */ }
+await mkdir('dist/validation',{recursive:true});
 await writeFile('dist/validation/report.json',JSON.stringify(report,null,2));
 try { await cp('validation/fixtures.json','dist/validation/fixtures.json'); } catch { /* Fixtures are produced by the JVM validation runner. */ }
+await mkdir(`dist/${assets}validation`,{recursive:true});
+for(const path of ['runtime-config.json','analytics-config.json','release.json','openapi.json','validation/report.json','validation/fixtures.json']) {
+  try {await cp(`dist/${path}`,`dist/${assets}${path}`);} catch(error) {if(path!=='validation/fixtures.json')throw error;}
+}
 async function files(directory: string): Promise<string[]> {
   const result: string[] = [];
   for (const entry of await readdir(directory,{withFileTypes:true})) {

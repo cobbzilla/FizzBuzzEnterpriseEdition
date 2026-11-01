@@ -11,7 +11,7 @@ export async function serve(request:Request,env:Env,fetchOrigin:typeof fetch=fet
  if(path.endsWith('/'))path+='index.html';
  const target=new URL(path.slice(1).split('/').map(encodeURIComponent).join('/'),env.B2_ORIGIN);
  if(!target.href.startsWith(env.B2_ORIGIN))return new Response('Invalid path',{status:400});
- const immutable=/^\/assets\/[a-f0-9]{16}\//.test(path);
+ const immutable=/^\/assets\/(?:[a-f0-9]{16}\/|[a-z-]+\.[a-f0-9]{16}\.js$)/.test(path);
  const headers=new Headers();for(const name of ['range','if-none-match','if-modified-since']){const value=request.headers.get(name);if(value)headers.set(name,value);}
  let upstream:Response;
  // Workers supports manual/follow redirects, and only nonnegative cacheTtl.

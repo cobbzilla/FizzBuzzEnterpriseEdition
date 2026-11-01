@@ -28,11 +28,13 @@ public final class EquivalenceFixtureMain {
   CacheAuthority cache=new CacheAuthority(new CacheRepository(){public boolean enabled(){return true;}public String get(int limit){return memory.get(limit);}public void put(int limit,String body,int ttl){memory.put(limit,body);}});
   EnterpriseDispatcher dispatcher=new EnterpriseDispatcher(ExplicitEnterpriseAssembly.assemble(transactions),transactions,journal,cache,new ReleaseCustodyReport(args[2],clock.currentTimeMillis()),clock);
   List<String[]> requests=new ArrayList<String[]>();
-  String[] desks={"/healthz","/readyz","/cache/status","/operations/scorecard","/operations/release","/operations/canary","/operations/recovery","/audit/status","/audit/evidence","/capacity/forecast","/procurement/dossier"};
+  String[] desks={"/healthz","/readyz","/cache/status","/operations/scorecard","/operations/release","/operations/canary","/operations/recovery","/audit/status","/audit/evidence","/capacity/forecast","/procurement/dossier","/onboarding/rehearsal"};
   for(String path:desks)requests.add(new String[]{"GET",path});
   for(String path:new String[]{"/fizzbuzz?limit=0","/fizzbuzz?limit=0","/fizzbuzz?limit=15","/fizzbuzz?limit=15","/fizzbuzz?limit=0003","/fizzbuzz?limit=1000","/fizzbuzz","/capacity/forecast?limit=1000","/fizzbuzz?limit=1001","/fizzbuzz?limit=-1","/fizzbuzz?limit=1&limit=2","/fizzbuzz?limit=%31","/fizzbuzz?","/fizzbuzz?limit=1&x=2","/fizzbuzz/child","/unknown"})requests.add(new String[]{"GET",path});
   for(String path:new String[]{"/procurement/dossier?product=Fizz","/procurement/dossier?product=Buzz","/procurement/dossier?product=FizzBuzz","/procurement/dossier?product=fizz","/procurement/dossier?product=","/procurement/dossier?product=Fizz&product=Buzz","/procurement/dossier?product=%46izz","/procurement/dossier?","/procurement/dossier/child"})requests.add(new String[]{"GET",path});
   requests.add(new String[]{"POST","/procurement/dossier"});
+  for(String scenario:new String[]{"approved","zero","two","missing-induction","","unauthorized","%7Aero","zero&scenario=two","zero&x=1"})requests.add(new String[]{"GET","/onboarding/rehearsal?scenario="+scenario});
+  requests.add(new String[]{"GET","/onboarding/rehearsal?"});requests.add(new String[]{"GET","/onboarding/rehearsal/child"});requests.add(new String[]{"POST","/onboarding/rehearsal"});
   for(String path:new String[]{"/fizzbuzz/window?start=1&count=100","/fizzbuzz/window?start=9007199254740990&count=8","/fizzbuzz/window?start=9223372036854775807&count=4","/fizzbuzz/window?start=100000000000000000000000000000000000000000000000001&count=3","/fizzbuzz/window?start=0&count=1","/fizzbuzz/window?start=1&count=101","/fizzbuzz/window?start=1&count=0","/fizzbuzz/window?start=%31&count=1","/fizzbuzz/window?start=1&count=2&x=3","/capacity/forecast/extended?limit=0","/capacity/forecast/extended?limit=1001","/capacity/forecast/extended?limit=9007199254740993","/capacity/forecast/extended?limit=100000000000000000000000000000000000000000000000001","/capacity/forecast/extended?limit=-1","/capacity/forecast/extended?limit=1&x=3"})requests.add(new String[]{"GET",path});
   String astronomical=java.math.BigInteger.TEN.pow(1000).add(java.math.BigInteger.ONE).toString();
   requests.add(new String[]{"GET","/fizzbuzz/window?start="+astronomical+"&count=3"});
@@ -43,7 +45,8 @@ public final class EquivalenceFixtureMain {
   for(String path:desks)requests.add(new String[]{"GET",path});
   for(String path:desks)for(String method:new String[]{"PUT","DELETE","PATCH","HEAD","OPTIONS"})requests.add(new String[]{method,path});
   requests.add(new String[]{"POST","/fizzbuzz"});requests.add(new String[]{"GET","/operations/scorecard"});
-  for(String[] request:requests){EnterpriseExchange r=dispatcher.dispatch(request[0],request[1]);StringBuilder headers=new StringBuilder();for(Map.Entry<String,String> h:r.headers.entrySet())headers.append(h.getKey()).append(':').append(h.getValue()).append('\n');emit(out,request[0],request[1],r.status,r.text(),headers.toString());}
+  TraceCustody.bind("0123456789abcdef0123456789abcdef");
+  try{for(String[] request:requests){EnterpriseExchange r=dispatcher.dispatch(request[0],request[1]);StringBuilder headers=new StringBuilder();for(Map.Entry<String,String> h:r.headers.entrySet())headers.append(h.getKey()).append(':').append(h.getValue()).append('\n');emit(out,request[0],request[1],r.status,r.text(),headers.toString());}}finally{TraceCustody.clear();}
   clock.advance(15000);emit(out,"ADVANCE","15000",200,"","");
   EnterpriseExchange r=dispatcher.dispatch("POST","/operations/canary");emit(out,"POST","/operations/canary",r.status,r.text(),"X-SlopBuzz-Rehearsal:EXECUTED\n");
   emit(out,"GET","/__validation/contracts",200,PortableContractTribunal.rehearse(new JvmAuditDigest()),"");

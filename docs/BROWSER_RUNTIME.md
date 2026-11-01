@@ -36,6 +36,18 @@ to the server artifact. Browser hashing uses Web Crypto through `AuditDigest`.
 
 ## Optional server deployment
 
+The demo's Personnel proceedings show decisions captured from the actual Java
+initializer that hired literal 1. Read-only Management intervention rehearsals
+exercise the same seven offices and do not add numerical audit entries. Their
+current-release transient worker also works beside an older journal owner. See
+[the onboarding decision](ADR-0024-first-ordinal-onboarding.md) for custody,
+cache-hit behavior and the difference between execution and ceremonial reading.
+
+Static pages select immutable release-addressed scripts, runtime configuration,
+API charter and validation evidence. This keeps new markup coherent even while
+an older offline service worker controls the tab. Stable file aliases support
+older clients; optional JVM pages use the server's existing asset fingerprints.
+
 The interactive mandate desk lives at `/demo/`. Its controls and official output
 share two desktop columns, with the advisory inventory below; narrow screens
 present controls, output, then advisory. The home page retains Operations and the

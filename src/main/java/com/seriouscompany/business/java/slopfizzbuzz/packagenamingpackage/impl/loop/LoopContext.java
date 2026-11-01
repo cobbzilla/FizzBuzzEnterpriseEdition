@@ -41,6 +41,7 @@ public final class LoopContext implements LoopContextStateManipulation, LoopCont
 	public void start() {
 		this.myCurrentControlParameterValue =
 				this.myLoopInitializer.getLoopInitializationPoint();
+        if(this.myCurrentControlParameterValue!=1)throw new IllegalStateException("The initial ordinal must have commencement clearance for exactly 1.");
 	}
 
 	/**

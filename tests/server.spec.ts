@@ -11,6 +11,8 @@ test('generated TypeScript interface runs against the optional Spring JVM server
     const port=await new Promise<string>((resolve,reject)=>{child.stdout.on('data',data=>{const match=String(data).match(/SLOPBUZZ_LISTENING=(\d+)/);if(match)resolve(match[1]);});child.once('exit',code=>reject(new Error(`Server exited ${code}`)));child.once('error',reject);});
     await page.goto(`http://127.0.0.1:${port}/demo/`);await expect(page.locator('#health-value')).toHaveText('LIVE');
     await page.selectOption('#display-speed','0');await page.click('#run-button');await expect(page.locator('#run-status')).toContainText('Mandate complete');await expect(page.locator('#cache-result')).toHaveText('BYPASS');
+    await expect(page.locator('#personnel-verdict')).toHaveText('Approved to start at 1');
+    await page.click('[data-personnel-scenario="zero"]');await expect(page.locator('#personnel-verdict')).toHaveText('Application rejected');
     await page.fill('#limit','1001');await page.click('#run-button');await expect(page.locator('#run-status')).toContainText('Mandate complete. 1001 lines disclosed');
     await page.goto(`http://127.0.0.1:${port}/#operations`);
     await page.click('#procurement-button');await expect(page.locator('#procurement-status')).toContainText('8 separate line items');

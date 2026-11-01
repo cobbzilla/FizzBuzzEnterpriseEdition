@@ -26,6 +26,9 @@ import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.o
 import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.operations.RecoveryRehearsalBureau;
 import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.operations.RecoveryVerdict;
 import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.interfaces.SlopFizzBuzz;
+import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.onboarding.PersonnelEvidenceCustody;
+import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.onboarding.PersonnelDossier;
+import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.onboarding.FirstOrdinalOnboardingDirectorate;
 
 /** Transport-independent proceedings shared by HTTP and browser execution. */
 public final class EnterpriseDispatcher {
@@ -45,12 +48,24 @@ public final class EnterpriseDispatcher {
    String query=exchange.getRequestURI().getRawQuery();
    int split=query==null?-1:query.indexOf("&count=");
    if(query==null||!query.startsWith("start=")||split<6||!com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.capacity.ExtendedMagnitudeBureau.isDecimal(query.substring(6,split))||!com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.capacity.ExtendedMagnitudeBureau.isDecimal(query.substring(split+7))||query.substring(split+7).length()>3) {respond(exchange,400,"Use a positive decimal start and a count from 1 through 100\n");return;}
-   try {
+   final PersonnelEvidenceCustody.Capture evidence=PersonnelEvidenceCustody.capture();
+   try(PersonnelEvidenceCustody.Capture custody=evidence) {
     java.math.BigInteger start=new java.math.BigInteger(query.substring(6,split));int count=Integer.parseInt(query.substring(split+7));
     String body=magnitude.window(start,count);
+    attachPersonnel(exchange,evidence,"CONTINUATION");
     exchange.headers.set("Cache-Control","no-store");exchange.headers.set("X-SlopBuzz-Cache","BYPASS");exchange.headers.set("X-SlopBuzz-Proceedings","TRANSIENT");
     respond(exchange,200,body);
    } catch(IllegalArgumentException invalid) {respond(exchange,400,"Use a positive decimal start and a count from 1 through 100\n");}
+   catch(RuntimeException rejected){attachPersonnel(exchange,evidence,"UNAVAILABLE");respond(exchange,500,"Generation failed\n");}
+  }});
+  register("/onboarding/rehearsal",new DeskHandler(){public void handle(EnterpriseExchange exchange)throws IOException {
+   if(!"GET".equals(exchange.getRequestMethod())){exchange.headers.set("Allow","GET");respond(exchange,405,"Method not authorized\n");return;}
+   String query=exchange.getRequestURI().getRawQuery();String scenario=query==null?"approved":query.startsWith("scenario=")?query.substring(9):"";
+   if(!"approved".equals(scenario)&&!"zero".equals(scenario)&&!"two".equals(scenario)&&!"missing-induction".equals(scenario)){respond(exchange,400,"Use approved, zero, two or missing-induction\n");return;}
+   int candidate="zero".equals(scenario)?0:"two".equals(scenario)?2:1;
+   PersonnelDossier dossier=FirstOrdinalOnboardingDirectorate.rehearsal(candidate,!"missing-induction".equals(scenario)).inspect("REHEARSAL");
+   exchange.headers.set("Cache-Control","no-store");exchange.headers.set("X-SlopBuzz-Proceedings","READ_ONLY_REHEARSAL");
+   respond(exchange,200,dossier.toJson(),"application/json; charset=UTF-8");
   }});
   register("/capacity/forecast/extended",new DeskHandler(){public void handle(EnterpriseExchange exchange)throws IOException {
    if(!"GET".equals(exchange.getRequestMethod())) {exchange.headers.set("Allow","GET");respond(exchange,405,"Method not authorized\n");return;}
@@ -86,6 +101,11 @@ public final class EnterpriseDispatcher {
 
  }
  private void register(String path,DeskHandler handler){desks.put(path,handler);}
+ private static void attachPersonnel(EnterpriseExchange exchange,PersonnelEvidenceCustody.Capture evidence,String fallback){
+  PersonnelDossier dossier=evidence.getDossier();
+  exchange.headers.set("X-SlopBuzz-Onboarding-State",dossier==null?fallback:dossier.getStatus());
+  if(dossier!=null){String record=dossier.toJson();if(record.length()<=8192)exchange.headers.set("X-SlopBuzz-Onboarding-Trace",record);else exchange.headers.set("X-SlopBuzz-Onboarding-State","UNAVAILABLE");}
+ }
  public EnterpriseExchange dispatch(String method,String target) throws IOException {
   EnterpriseExchange exchange=new EnterpriseExchange(method,target);
   DeskHandler handler=desks.get(exchange.getRequestURI().getPath());
@@ -243,12 +263,15 @@ public final class EnterpriseDispatcher {
 				final CacheLookup lookup = this.cache.lookup(limit.intValue());
 				exchange.getResponseHeaders().set("X-SlopBuzz-Cache", lookup.getState().name());
 				if (lookup.getState() == CacheLookup.State.HIT) {
+					exchange.headers.set("X-SlopBuzz-Onboarding-State","CACHE_REUSED");
 					respond(exchange, 200, lookup.getBody());
 					outcome = ProclamationOutcome.SUCCESSFUL;
 					return;
 				}
-				try (OutputCapture audience = this.transactions.capture()) {
+				final PersonnelEvidenceCustody.Capture evidence=PersonnelEvidenceCustody.capture();
+				try (PersonnelEvidenceCustody.Capture custody=evidence; OutputCapture audience = this.transactions.capture()) {
 					this.service.slopFizzBuzz(limit.intValue());
+					attachPersonnel(exchange,evidence,"UNAVAILABLE");
 					final String body = audience.getText();
 					if (lookup.getState() == CacheLookup.State.MISS) {
 						this.cache.store(limit.intValue(), body);
@@ -256,6 +279,7 @@ public final class EnterpriseDispatcher {
 					respond(exchange, 200, body);
 					outcome = ProclamationOutcome.SUCCESSFUL;
 				} catch (final RuntimeException failure) {
+					attachPersonnel(exchange,evidence,"UNAVAILABLE");
 					LOGGER.warning("A SlopFizzBuzz HTTP proclamation failed: " + failure.getMessage());
 					respond(exchange, 500, "Generation failed\n");
 				}

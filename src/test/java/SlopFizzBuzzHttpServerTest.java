@@ -146,7 +146,7 @@ public class SlopFizzBuzzHttpServerTest {
 		assertTrue(demo.body.contains("<option value=\"800\">Interdepartmental Sign-Off</option>"));
 		assertTrue(demo.body.contains("<option value=\"225\">Emergency Delegated Authority</option>"));
 		assertTrue(demo.body.contains("<option value=\"0\">Executive Fiat</option>"));
-		assertTrue(demo.body.contains("Executive Fiat waives the queue for real-time disclosure."));
+		assertTrue(demo.body.contains("Executive Fiat waives the queue for real-time reading."));
 		assertTrue(request("GET", "/assets/demo.js").body.contains("runtime-config.json"));
 		assertFalse(page.body.contains("leisurely"));
 		assertTrue(page.body.contains("href=\"/api\""));
@@ -266,7 +266,7 @@ public class SlopFizzBuzzHttpServerTest {
 		assertEquals(new HashSet<String>(Arrays.asList("/fizzbuzz", "/capacity/forecast",
 				"/healthz", "/readyz", "/operations/scorecard", "/operations/release",
 				"/operations/canary", "/operations/recovery", "/cache/status",
-				"/audit/status", "/audit/evidence", "/openapi.json", "/operations/runtime", "/procurement/dossier", "/fizzbuzz/window", "/capacity/forecast/extended")), paths);
+				"/audit/status", "/audit/evidence", "/openapi.json", "/operations/runtime", "/procurement/dossier", "/fizzbuzz/window", "/capacity/forecast/extended", "/onboarding/rehearsal")), paths);
 		for (final String path : paths) {
 			final String target = ("/fizzbuzz".equals(path) || "/capacity/forecast".equals(path))
 					? path + "?limit=0" : path;

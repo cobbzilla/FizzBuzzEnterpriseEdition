@@ -10,7 +10,9 @@ let legacyWorker:string,unsupportedWorker:string;
 test.beforeAll(async()=>{
   const source=await readFile('tests/fixtures/legacy-runtime-worker.ts','utf8');
   const compile=async(contents:string)=>(await build({stdin:{contents,resolveDir:`${process.cwd()}/tests/fixtures`,loader:'ts'},bundle:true,write:false,format:'iife',target:'es2022'})).outputFiles[0].text;
-  legacyWorker=await compile(source);
+  // The frozen transport fixture loads this build's compiled Java. Strip only
+  // the newly introduced response headers to model its pre-HR business release.
+  legacyWorker=await compile(source.replace("reply({kind: 'reply', id: message.id, revision: config.revision, leader, result});","delete result.headers['X-SlopBuzz-Onboarding-Trace']; delete result.headers['X-SlopBuzz-Onboarding-State']; reply({kind: 'reply', id: message.id, revision: config.revision, leader, result});"));
   unsupportedWorker=await compile(source.replace('protocol:1','protocol:999'));
 });
 async function invoke(page:Page,path:string){
@@ -47,6 +49,11 @@ test('hard reload beside a frozen legacy owner keeps demo, BigInt and one durabl
   }
   const currentRevision=await next.evaluate(async()=>(await (await fetch('/runtime-config.json')).json()).revision);
   const retained=await invoke(next,'/audit/evidence');expect(retained.revision).toBe(legacyRevision);
+  await next.fill('#limit','19');await next.click('#run-button');await expect(next.locator('#run-status')).toContainText('Mandate complete');
+  await expect(next.locator('#personnel-verdict')).toHaveText('Evidence unavailable');
+  const beforeRehearsal=await invoke(next,'/audit/evidence');
+  await next.click('[data-personnel-scenario="zero"]');await expect(next.locator('#personnel-verdict')).toHaveText('Application rejected');
+  const afterRehearsal=await invoke(next,'/audit/evidence');expect(JSON.parse(afterRehearsal.body).journalEntries).toBe(JSON.parse(beforeRehearsal.body).journalEntries);
   expect(JSON.parse(retained.body).journalEntries).toBe(33);
   const window=await invoke(next,'/fizzbuzz/window?start=9007199254740993&count=2');
   expect(window.status).toBe(200);expect(window.body).toBe('Fizz\n9007199254740994\n');expect(window.revision).toBe(currentRevision);
@@ -55,7 +62,7 @@ test('hard reload beside a frozen legacy owner keeps demo, BigInt and one durabl
   await next.goto('/#operations');
   await next.click('#procurement-button');await expect(next.locator('#procurement-status')).toContainText('8 separate line items');
   await next.goto('/demo/');
-  await next.fill('#limit','9007199254740993');await next.selectOption('#display-speed','1800');await next.click('#run-button');
+  await next.fill('#limit','9007199254740993');await next.selectOption('#display-speed','225');await next.click('#run-button');
   await expect(next.locator('#output-count')).toContainText('of 9007199254740993 lines');await next.click('#stop-reading');
   // Release-local desks have not created a second persistent journal or even a DB.
   expect(await next.evaluate(async()=>(await indexedDB.databases()).map(db=>db.name))).toEqual([`slopbuzz:${new URL(next.url()).origin}/`]);
@@ -63,7 +70,7 @@ test('hard reload beside a frozen legacy owner keeps demo, BigInt and one durabl
   await page.close();
   await expect.poll(async()=>JSON.parse((await invoke(next,'/operations/runtime')).body).revision).toBe(currentRevision);
   const after=await invoke(next,'/audit/evidence');expect(after.revision).toBe(currentRevision);
-  expect(JSON.parse(after.body).headDigest).toBe(before.headDigest);expect(JSON.parse(after.body).journalEntries).toBe(33);
+  expect(JSON.parse(after.body).headDigest).toBe(before.headDigest);expect(JSON.parse(after.body).journalEntries).toBe(52);
   await next.fill('#limit','17');await next.selectOption('#display-speed','0');await next.click('#run-button');
   await expect(next.locator('#run-status')).toContainText('Mandate complete');await expect(next.locator('#cache-result')).toHaveText('HIT');
 });

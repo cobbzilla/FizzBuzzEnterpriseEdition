@@ -1,11 +1,11 @@
 import posthog from 'posthog-js/dist/module.no-external';
 import type {Usage} from './telemetry';
-const scope = new URL('../',import.meta.url);
+import {scope,releaseFile} from './release-assets';
 const allowed = new Set(['$pageview','$pageleave','slopbuzz_demo_run','slopbuzz_api_request']);
 const local = ['localhost','127.0.0.1','[::1]'].includes(location.hostname);
 function cleanUrl(value: unknown) {try {const u=new URL(String(value));return u.origin+u.pathname;}catch{return '';}}
 async function initialize() {
- const response=await fetch(new URL('analytics-config.json',scope));
+ const response=await fetch(releaseFile('analytics-config.json'));
  if(!response.ok) return;
  const config=await response.json();
  // Explicit site policy: DNT and GPC do not suppress this cookieless census.

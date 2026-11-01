@@ -40,6 +40,7 @@ for (const route of routes) {
 test('keyboard reading controls preserve focus, pause output and allow immediate completion',async({page})=>{
   await page.goto('/demo/'); await expect(page.locator('#health-value')).toHaveText('LIVE');
   await page.fill('#limit','100');
+  await page.selectOption('#display-speed','225');
   await page.locator('#run-button').focus(); await page.keyboard.press('Enter');
   await expect(page.locator('#output-count')).toContainText('of 100');
   await expect(page.locator('#run-button')).toBeFocused();

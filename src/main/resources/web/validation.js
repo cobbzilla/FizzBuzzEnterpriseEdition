@@ -3,12 +3,18 @@
 // web/runtime-protocol.ts
 var runtimeProtocol = 1;
 function isTransientOperation(path, method = "GET") {
-  return method === "GET" && ["/fizzbuzz/window", "/capacity/forecast/extended", "/procurement/dossier"].includes(path.split("?")[0]);
+  return method === "GET" && ["/fizzbuzz/window", "/capacity/forecast/extended", "/procurement/dossier", "/onboarding/rehearsal"].includes(path.split("?")[0]);
 }
 
-// web/runtime.ts
+// web/release-assets.ts
 var scope = new URL("../", import.meta.url).href;
-var config = await fetch(new URL("runtime-config.json", scope), { cache: "no-cache" }).then((r) => {
+var releaseFile = (path) => new URL(
+  (typeof RELEASE_ASSET_DIRECTORY === "string" ? RELEASE_ASSET_DIRECTORY : "") + path,
+  scope
+);
+
+// web/runtime.ts
+var config = await fetch(releaseFile("runtime-config.json"), { cache: "no-cache" }).then((r) => {
   if (!r.ok) throw new Error("Deployment configuration is unavailable");
   return r.json();
 });
@@ -106,7 +112,7 @@ var runtime = config.mode === "server" ? new ServerRuntimeClient() : new Browser
 if ("serviceWorker" in navigator && config.mode === "browser") {
   void navigator.serviceWorker.register(new URL("sw.js", scope), { scope: new URL(scope).pathname }).catch((error) => console.warn("Offline installation unavailable", error));
 }
-var desks = /^\/(?:fizzbuzz|procurement\/dossier|capacity\/forecast|healthz|readyz|cache\/status|operations\/|audit\/)/;
+var desks = /^\/(?:fizzbuzz|onboarding\/rehearsal|procurement\/dossier|capacity\/forecast|healthz|readyz|cache\/status|operations\/|audit\/)/;
 if (config.mode === "browser") document.querySelectorAll("a[href]").forEach((link) => {
   const url = new URL(link.href);
   const base = new URL(scope).pathname.replace(/\/$/, "");
@@ -117,7 +123,7 @@ if (config.mode === "browser") document.querySelectorAll("a[href]").forEach((lin
 
 // web/validation.ts
 try {
-  const report = await fetch(new URL("validation/report.json", scope)).then((r) => {
+  const report = await fetch(releaseFile("validation/report.json")).then((r) => {
     if (!r.ok) throw new Error(`HTTP ${r.status}`);
     return r.json();
   });
@@ -140,7 +146,7 @@ button.onclick = async () => {
   verdict.textContent = "Comparing the local Java runtime against bundled JVM fixtures\u2026";
   try {
     client = new BrowserRuntimeClient({ ...config, mode: "browser" }, id);
-    const fixtures = await fetch(new URL("validation/fixtures.json", scope)).then((r) => {
+    const fixtures = await fetch(releaseFile("validation/fixtures.json")).then((r) => {
       if (!r.ok) throw new Error("JVM fixtures have not been generated for this release");
       return r.json();
     });
