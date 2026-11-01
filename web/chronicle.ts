@@ -1,11 +1,14 @@
 import {byId,setText} from './dom';
 import {parseDossier,type PersonnelDossier} from './onboarding';
+import {parsePrecedent,type PrecedentDossier} from './precedent';
 export interface ExecutionEvent {ordinal:string|null;kind:string;office:string;finding:string;document:string|null}
-export interface ExecutionPacket {text:string;events:ExecutionEvent[];omitted:number;cache:string;runtime:Record<string,unknown>;recorded:boolean}
+export interface ExecutionPacket {text:string;events:ExecutionEvent[];omitted:number;cache:string;runtime:Record<string,unknown>;recorded:boolean;precedent?:PrecedentDossier}
 export interface Folio {ordinal:string;text:string;events:readonly ExecutionEvent[];cache:string;recorded:boolean;runtime:Record<string,unknown>}
 export async function readProclamation(response:Response):Promise<ExecutionPacket>{
  const runtime=JSON.parse(response.headers.get('X-SlopBuzz-Execution-Runtime')||'{}');
- const packet={text:'',events:[] as ExecutionEvent[],omitted:0,cache:response.headers.get('X-SlopBuzz-Cache')||'UNKNOWN',runtime,recorded:false};
+ const packet:ExecutionPacket={text:'',events:[] as ExecutionEvent[],omitted:0,cache:response.headers.get('X-SlopBuzz-Cache')||'UNKNOWN',runtime,recorded:false};
+ const precedent=response.headers.get('X-SlopBuzz-Precedent-Trace');
+ if(precedent&&precedent.length<=8192)try{const data=parsePrecedent(JSON.parse(precedent));if(data.purpose==='MANDATE')packet.precedent=data;}catch{/* Optional court papers must not prevent disclosure of correct numerical output. */}
  if(!response.headers.get('Content-Type')?.includes('application/json')){
   const raw=response.headers.get('X-SlopBuzz-Onboarding-Trace');
   if(raw&&raw.length<=8192)try{const personnel=parseDossier(JSON.parse(raw));if(personnel.purpose==='MANDATE')packet.events=personnel.steps.map(step=>({ordinal:'1',kind:'HR_'+step.state,office:step.office,finding:step.finding,document:step.document}));}catch{/* A missing optional dossier must not erase the observed output. */}
@@ -90,8 +93,12 @@ export class ExecutiveChronicle {
  }
  receive(packet:ExecutionPacket){
   this.packet=packet;this.groups.clear();for(const event of packet.events){if(event.ordinal!==null){const group=this.groups.get(event.ordinal)||[];group.push(event);this.groups.set(event.ordinal,group);}}
-  const global=packet.events.filter(e=>e.ordinal===null&&!['COMPLETE','FAILED'].includes(e.kind));
+ const global=packet.events.filter(e=>e.ordinal===null&&!['COMPLETE','FAILED'].includes(e.kind)&&!e.kind.startsWith('PRECEDENT_'));
   if(global.length)this.note(global.map(e=>`${e.office}: ${e.finding}`).join(' '),'Recorded reception and operating path');
+  if(packet.precedent){
+   this.note(packet.precedent.status==='APPROVED'?'Institutional Memory offered prior text. Five actual Java offices examined the current reuse petition. Doing no new numerical work is an outcome for which the company requires considerable fresh paperwork.':'Institutional Memory offered an inadmissible precedent. The court refused reuse before a single fresh production run was authorized. The rejected text has not been disclosed as the answer.','Prior Work Ratification and Institutional Memory Court');
+   for(const step of packet.precedent.steps)this.note(`${step.state==='APPROVED'?'Approved':step.state==='REJECTED'?'Rejected':'Not reached'}. ${step.finding} ${step.document}`,step.office);
+  }
   const {engine,storage,cache}=packet.runtime;
   if(engine)this.note(`The appointed implementation is ${String(engine)}. Its declared repository is ${String(storage||'unspecified')} and its cache adapter is ${String(cache||'unspecified')}. ${packet.cache==='HIT'?'Institutional memory answered without convening a fresh production workforce.':'The following account distinguishes actual Java decisions from explanatory context.'}`,'Execution arrangements');
   if(packet.omitted)this.note(`${packet.omitted} observation entries exceeded the finite dossier allowance. Numerical output remains independently available.`,'Observation allowance');

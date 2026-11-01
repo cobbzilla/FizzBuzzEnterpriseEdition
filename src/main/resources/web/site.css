@@ -77,6 +77,16 @@ h1 em { color: #ee9a75; font-weight: 500; }
 .section-heading > div:last-child p { margin-bottom: 15px; }
 .panel { background: var(--white); border: 1px solid var(--line); box-shadow: 0 8px 0 #d8d1c5; }
 .demo-workspace { display: grid; gap: clamp(32px, 4vw, 48px); }
+.precedent-panel { padding: clamp(22px, 3vw, 38px); min-width: 0; }
+.precedent-panel h2 { font-family: Georgia, "Times New Roman", serif; font-weight: 500; font-size: clamp(1.7rem, 2.4vw, 2.3rem); line-height: 1.12; }
+.precedent-panel > p, .precedent-source { color: var(--ink-soft); }
+.precedent-form { display: grid; gap: 12px; margin-block: 24px; max-width: 46rem; }
+.precedent-form select { max-width: 100%; width: 100%; min-height: 48px; height: max(48px, 3rem); padding: 10px 12px; border: 2px solid var(--ink); border-radius: 3px; background: var(--white); color: var(--ink); font: inherit; }
+.precedent-form .button { justify-self: start; }
+.precedent-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-block: 20px; }
+#precedent-case { min-width: 0; scroll-margin-block: 24px; }
+#precedent-steps summary { grid-template-columns: 22px minmax(0,1fr) minmax(0,90px); }
+#precedent-steps .personnel-office, .precedent-source, #precedent-status { overflow-wrap: anywhere; }
 .demo-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px; align-items: stretch; }
 .mandate-panel, .output-panel, .forecast-panel { padding: clamp(22px, 3vw, 38px); }
 .demo-section .section-heading h1 { margin: 0; font-size: clamp(2.2rem, 4vw, 3.9rem); line-height: 1.12; letter-spacing: -.04em; }

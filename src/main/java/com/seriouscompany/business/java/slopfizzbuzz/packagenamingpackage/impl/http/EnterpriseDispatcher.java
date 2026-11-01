@@ -68,6 +68,14 @@ public final class EnterpriseDispatcher {
    exchange.headers.set("Cache-Control","no-store");exchange.headers.set("X-SlopBuzz-Proceedings","READ_ONLY_REHEARSAL");
    respond(exchange,200,dossier.toJson(),"application/json; charset=UTF-8");
   }});
+  register("/precedent/rehearsal",new DeskHandler(){public void handle(EnterpriseExchange exchange)throws IOException {
+   if(!"GET".equals(exchange.getRequestMethod())){exchange.headers.set("Allow","GET");respond(exchange,405,"Method not authorized\n");return;}
+   String query=exchange.getRequestURI().getRawQuery();String scenario=query==null?"approved":query.startsWith("scenario=")?query.substring(9):"";
+   try{
+    com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.precedent.PrecedentDossier result=com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.precedent.PriorWorkRatificationDirectorate.rehearse(scenario);
+    exchange.headers.set("Cache-Control","no-store");exchange.headers.set("X-SlopBuzz-Proceedings","READ_ONLY_REHEARSAL");respond(exchange,200,result.toJson(),"application/json; charset=UTF-8");
+   }catch(IllegalArgumentException invalid){respond(exchange,400,"Use approved, zero, wrong-mandate, missing-line or lowercase-fizz\n");}
+  }});
   register("/capacity/forecast/extended",new DeskHandler(){public void handle(EnterpriseExchange exchange)throws IOException {
    if(!"GET".equals(exchange.getRequestMethod())) {exchange.headers.set("Allow","GET");respond(exchange,405,"Method not authorized\n");return;}
    String query=exchange.getRequestURI().getRawQuery();
@@ -116,7 +124,8 @@ public final class EnterpriseDispatcher {
   }
   exchange.headers.putAll(result.headers);exchange.headers.set("Cache-Control","no-store");
   String personnel=result.headers.get("X-SlopBuzz-Onboarding-Trace");
-  String body="{\"schema\":\"slopbuzz-execution/v1\",\"text\":"+com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.proceedings.ExecutionEvent.quote(result.text())+",\"personnel\":"+(personnel==null?"null":personnel)+",\"trace\":"+ledger.toJson()+"}";
+  String precedent=result.headers.get("X-SlopBuzz-Precedent-Trace");
+  String body="{\"schema\":\"slopbuzz-execution/v1\",\"text\":"+com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.proceedings.ExecutionEvent.quote(result.text())+",\"personnel\":"+(personnel==null?"null":personnel)+",\"precedent\":"+(precedent==null?"null":precedent)+",\"trace\":"+ledger.toJson()+"}";
   respond(exchange,result.status,body,"application/json; charset=UTF-8");
  }});}
  private static void attachPersonnel(EnterpriseExchange exchange,PersonnelEvidenceCustody.Capture evidence,String fallback){
@@ -279,6 +288,7 @@ public final class EnterpriseDispatcher {
 				}
 				exchange.getResponseHeaders().set("Cache-Control", "no-store");
 				final CacheLookup lookup = this.cache.lookup(limit.intValue());
+    if(lookup.getPrecedent()!=null){String receipt=lookup.getPrecedent().toJson();if(receipt.length()<=8192)exchange.headers.set("X-SlopBuzz-Precedent-Trace",receipt);}
     event("CACHE_"+lookup.getState().name(),"Institutional Memory","The output repository returned "+lookup.getState().name()+" for upper limit "+limit+".");
 				exchange.getResponseHeaders().set("X-SlopBuzz-Cache", lookup.getState().name());
 				if (lookup.getState() == CacheLookup.State.HIT) {

@@ -38,10 +38,11 @@ public final class PortableContractTribunal {
   require(failed && unavailable.snapshot().isEmpty() && unavailable.messages().pendingCount()==0,"failed append publication barrier");
   int glyphChecks=com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.procurement.GlyphProcurementTribunal.rehearse();
   int personnelChecks=com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.onboarding.PersonnelObjectionTribunal.rehearse();
+  int precedentChecks=com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.precedent.PriorWorkObjectionTribunal.rehearse();
   // UTF-16 lengths and UTF-8 hashing must agree across all compilers.
   OutputAuditEntry unicode=reopened.record(7,"gravitás \uD83C\uDFDB\uFE0F\n",OutputDisposition.ABORTED);
   require(reopened.verifyChain(),"unicode chain");
-  return "{\"state\":\"PASSED\",\"checks\":"+(13+glyphChecks+personnelChecks)+",\"headDigest\":\""+unicode.getDigest()+"\",\"cache\":"+failedCache.statusJson()+"}";
+  return "{\"state\":\"PASSED\",\"checks\":"+(13+glyphChecks+personnelChecks+precedentChecks)+",\"headDigest\":\""+unicode.getDigest()+"\",\"cache\":"+failedCache.statusJson()+"}";
  }
  private static void require(boolean condition,String name){if(!condition)throw new IllegalStateException("Contract failed: "+name);}
 }

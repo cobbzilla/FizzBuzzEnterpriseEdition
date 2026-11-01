@@ -175,3 +175,11 @@ using native BigInt when Number would lose precision. Optional Numeric Character
 Governance corrects pasted values; extended transient runs can be paused or stopped
 and retain the latest 1000 lines. Twenty provisional policy warnings attend
 requests beyond the ordinary-number jurisdiction.
+
+The [Institutional Memory Court](docs/ADR-0026-prior-work-ratification.md) requires
+five interchangeable Java offices to validate cached output before reuse.
+Repeat a bounded mandate in the demo to inspect its Certificate of Authorized
+Non-Performance, or try the isolated management petitions beneath the advisory
+inventory. The same read-only cases are available through GET
+/precedent/rehearsal?scenario=approved and the human API charter. Neither reuse
+inspection nor a specimen rehearsal creates new numerical audit entries.

@@ -19,11 +19,17 @@ import org.junit.Test;
 
 import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.cache.CacheLookup;
 import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.cache.RedisOutputCache;
+import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.precedent.*;
+import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.precedent.PriorWorkDocuments.*;
 
 public class RedisOutputCacheTest {
 
 	@Test
 	public void missIsStoredWithExpiryAndNextConsultationHits() throws Exception {
+		inspectRedisReuse(false);
+	}
+    @Test public void replaceableCourtReceivesTheActualRedisCandidate()throws Exception{inspectRedisReuse(true);}
+    private void inspectRedisReuse(final boolean inject) throws Exception {
 		final ServerSocket listener = new ServerSocket(0);
 		listener.setSoTimeout(3000);
 		final ExecutorService clerk = Executors.newSingleThreadExecutor();
@@ -50,12 +56,15 @@ public class RedisOutputCacheTest {
 			}
 		});
 		try {
-			final RedisOutputCache cache = new RedisOutputCache("127.0.0.1", listener.getLocalPort());
+            final int[] admitted={0};
+            PriorWorkRatificationDirectorate court=new PriorWorkRatificationDirectorate(new PrecedentAdmissionOffice(){public Admission admit(Petition petition){admitted[0]++;return new BoundedPrecedentAdmissionOffice().admit(petition);}},new ExactMandateJurisdictionChamber(),new CompleteLineInventoryOffice(),new NotarialIndependentLexicalBench(),new IndependentlyAuditedNonPerformanceAuthority());
+			final RedisOutputCache cache = inject?new RedisOutputCache("127.0.0.1", listener.getLocalPort(),court):new RedisOutputCache("127.0.0.1", listener.getLocalPort());
 			assertEquals(CacheLookup.State.MISS, cache.lookup(3).getState());
 			cache.store(3, answer);
 			final CacheLookup hit = cache.lookup(3);
 			assertEquals(CacheLookup.State.HIT, hit.getState());
 			assertEquals(answer, hit.getBody());
+            assertTrue(hit.getPrecedent().isApproved());assertEquals(inject?1:0,admitted[0]);
 			final List<List<String>> sent = commands.get(5, TimeUnit.SECONDS);
 			assertEquals(Arrays.asList("GET", "slopbuzz:fizzbuzz:v1:limit:3"), sent.get(0));
 			assertEquals(Arrays.asList("SET", "slopbuzz:fizzbuzz:v1:limit:3", answer,

@@ -39,6 +39,10 @@
     {
       "name": "Developer relations",
       "description": "Read the charter that describes these desks."
+    },
+    {
+      "name": "Prior work ratification",
+      "description": "Five real offices must license the reuse of a cached answer."
     }
   ],
   "paths": {
@@ -49,7 +53,7 @@
         ],
         "operationId": "issueMandate",
         "summary": "Issue a numerical mandate",
-        "description": "Runs the real Spring service for integers 1 through limit. A cache miss produces audit certificates; a Redis hit returns the same approved text without producing new certificates. A production start at 1 obtains a commencement certificate from seven personnel offices. X-SlopBuzz-Onboarding-Trace carries request-bound completed decisions without changing the plain-text body. Cache hits and later extended windows create no new HR proceedings.",
+        "description": "Runs the real Spring service for integers 1 through limit. A cache miss produces audit certificates; a Redis hit returns the same approved text without producing new certificates. A production start at 1 obtains a commencement certificate from seven personnel offices. X-SlopBuzz-Onboarding-Trace carries request-bound completed decisions without changing the plain-text body. Cache hits and later extended windows create no new HR proceedings. A current cache hit requires five-office prior-work ratification. Rejected prior text becomes a cache miss before at most one fresh production invocation. Reuse itself performs independent validation but creates no fresh numerical transactions. Existing raw cache entries and expiry policies remain compatible.",
         "parameters": [
           {
             "$ref": "#/components/parameters/Limit"
@@ -80,6 +84,9 @@
               },
               "X-SlopBuzz-Onboarding-Trace": {
                 "$ref": "#/components/headers/PersonnelTrace"
+              },
+              "X-SlopBuzz-Precedent-Trace": {
+                "$ref": "#/components/headers/PrecedentTrace"
               }
             },
             "content": {
@@ -888,7 +895,7 @@
         ],
         "operationId": "explainNumericalMandate",
         "summary": "Issue a mandate with actual execution proceedings",
-        "description": "Opt-in structured envelope around one execution of /fizzbuzz. Returns the identical numerical text with bounded, request-local Java observations and optional actual personnel evidence. It does not rerun the operation for its story. Cache hits report only the cache action; extended windows do not invent retained transactions. The observer never grants business authorization. At most 50000 observations are retained; omitted counts are explicit. Older runtimes may lack this operation: clients must probe operations/runtime narrative capability before choosing an execution path, rather than retrying a possibly completed mandate.",
+        "description": "Opt-in structured envelope around one execution of /fizzbuzz. Returns the identical numerical text with bounded, request-local Java observations and optional actual personnel evidence. It does not rerun the operation for its story. Cache hits report only the cache action; extended windows do not invent retained transactions. The observer never grants business authorization. At most 50000 observations are retained; omitted counts are explicit. Older runtimes may lack this operation: clients must probe operations/runtime narrative capability before choosing an execution path, rather than retrying a possibly completed mandate. A current cache hit requires five-office prior-work ratification. Rejected prior text becomes a cache miss before at most one fresh production invocation. Reuse itself performs independent validation but creates no fresh numerical transactions. Existing raw cache entries and expiry policies remain compatible.",
         "parameters": [
           {
             "$ref": "#/components/parameters/Limit"
@@ -903,6 +910,9 @@
                   "type": "string",
                   "const": "no-store"
                 }
+              },
+              "X-SlopBuzz-Precedent-Trace": {
+                "$ref": "#/components/headers/PrecedentTrace"
               }
             },
             "content": {
@@ -1045,6 +1055,80 @@
           }
         }
       }
+    },
+    "/precedent/rehearsal": {
+      "get": {
+        "tags": [
+          "Prior work ratification"
+        ],
+        "operationId": "rehearsePriorWork",
+        "summary": "Convene a read-only institutional memory court",
+        "description": "Exercises the same five Java offices that ratify real cached responses. Approved adopts fifteen lines; zero licenses empty prior work; wrong-mandate fails jurisdiction, missing-line fails completeness, and lowercase-fizz fails independent lexical inspection. A substantive rejection returns HTTP 200 with status REJECTED and later offices NOT_REACHED. Specimens are fixed and isolated: no real cache reads/writes, numerical output, numerical audit entries or message delivery occurs. Executes locally and offline in browser mode, including alongside an older journal owner.",
+        "parameters": [
+          {
+            "name": "scenario",
+            "in": "query",
+            "description": "One exact unencoded scenario; omission defaults to approved. Repeated and extra parameters are rejected.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "approved",
+                "zero",
+                "wrong-mandate",
+                "missing-line",
+                "lowercase-fizz"
+              ],
+              "default": "approved"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Actual completed court decisions and, only on approval, a Certificate of Authorized Non-Performance.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "const": "no-store"
+                }
+              },
+              "X-SlopBuzz-Proceedings": {
+                "schema": {
+                  "type": "string",
+                  "const": "READ_ONLY_REHEARSAL"
+                }
+              },
+              "X-SlopBuzz-Trace-Id": {
+                "$ref": "#/components/headers/TraceId"
+              },
+              "X-SlopBuzz-Span-Id": {
+                "$ref": "#/components/headers/SpanId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PrecedentDossier"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Unsupported or ambiguous scenario query."
+          },
+          "405": {
+            "description": "Only GET is authorized.",
+            "headers": {
+              "Allow": {
+                "schema": {
+                  "type": "string",
+                  "const": "GET"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -1106,6 +1190,13 @@
         "description": "ASCII-escaped JSON PersonnelDossier, at most 8192 characters, captured from this request’s actual Java initializer. Only supplied when onboarding ran. Never copied into the output cache or persisted in the numerical journal. Missing on cache hits and extended continuation windows. See PersonnelDossier schema.",
         "schema": {
           "type": "string"
+        }
+      },
+      "PrecedentTrace": {
+        "description": "Optional ASCII JSON PrecedentDossier, at most 8192 characters. Current Java cache reuse decisions, including rejection before fresh production. Absent when no prior text was offered, the repository was bypassed, or an older owner has no court. Never stored in the numerical cache or journal.",
+        "schema": {
+          "type": "string",
+          "maxLength": 8192
         }
       }
     },
@@ -1410,6 +1501,11 @@
           },
           "ttlSeconds": {
             "type": "integer"
+          },
+          "rejectedPrecedents": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Substantively rejected cached candidates. Each also counts as a miss; infrastructure failures remain bypasses/errors."
           }
         }
       },
@@ -1782,6 +1878,17 @@
                 "description": "Number of observations beyond the finite collector allowance."
               }
             }
+          },
+          "precedent": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PrecedentDossier"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Optional current reuse case; absent or null when the court did not convene."
           }
         }
       },
@@ -1821,6 +1928,109 @@
               "null"
             ],
             "description": "Actual payload or document summary when one was emitted."
+          }
+        }
+      },
+      "PrecedentDecision": {
+        "type": "object",
+        "required": [
+          "office",
+          "state",
+          "rule",
+          "received",
+          "finding",
+          "document"
+        ],
+        "properties": {
+          "office": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "APPROVED",
+              "REJECTED",
+              "NOT_REACHED"
+            ]
+          },
+          "rule": {
+            "type": "string"
+          },
+          "received": {
+            "type": "string"
+          },
+          "finding": {
+            "type": "string"
+          },
+          "document": {
+            "type": "string"
+          }
+        }
+      },
+      "PrecedentDossier": {
+        "type": "object",
+        "description": "Current reuse decisions bound to one immutable petition. These are not the historic records of producing the cached result. Case labels may repeat across invocations; in-memory document identity enforces custody.",
+        "required": [
+          "schema",
+          "caseId",
+          "purpose",
+          "limit",
+          "repositoryLimit",
+          "bodyCharacters",
+          "certifiedLines",
+          "status",
+          "steps"
+        ],
+        "properties": {
+          "schema": {
+            "type": "string",
+            "const": "slopbuzz-precedent/v1"
+          },
+          "caseId": {
+            "type": "string"
+          },
+          "purpose": {
+            "type": "string",
+            "enum": [
+              "MANDATE",
+              "REHEARSAL"
+            ]
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1000
+          },
+          "repositoryLimit": {
+            "type": "integer"
+          },
+          "bodyCharacters": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "certifiedLines": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0,
+            "maximum": 1000,
+            "description": "Equals limit only on approval; null after rejection."
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "APPROVED",
+              "REJECTED"
+            ]
+          },
+          "steps": {
+            "type": "array",
+            "minItems": 5,
+            "maxItems": 5,
+            "items": {
+              "$ref": "#/components/schemas/PrecedentDecision"
+            }
           }
         }
       }

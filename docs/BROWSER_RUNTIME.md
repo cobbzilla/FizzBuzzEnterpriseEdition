@@ -168,3 +168,18 @@ work offline and in server mode. These windows are transient and do not grow the
 retained audit/cache repository. Output retains the latest 1000 displayed lines,
 with pause, expedited disclosure and Stop controls. See
 [ADR 0023](ADR-0023-unbounded-mandates.md) for contracts and precision guarantees.
+
+## Prior work ratification
+
+The shared Java cache authority validates every offered prior body through five
+offices before returning HIT. Existing raw cache records and expiry remain
+compatible. Rejected candidates count as misses before one fresh production
+invocation; infrastructure failures retain the bypass policy. Current court
+papers travel in an optional bounded header and explained JSON envelope, never
+in the numerical cache or audit journal. Extended windows bypass this court.
+
+The read-only /precedent/rehearsal desk uses fixed specimens and is whitelisted
+for current-release transient execution beside an older journal owner. It
+opens no database and cannot poison the actual cache. Older owners may omit
+court papers; the UI explains provenance without reconstructing approvals.
+See [ADR 0026](ADR-0026-prior-work-ratification.md).

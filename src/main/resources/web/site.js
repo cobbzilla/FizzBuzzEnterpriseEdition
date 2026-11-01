@@ -3,7 +3,7 @@
 // web/runtime-protocol.ts
 var runtimeProtocol = 1;
 function isTransientOperation(path, method = "GET") {
-  return method === "GET" && ["/operations/runtime", "/fizzbuzz/window", "/fizzbuzz/window/explained", "/capacity/forecast/extended", "/procurement/dossier", "/onboarding/rehearsal"].includes(path.split("?")[0]);
+  return method === "GET" && ["/operations/runtime", "/fizzbuzz/window", "/fizzbuzz/window/explained", "/capacity/forecast/extended", "/procurement/dossier", "/onboarding/rehearsal", "/precedent/rehearsal"].includes(path.split("?")[0]);
 }
 
 // web/release-assets.ts
@@ -145,7 +145,7 @@ var request = (path, options) => path === "/openapi.json" && (!options?.method |
 if ("serviceWorker" in navigator && config.mode === "browser") {
   void navigator.serviceWorker.register(new URL("sw.js", scope), { scope: new URL(scope).pathname }).catch((error) => console.warn("Offline installation unavailable", error));
 }
-var desks = /^\/(?:fizzbuzz|onboarding\/rehearsal|procurement\/dossier|capacity\/forecast|healthz|readyz|cache\/status|operations\/|audit\/)/;
+var desks = /^\/(?:fizzbuzz|onboarding\/rehearsal|precedent\/rehearsal|procurement\/dossier|capacity\/forecast|healthz|readyz|cache\/status|operations\/|audit\/)/;
 if (config.mode === "browser") document.querySelectorAll("a[href]").forEach((link) => {
   const url = new URL(link.href);
   const base = new URL(scope).pathname.replace(/\/$/, "");
