@@ -1,4 +1,5 @@
 package com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.visitors;
+import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.proceedings.ExecutionCustody;
 
 import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.interfaces.printers.DataPrinter;
 import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.interfaces.strategies.IsEvenlyDivisibleStrategy;
@@ -21,7 +22,9 @@ public class SlopFizzBuzzOutputGenerationContextVisitor implements
 	@Override
 	public void visit(final OutputGenerationContext context, final int nGenerationParameter) {
 		final IsEvenlyDivisibleStrategy strategy = context.getStrategy();
-		if (strategy.isEvenlyDivisible(nGenerationParameter)) {
+        final boolean authorized=strategy.isEvenlyDivisible(nGenerationParameter);
+        if(ExecutionCustody.observing())ExecutionCustody.record("VISITOR","Output Generation Context Visitor","The certified strategy "+(authorized?"authorized":"declined")+" printer "+context.getPrinter().getClass().getSimpleName()+" for this ordinal.");
+		if (authorized) {
 			final DataPrinter printer = context.getPrinter();
 			printer.printValue(new Integer(nGenerationParameter));
 		}

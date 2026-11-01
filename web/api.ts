@@ -63,7 +63,7 @@ function tryDesk(spec: Spec, path: string, method: string, operation: Operation)
   panel.append(element('h4', '', 'Live request desk'));
   const hasLimit = (operation.parameters || []).some((parameter) =>
     parameter.$ref?.endsWith('/Limit') || (parameter.name === 'limit' && parameter.schema?.type !== 'string'));
-  const magnitudeFields: {name:string;label:string;value:string;minimum:number;maximum?:number}[] = path === '/fizzbuzz/window'
+  const magnitudeFields: {name:string;label:string;value:string;minimum:number;maximum?:number}[] = path.startsWith('/fizzbuzz/window')
     ? [{name:'start',label:'Starting ordinal',value:'9007199254740990',minimum:1},{name:'count',label:'Window lines',value:'15',minimum:1,maximum:100}]
     : path === '/capacity/forecast/extended' ? [{name:'limit',label:'Upper limit',value:'9007199254740993',minimum:0}] : [];
   const requestedPath = hasLimit ? `${path}?limit=15` : magnitudeFields.length ? `${path}?${new URLSearchParams(magnitudeFields.map(field=>[field.name,field.value]))}` : path;

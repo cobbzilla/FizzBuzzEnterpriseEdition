@@ -33,6 +33,10 @@
       "description": "The literal one must complete recruitment, induction and probation before counting can begin."
     },
     {
+      "name": "Execution proceedings",
+      "description": "Observe the actual work behind a numerical mandate without executing it twice."
+    },
+    {
       "name": "Developer relations",
       "description": "Read the charter that describes these desks."
     }
@@ -618,7 +622,7 @@
         ],
         "summary": "Inspect the configured execution environment",
         "operationId": "runtimeCapabilities",
-        "description": "Identifies the engine, audit repository and cache provider. No automatic browser-to-server failover occurs.",
+        "description": "Identifies the engine, audit repository and cache provider. No automatic browser-to-server failover occurs. The optional narrative integer capability is1 when explained mandate endpoints are supported. Its absence means clients must choose the established plain-text operation once and use clearly labeled explanatory context for missing details.",
         "responses": {
           "200": {
             "description": "Current runtime capabilities",
@@ -870,6 +874,171 @@
                 "schema": {
                   "type": "string",
                   "const": "GET"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/fizzbuzz/explained": {
+      "get": {
+        "tags": [
+          "Execution proceedings"
+        ],
+        "operationId": "explainNumericalMandate",
+        "summary": "Issue a mandate with actual execution proceedings",
+        "description": "Opt-in structured envelope around one execution of /fizzbuzz. Returns the identical numerical text with bounded, request-local Java observations and optional actual personnel evidence. It does not rerun the operation for its story. Cache hits report only the cache action; extended windows do not invent retained transactions. The observer never grants business authorization. At most 50000 observations are retained; omitted counts are explicit. Older runtimes may lack this operation: clients must probe operations/runtime narrative capability before choosing an execution path, rather than retrying a possibly completed mandate.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Limit"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Numerical result and the actual observed proceedings.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "const": "no-store"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExecutionEnvelope"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The original failure status is preserved with its text and observed failure record.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "const": "no-store"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExecutionEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "The original failure status is preserved with its text and observed failure record.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "const": "no-store"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExecutionEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/fizzbuzz/window/explained": {
+      "get": {
+        "tags": [
+          "Execution proceedings"
+        ],
+        "operationId": "explainMagnitudeWindow",
+        "summary": "Disclose a transient window with execution proceedings",
+        "description": "Opt-in structured envelope around one execution of /fizzbuzz/window. Returns the identical numerical text with bounded, request-local Java observations and optional actual personnel evidence. It does not rerun the operation for its story. Cache hits report only the cache action; extended windows do not invent retained transactions. The observer never grants business authorization. At most 50000 observations are retained; omitted counts are explicit. Older runtimes may lack this operation: clients must probe operations/runtime narrative capability before choosing an execution path, rather than retrying a possibly completed mandate.",
+        "parameters": [
+          {
+            "name": "start",
+            "in": "query",
+            "required": true,
+            "description": "Positive decimal ordinal, transmitted as text to preserve precision.",
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9]+$",
+              "default": "9007199254740990"
+            }
+          },
+          {
+            "name": "count",
+            "in": "query",
+            "required": true,
+            "description": "Number of lines in this finite response window.",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 15
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Numerical result and the actual observed proceedings.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "const": "no-store"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExecutionEnvelope"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The original failure status is preserved with its text and observed failure record.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "const": "no-store"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExecutionEnvelope"
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Only GET is authorized."
+          },
+          "500": {
+            "description": "The original failure status is preserved with its text and observed failure record.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "const": "no-store"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExecutionEnvelope"
                 }
               }
             }
@@ -1562,6 +1731,96 @@
           "document": {
             "type": "string",
             "description": "Human-readable summary of the immutable Java document or rejection notice."
+          }
+        }
+      },
+      "ExecutionEnvelope": {
+        "type": "object",
+        "required": [
+          "schema",
+          "text",
+          "personnel",
+          "trace"
+        ],
+        "properties": {
+          "schema": {
+            "type": "string",
+            "const": "slopbuzz-execution/v1"
+          },
+          "text": {
+            "type": "string",
+            "description": "Exactly the original proclamation body, including line endings, or the original error text."
+          },
+          "personnel": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PersonnelDossier"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Observed personnel decisions from this execution, or null when no such record was produced."
+          },
+          "trace": {
+            "type": "object",
+            "required": [
+              "events",
+              "omitted"
+            ],
+            "properties": {
+              "events": {
+                "type": "array",
+                "maxItems": 50000,
+                "items": {
+                  "$ref": "#/components/schemas/ExecutionEvent"
+                }
+              },
+              "omitted": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Number of observations beyond the finite collector allowance."
+              }
+            }
+          }
+        }
+      },
+      "ExecutionEvent": {
+        "type": "object",
+        "required": [
+          "ordinal",
+          "kind",
+          "office",
+          "finding",
+          "document"
+        ],
+        "properties": {
+          "ordinal": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "pattern": "^[0-9]+$",
+            "description": "Exact decimal ordinal, or null for a request-wide action. Strings preserve arbitrary precision."
+          },
+          "kind": {
+            "type": "string",
+            "description": "Semantic action actually observed: for example CACHE_MISS, HR_APPROVED, CLASSIFICATION, GLYPH_ACCEPTED, NOTARY, AUDIT_APPEND or EXTENDED_NOTARY."
+          },
+          "office": {
+            "type": "string",
+            "description": "The authority or component that performed the action."
+          },
+          "finding": {
+            "type": "string",
+            "description": "Observed inputs, outcome and reason. Observations describe completed acts; they are not authorizations."
+          },
+          "document": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Actual payload or document summary when one was emitted."
           }
         }
       }

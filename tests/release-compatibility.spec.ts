@@ -6,13 +6,14 @@ const legacyRevision='0000000000000000000000000000000000000001';
 // Model a network/hard refresh while retaining the legacy tab's dedicated worker.
 // Offline service-worker installation and activation are covered in browser.spec.ts.
 test.use({serviceWorkers:'block'});
-let legacyWorker:string,unsupportedWorker:string;
+let legacyWorker:string,unsupportedWorker:string,personnelWorker:string;
 test.beforeAll(async()=>{
   const source=await readFile('tests/fixtures/legacy-runtime-worker.ts','utf8');
   const compile=async(contents:string)=>(await build({stdin:{contents,resolveDir:`${process.cwd()}/tests/fixtures`,loader:'ts'},bundle:true,write:false,format:'iife',target:'es2022'})).outputFiles[0].text;
   // The frozen transport fixture loads this build's compiled Java. Strip only
   // the newly introduced response headers to model its pre-HR business release.
   legacyWorker=await compile(source.replace("reply({kind: 'reply', id: message.id, revision: config.revision, leader, result});","delete result.headers['X-SlopBuzz-Onboarding-Trace']; delete result.headers['X-SlopBuzz-Onboarding-State']; reply({kind: 'reply', id: message.id, revision: config.revision, leader, result});"));
+  personnelWorker=await compile(source);
   unsupportedWorker=await compile(source.replace('protocol:1','protocol:999'));
 });
 async function invoke(page:Page,path:string){
@@ -50,7 +51,9 @@ test('hard reload beside a frozen legacy owner keeps demo, BigInt and one durabl
   const currentRevision=await next.evaluate(async()=>(await (await fetch('/runtime-config.json')).json()).revision);
   const retained=await invoke(next,'/audit/evidence');expect(retained.revision).toBe(legacyRevision);
   await next.fill('#limit','19');await next.click('#run-button');await expect(next.locator('#run-status')).toContainText('Mandate complete');
-  await expect(next.locator('#personnel-verdict')).toHaveText('Evidence unavailable');
+  await expect(next.locator('#personnel-verdict')).toHaveText('Earlier administration');
+  await expect(next.locator('#chronicle-entries')).toContainText('One has reported for duty');
+  await expect(next.locator('#chronicle-entries')).toContainText('without forwarding a detailed execution dossier');
   const beforeRehearsal=await invoke(next,'/audit/evidence');
   await next.click('[data-personnel-scenario="zero"]');await expect(next.locator('#personnel-verdict')).toHaveText('Application rejected');
   const afterRehearsal=await invoke(next,'/audit/evidence');expect(JSON.parse(afterRehearsal.body).journalEntries).toBe(JSON.parse(beforeRehearsal.body).journalEntries);
@@ -73,6 +76,14 @@ test('hard reload beside a frozen legacy owner keeps demo, BigInt and one durabl
   expect(JSON.parse(after.body).headDigest).toBe(before.headDigest);expect(JSON.parse(after.body).journalEntries).toBe(52);
   await next.fill('#limit','17');await next.selectOption('#display-speed','0');await next.click('#run-button');
   await expect(next.locator('#run-status')).toContainText('Mandate complete');await expect(next.locator('#cache-result')).toHaveText('HIT');
+});
+test('an earlier HR-aware owner contributes its real personnel record without invented later proceedings',async({page,context},info)=>{
+ await page.route('**/runtime-config.json',async route=>{const response=await route.fetch();await route.fulfill({json:{...await response.json(),revision:legacyRevision,engine:info.project.metadata.engine}});});
+ await page.route('**/runtime-worker.js',route=>route.fulfill({contentType:'text/javascript',body:personnelWorker}));
+ await page.goto('/demo/');await expect(page.locator('#health-value')).toHaveText('LIVE');
+ const next=await context.newPage();await next.goto('/demo/');await next.selectOption('#display-speed','0');await next.fill('#limit','1');await next.click('#run-button');await expect(next.locator('#run-status')).toContainText('Mandate complete');
+ await expect(next.locator('#chronicle-entries')).toContainText('Personnel has supplied the actual case file');await expect(next.locator('#chronicle-entries')).toContainText('Recorded personnel · procedure explained');await expect(next.locator('#chronicle-entries')).toContainText('other departments are explained as procedure');
+ expect(JSON.parse((await invoke(next,'/audit/evidence')).body).journalEntries).toBe(1);
 });
 test('an unknown legacy protocol is refused before a mandate is submitted',async({page,context},info)=>{
   await installLegacy(page,info.project.metadata.engine,true);

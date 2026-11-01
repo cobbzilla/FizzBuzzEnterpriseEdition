@@ -20,6 +20,8 @@ try {
  await page.selectOption('#display-speed','0');await page.click('#run-button');
  await page.waitForFunction(()=>document.querySelector('#run-status')?.textContent?.includes('Mandate complete'));
  assert.equal((await page.locator('#output').textContent())?.split('\n').filter(Boolean).length,15);
+ assert.ok((await page.locator('#chronicle-entries').textContent())?.includes('One has reported for duty'));
+ assert.ok(await page.locator('#chronicle-scroll').evaluate(element=>element.scrollHeight>element.clientHeight));
  assert.equal(await page.locator('#runtime-status, #offline-status').count(),0);
  for(const port of [18088,18089]) {
   for(const route of ['demo','company-history','accessibility','api','validation']) {

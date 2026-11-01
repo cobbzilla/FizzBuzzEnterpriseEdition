@@ -26,6 +26,16 @@ JavaScript. Add new pages to both builders and to the route list in
 
 ## Human review and limits
 
+The Executive Chronicle review covers its named fixed-height scroll region,
+optional following, stable archive inspection during ongoing output, restoration
+of the latest announcement, native personnel-paper dialog and explicit opener
+focus restoration. The read-only accessibility audit found and corrected archive
+reordering/eviction and inaccessible nested document scrolling. The outer
+chronicle now handles document scrolling. Rechecks pass keyboard scrolling,
+Escape, focus return, 320px, 200% text, increased text spacing, reduced motion and
+axe rules without horizontal overflow or browser errors. Both numerical output
+and the chronicle keep bounded heights as their contents grow.
+
 The First Ordinal Onboarding review additionally exercises native decision
 disclosures, case verdict announcements, synchronized Inspect paperwork state,
 focus-preserving step-through, pause/resume/stop, and replay without new business

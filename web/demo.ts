@@ -1,8 +1,9 @@
 import {parseMandate,autocorrectMandate,addOrdinals,windowCount,chooseMagnitudeWarning,type MandateInteger} from './mandate-input';
 import {trackUsage} from './telemetry';
-import { request, config } from './runtime';
+import { request, config,proclamation } from './runtime';
 import {byId,setText} from './dom';
-import {PersonnelProceedings,type PersonnelPlayback,type PersonnelScenario} from './onboarding';
+import {PersonnelProceedings,type PersonnelPlayback,type PersonnelScenario,type PersonnelDossier} from './onboarding';
+import {ExecutiveChronicle,readProclamation,type Folio} from './chronicle';
 const runForm = byId<HTMLFormElement>('run-form');
 const limitInput = byId<HTMLInputElement>('limit');
 const speedControl = byId<HTMLSelectElement>('display-speed');
@@ -19,7 +20,12 @@ let revealAll = false;
 let wakeReading: (() => void) | undefined;
 let activityMode:'mandate'|'rehearsal'|'replay'|'inspection'='mandate';
 let manualStep=false;
-const personnel=new PersonnelProceedings({rehearse:scenario=>void rehearsePersonnel(scenario),replay:()=>void replayPersonnel(),step:stepPersonnel});
+const chronicle=new ExecutiveChronicle();
+let currentLimit='15';
+let lastPlayback:{kind:'mandate';folios:Folio[];limit:string;personnel?:PersonnelDossier}|{kind:'rehearsal';data:PersonnelDossier}|undefined;
+let inspection:{folios:Folio[];index:number}|undefined;
+const personnel=new PersonnelProceedings({rehearse:scenario=>void rehearsePersonnel(scenario),replay:()=>void replayPersonnel(),step:stepPersonnel,disclosed:(data,count)=>{if(data.purpose==='REHEARSAL')chronicle.rehearsal(data,count);}});
+function discloseLines(start:string,lines:readonly string[]){chronicle.disclose(start,lines);lastPlayback={kind:'mandate',folios:chronicle.records,limit:currentLimit,personnel:personnel.record};personnel.setPlaybackAvailable(true);}
 function readingControls() {
   stopButton.setAttribute('aria-disabled', String(!reading));
   revealButton.textContent = activityMode==='rehearsal'||activityMode==='replay'?'Reveal completed proceedings':streaming ? 'Waive disclosure delays' : 'Reveal complete output';
@@ -77,6 +83,7 @@ stopButton.addEventListener('click',()=>{
  ++mandateSequence;reading=false;streaming=false;paused=false;wakeReading?.();readingControls();
  runButton.removeAttribute('aria-disabled');byId('output').removeAttribute('aria-busy');
  personnel.stopReading();
+ chronicle.note('The ceremonial disclosure was adjourned. Already printed numbers and their minutes remain available; this does not reverse completed business operations.','Proceedings adjourned');
  setText('run-status','Proceedings stopped. Already disclosed lines remain visible.');
 });
 
@@ -121,12 +128,14 @@ async function revealOutput(text: string, sequence: number, serviceMillis: numbe
     while (paused && sequence === mandateSequence) await waitForPace();
     if (sequence !== mandateSequence) return;
     if (revealAll || Number(speedControl.value) === 0) {
+      discloseLines(String(index+1),lines.slice(index));
       output.append(document.createTextNode(`${lines.slice(index).join('\n')}\n`));
       followLatest();
       setText('output-count', `${lines.length} ${lines.length === 1 ? 'line' : 'lines'}`);
       break;
     }
     output.append(document.createTextNode(`${lines[index]}\n`));
+    discloseLines(String(index+1),[lines[index]]);
     followLatest();
     setText('output-count', `${index + 1} of ${lines.length} lines`);
     if (index < lines.length - 1) await waitForPace(Number(speedControl.value));
@@ -134,6 +143,7 @@ async function revealOutput(text: string, sequence: number, serviceMillis: numbe
   if (sequence === mandateSequence) {
     setText('output-count', `${lines.length} ${lines.length === 1 ? 'line' : 'lines'}`);
     reading = false; readingControls();
+    chronicle.finish(lines.length===0);
     setText('run-status', `Mandate complete. The service answered in ${serviceMillis} milliseconds; ${serviceMillis < 1000 ? 'under' : 'above'} the one-second target. All ${lines.length} lines are visible.`);
   }
 }
@@ -145,6 +155,7 @@ async function streamMandate(limit: MandateInteger, sequence: number, started: n
  streaming=true;reading=true;paused=false;revealAll=false;readingControls();
  const output=byId('output');output.textContent='';
  function append(lines:string[]) {
+  discloseLines(String(addOrdinals(disclosed,1)),lines);
   const top=output.scrollTop;const height=parseFloat(getComputedStyle(output).lineHeight)||20;
   const fragment=document.createDocumentFragment();for(const line of lines)fragment.append(document.createTextNode(line+'\n'));output.append(fragment);
   let removed=0;while(output.childNodes.length>1000){output.firstChild!.remove();removed++;}
@@ -156,18 +167,19 @@ async function streamMandate(limit: MandateInteger, sequence: number, started: n
   while(paused&&sequence===mandateSequence)await waitForPace();
   if(sequence!==mandateSequence)return;
   const count=windowCount(next,limit);
-  const answer=await request(`/fizzbuzz/window?start=${next}&count=${count}`);
-  const text=await answer.text();
+  const answer=await proclamation(`/fizzbuzz/window?start=${next}&count=${count}`);
+  const packet=await readProclamation(answer);const text=packet.text;
   const lines=answer.ok?text.trimEnd().split('\n'):[];
   if(answer.ok&&lines.length!==count)throw new Error('The response did not contain the authorized number of lines.');
   if(sequence!==mandateSequence)return;
+  chronicle.receive(packet);
   setText('trace-result',answer.headers.get('X-SlopBuzz-Trace-Id')||'UNAVAILABLE');
   if(first) {
    first=false;const elapsed=Math.round(performance.now()-started);
    setText('latency',`${elapsed} ms · first batch`);setText('cache-result','BYPASS');runButton.removeAttribute('aria-disabled');output.removeAttribute('aria-busy');
    if(answer.ok)trackUsage({event:'slopbuzz_demo_run',outcome:'success',runtime_mode:config.mode,duration_ms:elapsed,cache_outcome:'BYPASS'});
    const record=personnel.responseRecord(answer);
-   if(record){setText('run-status',`Service answered in ${elapsed} milliseconds. Reading completed personnel proceedings…`);await personnel.read(record,personnelClock(sequence));}
+   if(record){personnel.prepare(record);personnel.disclose(7);}
    if(sequence!==mandateSequence)return;
   }
   if(!answer.ok)throw new Error(`Extended proclamation desk returned ${answer.status}.`);
@@ -185,6 +197,7 @@ async function streamMandate(limit: MandateInteger, sequence: number, started: n
  }
  if(sequence===mandateSequence) {
   reading=false;streaming=false;readingControls();
+  chronicle.finish();
   setText('run-status',`Mandate complete. ${disclosed} lines disclosed; the latest ${output.childNodes.length} remain visible. Extended proceedings are transient.`);
  }
 }
@@ -195,7 +208,7 @@ async function runMandate(event: Event) {
   const limit = validateLimit();
   if (limit === null) return;
   const sequence = ++mandateSequence;
-  wakeReading?.(); reading = false; streaming=false;activityMode='mandate';manualStep=false;readingControls();personnel.loading();
+  wakeReading?.(); reading = false; streaming=false;activityMode='mandate';manualStep=false;inspection=undefined;lastPlayback=undefined;currentLimit=String(limit);readingControls();personnel.setPlaybackAvailable(false);personnel.loading();chronicle.begin(currentLimit);
   runButton.setAttribute('aria-disabled', 'true');
   byId('output').setAttribute('aria-busy', 'true');
   setText('run-status', `The committee is considering ${limit} numbers…`);
@@ -208,11 +221,12 @@ async function runMandate(event: Event) {
   const started = performance.now();
   try {
     if(typeof limit==='bigint'||limit>1000) {await streamMandate(limit,sequence,started);return;}
-    const answer = await request(`/fizzbuzz?limit=${limit}`);
+    const answer = await proclamation(`/fizzbuzz?limit=${limit}`);
     const elapsed = performance.now() - started;
-    const text = await answer.text();
+    const packet=await readProclamation(answer);const text=packet.text;
     if(answer.ok)trackUsage({event:'slopbuzz_demo_run',outcome:'success',runtime_mode:config.mode,duration_ms:elapsed,cache_outcome:answer.headers.get('X-SlopBuzz-Cache')||'UNKNOWN'});
     if (sequence !== mandateSequence) return;
+    chronicle.receive(packet);
     setText('latency', `${Math.round(elapsed)} ms`);
     setText('cache-result', answer.headers.get('X-SlopBuzz-Cache') || 'UNKNOWN');
     setText('trace-result', answer.headers.get('X-SlopBuzz-Trace-Id') || 'UNAVAILABLE');
@@ -220,7 +234,8 @@ async function runMandate(event: Event) {
     byId('output').removeAttribute('aria-busy');
     reading=true;paused=false;revealAll=false;readingControls();
     const record=personnel.responseRecord(answer);
-    if(record){setText('run-status',`Service answered in ${Math.round(elapsed)} milliseconds. Reading completed personnel proceedings…`);await personnel.read(record,personnelClock(sequence));}
+    if(record){personnel.prepare(record);personnel.disclose(7);}
+    lastPlayback={kind:'mandate',folios:[],limit:currentLimit,personnel:record};personnel.setPlaybackAvailable(true);
     if(sequence!==mandateSequence)return;
     if (!answer.ok) throw new Error(`Proclamation desk returned ${answer.status}.`);
     await revealOutput(text, sequence, Math.round(elapsed));
@@ -230,6 +245,7 @@ async function runMandate(event: Event) {
       reading=false;streaming=false;readingControls();
       personnel.setBusy(false);
       if(!personnel.record)personnel.clear('The request failed before any personnel record could be inspected.','Evidence unavailable');
+      chronicle.note(`The operation could not complete: ${error.message}. No automatic second mandate was submitted.`,'Exception management');
       setText('run-status', error.name === 'AbortError'
         ? 'The desk did not answer within eight seconds. Please try again.'
         : `The mandate could not be completed: ${error.message}`);
@@ -260,21 +276,41 @@ async function rehearsePersonnel(scenario:PersonnelScenario){
   const response=await request(`/onboarding/rehearsal?scenario=${scenario}`);
   if(!response.ok)throw new Error(`Personnel desk returned ${response.status}.`);
   const data=personnel.rehearsalRecord(await response.json());if(sequence!==mandateSequence)return;
+  lastPlayback={kind:'rehearsal',data};personnel.setPlaybackAvailable(true);
   await personnel.read(data,personnelClock(sequence));if(sequence!==mandateSequence)return;
   setText('run-status',`Personnel rehearsal ${data.status==='APPROVED'?'approved':'rejected'}. No numerical output was requested by this rehearsal.`);
  }catch(error){if(sequence===mandateSequence){personnel.clear('The personnel rehearsal could not be opened.');setText('run-status',`Personnel rehearsal could not be completed: ${error.message}`);}}
  finally{if(sequence===mandateSequence){reading=false;personnel.setBusy(false);readingControls();}}
 }
 async function replayPersonnel(){
- const record=personnel.record;if(!record)return;
- const sequence=beginPersonnelActivity('replay');setText('run-status','Replaying recorded personnel proceedings. Numerical output is retained.');
- await personnel.read(record,personnelClock(sequence),`Replay of ${record.purpose==='REHEARSAL'?'read-only rehearsal':'mandate record'}`);
- if(sequence===mandateSequence){reading=false;readingControls();setText('run-status','Personnel replay complete. The recorded business operation was not executed again.');}
+ const saved=lastPlayback;if(!saved)return;
+ const sequence=beginPersonnelActivity('replay');
+ if(saved.kind==='rehearsal'){
+  setText('run-status','Replaying recorded personnel proceedings. Numerical output is retained.');
+  await personnel.read(saved.data,personnelClock(sequence),'Replay of read-only rehearsal');
+  if(sequence===mandateSequence){reading=false;readingControls();setText('run-status','Personnel replay complete. The recorded business operation was not executed again.');}return;
+ }
+ chronicle.begin(saved.limit,'replay');setText('run-status','Replaying the retained numerical output and its corporate minutes. No mandate was submitted.');
+ const output=byId('output');output.textContent='';
+ for(let i=0;i<saved.folios.length;){
+  while(paused&&sequence===mandateSequence)await waitForPace();if(sequence!==mandateSequence)return;
+  const batch=revealAll||Number(speedControl.value)===0?saved.folios.slice(i):saved.folios.slice(i,i+1);
+  chronicle.discloseFolios(batch);output.append(document.createTextNode(batch.map(f=>f.text+'\n').join('')));i+=batch.length;
+  followLatest();setText('output-count',i+' of '+saved.folios.length+' retained lines');
+  if(i<saved.folios.length&&!revealAll&&Number(speedControl.value)>0)await waitForPace(Number(speedControl.value));
+ }
+ if(sequence===mandateSequence){if(!saved.folios.length)output.textContent='The zero-number mandate produces no lines.';chronicle.finish(saved.limit==='0');reading=false;readingControls();setText('run-status','Execution replay complete. No business operation was executed again.');}
 }
 function stepPersonnel(){
- if(!personnel.record)return;
- if(!manualStep||personnel.progress===7){beginPersonnelActivity('inspection');personnel.startStepThrough();}
- personnel.step();setText('run-status',`Inspecting recorded personnel paperwork: ${personnel.progress} of 7 offices disclosed. Numerical output is retained.`);
+ const saved=lastPlayback;if(!saved)return;
+ if(saved.kind==='rehearsal'){
+  if(!manualStep||personnel.progress===7){beginPersonnelActivity('inspection');personnel.startStepThrough();}
+  personnel.step();setText('run-status','Inspecting recorded personnel paperwork: '+personnel.progress+' of 7 offices disclosed. Numerical output is retained.');return;
+ }
+ if(!manualStep||!inspection||inspection.index>=inspection.folios.length){beginPersonnelActivity('inspection');inspection={folios:saved.folios,index:0};chronicle.begin(saved.limit,'replay');}
+ const folio=inspection.folios[inspection.index++];if(folio)chronicle.discloseFolios([folio]);else chronicle.finish(saved.limit==='0');
+ setText('personnel-step',inspection.index<inspection.folios.length?'Next ordinal':'Step through');
+ setText('run-status','Inspecting completed execution: '+Math.min(inspection.index,inspection.folios.length)+' of '+inspection.folios.length+' retained ordinals. Numerical output is retained.');
 }
 
 runForm.addEventListener('submit',runMandate);

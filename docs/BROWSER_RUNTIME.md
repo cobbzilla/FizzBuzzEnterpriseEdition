@@ -43,6 +43,15 @@ current-release transient worker also works beside an older journal owner. See
 [the onboarding decision](ADR-0024-first-ordinal-onboarding.md) for custody,
 cache-hit behavior and the difference between execution and ceremonial reading.
 
+The Executive Chronicle now narrates the complete observed execution as each
+line becomes visible. Its fixed-height viewport follows recent entries at the
+bottom. HR documents open as case papers; they no longer precede numerical output.
+Opt-in explained endpoints execute the mandate once and return structured Java
+observations. A capability probe selects the established operation for older
+owners, whose missing records receive clearly labeled procedure context. See
+[the chronicle decision](ADR-0025-executive-execution-chronicle.md) for custody,
+finite history, inspection and presentation behavior.
+
 Static pages select immutable release-addressed scripts, runtime configuration,
 API charter and validation evidence. This keeps new markup coherent even while
 an older offline service worker controls the tab. Stable file aliases support

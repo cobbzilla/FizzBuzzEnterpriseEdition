@@ -50,7 +50,7 @@ function trackUsage(detail) {
 // web/runtime-protocol.ts
 var runtimeProtocol = 1;
 function isTransientOperation(path, method = "GET") {
-  return method === "GET" && ["/fizzbuzz/window", "/capacity/forecast/extended", "/procurement/dossier", "/onboarding/rehearsal"].includes(path.split("?")[0]);
+  return method === "GET" && ["/operations/runtime", "/fizzbuzz/window", "/fizzbuzz/window/explained", "/capacity/forecast/extended", "/procurement/dossier", "/onboarding/rehearsal"].includes(path.split("?")[0]);
 }
 
 // web/release-assets.ts
@@ -81,6 +81,7 @@ var BrowserRuntimeClient = class _BrowserRuntimeClient {
   pending = /* @__PURE__ */ new Map();
   compatibleOwners = /* @__PURE__ */ new Map();
   transientClient;
+  narrativeCapabilities = /* @__PURE__ */ new Map();
   close() {
     this.transientClient?.close();
     this.worker.terminate();
@@ -120,6 +121,21 @@ var BrowserRuntimeClient = class _BrowserRuntimeClient {
     }
     return this.dispatch(owner, path, options);
   }
+  async proclamation(path) {
+    const owner = await this.owner();
+    if (owner.error) throw new Error(owner.error);
+    if (owner.revision !== this.configuration.revision) {
+      if (!this.compatibleOwners.has(owner.leader)) this.compatibleOwners.set(owner.leader, this.verifyCompatibility(owner));
+      await this.compatibleOwners.get(owner.leader);
+      if (isTransientOperation(path)) {
+        this.transientClient ||= new _BrowserRuntimeClient(this.configuration, crypto.randomUUID(), true);
+        return this.transientClient.proclamation(path);
+      }
+    }
+    if (!this.narrativeCapabilities.has(owner.leader)) this.narrativeCapabilities.set(owner.leader, this.dispatch(owner, "/operations/runtime").then(async (response) => response.ok ? response.json() : {}));
+    const info = await this.narrativeCapabilities.get(owner.leader);
+    return annotate(await this.dispatch(owner, info.narrative === 1 ? explainedPath(path) : path), info);
+  }
   async verifyCompatibility(owner) {
     const response = await this.dispatch(owner, "/operations/runtime");
     const runtime2 = response.ok ? await response.json() : {};
@@ -150,12 +166,29 @@ var BrowserRuntimeClient = class _BrowserRuntimeClient {
   }
 };
 var ServerRuntimeClient = class {
+  capabilities;
   request(path, options = {}) {
     return fetch(`${(config.apiBaseUrl || "").replace(/\/$/, "")}${path}`, { ...options, cache: "no-store" });
   }
+  async proclamation(path) {
+    this.capabilities ||= this.request("/operations/runtime").then(async (response) => response.ok ? response.json() : {});
+    const info = await this.capabilities;
+    return annotate(await this.request(info.narrative === 1 ? explainedPath(path) : path), info);
+  }
 };
+function explainedPath(path) {
+  const split = path.indexOf("?");
+  return (split < 0 ? path : path.slice(0, split)) + "/explained" + (split < 0 ? "" : path.slice(split));
+}
+function annotate(response, info) {
+  const headers = new Headers(response.headers);
+  const safe = Object.fromEntries(["mode", "engine", "storage", "cache", "revision", "protocol", "narrative"].filter((key) => info[key] !== void 0).map((key) => [key, info[key]]));
+  headers.set("X-SlopBuzz-Execution-Runtime", JSON.stringify(safe).replace(/[^\x20-\x7e]/g, (char) => "\\u" + char.charCodeAt(0).toString(16).padStart(4, "0")));
+  return new Response(response.body, { status: response.status, headers });
+}
 if (!["browser", "server"].includes(config.mode)) throw new Error("Unrecognized runtime mode");
 var runtime = config.mode === "server" ? new ServerRuntimeClient() : new BrowserRuntimeClient();
+var proclamation = (path) => runtime.proclamation(path);
 var request = (path, options) => path === "/openapi.json" && (!options?.method || options.method === "GET") ? fetch(releaseFile("openapi.json")) : runtime.request(path, options);
 if ("serviceWorker" in navigator && config.mode === "browser") {
   void navigator.serviceWorker.register(new URL("sw.js", scope), { scope: new URL(scope).pathname }).catch((error) => console.warn("Offline installation unavailable", error));
@@ -171,9 +204,9 @@ if (config.mode === "browser") document.querySelectorAll("a[href]").forEach((lin
 
 // web/dom.ts
 var byId = (id) => {
-  const node = document.getElementById(id);
-  if (!node) throw new Error(`Missing element ${id}`);
-  return node;
+  const node2 = document.getElementById(id);
+  if (!node2) throw new Error(`Missing element ${id}`);
+  return node2;
 };
 function setText(id, value) {
   byId(id).textContent = String(value);
@@ -187,34 +220,46 @@ function parseDossier(value) {
   return data;
 }
 var PersonnelProceedings = class {
+  constructor(actions) {
+    this.actions = actions;
+    document.querySelectorAll("[data-personnel-scenario]").forEach((button) => button.addEventListener("click", () => {
+      if (button.getAttribute("aria-disabled") !== "true") actions.rehearse(button.dataset.personnelScenario);
+    }));
+    byId("personnel-replay").addEventListener("click", () => {
+      if ((this.dossier || this.playbackAvailable) && !this.busy) actions.replay();
+    });
+    byId("personnel-step").addEventListener("click", () => {
+      if ((this.dossier || this.playbackAvailable) && !this.busy) actions.step();
+    });
+    byId("personnel-documents").addEventListener("click", () => {
+      if (!this.dossier || this.busy) return;
+      byId("personnel-documents").focus();
+      byId("personnel-dialog").showModal();
+    });
+    byId("personnel-dialog-close").addEventListener("click", () => byId("personnel-dialog").close());
+    byId("personnel-dialog").addEventListener("close", () => byId("personnel-documents").focus({ preventScroll: true }));
+    byId("personnel-documents-toggle").addEventListener("click", () => {
+      const open = byId("personnel-documents-toggle").getAttribute("aria-expanded") !== "true";
+      this.rows.forEach((row) => row.details.open = open);
+      this.synchronizeDisclosure();
+    });
+    this.updateControls();
+  }
+  actions;
   dossier;
   visible = 0;
   rows = [];
   source = "";
   busy = false;
+  playbackAvailable = false;
+  setPlaybackAvailable(available) {
+    this.playbackAvailable = available;
+    this.updateControls();
+  }
   synchronizeDisclosure() {
     const open = this.rows.length > 0 && this.rows.every((row) => row.details.open);
-    byId("personnel-documents").setAttribute("aria-expanded", String(open));
-    setText("personnel-documents", open ? "Fold paperwork" : "Inspect paperwork");
-  }
-  constructor(actions) {
-    document.querySelectorAll("[data-personnel-scenario]").forEach((button) => button.addEventListener("click", () => {
-      if (button.getAttribute("aria-disabled") !== "true") actions.rehearse(button.dataset.personnelScenario);
-    }));
-    byId("personnel-replay").addEventListener("click", () => {
-      if (this.dossier && !this.busy) actions.replay();
-    });
-    byId("personnel-step").addEventListener("click", () => {
-      if (this.dossier && !this.busy) actions.step();
-    });
-    byId("personnel-documents").addEventListener("click", () => {
-      if (!this.dossier || this.busy) return;
-      const open = byId("personnel-documents").getAttribute("aria-expanded") !== "true";
-      this.rows.forEach((row) => row.details.open = open);
-      byId("personnel-documents").setAttribute("aria-expanded", String(open));
-      byId("personnel-documents").textContent = open ? "Fold paperwork" : "Inspect paperwork";
-    });
-    this.updateControls();
+    byId("personnel-documents-toggle").setAttribute("aria-expanded", String(open));
+    setText("personnel-documents-toggle", open ? "Fold all documents" : "Expand all documents");
   }
   get record() {
     return this.dossier;
@@ -227,7 +272,8 @@ var PersonnelProceedings = class {
     this.updateControls();
   }
   updateControls() {
-    for (const id of ["personnel-replay", "personnel-step", "personnel-documents"]) byId(id).setAttribute("aria-disabled", String(!this.dossier || this.busy));
+    for (const id of ["personnel-replay", "personnel-step"]) byId(id).setAttribute("aria-disabled", String(!this.dossier && !this.playbackAvailable || this.busy));
+    byId("personnel-documents").setAttribute("aria-disabled", String(!this.dossier || this.busy));
     document.querySelectorAll("[data-personnel-scenario]").forEach((button) => button.setAttribute("aria-disabled", String(this.busy)));
   }
   loading() {
@@ -245,8 +291,7 @@ var PersonnelProceedings = class {
     setText("personnel-verdict", verdict);
     setText("personnel-status", "No new personnel decisions are available to read.");
     byId("personnel-step").textContent = "Step through";
-    byId("personnel-documents").setAttribute("aria-expanded", "false");
-    byId("personnel-documents").textContent = "Inspect paperwork";
+    this.synchronizeDisclosure();
     this.updateControls();
   }
   responseRecord(response) {
@@ -257,7 +302,7 @@ var PersonnelProceedings = class {
     }
     const raw = response.headers.get("X-SlopBuzz-Onboarding-Trace");
     if (!raw) {
-      this.clear("No personnel record accompanied this response. Submit a rehearsal to inspect the current personnel procedure.", "Evidence unavailable");
+      this.clear("The output supplies the observed result. This administration did not forward individual personnel certificates; the chronicle explains the procedure.", "Earlier administration");
       return;
     }
     try {
@@ -281,8 +326,6 @@ var PersonnelProceedings = class {
     setText("personnel-origin", `${this.source} \xB7 Applicant ${data.candidate} \xB7 Position: Initial ordinal \xB7 Case ${data.caseId}`);
     setText("personnel-verdict", "Reading completed record");
     setText("personnel-status", "Reading completed proceedings \xB7 0 of 7 offices disclosed.");
-    byId("personnel-documents").setAttribute("aria-expanded", "false");
-    setText("personnel-documents", "Inspect paperwork");
     setText("personnel-step", "Step through");
     this.rows = data.steps.map((step, index) => {
       const item = document.createElement("li");
@@ -320,6 +363,7 @@ var PersonnelProceedings = class {
     byId("personnel-steps").replaceChildren(...this.rows.map((row) => row.item));
     byId("personnel-steps").hidden = false;
     this.setBusy(false);
+    this.synchronizeDisclosure();
   }
   disclose(count) {
     if (!this.dossier) return;
@@ -335,6 +379,7 @@ var PersonnelProceedings = class {
     setText("personnel-status", this.visible === 7 ? this.dossier.status === "APPROVED" ? "All seven offices disclosed. Commencement authorized at 1." : `Personnel application rejected by ${this.dossier.steps.find((step) => step.state === "REJECTED").office}. Subsequent offices were not reached.` : `Reading completed proceedings \xB7 ${this.visible} of 7 offices disclosed${this.visible ? `. ${last.office}: ${last.state === "APPROVED" ? "approved" : last.state === "REJECTED" ? "rejected" : "not reached"}` : ""}.`);
     setText("personnel-verdict", this.visible === 7 ? this.dossier.status === "APPROVED" ? "Approved to start at 1" : "Application rejected" : "Reading completed record");
     setText("personnel-step", this.visible > 0 && this.visible < 7 ? "Next office" : "Step through");
+    this.actions.disclosed?.(this.dossier, this.visible);
   }
   async read(data, clock, source) {
     this.prepare(data, source);
@@ -358,6 +403,306 @@ var PersonnelProceedings = class {
   }
 };
 
+// web/chronicle.ts
+async function readProclamation(response) {
+  const runtime2 = JSON.parse(response.headers.get("X-SlopBuzz-Execution-Runtime") || "{}");
+  const packet = { text: "", events: [], omitted: 0, cache: response.headers.get("X-SlopBuzz-Cache") || "UNKNOWN", runtime: runtime2, recorded: false };
+  if (!response.headers.get("Content-Type")?.includes("application/json")) {
+    const raw = response.headers.get("X-SlopBuzz-Onboarding-Trace");
+    if (raw && raw.length <= 8192) try {
+      const personnel2 = parseDossier(JSON.parse(raw));
+      if (personnel2.purpose === "MANDATE") packet.events = personnel2.steps.map((step) => ({ ordinal: "1", kind: "HR_" + step.state, office: step.office, finding: step.finding, document: step.document }));
+    } catch {
+    }
+    return { ...packet, text: await response.text() };
+  }
+  const data = await response.json();
+  if (data?.schema !== "slopbuzz-execution/v1" || typeof data.text !== "string" || !Array.isArray(data.trace?.events) || data.trace.events.length > 5e4 || !Number.isSafeInteger(data.trace.omitted) || data.trace.omitted < 0 || data.trace.events.some((e) => !e || e.ordinal !== null && (typeof e.ordinal !== "string" || !/^\d+$/.test(e.ordinal)) || ["kind", "office", "finding"].some((k) => typeof e[k] !== "string") || e.document !== null && typeof e.document !== "string")) throw new Error("The execution dossier could not be read. No second mandate was submitted.");
+  return { ...packet, text: data.text, events: data.trace.events, omitted: data.trace.omitted, recorded: true };
+}
+function node(tag, text, className) {
+  const result = document.createElement(tag);
+  if (text !== void 0) result.textContent = text;
+  if (className) result.className = className;
+  return result;
+}
+function title(folio) {
+  if (folio.ordinal === "1") return "One has reported for duty";
+  if (folio.text === "FizzBuzz") return "A cross-departmental branding initiative has concluded";
+  if (folio.text === "Fizz") return "The Fizz delegation has been admitted";
+  if (folio.text === "Buzz") return "The Buzz delegation has been admitted";
+  return `Ordinal ${folio.ordinal} has retained its numerical identity`;
+}
+function paragraphs(folio) {
+  const events = folio.events, parts = [];
+  if (folio.ordinal === "1") parts.push("One has reported for duty. The first position is now visibly occupied by exactly one. Zero remains outside the staffing plan; Two must wait for an authorized succession.");
+  if (folio.cache === "HIT") return [...parts, `Institutional Memory reissued the approved answer \u201C${folio.text}\u201D. No fresh recruitment, classification, glyph requisition or numerical audit transaction was conducted for this cache hit. The company considers remembering yesterday\u2019s work a substantial innovation.`, `The observed output is ${folio.text}. Its current disclosure is new; the underlying business result was already held in the output cache. Historical per-line certificates are not manufactured for this replay.`];
+  const hr = events.filter((e) => e.kind.startsWith("HR_"));
+  if (hr.length) parts.push("Personnel has supplied the actual case file. " + hr.map((e) => `${e.office}: ${e.finding}`).join(" ") + " The seven offices have thereby achieved the starting value a less serious organization might have written as a literal.");
+  if (!folio.recorded) return [...parts, `The observed proclamation is \u201C${folio.text}\u201D. The earlier administration returned the answer without forwarding a detailed execution dossier. ${hr.length ? "Its supplied personnel approvals are recorded above; the other departments are explained as procedure." : "We can explain the company\u2019s procedure while keeping those explanations distinct from recorded decisions."}`, `Under the current procedure, One completes recruitment and induction before a new sequence starts. Each ordinal is classified for Fizz, Buzz or its own decimal identity, and word output obtains its approved characters through procurement. The procedure\u2019s contracts are described here; individual historical approvals are not reconstructed.`, `A retained mandate uses staged output, an independent notary, the audit repository and its message queue. Extended-magnitude windows use exact arithmetic and an independent lexical witness without retained audit transactions. The selected runtime\u2019s old receipt does not establish which newer offices attended this particular case.`];
+  const assembly = events.find((e) => e.kind === "ASSEMBLY");
+  if (assembly) parts.push(assembly.finding + " The visitor then consulted each certified strategy before allowing its printer to speak. Three contexts were deemed the minimum acceptable representation.");
+  const classification = events.find((e) => e.kind === "CLASSIFICATION" || e.kind === "EXTENDED_CLASSIFICATION");
+  if (classification) parts.push(classification.finding + " The resulting permissions determine which output departments may participate; enthusiasm alone grants no publishing rights.");
+  const procurement = events.filter((e) => ["REQUISITION", "DELIVERY", "GLYPH_ACCEPTED", "GLYPH_ASSEMBLED"].includes(e.kind));
+  if (procurement.length) {
+    const received = procurement.filter((e) => e.kind === "GLYPH_ACCEPTED");
+    const zs = received.filter((e) => e.finding.includes("character z,"));
+    parts.push(`Glyph Procurement received ${received.length} individually inspected character allocations${zs.length ? `, including ${zs.length} separately certified z\u2019s` : ""}. ` + procurement.filter((e) => e.kind !== "GLYPH_ACCEPTED").map((e) => e.finding).join(" ") + " Matching letters do not confer permission to borrow one another\u2019s paperwork. Every position\u2019s receiving decision is available in the department documents.");
+  }
+  const numeral = events.find((e) => e.kind === "NUMERAL");
+  if (numeral) parts.push(numeral.finding + " This succession of representations protects the company against the reputational risk of a direct answer.");
+  const begin = events.find((e) => e.kind === "TRANSACTION_BEGIN"), fragments = events.filter((e) => e.kind === "FRAGMENT");
+  if (begin) parts.push(begin.finding + ` ${fragments.length} fragments entered custody: ` + fragments.map((e) => JSON.stringify(e.document)).join(", ") + ". Even the line ending is accounted for; the public receives a complete proclamation.");
+  for (const kind of ["NOTARY", "PUBLICATION", "AUDIT_APPEND", "QUEUE_ENQUEUED", "TRANSACTION_COMMIT", "TRANSACTION_CLEANUP", "SUCCESSION", "EXTENDED_NOTARY", "EXTENDED_SUCCESSION"]) {
+    const selected = events.filter((e) => e.kind === kind);
+    if (selected.length) parts.push(selected.map((e) => `${e.office}: ${e.finding}`).join(" "));
+  }
+  if (!parts.length) parts.push(`The recorded output \u201C${folio.text}\u201D has entered the transcript. The accompanying department documents contain the observed decisions for ordinal ${folio.ordinal}.`);
+  return parts;
+}
+var ExecutiveChronicle = class {
+  packet;
+  groups = /* @__PURE__ */ new Map();
+  snapshots = /* @__PURE__ */ new Map();
+  options = /* @__PURE__ */ new Map();
+  rendered = /* @__PURE__ */ new Map();
+  serial = 0;
+  collapsed = 0;
+  inspected;
+  pending = false;
+  pendingNotes = [];
+  body = byId("chronicle-scroll");
+  entries = byId("chronicle-entries");
+  follow = byId("follow-chronicle");
+  selector = byId("chronicle-ordinal");
+  constructor() {
+    this.follow.addEventListener("change", () => {
+      if (this.follow.checked) this.latest();
+    });
+    this.selector.addEventListener("change", () => {
+      if (this.selector.value === "latest") {
+        this.latest();
+        return;
+      }
+      const folio = this.snapshots.get(this.selector.value);
+      if (!folio) return;
+      this.follow.checked = false;
+      this.inspected?.remove();
+      this.inspected = this.render(folio);
+      this.inspected.prepend(node("p", "Archive inspection \xB7 original completed record", "chronicle-source"));
+      this.inspected.classList.add("chronicle-inspection");
+      this.body.prepend(this.inspected);
+      this.body.scrollTop = 0;
+      setText("chronicle-current", `Inspecting recorded ordinal ${folio.ordinal}. New output can continue without moving this reading position.`);
+    });
+    const layout = () => {
+      this.followBottom();
+      const panel = byId("mandate-output");
+      panel.dataset.viewportFit = String(innerHeight > 600 && panel.getBoundingClientRect().height <= innerHeight - 24);
+    };
+    let frame = 0;
+    const schedule = () => {
+      if (!frame) frame = requestAnimationFrame(() => {
+        frame = 0;
+        layout();
+      });
+    };
+    const resize = new ResizeObserver(schedule);
+    resize.observe(this.body);
+    resize.observe(this.entries);
+    resize.observe(byId("mandate-output"));
+    resize.observe(byId("mandate-output").querySelector(".output-dock"));
+    window.addEventListener("resize", schedule);
+  }
+  get records() {
+    return [...this.snapshots.values()];
+  }
+  begin(limit, mode = "mandate") {
+    this.packet = void 0;
+    this.groups.clear();
+    this.snapshots.clear();
+    this.options.clear();
+    this.rendered.clear();
+    this.collapsed = 0;
+    this.serial++;
+    this.pending = false;
+    this.pendingNotes = [];
+    this.follow.checked = true;
+    this.inspected?.remove();
+    this.inspected = void 0;
+    this.entries.replaceChildren();
+    this.selector.replaceChildren(node("option", "Latest proceedings"));
+    this.selector.options[0].value = "latest";
+    this.note(mode === "replay" ? "The clerk is rereading completed proceedings. No business operation will be executed again." : `Reception accepted an upper limit of ${limit}. The input passed decimal validation. The company is obtaining a result and will explain each number as it becomes visible.`, "Mandate reception");
+    setText("chronicle-current", mode === "replay" ? "Replaying completed corporate minutes." : "The committees have received a numerical mandate.");
+  }
+  receive(packet) {
+    this.packet = packet;
+    this.groups.clear();
+    for (const event of packet.events) {
+      if (event.ordinal !== null) {
+        const group = this.groups.get(event.ordinal) || [];
+        group.push(event);
+        this.groups.set(event.ordinal, group);
+      }
+    }
+    const global = packet.events.filter((e) => e.ordinal === null && !["COMPLETE", "FAILED"].includes(e.kind));
+    if (global.length) this.note(global.map((e) => `${e.office}: ${e.finding}`).join(" "), "Recorded reception and operating path");
+    const { engine, storage, cache } = packet.runtime;
+    if (engine) this.note(`The appointed implementation is ${String(engine)}. Its declared repository is ${String(storage || "unspecified")} and its cache adapter is ${String(cache || "unspecified")}. ${packet.cache === "HIT" ? "Institutional memory answered without convening a fresh production workforce." : "The following account distinguishes actual Java decisions from explanatory context."}`, "Execution arrangements");
+    if (packet.omitted) this.note(`${packet.omitted} observation entries exceeded the finite dossier allowance. Numerical output remains independently available.`, "Observation allowance");
+  }
+  disclose(start, lines) {
+    let ordinal = BigInt(start);
+    const folios = lines.map((text) => {
+      const value = ordinal.toString();
+      ordinal++;
+      return { ordinal: value, text, events: this.groups.get(value) || [], cache: this.packet?.cache || "UNKNOWN", recorded: this.packet?.recorded || false, runtime: this.packet?.runtime || {} };
+    });
+    this.discloseFolios(folios);
+    return folios;
+  }
+  discloseFolios(folios) {
+    for (const folio of folios) {
+      this.snapshots.set(folio.ordinal, folio);
+      if (!this.options.has(folio.ordinal)) {
+        const option = node("option", `Ordinal ${folio.ordinal}`);
+        option.value = folio.ordinal;
+        this.options.set(folio.ordinal, option);
+        this.selector.append(option);
+      }
+      while (this.snapshots.size > 1e3) {
+        const oldest = this.snapshots.keys().next().value;
+        this.snapshots.delete(oldest);
+        if (this.selector.value !== oldest) {
+          this.options.get(oldest)?.remove();
+          this.options.delete(oldest);
+        }
+      }
+    }
+    if (!this.follow.checked) {
+      this.pending = true;
+      return;
+    }
+    for (const folio of folios.slice(-24)) {
+      const old = this.rendered.get(folio.ordinal);
+      if (old) {
+        old.remove();
+        this.rendered.delete(folio.ordinal);
+      }
+      const article = this.render(folio);
+      this.rendered.set(folio.ordinal, article);
+      this.entries.append(article);
+    }
+    this.trim();
+    const last = folios.at(-1);
+    if (last && !this.inspected) {
+      this.selector.value = "latest";
+      setText("chronicle-current", `Ordinal ${last.ordinal}: ${title(last)}. Official output: ${last.text}.`);
+    }
+    this.followBottom();
+  }
+  render(folio) {
+    const article = node("article", void 0, "chronicle-folio");
+    article.dataset.ordinal = folio.ordinal;
+    article.append(node("p", `Ordinal ${folio.ordinal} \xB7 ${folio.cache === "HIT" ? "Institutional memory" : folio.recorded ? "Recorded Java proceedings" : folio.events.length ? "Recorded personnel \xB7 procedure explained" : "Observed output \xB7 procedure explained"}`, "chronicle-source"), node("h4", title(folio)));
+    for (const paragraph of paragraphs(folio)) article.append(node("p", paragraph));
+    if (folio.events.length) {
+      const details = node("details");
+      details.append(node("summary", `Inspect ${folio.events.length} department records for ordinal ${folio.ordinal}`));
+      const list = node("ol");
+      for (const event of folio.events) {
+        const item = node("li");
+        item.append(node("strong", event.office), node("p", event.finding));
+        if (event.document) item.append(node("pre", event.document, "chronicle-document"));
+        list.append(item);
+      }
+      details.append(list);
+      article.append(details);
+    }
+    return article;
+  }
+  trim() {
+    for (const [key, article] of this.rendered) {
+      if (this.rendered.size <= 24) break;
+      if (article.contains(document.activeElement)) continue;
+      article.remove();
+      this.rendered.delete(key);
+      this.collapsed++;
+    }
+    let notice = this.entries.querySelector(".chronicle-archive-note");
+    if (this.collapsed) {
+      if (!notice) {
+        notice = node("p", void 0, "chronicle-archive-note");
+        this.entries.prepend(notice);
+      }
+      notice.textContent = `Earlier narration has been condensed for a finite browser. Inspect any of the latest ${this.snapshots.size} disclosed ordinals using the selector.`;
+    }
+  }
+  note(text, heading = "Corporate minutes") {
+    if (!this.follow.checked) {
+      this.pending = true;
+      this.pendingNotes.push({ text, heading });
+      if (this.pendingNotes.length > 16) this.pendingNotes.shift();
+      return;
+    }
+    const article = node("article", void 0, "chronicle-note");
+    article.append(node("h4", heading), node("p", text));
+    this.entries.append(article);
+    const notes = this.entries.querySelectorAll(".chronicle-note");
+    if (notes.length > 16) notes[0].remove();
+    this.followBottom();
+  }
+  rehearsal(data, count) {
+    const key = `rehearsal-${data.caseId}`;
+    let article = this.entries.querySelector(`[data-rehearsal="${CSS.escape(key)}"]`);
+    if (!article) {
+      article = node("article", void 0, "chronicle-note");
+      article.dataset.rehearsal = key;
+      this.entries.append(article);
+    }
+    article.replaceChildren(node("h4", `Management intervention: applicant ${data.candidate}`), node("p", "This is a read-only rehearsal using the actual personnel offices. Existing numerical output is retained; the rehearsal creates no numerical audit entries."));
+    for (const decision of data.steps.slice(0, count)) article.append(node("p", `${decision.office} \u2014 ${decision.state === "APPROVED" ? "Approved" : decision.state === "REJECTED" ? "Rejected" : "Not reached"}. ${decision.finding} ${decision.document}`));
+    setText("chronicle-current", count === 7 ? data.status === "APPROVED" ? "Personnel rehearsal approved: One may start work." : `Personnel rehearsal rejected by ${data.steps.find((e) => e.state === "REJECTED").office}.` : `Reading completed personnel rehearsal: ${count} of 7 offices.`);
+    const rehearsals = this.entries.querySelectorAll("[data-rehearsal]");
+    if (rehearsals.length > 8) rehearsals[0].remove();
+    this.followBottom();
+  }
+  finish(zero = false) {
+    if (zero && !this.inspected) setText("chronicle-current", "Zero-number mandate complete. No numerical output was required.");
+    if (zero) this.note(this.packet?.cache === "HIT" ? "Institutional memory reissued the zero-work mandate. No new recruitment, numerical line or audit entry was required. The company remembered how to achieve nothing." : this.packet?.recorded ? "The company hired One for a zero-work mandate. The loop boundary then declined every numerical iteration. No line was printed and no numerical audit entry was needed. An entire organization has successfully coordinated the absence of deliverables." : "The observed zero-number mandate published no lines. Under the current procedure One is initialized before the loop boundary declines all work; this older response supplied no individual personnel certificates.", "Zero-number mandate");
+    const denied = [...this.groups.values()].filter((events) => !this.snapshots.has(events[0]?.ordinal || "")).flat().filter((e) => e.kind === "CONTINUATION");
+    this.note((denied.length ? denied.map((e) => e.finding).join(" ") + " " : "") + "The requested disclosures are complete. Replay and inspection read these retained minutes without submitting another mandate.", "Proceedings concluded");
+  }
+  followBottom() {
+    if (this.follow.checked) this.body.scrollTop = this.body.scrollHeight;
+  }
+  latest() {
+    this.inspected?.remove();
+    this.inspected = void 0;
+    this.follow.checked = true;
+    this.selector.value = "latest";
+    for (const [ordinal, option] of this.options) if (!this.snapshots.has(ordinal)) {
+      option.remove();
+      this.options.delete(ordinal);
+    }
+    if (this.pending) {
+      this.pending = false;
+      const notes = this.pendingNotes;
+      this.pendingNotes = [];
+      this.entries.replaceChildren();
+      this.rendered.clear();
+      this.note("Following has resumed at the latest retained minutes. No business operation was submitted again.", "Reading position restored");
+      this.discloseFolios(this.records.slice(-24));
+      for (const entry of notes) this.note(entry.text, entry.heading);
+    }
+    const last = this.records.at(-1);
+    if (last) setText("chronicle-current", `Ordinal ${last.ordinal}: ${title(last)}. Official output: ${last.text}.`);
+    this.followBottom();
+  }
+};
+
 // web/demo.ts
 var runForm = byId("run-form");
 var limitInput = byId("limit");
@@ -375,7 +720,18 @@ var revealAll = false;
 var wakeReading;
 var activityMode = "mandate";
 var manualStep = false;
-var personnel = new PersonnelProceedings({ rehearse: (scenario) => void rehearsePersonnel(scenario), replay: () => void replayPersonnel(), step: stepPersonnel });
+var chronicle = new ExecutiveChronicle();
+var currentLimit = "15";
+var lastPlayback;
+var inspection;
+var personnel = new PersonnelProceedings({ rehearse: (scenario) => void rehearsePersonnel(scenario), replay: () => void replayPersonnel(), step: stepPersonnel, disclosed: (data, count) => {
+  if (data.purpose === "REHEARSAL") chronicle.rehearsal(data, count);
+} });
+function discloseLines(start, lines) {
+  chronicle.disclose(start, lines);
+  lastPlayback = { kind: "mandate", folios: chronicle.records, limit: currentLimit, personnel: personnel.record };
+  personnel.setPlaybackAvailable(true);
+}
 function readingControls() {
   stopButton.setAttribute("aria-disabled", String(!reading));
   revealButton.textContent = activityMode === "rehearsal" || activityMode === "replay" ? "Reveal completed proceedings" : streaming ? "Waive disclosure delays" : "Reveal complete output";
@@ -464,6 +820,7 @@ stopButton.addEventListener("click", () => {
   runButton.removeAttribute("aria-disabled");
   byId("output").removeAttribute("aria-busy");
   personnel.stopReading();
+  chronicle.note("The ceremonial disclosure was adjourned. Already printed numbers and their minutes remain available; this does not reverse completed business operations.", "Proceedings adjourned");
   setText("run-status", "Proceedings stopped. Already disclosed lines remain visible.");
 });
 function showForecast(forecast) {
@@ -504,6 +861,7 @@ async function revealOutput(text, sequence, serviceMillis) {
     while (paused && sequence === mandateSequence) await waitForPace();
     if (sequence !== mandateSequence) return;
     if (revealAll || Number(speedControl.value) === 0) {
+      discloseLines(String(index + 1), lines.slice(index));
       output.append(document.createTextNode(`${lines.slice(index).join("\n")}
 `));
       followLatest();
@@ -512,6 +870,7 @@ async function revealOutput(text, sequence, serviceMillis) {
     }
     output.append(document.createTextNode(`${lines[index]}
 `));
+    discloseLines(String(index + 1), [lines[index]]);
     followLatest();
     setText("output-count", `${index + 1} of ${lines.length} lines`);
     if (index < lines.length - 1) await waitForPace(Number(speedControl.value));
@@ -520,6 +879,7 @@ async function revealOutput(text, sequence, serviceMillis) {
     setText("output-count", `${lines.length} ${lines.length === 1 ? "line" : "lines"}`);
     reading = false;
     readingControls();
+    chronicle.finish(lines.length === 0);
     setText("run-status", `Mandate complete. The service answered in ${serviceMillis} milliseconds; ${serviceMillis < 1e3 ? "under" : "above"} the one-second target. All ${lines.length} lines are visible.`);
   }
 }
@@ -535,6 +895,7 @@ async function streamMandate(limit, sequence, started) {
   const output = byId("output");
   output.textContent = "";
   function append(lines) {
+    discloseLines(String(addOrdinals(disclosed, 1)), lines);
     const top = output.scrollTop;
     const height = parseFloat(getComputedStyle(output).lineHeight) || 20;
     const fragment = document.createDocumentFragment();
@@ -554,11 +915,13 @@ async function streamMandate(limit, sequence, started) {
     while (paused && sequence === mandateSequence) await waitForPace();
     if (sequence !== mandateSequence) return;
     const count = windowCount(next, limit);
-    const answer = await request(`/fizzbuzz/window?start=${next}&count=${count}`);
-    const text = await answer.text();
+    const answer = await proclamation(`/fizzbuzz/window?start=${next}&count=${count}`);
+    const packet = await readProclamation(answer);
+    const text = packet.text;
     const lines = answer.ok ? text.trimEnd().split("\n") : [];
     if (answer.ok && lines.length !== count) throw new Error("The response did not contain the authorized number of lines.");
     if (sequence !== mandateSequence) return;
+    chronicle.receive(packet);
     setText("trace-result", answer.headers.get("X-SlopBuzz-Trace-Id") || "UNAVAILABLE");
     if (first) {
       first = false;
@@ -570,8 +933,8 @@ async function streamMandate(limit, sequence, started) {
       if (answer.ok) trackUsage({ event: "slopbuzz_demo_run", outcome: "success", runtime_mode: config.mode, duration_ms: elapsed, cache_outcome: "BYPASS" });
       const record = personnel.responseRecord(answer);
       if (record) {
-        setText("run-status", `Service answered in ${elapsed} milliseconds. Reading completed personnel proceedings\u2026`);
-        await personnel.read(record, personnelClock(sequence));
+        personnel.prepare(record);
+        personnel.disclose(7);
       }
       if (sequence !== mandateSequence) return;
     }
@@ -596,6 +959,7 @@ async function streamMandate(limit, sequence, started) {
     reading = false;
     streaming = false;
     readingControls();
+    chronicle.finish();
     setText("run-status", `Mandate complete. ${disclosed} lines disclosed; the latest ${output.childNodes.length} remain visible. Extended proceedings are transient.`);
   }
 }
@@ -610,8 +974,13 @@ async function runMandate(event) {
   streaming = false;
   activityMode = "mandate";
   manualStep = false;
+  inspection = void 0;
+  lastPlayback = void 0;
+  currentLimit = String(limit);
   readingControls();
+  personnel.setPlaybackAvailable(false);
   personnel.loading();
+  chronicle.begin(currentLimit);
   runButton.setAttribute("aria-disabled", "true");
   byId("output").setAttribute("aria-busy", "true");
   setText("run-status", `The committee is considering ${limit} numbers\u2026`);
@@ -627,11 +996,13 @@ async function runMandate(event) {
       await streamMandate(limit, sequence, started);
       return;
     }
-    const answer = await request(`/fizzbuzz?limit=${limit}`);
+    const answer = await proclamation(`/fizzbuzz?limit=${limit}`);
     const elapsed = performance.now() - started;
-    const text = await answer.text();
+    const packet = await readProclamation(answer);
+    const text = packet.text;
     if (answer.ok) trackUsage({ event: "slopbuzz_demo_run", outcome: "success", runtime_mode: config.mode, duration_ms: elapsed, cache_outcome: answer.headers.get("X-SlopBuzz-Cache") || "UNKNOWN" });
     if (sequence !== mandateSequence) return;
+    chronicle.receive(packet);
     setText("latency", `${Math.round(elapsed)} ms`);
     setText("cache-result", answer.headers.get("X-SlopBuzz-Cache") || "UNKNOWN");
     setText("trace-result", answer.headers.get("X-SlopBuzz-Trace-Id") || "UNAVAILABLE");
@@ -643,9 +1014,11 @@ async function runMandate(event) {
     readingControls();
     const record = personnel.responseRecord(answer);
     if (record) {
-      setText("run-status", `Service answered in ${Math.round(elapsed)} milliseconds. Reading completed personnel proceedings\u2026`);
-      await personnel.read(record, personnelClock(sequence));
+      personnel.prepare(record);
+      personnel.disclose(7);
     }
+    lastPlayback = { kind: "mandate", folios: [], limit: currentLimit, personnel: record };
+    personnel.setPlaybackAvailable(true);
     if (sequence !== mandateSequence) return;
     if (!answer.ok) throw new Error(`Proclamation desk returned ${answer.status}.`);
     await revealOutput(text, sequence, Math.round(elapsed));
@@ -657,6 +1030,7 @@ async function runMandate(event) {
       readingControls();
       personnel.setBusy(false);
       if (!personnel.record) personnel.clear("The request failed before any personnel record could be inspected.", "Evidence unavailable");
+      chronicle.note(`The operation could not complete: ${error.message}. No automatic second mandate was submitted.`, "Exception management");
       setText("run-status", error.name === "AbortError" ? "The desk did not answer within eight seconds. Please try again." : `The mandate could not be completed: ${error.message}`);
     }
   } finally {
@@ -700,6 +1074,8 @@ async function rehearsePersonnel(scenario) {
     if (!response.ok) throw new Error(`Personnel desk returned ${response.status}.`);
     const data = personnel.rehearsalRecord(await response.json());
     if (sequence !== mandateSequence) return;
+    lastPlayback = { kind: "rehearsal", data };
+    personnel.setPlaybackAvailable(true);
     await personnel.read(data, personnelClock(sequence));
     if (sequence !== mandateSequence) return;
     setText("run-status", `Personnel rehearsal ${data.status === "APPROVED" ? "approved" : "rejected"}. No numerical output was requested by this rehearsal.`);
@@ -717,25 +1093,64 @@ async function rehearsePersonnel(scenario) {
   }
 }
 async function replayPersonnel() {
-  const record = personnel.record;
-  if (!record) return;
+  const saved = lastPlayback;
+  if (!saved) return;
   const sequence = beginPersonnelActivity("replay");
-  setText("run-status", "Replaying recorded personnel proceedings. Numerical output is retained.");
-  await personnel.read(record, personnelClock(sequence), `Replay of ${record.purpose === "REHEARSAL" ? "read-only rehearsal" : "mandate record"}`);
+  if (saved.kind === "rehearsal") {
+    setText("run-status", "Replaying recorded personnel proceedings. Numerical output is retained.");
+    await personnel.read(saved.data, personnelClock(sequence), "Replay of read-only rehearsal");
+    if (sequence === mandateSequence) {
+      reading = false;
+      readingControls();
+      setText("run-status", "Personnel replay complete. The recorded business operation was not executed again.");
+    }
+    return;
+  }
+  chronicle.begin(saved.limit, "replay");
+  setText("run-status", "Replaying the retained numerical output and its corporate minutes. No mandate was submitted.");
+  const output = byId("output");
+  output.textContent = "";
+  for (let i = 0; i < saved.folios.length; ) {
+    while (paused && sequence === mandateSequence) await waitForPace();
+    if (sequence !== mandateSequence) return;
+    const batch = revealAll || Number(speedControl.value) === 0 ? saved.folios.slice(i) : saved.folios.slice(i, i + 1);
+    chronicle.discloseFolios(batch);
+    output.append(document.createTextNode(batch.map((f) => f.text + "\n").join("")));
+    i += batch.length;
+    followLatest();
+    setText("output-count", i + " of " + saved.folios.length + " retained lines");
+    if (i < saved.folios.length && !revealAll && Number(speedControl.value) > 0) await waitForPace(Number(speedControl.value));
+  }
   if (sequence === mandateSequence) {
+    if (!saved.folios.length) output.textContent = "The zero-number mandate produces no lines.";
+    chronicle.finish(saved.limit === "0");
     reading = false;
     readingControls();
-    setText("run-status", "Personnel replay complete. The recorded business operation was not executed again.");
+    setText("run-status", "Execution replay complete. No business operation was executed again.");
   }
 }
 function stepPersonnel() {
-  if (!personnel.record) return;
-  if (!manualStep || personnel.progress === 7) {
-    beginPersonnelActivity("inspection");
-    personnel.startStepThrough();
+  const saved = lastPlayback;
+  if (!saved) return;
+  if (saved.kind === "rehearsal") {
+    if (!manualStep || personnel.progress === 7) {
+      beginPersonnelActivity("inspection");
+      personnel.startStepThrough();
+    }
+    personnel.step();
+    setText("run-status", "Inspecting recorded personnel paperwork: " + personnel.progress + " of 7 offices disclosed. Numerical output is retained.");
+    return;
   }
-  personnel.step();
-  setText("run-status", `Inspecting recorded personnel paperwork: ${personnel.progress} of 7 offices disclosed. Numerical output is retained.`);
+  if (!manualStep || !inspection || inspection.index >= inspection.folios.length) {
+    beginPersonnelActivity("inspection");
+    inspection = { folios: saved.folios, index: 0 };
+    chronicle.begin(saved.limit, "replay");
+  }
+  const folio = inspection.folios[inspection.index++];
+  if (folio) chronicle.discloseFolios([folio]);
+  else chronicle.finish(saved.limit === "0");
+  setText("personnel-step", inspection.index < inspection.folios.length ? "Next ordinal" : "Step through");
+  setText("run-status", "Inspecting completed execution: " + Math.min(inspection.index, inspection.folios.length) + " of " + inspection.folios.length + " retained ordinals. Numerical output is retained.");
 }
 runForm.addEventListener("submit", runMandate);
 document.querySelectorAll("[data-limit]").forEach((button) => {

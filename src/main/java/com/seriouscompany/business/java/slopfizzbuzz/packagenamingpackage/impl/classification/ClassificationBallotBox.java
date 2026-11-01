@@ -1,4 +1,5 @@
 package com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.classification;
+import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.proceedings.ExecutionCustody;
 
 import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.interfaces.strategies.IsEvenlyDivisibleStrategy;
 
@@ -21,6 +22,7 @@ public final class ClassificationBallotBox {
 		if (fizz != (number % 3 == 0) || buzz != (number % 5 == 0)) {
 			throw new IllegalStateException("The independent arithmetic witness vetoed the ballot.");
 		}
+        if(ExecutionCustody.observing())ExecutionCustody.record("CLASSIFICATION","Three-seat Classification Council","Fizz permission: "+fizz+"; Buzz permission: "+buzz+"; numeral permission: "+numeral+". The independent arithmetic witness verified all votes.");
 		return new ClassificationBallot(number, fizz, buzz, numeral);
 	}
 }

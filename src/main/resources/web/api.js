@@ -8,7 +8,7 @@ function trackUsage(detail) {
 // web/runtime-protocol.ts
 var runtimeProtocol = 1;
 function isTransientOperation(path, method = "GET") {
-  return method === "GET" && ["/fizzbuzz/window", "/capacity/forecast/extended", "/procurement/dossier", "/onboarding/rehearsal"].includes(path.split("?")[0]);
+  return method === "GET" && ["/operations/runtime", "/fizzbuzz/window", "/fizzbuzz/window/explained", "/capacity/forecast/extended", "/procurement/dossier", "/onboarding/rehearsal"].includes(path.split("?")[0]);
 }
 
 // web/release-assets.ts
@@ -39,6 +39,7 @@ var BrowserRuntimeClient = class _BrowserRuntimeClient {
   pending = /* @__PURE__ */ new Map();
   compatibleOwners = /* @__PURE__ */ new Map();
   transientClient;
+  narrativeCapabilities = /* @__PURE__ */ new Map();
   close() {
     this.transientClient?.close();
     this.worker.terminate();
@@ -78,6 +79,21 @@ var BrowserRuntimeClient = class _BrowserRuntimeClient {
     }
     return this.dispatch(owner, path, options);
   }
+  async proclamation(path) {
+    const owner = await this.owner();
+    if (owner.error) throw new Error(owner.error);
+    if (owner.revision !== this.configuration.revision) {
+      if (!this.compatibleOwners.has(owner.leader)) this.compatibleOwners.set(owner.leader, this.verifyCompatibility(owner));
+      await this.compatibleOwners.get(owner.leader);
+      if (isTransientOperation(path)) {
+        this.transientClient ||= new _BrowserRuntimeClient(this.configuration, crypto.randomUUID(), true);
+        return this.transientClient.proclamation(path);
+      }
+    }
+    if (!this.narrativeCapabilities.has(owner.leader)) this.narrativeCapabilities.set(owner.leader, this.dispatch(owner, "/operations/runtime").then(async (response) => response.ok ? response.json() : {}));
+    const info = await this.narrativeCapabilities.get(owner.leader);
+    return annotate(await this.dispatch(owner, info.narrative === 1 ? explainedPath(path) : path), info);
+  }
   async verifyCompatibility(owner) {
     const response = await this.dispatch(owner, "/operations/runtime");
     const runtime2 = response.ok ? await response.json() : {};
@@ -108,10 +124,26 @@ var BrowserRuntimeClient = class _BrowserRuntimeClient {
   }
 };
 var ServerRuntimeClient = class {
+  capabilities;
   request(path, options = {}) {
     return fetch(`${(config.apiBaseUrl || "").replace(/\/$/, "")}${path}`, { ...options, cache: "no-store" });
   }
+  async proclamation(path) {
+    this.capabilities ||= this.request("/operations/runtime").then(async (response) => response.ok ? response.json() : {});
+    const info = await this.capabilities;
+    return annotate(await this.request(info.narrative === 1 ? explainedPath(path) : path), info);
+  }
 };
+function explainedPath(path) {
+  const split = path.indexOf("?");
+  return (split < 0 ? path : path.slice(0, split)) + "/explained" + (split < 0 ? "" : path.slice(split));
+}
+function annotate(response, info) {
+  const headers = new Headers(response.headers);
+  const safe = Object.fromEntries(["mode", "engine", "storage", "cache", "revision", "protocol", "narrative"].filter((key) => info[key] !== void 0).map((key) => [key, info[key]]));
+  headers.set("X-SlopBuzz-Execution-Runtime", JSON.stringify(safe).replace(/[^\x20-\x7e]/g, (char) => "\\u" + char.charCodeAt(0).toString(16).padStart(4, "0")));
+  return new Response(response.body, { status: response.status, headers });
+}
 if (!["browser", "server"].includes(config.mode)) throw new Error("Unrecognized runtime mode");
 var runtime = config.mode === "server" ? new ServerRuntimeClient() : new BrowserRuntimeClient();
 var request = (path, options) => path === "/openapi.json" && (!options?.method || options.method === "GET") ? fetch(releaseFile("openapi.json")) : runtime.request(path, options);
@@ -191,7 +223,7 @@ function tryDesk(spec, path, method, operation) {
   const panel = element("div", "api-try");
   panel.append(element("h4", "", "Live request desk"));
   const hasLimit = (operation.parameters || []).some((parameter) => parameter.$ref?.endsWith("/Limit") || parameter.name === "limit" && parameter.schema?.type !== "string");
-  const magnitudeFields = path === "/fizzbuzz/window" ? [{ name: "start", label: "Starting ordinal", value: "9007199254740990", minimum: 1 }, { name: "count", label: "Window lines", value: "15", minimum: 1, maximum: 100 }] : path === "/capacity/forecast/extended" ? [{ name: "limit", label: "Upper limit", value: "9007199254740993", minimum: 0 }] : [];
+  const magnitudeFields = path.startsWith("/fizzbuzz/window") ? [{ name: "start", label: "Starting ordinal", value: "9007199254740990", minimum: 1 }, { name: "count", label: "Window lines", value: "15", minimum: 1, maximum: 100 }] : path === "/capacity/forecast/extended" ? [{ name: "limit", label: "Upper limit", value: "9007199254740993", minimum: 0 }] : [];
   const requestedPath = hasLimit ? `${path}?limit=15` : magnitudeFields.length ? `${path}?${new URLSearchParams(magnitudeFields.map((field) => [field.name, field.value]))}` : path;
   const command = method === "post" ? `curl -i -X POST '${config.mode === "server" ? new URL(config.apiBaseUrl || "/", location.origin).href.replace(/\/$/, "") : "http://localhost:18089"}${path}'` : `curl -i '${config.mode === "server" ? new URL(config.apiBaseUrl || "/", location.origin).href.replace(/\/$/, "") : "http://localhost:18089"}${requestedPath}'`;
   panel.append(element("p", "", "Server deployment example (cURL cannot call an in-browser runtime):"));

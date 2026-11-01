@@ -1,4 +1,5 @@
 package com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.capacity;
+import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.proceedings.ExecutionCustody;
 
 import java.math.BigInteger;
 import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.procurement.GlyphProcurementDirectorate;
@@ -18,10 +19,12 @@ public final class ExtendedMagnitudeBureau {
  }
  public String window(BigInteger start,int count) {
   if(start==null||start.signum()<1||count<1||count>WINDOW_SIZE) throw new IllegalArgumentException("A window needs a positive ordinal and 1 through 100 lines.");
+  ExecutionCustody.record("EXTENDED_WINDOW","Extended Magnitude Bureau","This finite BigInteger window is transient: no retained output cache, numerical audit transaction or message-queue entry is created.");
   StringBuilder output=new StringBuilder();
   BigInteger number=start.equals(BigInteger.ONE)?BigInteger.valueOf(origin.getLoopInitializationPoint()):start;
   if(!number.equals(start))throw new IllegalStateException("Initial ordinal clearance changed the requested window origin.");
   for(int i=0;i<count;i++) {
+   if(ExecutionCustody.observing()){ExecutionCustody.ordinal(number.toString());ExecutionCustody.record("EXTENDED_CLASSIFICATION","BigInteger Classification Office","Divisibility by 3: "+(number.mod(THREE).signum()==0)+"; divisibility by 5: "+(number.mod(FIVE).signum()==0)+". This path uses exact BigInteger arithmetic.");}
    String text="";
    if(number.mod(THREE).signum()==0) text+=procurement.procure("Fizz").text();
    if(number.mod(FIVE).signum()==0) text+=procurement.procure("Buzz").text();
@@ -29,7 +32,10 @@ public final class ExtendedMagnitudeBureau {
    // Independent lexical witness does not source its answer from procurement.
    String expected=number.remainder(FIFTEEN).signum()==0?"FizzBuzz":number.remainder(THREE).signum()==0?"Fizz":number.remainder(FIVE).signum()==0?"Buzz":number.toString();
    if(!expected.equals(text)) throw new IllegalStateException("Extended-magnitude lexical inspection rejected the proclamation.");
-   output.append(text).append('\n');number=number.add(BigInteger.ONE);
+   if(ExecutionCustody.observing())ExecutionCustody.record("EXTENDED_NOTARY","Independent Lexical Witness","Independently verified the exact text and appended LF to this finite response window.",text+"\n");
+   output.append(text).append('\n');
+   if(ExecutionCustody.observing())ExecutionCustody.record("EXTENDED_SUCCESSION","BigInteger Advancement Office","Advanced exactly from "+number+" to "+number.add(BigInteger.ONE)+". This path does not issue bounded-integer succession certificates.");
+   number=number.add(BigInteger.ONE);
   }
   return output.toString();
  }

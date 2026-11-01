@@ -81,10 +81,10 @@ h1 em { color: #ee9a75; font-weight: 500; }
 .mandate-panel, .output-panel, .forecast-panel { padding: clamp(22px, 3vw, 38px); }
 .demo-section .section-heading h1 { margin: 0; font-size: clamp(2.2rem, 4vw, 3.9rem); line-height: 1.12; letter-spacing: -.04em; }
 .mandate-panel h2, .output-panel h2 { font-size: 1.5rem; line-height: 1.2; margin-bottom: 24px; }
-.output-panel { display: flex; flex-direction: column; }
-.output-panel .output-heading { flex-wrap: wrap; align-items: center; margin-bottom: 18px; padding-bottom: 18px; border-bottom: 1px solid var(--line); }
+.output-panel { display: block; align-self: start; }
+.output-panel .output-heading { flex-wrap: wrap; align-items: center; margin-bottom: 10px; padding-bottom: 12px; border-bottom: 1px solid var(--line); }
 .output-panel .output-heading h2 { margin: 0; }
-.output-panel .terminal { flex: 1; min-height: 28rem; height: 0; max-height: none; padding: clamp(18px, 2vw, 26px); background: var(--ink); color: var(--white); border-color: var(--ink); font-size: .95rem; line-height: 1.7; }
+.output-panel .terminal { min-height: 0; height: clamp(6rem, 16dvh, 11rem); max-height: none; padding: clamp(18px, 2vw, 26px); background: var(--ink); color: var(--white); border-color: var(--ink); font-size: .95rem; line-height: 1.7; }
 .demo-section .run-meta { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .demo-section .forecast-panel { margin: 0; }
 .demo-section .forecast-panel h2 { font-size: clamp(1.7rem, 2.4vw, 2.3rem); line-height: 1.12; letter-spacing: -.035em; }
@@ -317,3 +317,35 @@ body { overflow-wrap: anywhere; }
 .personnel-record-note { font-size: .72rem; color: var(--ink-soft); }
 @media(max-width:640px){.personnel-case {padding:14px;} .personnel-steps summary {grid-template-columns:18px minmax(0,1fr) minmax(0,70px);gap:6px;}}
 @media(forced-colors:active){.personnel-case,.personnel-rehearsals {border-color:CanvasText;} .personnel-steps [data-verdict] .personnel-badge {color:CanvasText;}}
+
+/* The answer remains a compact desk; the minutes scroll within their own premises. */
+.output-panel #run-status { margin-bottom: 12px; font-size: .8rem; }
+.chronicle { margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--line); }
+.chronicle h3 { font-family: Georgia, 'Times New Roman', serif; font-size: 1.08rem; line-height: 1.3; margin: 0 0 10px; }
+.chronicle-current { font-size: .8rem; font-weight: 750; margin: 0 0 12px; }
+.chronicle-tools { display: flex; gap: 12px; align-items: start; flex-wrap: wrap; font-size: .73rem; }
+.chronicle-tools .check-label { display: flex; align-items: flex-start; gap: 8px; margin: 0; }
+.chronicle-tools label { min-width: 0; flex: 1 1 160px; margin: 0; font-size: .73rem; line-height: 1.4; }
+.chronicle-tools select { display: block; width: 100%; margin-top: 6px; font-size: .75rem; padding: 8px; }
+.chronicle-caption { font-size: .71rem; margin: 12px 0; color: var(--ink-soft); }
+.chronicle-scroll { position: relative; height: clamp(8rem, 22dvh, 16rem); min-height: 0; overflow: auto; overscroll-behavior: contain; scrollbar-gutter: stable; background: var(--paper); border: 1px solid var(--line); padding: 18px; }
+.chronicle-folio, .chronicle-note { padding-block: 16px; border-bottom: 1px solid var(--line); }
+.chronicle-folio:first-child, .chronicle-note:first-child { padding-top: 0; }
+.chronicle-folio h4, .chronicle-note h4 { font-family: Georgia, 'Times New Roman', serif; font-size: 1.05rem; line-height: 1.35; margin: 0 0 12px; }
+.chronicle-folio p, .chronicle-note p { font-size: .82rem; line-height: 1.65; margin: 0 0 12px; }
+.chronicle-folio .chronicle-source { text-transform: uppercase; font-size: .64rem; letter-spacing: .06em; font-weight: 800; color: var(--accent-deep); }
+.chronicle-folio summary { cursor: pointer; min-height: 44px; padding-block: 10px; font-size: .78rem; font-weight: 800; }
+.chronicle-folio ol { padding-left: 20px; }
+.chronicle-folio li { padding-block: 8px; font-size: .78rem; }
+.chronicle-document { overflow: visible; white-space: pre-wrap; overflow-wrap: anywhere; padding: 10px; background: var(--white); border: 1px solid var(--line); font-size: .7rem; }
+.chronicle-archive-note { font-size: .72rem; margin-bottom: 16px; }
+#personnel-dialog { width: min(46rem, calc(100% - 32px)); max-height: calc(100dvh - 32px); overflow: auto; margin: auto; padding: 22px; background: var(--white); color: var(--ink); border: 2px solid var(--ink); }
+#personnel-dialog::backdrop { background: rgb(12 31 38 / 70%); }
+.case-dialog-tools { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 18px; }
+#personnel-dialog .personnel-case { margin-bottom: 0; }
+#personnel-dialog h2 { font-family: Georgia, 'Times New Roman', serif; font-size: 1.4rem; }
+@media(max-width:640px){.chronicle-scroll {padding:14px;} .chronicle-tools label {flex-basis:100%;}}
+@media(forced-colors:active){.chronicle-scroll,.chronicle-folio,.chronicle-note,#personnel-dialog {border-color:CanvasText;} .chronicle-folio .chronicle-source {color:CanvasText;}}
+.output-panel[data-viewport-fit=true] { position: sticky; top: 12px; }
+.chronicle-tools input[type=checkbox] { width: 18px; height: 18px; flex-shrink: 0; accent-color: var(--ink); }
+.chronicle-inspection { border: 2px solid var(--accent-deep); padding: 14px; margin-bottom: 18px; }

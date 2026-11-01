@@ -32,6 +32,7 @@ import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.o
 
 /** Transport-independent proceedings shared by HTTP and browser execution. */
 public final class EnterpriseDispatcher {
+ private static void event(String kind,String office,String finding){com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.proceedings.ExecutionCustody.record(kind,office,finding);}
  private static final Logger LOGGER=Logger.getLogger(EnterpriseDispatcher.class.getName());
  private final java.util.Map<String,DeskHandler> desks=new java.util.HashMap<String,DeskHandler>();
  private interface DeskHandler {void handle(EnterpriseExchange exchange) throws IOException;}
@@ -39,7 +40,7 @@ public final class EnterpriseDispatcher {
  this(service,transactions,journal,cache,release,new SystemRuntimeClock());
  }
  public EnterpriseDispatcher(SlopFizzBuzz service, OutputTransactionCoordinator transactions, OutputAuditJournal journal, OutputCache cache, ReleaseCustodyReport release, final RuntimeClock clock) {
- this(service,transactions,journal,cache,release,clock,new com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.runtime.RuntimeIdentity(){public String toJson(){return "{\"mode\":\"server\",\"engine\":\"JVM\",\"storage\":\"configured JVM audit repository\",\"cache\":\"Redis adapter\",\"protocol\":1}";}});
+ this(service,transactions,journal,cache,release,clock,new com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.runtime.RuntimeIdentity(){public String toJson(){return "{\"mode\":\"server\",\"engine\":\"JVM\",\"storage\":\"configured JVM audit repository\",\"cache\":\"Redis adapter\",\"protocol\":1,\"narrative\":1}";}});
  }
  public EnterpriseDispatcher(SlopFizzBuzz service, OutputTransactionCoordinator transactions, OutputAuditJournal journal, OutputCache cache, ReleaseCustodyReport release, final RuntimeClock clock, final com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.runtime.RuntimeIdentity identity) {
   final com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.capacity.ExtendedMagnitudeBureau magnitude=new com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.capacity.ExtendedMagnitudeBureau();
@@ -86,6 +87,8 @@ public final class EnterpriseDispatcher {
             respond(exchange,200,identity.toJson(),"application/json; charset=UTF-8");
         }});
 		register("/fizzbuzz", new FizzBuzzHandler(service, transactions, scorecard, cache, clock));
+  registerExplained("/fizzbuzz/explained","/fizzbuzz");
+  registerExplained("/fizzbuzz/window/explained","/fizzbuzz/window");
 		register("/operations/scorecard", new ScorecardHandler(scorecard));
 		register("/operations/release", new ReleaseHandler(release));
 		register("/operations/recovery", new RecoveryHandler(new RecoveryRehearsalBureau(journal,clock)));
@@ -101,6 +104,21 @@ public final class EnterpriseDispatcher {
 
  }
  private void register(String path,DeskHandler handler){desks.put(path,handler);}
+ private void registerExplained(String path,final String original){register(path,new DeskHandler(){public void handle(EnterpriseExchange exchange)throws IOException{
+  if(!"GET".equals(exchange.getRequestMethod())){exchange.headers.set("Allow","GET");respond(exchange,405,"Method not authorized\n");return;}
+  com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.proceedings.BoundedExecutionLedger ledger=new com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.proceedings.BoundedExecutionLedger();
+  EnterpriseExchange result;
+  try(com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.proceedings.ExecutionCustody.Capture scope=com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.proceedings.ExecutionCustody.capture(ledger)){
+   event("REQUEST","Mandate Reception","A narrated request was accepted for "+original+". The business will execute once.");
+   result=dispatch("GET",original+(exchange.getRequestURI().getRawQuery()==null?"":"?"+exchange.getRequestURI().getRawQuery()));
+   com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.proceedings.ExecutionCustody.ordinal(null);
+   event(result.status==200?"COMPLETE":"FAILED","Mandate Reception","The operation concluded with HTTP "+result.status+".");
+  }
+  exchange.headers.putAll(result.headers);exchange.headers.set("Cache-Control","no-store");
+  String personnel=result.headers.get("X-SlopBuzz-Onboarding-Trace");
+  String body="{\"schema\":\"slopbuzz-execution/v1\",\"text\":"+com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.proceedings.ExecutionEvent.quote(result.text())+",\"personnel\":"+(personnel==null?"null":personnel)+",\"trace\":"+ledger.toJson()+"}";
+  respond(exchange,result.status,body,"application/json; charset=UTF-8");
+ }});}
  private static void attachPersonnel(EnterpriseExchange exchange,PersonnelEvidenceCustody.Capture evidence,String fallback){
   PersonnelDossier dossier=evidence.getDossier();
   exchange.headers.set("X-SlopBuzz-Onboarding-State",dossier==null?fallback:dossier.getStatus());
@@ -261,6 +279,7 @@ public final class EnterpriseDispatcher {
 				}
 				exchange.getResponseHeaders().set("Cache-Control", "no-store");
 				final CacheLookup lookup = this.cache.lookup(limit.intValue());
+    event("CACHE_"+lookup.getState().name(),"Institutional Memory","The output repository returned "+lookup.getState().name()+" for upper limit "+limit+".");
 				exchange.getResponseHeaders().set("X-SlopBuzz-Cache", lookup.getState().name());
 				if (lookup.getState() == CacheLookup.State.HIT) {
 					exchange.headers.set("X-SlopBuzz-Onboarding-State","CACHE_REUSED");

@@ -1,4 +1,5 @@
 package com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.procurement;
+import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.proceedings.ExecutionCustody;
 
 import java.util.List;
 import org.springframework.stereotype.Service;
@@ -14,6 +15,7 @@ public final class CertifiedGlyphAssembler implements GlyphAssembler {
    certificate.authorize(requisition,i+1);
    text.append(certificate.delivery.character);
   }
+  if(ExecutionCustody.observing())ExecutionCustody.record("GLYPH_ASSEMBLED","Certified Glyph Assembler","Verified every position-specific certificate and assembled "+text.toString()+" in the approved order.");
   return new ProcurementDossier(requisition,text.toString());
  }
 }

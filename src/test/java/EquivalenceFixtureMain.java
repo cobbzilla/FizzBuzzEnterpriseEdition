@@ -45,6 +45,8 @@ public final class EquivalenceFixtureMain {
   for(String path:desks)requests.add(new String[]{"GET",path});
   for(String path:desks)for(String method:new String[]{"PUT","DELETE","PATCH","HEAD","OPTIONS"})requests.add(new String[]{method,path});
   requests.add(new String[]{"POST","/fizzbuzz"});requests.add(new String[]{"GET","/operations/scorecard"});
+  for(String target:new String[]{"/fizzbuzz/explained?limit=0","/fizzbuzz/explained?limit=1","/fizzbuzz/explained?limit=3","/fizzbuzz/explained?limit=5","/fizzbuzz/explained?limit=15","/fizzbuzz/explained?limit=15","/fizzbuzz/explained?limit=19","/fizzbuzz/explained?limit=1001","/fizzbuzz/explained?limit=-1","/fizzbuzz/explained?limit=1&x=2","/fizzbuzz/window/explained?start=1&count=15","/fizzbuzz/window/explained?start=9007199254740993&count=3","/fizzbuzz/window/explained?start=0&count=1"})requests.add(new String[]{"GET",target});
+  requests.add(new String[]{"POST","/fizzbuzz/explained"});requests.add(new String[]{"HEAD","/fizzbuzz/window/explained"});
   TraceCustody.bind("0123456789abcdef0123456789abcdef");
   try{for(String[] request:requests){EnterpriseExchange r=dispatcher.dispatch(request[0],request[1]);StringBuilder headers=new StringBuilder();for(Map.Entry<String,String> h:r.headers.entrySet())headers.append(h.getKey()).append(':').append(h.getValue()).append('\n');emit(out,request[0],request[1],r.status,r.text(),headers.toString());}}finally{TraceCustody.clear();}
   clock.advance(15000);emit(out,"ADVANCE","15000",200,"","");

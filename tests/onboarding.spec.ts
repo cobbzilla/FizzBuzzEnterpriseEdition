@@ -20,9 +20,9 @@ test('real mandate evidence names all seven authorities and a cache hit hires no
  expect(await page.locator('.personnel-badge').allTextContents()).toEqual(Array(7).fill('Approved'));
  const trace=(await page.locator('#trace-result').textContent())!;
  await expect(page.locator('#personnel-origin')).toContainText(`Case HR-${trace}`);
- await page.click('#personnel-documents');await expect(page.locator('#personnel-steps details[open]')).toHaveCount(7);
+ await page.click('#personnel-documents');await page.click('#personnel-documents-toggle');await expect(page.locator('#personnel-steps details[open]')).toHaveCount(7);
  await expect(page.locator('#personnel-steps')).toContainText('INITIAL-ORDINAL-HANDBOOK/v1');
- await expect(page.locator('#output')).toContainText('FizzBuzz');const before=await evidence(page);expect(before.journalEntries).toBe(15);
+ await page.keyboard.press('Escape');await expect(page.locator('#output')).toContainText('FizzBuzz');const before=await evidence(page);expect(before.journalEntries).toBe(15);
  await page.click('#run-button');await expect(page.locator('#run-status')).toContainText('Mandate complete');
  await expect(page.locator('#personnel-origin')).toHaveText('Institutional memory answered. No new HR proceedings.');
  await expect(page.locator('#personnel-steps')).toBeHidden();expect((await evidence(page)).journalEntries).toBe(15);
@@ -56,8 +56,8 @@ test('paced reading pauses, stops, replays and steps through existing evidence w
  const before=await evidence(page);await page.click('#personnel-replay');await page.click('#reveal-all');
  await expect(page.locator('#run-status')).toContainText('Personnel replay complete');expect((await evidence(page)).journalEntries).toBe(before.journalEntries);
  await expect(page.locator('#personnel-origin')).toContainText('Replay of read-only rehearsal');
- await page.click('#personnel-documents');await expect(page.locator('#personnel-documents')).toHaveAttribute('aria-expanded','true');
- await page.locator('#personnel-steps summary').first().click();await expect(page.locator('#personnel-documents')).toHaveAttribute('aria-expanded','false');
+ await page.click('#personnel-documents');await page.click('#personnel-documents-toggle');await expect(page.locator('#personnel-documents-toggle')).toHaveAttribute('aria-expanded','true');
+ await page.locator('#personnel-steps summary').first().click();await expect(page.locator('#personnel-documents-toggle')).toHaveAttribute('aria-expanded','false');
 });
 test('a newer mandate interrupts old playback and owns the displayed record',async({page})=>{
  await page.goto('/demo/');await page.click('[data-personnel-scenario="zero"]');await expect(page.locator('#personnel-status')).toContainText('Reading completed proceedings');
@@ -73,7 +73,7 @@ test('the API charter exposes actual rejection records through an operable scena
 test('expanded personnel records remain accessible and reflow with enlarged text',async({page},info)=>{
  test.skip(info.project.metadata.engine==='js','Shared DOM audited once per browser; both Java engines exercise all decisions.');
  await page.goto('/demo/');await page.selectOption('#display-speed','0');await page.click('[data-personnel-scenario="zero"]');await expect(page.locator('#personnel-verdict')).toHaveText('Application rejected');
- await page.click('#personnel-documents');
+ await page.click('#personnel-documents');await page.click('#personnel-documents-toggle');
  const audit=await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21a','wcag21aa','wcag22aa','best-practice']).analyze();expect(audit.violations.map(v=>({id:v.id,nodes:v.nodes.map(n=>n.target)}))).toEqual([]);
  await page.setViewportSize({width:320,height:800});await page.evaluate(()=>{for(const rule of ['html {font-size:200% !important}','* {line-height:1.5 !important; letter-spacing:.12em !important; word-spacing:.16em !important}'])document.styleSheets[0].insertRule(rule);});
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);

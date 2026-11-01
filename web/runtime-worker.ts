@@ -21,7 +21,7 @@ self.onmessage = async (event: MessageEvent<{config: RuntimeConfig; scope: strin
     let failure: string | undefined;
     try {
       const storageHost = hostCapabilities(transient ? undefined : await openRepository(namespace));
-      self.enterpriseHost = async (operation,value) => operation === 'runtime' ? JSON.stringify({mode:'browser',engine,fallbackReason,storage:transient?'Memory':'IndexedDB',cache:transient?'Disabled':'IndexedDB',revision:config.revision,protocol:runtimeProtocol}) : storageHost(operation,value);
+      self.enterpriseHost = async (operation,value) => operation === 'runtime' ? JSON.stringify({mode:'browser',engine,fallbackReason,storage:transient?'Memory':'IndexedDB',cache:transient?'Disabled':'IndexedDB',revision:config.revision,protocol:runtimeProtocol,narrative:1}) : storageHost(operation,value);
       if (config.engine === 'js') throw new Error('Fallback requested for validation');
       importScripts(new URL(`${config.assets}wasm/classes.wasm-runtime.js`, scope).href);
       java = (await self.TeaVM.wasmGC.load(new URL(`${config.assets}wasm/enterprise.wasm`, scope).href)).exports;
