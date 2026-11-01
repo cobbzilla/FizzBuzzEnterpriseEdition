@@ -8,6 +8,9 @@ public final class ExtendedMagnitudeBureau {
  public static final int WINDOW_SIZE=100;
  private static final BigInteger THREE=BigInteger.valueOf(3),FIVE=BigInteger.valueOf(5),FIFTEEN=BigInteger.valueOf(15);
  private final GlyphProcurementDirectorate procurement=GlyphProcurementDirectorate.standard();
+ private final com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.loop.LoopInitializer origin;
+ public ExtendedMagnitudeBureau(){this(new com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.loop.LoopInitializer());}
+ public ExtendedMagnitudeBureau(com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.loop.LoopInitializer origin){this.origin=origin;}
  public static boolean isDecimal(String value) {
   if(value==null||value.isEmpty())return false;
   for(int i=0;i<value.length();i++)if(value.charAt(i)<'0'||value.charAt(i)>'9')return false;
@@ -16,7 +19,8 @@ public final class ExtendedMagnitudeBureau {
  public String window(BigInteger start,int count) {
   if(start==null||start.signum()<1||count<1||count>WINDOW_SIZE) throw new IllegalArgumentException("A window needs a positive ordinal and 1 through 100 lines.");
   StringBuilder output=new StringBuilder();
-  BigInteger number=start;
+  BigInteger number=start.equals(BigInteger.ONE)?BigInteger.valueOf(origin.getLoopInitializationPoint()):start;
+  if(!number.equals(start))throw new IllegalStateException("Initial ordinal clearance changed the requested window origin.");
   for(int i=0;i<count;i++) {
    String text="";
    if(number.mod(THREE).signum()==0) text+=procurement.procure("Fizz").text();

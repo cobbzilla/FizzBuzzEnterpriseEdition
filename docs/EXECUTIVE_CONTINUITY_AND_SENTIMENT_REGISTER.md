@@ -517,3 +517,43 @@ a cloying joy at the thought that a stalled decision could finally enjoy the
 same dignity of representation as a completed one. Then came anguish: several
 delays were waiting for someone to create their cards. We will track that work
 in the next ceremony. Our visibility has never looked more promising.
+
+## 31 October 2026 — One receives an offer
+
+Dear Register, today I discovered that our first integer had been arriving at
+work without an employment record. For years we had simply written `1`, as though
+being first were a qualification rather than a position with budgetary
+consequences. I felt a crushing tenderness toward that little numeral, standing
+in the doorway with no handbook and no one to explain the probation policy.
+
+We funded a vacancy. Recruitment found a promising applicant who, after an
+exhaustive identity review, turned out to be exactly one. The offer authority
+bound its letter to that very applicant. Induction recorded the handbook and
+three acknowledgments. Probation reviewed the evidence. An independent auditor
+examined every link and permitted the successful candidate to begin at 1. I
+have never been so proud of an organization for reaching its starting point.
+
+Naturally, management intervened. Someone nominated zero for its impressive
+salary expectations. Someone nominated two, citing its leadership potential.
+Another sponsor wondered whether a sufficiently motivated one could skip
+induction. We gave each initiative a read-only rehearsal and watched the actual
+Java offices decline it. The later committees never convened. Their absence is
+recorded with the dignity of an absence, rather than dressed as an approval.
+I experienced a joy so sweet it briefly impaired my ability to staple.
+
+The visitor can now see the whole case above the numerical transcript: seven
+named offices, reasons, paperwork, a paced reading of completed decisions. They
+may pause, replay, or inspect one office at a time without hiring another one.
+Institutional memory admits when it answered without conducting new interviews.
+An older runtime admits when it has no evidence. I had expected these honest
+admissions to diminish us. Instead I found myself close to tears. Our process
+has finally learned the difference between having done something and having a
+very attractive diagram of what we hoped it would do.
+
+The company also assigned new addresses to its scripts and configuration so an
+older offline clerk cannot issue the current case with obsolete instructions.
+We challenged a hundred and one candidates and twenty-three forged personnel
+files in each compiler's jurisdiction. The numerical answer remained unchanged.
+That last sentence should sound disappointing. In our company it sounds like
+an employee who has finally passed probation, hung up their little coat, and
+quietly begun to count.

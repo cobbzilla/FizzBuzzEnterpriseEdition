@@ -26,6 +26,8 @@ for(let limit=0;limit<=1000;limit++) {
 const publicFixtures=fixtures.slice(0,1001).filter((_,i)=>[0,1,3,5,15,100,1000].includes(i)).map(f=>({...f,path:f.path.replace('/__validation/output','/fizzbuzz')}));
 await writeFile('validation/fixtures.json',JSON.stringify(publicFixtures));
 await cp('validation/fixtures.json','dist/validation/fixtures.json');
+await mkdir(`dist/${config.assets}validation`,{recursive:true});
+await cp('validation/fixtures.json',`dist/${config.assets}validation/fixtures.json`);
 const port=18191;
 const server=spawn(process.execPath,['scripts/serve.ts'],{env:{...process.env,PORT:String(port)},stdio:'pipe'});
 await new Promise<void>((resolve,reject)=>{server.stdout.once('data',()=>resolve());server.once('error',reject);});
@@ -69,4 +71,5 @@ try {
  const report={...release,status:'PASSED',generatedAt:new Date().toISOString(),execution:process.env.CI ? 'CI' : 'local automated run',suite:'JVM Spring oracle + shared dispatcher vs actual browser Java',oracleLimits:1001,fixtures:fixtures.length,results,artifactSha256:createHash('sha256').update(await readFile(`dist/${config.assets}wasm/enterprise.wasm`)).digest('hex')};
  await writeFile('validation/report.json',JSON.stringify(report,null,2));
  await cp('validation/report.json','dist/validation/report.json');
+  await cp('validation/report.json',`dist/${config.assets}validation/report.json`);
 } finally {server.kill();await rm(temp,{recursive:true,force:true});}

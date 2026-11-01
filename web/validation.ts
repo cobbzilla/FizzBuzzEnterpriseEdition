@@ -1,6 +1,7 @@
 import {BrowserRuntimeClient,config,scope} from './runtime';
+import {releaseFile} from './release-assets';
 try {
-  const report = await fetch(new URL('validation/report.json',scope)).then(r=>{if(!r.ok) throw new Error(`HTTP ${r.status}`);return r.json();});
+  const report = await fetch(releaseFile('validation/report.json')).then(r=>{if(!r.ok) throw new Error(`HTTP ${r.status}`);return r.json();});
   document.querySelector('#release-report')!.textContent = JSON.stringify(report,null,2);
   document.querySelector('#report-status')!.textContent = 'Release record loaded.';
 } catch(error) {document.querySelector('#report-status')!.textContent = `Release record unavailable: ${error}`;}
@@ -18,7 +19,7 @@ button.onclick = async () => {
   verdict.textContent = 'Comparing the local Java runtime against bundled JVM fixtures…';
   try {
     client = new BrowserRuntimeClient({...config,mode:'browser'},id);
-    const fixtures: {path:string;body:string;status:number}[] = await fetch(new URL('validation/fixtures.json',scope)).then(r=>{if(!r.ok)throw new Error('JVM fixtures have not been generated for this release');return r.json();});
+    const fixtures: {path:string;body:string;status:number}[] = await fetch(releaseFile('validation/fixtures.json')).then(r=>{if(!r.ok)throw new Error('JVM fixtures have not been generated for this release');return r.json();});
     let passed=0;
     for(const expected of fixtures) {
       const response = await client.request(expected.path);

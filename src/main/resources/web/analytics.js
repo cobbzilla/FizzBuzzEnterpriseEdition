@@ -9484,8 +9484,14 @@ var Ah = (function() {
   })(), e5;
 })();
 
+// web/release-assets.ts
+var scope = new URL("../", import.meta.url).href;
+var releaseFile = (path) => new URL(
+  (typeof RELEASE_ASSET_DIRECTORY === "string" ? RELEASE_ASSET_DIRECTORY : "") + path,
+  scope
+);
+
 // web/analytics.ts
-var scope = new URL("../", import.meta.url);
 var allowed = /* @__PURE__ */ new Set(["$pageview", "$pageleave", "slopbuzz_demo_run", "slopbuzz_api_request"]);
 var local = ["localhost", "127.0.0.1", "[::1]"].includes(location.hostname);
 function cleanUrl(value) {
@@ -9497,7 +9503,7 @@ function cleanUrl(value) {
   }
 }
 async function initialize() {
-  const response = await fetch(new URL("analytics-config.json", scope));
+  const response = await fetch(releaseFile("analytics-config.json"));
   if (!response.ok) return;
   const config = await response.json();
   if (!config.enabled || !config.token || local && !config.allowLocal) return;

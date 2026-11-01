@@ -46,7 +46,7 @@ test('BigInt mandates keep their exact bound, rotate a warning and can be stoppe
  await page.fill('#limit','9007199254740993');await expect(page.locator('#magnitude-warning')).toBeVisible();
  const first=await page.locator('#magnitude-warning').textContent();
  await page.fill('#limit','9007199254740994');expect(await page.locator('#magnitude-warning').textContent()).not.toBe(first);
- await page.fill('#limit','9007199254740993');await page.click('#run-button');
+ await page.fill('#limit','9007199254740993');await page.selectOption('#display-speed','225');await page.click('#run-button');
  await expect(page.locator('#output-count')).toContainText('of 9007199254740993 lines');
  await expect(page.locator('#forecast-units')).toHaveText('13811038857269522');
  await page.click('#stop-reading');await expect(page.locator('#run-status')).toContainText('Proceedings stopped');
@@ -57,7 +57,7 @@ test('BigInt mandates keep their exact bound, rotate a warning and can be stoppe
  await expect(page.locator('#magnitude-warning')).toBeHidden();
 });
 test('extended disclosure can pause and waive delays without losing browser responsiveness',async({page})=>{
- await page.goto('/demo/');await page.fill('#limit','1001');await page.click('#run-button');
+ await page.goto('/demo/');await page.fill('#limit','1001');await page.selectOption('#display-speed','225');await page.click('#run-button');
  await expect(page.locator('#output-count')).toContainText('of 1001 lines');
  await page.click('#pause-reading');const paused=await page.locator('#output').textContent();await page.waitForTimeout(300);
  expect(await page.locator('#output').textContent()).toBe(paused);

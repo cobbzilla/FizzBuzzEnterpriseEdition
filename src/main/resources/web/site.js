@@ -3,12 +3,18 @@
 // web/runtime-protocol.ts
 var runtimeProtocol = 1;
 function isTransientOperation(path, method = "GET") {
-  return method === "GET" && ["/fizzbuzz/window", "/capacity/forecast/extended", "/procurement/dossier"].includes(path.split("?")[0]);
+  return method === "GET" && ["/fizzbuzz/window", "/capacity/forecast/extended", "/procurement/dossier", "/onboarding/rehearsal"].includes(path.split("?")[0]);
 }
 
-// web/runtime.ts
+// web/release-assets.ts
 var scope = new URL("../", import.meta.url).href;
-var config = await fetch(new URL("runtime-config.json", scope), { cache: "no-cache" }).then((r) => {
+var releaseFile = (path) => new URL(
+  (typeof RELEASE_ASSET_DIRECTORY === "string" ? RELEASE_ASSET_DIRECTORY : "") + path,
+  scope
+);
+
+// web/runtime.ts
+var config = await fetch(releaseFile("runtime-config.json"), { cache: "no-cache" }).then((r) => {
   if (!r.ok) throw new Error("Deployment configuration is unavailable");
   return r.json();
 });
@@ -103,11 +109,11 @@ var ServerRuntimeClient = class {
 };
 if (!["browser", "server"].includes(config.mode)) throw new Error("Unrecognized runtime mode");
 var runtime = config.mode === "server" ? new ServerRuntimeClient() : new BrowserRuntimeClient();
-var request = (path, options) => path === "/openapi.json" && (!options?.method || options.method === "GET") ? fetch(new URL("openapi.json", scope)) : runtime.request(path, options);
+var request = (path, options) => path === "/openapi.json" && (!options?.method || options.method === "GET") ? fetch(releaseFile("openapi.json")) : runtime.request(path, options);
 if ("serviceWorker" in navigator && config.mode === "browser") {
   void navigator.serviceWorker.register(new URL("sw.js", scope), { scope: new URL(scope).pathname }).catch((error) => console.warn("Offline installation unavailable", error));
 }
-var desks = /^\/(?:fizzbuzz|procurement\/dossier|capacity\/forecast|healthz|readyz|cache\/status|operations\/|audit\/)/;
+var desks = /^\/(?:fizzbuzz|onboarding\/rehearsal|procurement\/dossier|capacity\/forecast|healthz|readyz|cache\/status|operations\/|audit\/)/;
 if (config.mode === "browser") document.querySelectorAll("a[href]").forEach((link) => {
   const url = new URL(link.href);
   const base = new URL(scope).pathname.replace(/\/$/, "");

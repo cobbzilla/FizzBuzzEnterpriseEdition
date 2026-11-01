@@ -1,7 +1,8 @@
 import type { RuntimeClient, RuntimeConfig, WorkerReply } from './contracts';
 import {isTransientOperation, runtimeProtocol} from './runtime-protocol';
-export const scope = new URL('../', import.meta.url).href;
-export const config: RuntimeConfig = await fetch(new URL('runtime-config.json', scope), {cache: 'no-cache'}).then(r => {
+import {scope,releaseFile} from './release-assets';
+export {scope} from './release-assets';
+export const config: RuntimeConfig = await fetch(releaseFile('runtime-config.json'), {cache: 'no-cache'}).then(r => {
   if (!r.ok) throw new Error('Deployment configuration is unavailable');
   return r.json();
 });
@@ -79,14 +80,14 @@ class ServerRuntimeClient implements RuntimeClient {
 }
 if (!['browser', 'server'].includes(config.mode)) throw new Error('Unrecognized runtime mode');
 export const runtime: RuntimeClient = config.mode === 'server' ? new ServerRuntimeClient() : new BrowserRuntimeClient();
-export const request = (path: string, options?: RequestInit) => path === '/openapi.json' && (!options?.method || options.method === 'GET') ? fetch(new URL('openapi.json',scope)) : runtime.request(path, options);
+export const request = (path: string, options?: RequestInit) => path === '/openapi.json' && (!options?.method || options.method === 'GET') ? fetch(releaseFile('openapi.json')) : runtime.request(path, options);
 // Offline installation is an infrastructure concern, not a site-wide announcement.
 if ('serviceWorker' in navigator && config.mode === 'browser') {
   void navigator.serviceWorker.register(new URL('sw.js', scope), {scope: new URL(scope).pathname})
     .catch(error => console.warn('Offline installation unavailable', error));
 }
 // Raw operational links remain useful on a static host, without pretending to be HTTP endpoints.
-const desks = /^\/(?:fizzbuzz|procurement\/dossier|capacity\/forecast|healthz|readyz|cache\/status|operations\/|audit\/)/;
+const desks = /^\/(?:fizzbuzz|onboarding\/rehearsal|procurement\/dossier|capacity\/forecast|healthz|readyz|cache\/status|operations\/|audit\/)/;
 if (config.mode === 'browser') document.querySelectorAll<HTMLAnchorElement>('a[href]').forEach(link => {
   const url = new URL(link.href);
   const base = new URL(scope).pathname.replace(/\/$/, '');

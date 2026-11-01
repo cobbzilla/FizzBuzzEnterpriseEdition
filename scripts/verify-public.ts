@@ -37,7 +37,7 @@ export async function verifyPublic(origin: string, revision: string) {
    const businessRequests: string[] = [];
    page.on('request', request => {
     const url = new URL(request.url());
-    if (url.origin === origin && /^\/(fizzbuzz|healthz|readyz|audit|operations|capacity|cache|procurement)(\/|\?|$)/.test(url.pathname)) businessRequests.push(url.pathname);
+    if (url.origin === origin && /^\/(fizzbuzz|healthz|readyz|audit|operations|capacity|cache|procurement|onboarding)(\/|\?|$)/.test(url.pathname)) businessRequests.push(url.pathname);
    });
    await page.goto(origin + '/demo/');
    await expect(page.locator('#health-value')).toHaveText('LIVE');
@@ -48,10 +48,14 @@ export async function verifyPublic(origin: string, revision: string) {
    await page.selectOption('#display-speed', '0');
    await page.click('#run-button');
    await expect(page.locator('#run-status')).toContainText('Mandate complete');
+   await expect(page.locator('#personnel-verdict')).toHaveText('Approved to start at 1');
    const expected = Array.from({length: 15}, (_, i) => (i + 1) % 15 === 0 ? 'FizzBuzz' : (i + 1) % 3 === 0 ? 'Fizz' : (i + 1) % 5 === 0 ? 'Buzz' : String(i + 1));
    assert.deepEqual((await page.locator('#output').textContent())?.trim().split('\n'), expected);
    await page.click('#run-button');
    await expect(page.locator('#cache-result')).toHaveText('HIT');
+   await expect(page.locator('#personnel-origin')).toHaveText('Institutional memory answered. No new HR proceedings.');
+   await page.click('[data-personnel-scenario="zero"]');await expect(page.locator('#personnel-verdict')).toHaveText('Application rejected');
+   await expect(page.locator('#personnel-status')).toContainText('Identity Office');
    await page.fill('#limit','1001');await page.click('#run-button');
    await expect(page.locator('#run-status')).toContainText('Mandate complete. 1001 lines disclosed');
    await page.fill('#limit','9007199254740993');await expect(page.locator('#magnitude-warning')).toBeVisible();
@@ -78,6 +82,8 @@ export async function verifyPublic(origin: string, revision: string) {
    await page.fill('#limit', '16');
    await page.click('#run-button');
    await expect(page.locator('#run-status')).toContainText('Mandate complete');
+   await page.click('[data-personnel-scenario="missing-induction"]');await expect(page.locator('#personnel-verdict')).toHaveText('Application rejected');
+   await expect(page.locator('#personnel-status')).toContainText('Probation Review');
    assert.equal((await page.locator('#output').textContent())?.trim().split('\n').at(-1), '16');
    await page.goto(origin+'/#operations');
    await page.click('#procurement-button');

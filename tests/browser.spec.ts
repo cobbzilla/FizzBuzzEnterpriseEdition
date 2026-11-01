@@ -68,6 +68,8 @@ test('whole release works with its origin server stopped',async({page},info)=>{
     await page.reload();await expect(page.locator('#health-value')).toHaveText('LIVE');
     expect((await invoke(page,'/operations/runtime')).body).toContain(info.project.metadata.engine==='js'?'js':'wasm');
     await page.selectOption('#display-speed','0');await page.click('#run-button');await expect(page.locator('#run-status')).toContainText('Mandate complete');
+    await expect(page.locator('#personnel-verdict')).toHaveText('Approved to start at 1');
+    await page.click('[data-personnel-scenario="missing-induction"]');await expect(page.locator('#personnel-verdict')).toHaveText('Application rejected');
     await page.fill('#limit','1001');await page.click('#run-button');await expect(page.locator('#run-status')).toContainText('Mandate complete. 1001 lines disclosed');
     await page.goto(`http://127.0.0.1:${port}/#operations`);
     await page.click('#procurement-button');await expect(page.locator('#procurement-status')).toContainText('8 separate line items');

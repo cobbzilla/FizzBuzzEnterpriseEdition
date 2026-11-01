@@ -50,7 +50,7 @@
                   <option value="225">Emergency Delegated Authority</option>
                   <option value="0">Executive Fiat</option>
                 </select>
-                <p id="pace-help">Every line must clear its assigned approval queue before appearing. Executive Fiat waives the queue for real-time disclosure. Change authority mid-proclamation and the next line obeys. The service response is timed separately.</p>
+                <p id="pace-help">Every office decision and numerical line must clear its assigned disclosure queue. Executive Fiat waives the queue for real-time reading. Change authority mid-proclamation and the next disclosure obeys. The completed Java proceedings and service response are timed separately from this reading.</p>
               </div>
               <div class="run-meta" role="group" aria-label="Latest response measurements">
                 <div><span class="meta-label">Elapsed</span><strong id="latency">—</strong></div>
@@ -63,16 +63,43 @@
                 <code id="trace-result">Awaiting a mandate</code>
                 <small>Give this ID to the logging department to locate the request proceedings.</small>
               </div>
-              <div class="reading-controls" role="group" aria-label="Output reading controls">
-                <button class="button button-secondary" id="pause-reading" type="button" aria-controls="output" aria-disabled="true">Pause reading</button>
-                <button class="button button-secondary" id="reveal-all" type="button" aria-controls="output" aria-disabled="true">Reveal complete output</button>
-                <button class="button button-secondary" id="stop-reading" type="button" aria-controls="output" aria-disabled="true">Stop proceedings</button>
+              <div class="reading-controls" role="group" aria-label="Proceedings and output reading controls">
+                <button class="button button-secondary" id="pause-reading" type="button" aria-controls="personnel-steps output" aria-disabled="true">Pause reading</button>
+                <button class="button button-secondary" id="reveal-all" type="button" aria-controls="personnel-steps output" aria-disabled="true">Reveal complete output</button>
+                <button class="button button-secondary" id="stop-reading" type="button" aria-controls="personnel-steps output" aria-disabled="true">Stop proceedings</button>
                 <label><input type="checkbox" id="follow-output" checked> Follow new output</label>
               </div>
+              <section class="personnel-controls" aria-labelledby="personnel-controls-title">
+                <h3 id="personnel-controls-title">Personnel case review</h3>
+                <div class="personnel-actions" role="group" aria-label="Personnel record playback">
+                  <button class="button button-secondary" id="personnel-replay" type="button" aria-controls="personnel-steps" aria-disabled="true">Replay proceedings</button>
+                  <button class="button button-secondary" id="personnel-step" type="button" aria-controls="personnel-steps" aria-disabled="true">Step through</button>
+                  <button class="button button-secondary" id="personnel-documents" type="button" aria-controls="personnel-steps" aria-expanded="false" aria-disabled="true">Inspect paperwork</button>
+                </div>
+                <fieldset class="personnel-rehearsals" aria-describedby="personnel-rehearsal-help">
+                  <legend>Management intervention rehearsals</legend>
+                  <p class="field-help" id="personnel-rehearsal-help">Open a read-only application using the real personnel offices. Rehearsals and replay replace the current ceremonial reading and retain numerical output already shown. They create no audit entries.</p>
+                  <div class="personnel-actions">
+                    <button class="button button-secondary" type="button" data-personnel-scenario="approved" aria-controls="personnel-case">Submit a complete application</button>
+                    <button class="button button-secondary" type="button" data-personnel-scenario="zero" aria-controls="personnel-case">Nominate zero</button>
+                    <button class="button button-secondary" type="button" data-personnel-scenario="two" aria-controls="personnel-case">Nominate two</button>
+                    <button class="button button-secondary" type="button" data-personnel-scenario="missing-induction" aria-controls="personnel-case">Omit induction paperwork</button>
+                  </div>
+                </fieldset>
+              </section>
             </section>
             <section class="panel output-panel" id="mandate-output" aria-labelledby="output-title">
               <div class="output-heading"><h2 id="output-title">Official output</h2><span id="output-count">0 lines</span></div>
               <p class="inline-status" id="run-status" role="status" aria-live="polite" aria-atomic="true">Ready to receive a mandate.</p>
+              <section class="personnel-case" id="personnel-case" aria-labelledby="personnel-title">
+                <div class="personnel-heading"><h3 id="personnel-title">Personnel proceedings</h3><span class="personnel-verdict" id="personnel-verdict">Awaiting application</span></div>
+                <p class="personnel-premise">The company must hire 1 before it can start counting.</p>
+                <p>HR consists of seven offices applying published rules. Each approval follows from the preceding document; no human sign-off is required. Open an office to inspect its reasoning.</p>
+                <p class="personnel-origin" id="personnel-origin">Run a mandate or submit a rehearsal to inspect the personnel file.</p>
+                <p class="inline-status" id="personnel-status" role="status" aria-live="polite" aria-atomic="true">No personnel proceedings have been read.</p>
+                <ol class="personnel-steps" id="personnel-steps" role="list" aria-label="Seven personnel office decisions" hidden></ol>
+              </section>
+              <h3 class="transcript-title">Numerical transcript</h3>
               <pre class="terminal" id="output" tabindex="0" role="region" aria-label="FizzBuzz output">Awaiting a duly authorized number.</pre>
             </section>
           </div>

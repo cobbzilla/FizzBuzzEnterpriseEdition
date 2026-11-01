@@ -1,5 +1,5 @@
 import {trackUsage} from './telemetry';
-import { request, config, scope } from './runtime';
+import { request, config } from './runtime';
 const byId = <T extends HTMLElement = HTMLElement>(id: string): T => document.getElementById(id) as T;
 const operations = byId('api-operations');
 const search = byId<HTMLInputElement>('api-search');
@@ -94,10 +94,10 @@ function tryDesk(spec: Spec, path: string, method: string, operation: Operation)
     input.addEventListener('input',()=>input.removeAttribute('aria-invalid'));
     label.append(input);controls.append(label);return {field,input};
   });
-  const productParameter = (operation.parameters || []).map(parameter => resolve(spec, parameter)).find(parameter => parameter?.name === 'product');
+  const productParameter = (operation.parameters || []).map(parameter => resolve(spec, parameter)).find(parameter => parameter?.name === 'product'||parameter?.name === 'scenario');
   let productSelect: HTMLSelectElement | null = null;
   if (productParameter) {
-    const label = element('label', '', 'Authorized product');
+    const label = element('label', '', productParameter.name==='scenario'?'Personnel scenario':'Authorized product');
     productSelect = element('select'); productSelect.id = `${id}-product`;
     productSelect.setAttribute('aria-describedby', `${id}-status`);
     for (const product of productParameter.schema?.enum || []) {
@@ -144,7 +144,7 @@ function tryDesk(spec: Spec, path: string, method: string, operation: Operation)
       decimal.removeAttribute('aria-invalid');
     }
     input?.removeAttribute('aria-invalid');
-    const url = magnitudeInputs.length ? `${path}?${new URLSearchParams(magnitudeInputs.map(({field,input})=>[field.name,input.value.trim()]))}` : input ? `${path}?limit=${input.value}` : productSelect ? `${path}?product=${encodeURIComponent(productSelect.value)}` : path;
+    const url = magnitudeInputs.length ? `${path}?${new URLSearchParams(magnitudeInputs.map(({field,input})=>[field.name,input.value.trim()]))}` : input ? `${path}?limit=${input.value}` : productSelect ? `${path}?${productParameter!.name}=${encodeURIComponent(productSelect.value)}` : path;
     button.setAttribute('aria-disabled', 'true');
     report.textContent = 'The desk is reviewing your request…';
     const started = performance.now();
@@ -268,7 +268,7 @@ function render(spec: Spec) {
 
 search.addEventListener('input', filterCards);
 try {
-  const reply = await fetch(new URL('openapi.json', scope), { cache: 'no-cache' });
+  const reply = await request('/openapi.json', { cache: 'no-cache' });
   if (!reply.ok) throw new Error(`HTTP ${reply.status}`);
   render(await reply.json());
 } catch (error) {

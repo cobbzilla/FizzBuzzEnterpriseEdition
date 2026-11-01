@@ -88,6 +88,15 @@ test('repeat publication skips matching bytes and metadata but repairs changed p
  assert.equal(needsUpload(payload), true);
 });
 
+test('release-addressed page scripts and configuration retain immutable cache policy',async()=>{
+ for(const path of ['assets/demo.0123456789abcdef.js','assets/0123456789abcdef/runtime-config.json','assets/0123456789abcdef/openapi.json']){
+  assert.match(metadata(path).cache,/immutable/);
+  const response=await serve(new Request('https://example.org/'+path),env,async()=>new Response('content'));
+  assert.match(response.headers.get('Cache-Control')!,/immutable/);
+ }
+ assert.equal(metadata('assets/demo.js').cache,'no-cache');assert.equal(metadata('runtime-config.json').cache,'no-cache');
+});
+
 test('uploads are bounded to four consumers and finish dependencies before HTML and service worker', async () => {
  const files = [...Array.from({length: 9}, (_, i) => file(`assets/0123456789abcdef/${i}.js`)), file('runtime-config.json'), file('index.html'), file('release.json'), file('sw.js')];
  let active = 0, maximum = 0;

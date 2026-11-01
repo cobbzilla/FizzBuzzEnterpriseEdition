@@ -26,6 +26,15 @@ JavaScript. Add new pages to both builders and to the route list in
 
 ## Human review and limits
 
+The First Ordinal Onboarding review additionally exercises native decision
+disclosures, case verdict announcements, synchronized Inspect paperwork state,
+focus-preserving step-through, pause/resume/stop, and replay without new business
+execution. Shared reading buttons identify both personnel and numerical regions.
+Expanded approved and rejected records pass axe rules for WCAG 2.0/2.1/2.2 AA
+and reflow at 320 CSS pixels with 200% text and increased text spacing. A read-only
+accessibility auditor also manually exercised the keyboard and reduced-motion
+paths on the local static build. These checks supplement the limits below.
+
 Source review identified and corrected live regions inside busy containers,
 missing reading controls, API heading gaps and input-error associations,
 keyboard-inaccessible scroll areas, a stamp overlapping explanatory copy,

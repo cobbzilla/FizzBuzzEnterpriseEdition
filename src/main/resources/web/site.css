@@ -281,3 +281,39 @@ body { overflow-wrap: anywhere; }
 .forecast-list dd, #output-count, #run-status { overflow-wrap: anywhere; }
 
 .form-row > .button { flex-shrink: 0; }
+
+/* Personnel proceedings are documents in the output chamber; controls stay at the left desk. */
+.personnel-controls { margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--line); }
+.personnel-controls h3, .personnel-heading h3, .transcript-title { font-family: Georgia, "Times New Roman", serif; font-size: 1.15rem; font-weight: 500; margin-bottom: 12px; }
+.personnel-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.personnel-actions .button { font-size: .8rem; padding: 10px 12px; }
+.personnel-rehearsals { min-width: 0; margin: 24px 0 0; padding: 16px; border: 1px solid var(--line); }
+.personnel-rehearsals legend { padding-inline: 6px; font-weight: 800; font-size: .88rem; }
+.personnel-rehearsals .field-help { font-size: .8rem; }
+.personnel-case { margin: 8px 0 24px; padding: 18px; background: var(--paper); border: 1px solid var(--line); }
+.personnel-heading { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 8px; }
+.personnel-heading h3 { margin: 0; }
+.personnel-verdict { font-size: .7rem; font-weight: 850; text-transform: uppercase; letter-spacing: .05em; }
+.personnel-premise { font-size: .85rem; margin: 10px 0; }
+.personnel-origin { font-size: .73rem; color: var(--ink-soft); overflow-wrap: anywhere; margin-bottom: 12px; }
+.personnel-case .inline-status { margin-bottom: 12px; }
+.personnel-steps { list-style: none; padding: 0; margin: 0; }
+.personnel-steps li { border-top: 1px solid var(--line); }
+.personnel-steps summary { display: grid; grid-template-columns: 22px minmax(0,1fr) minmax(0,80px); align-items: center; gap: 8px; min-height: 48px; padding-block: 8px; cursor: pointer; }
+.personnel-steps summary::marker { content: ''; }
+.personnel-index { font-size: .7rem; font-variant-numeric: tabular-nums; color: var(--ink-soft); }
+.personnel-office { font-size: .8rem; font-weight: 800; }
+.personnel-office::after { content: ' +'; color: var(--ink-soft); }
+.personnel-steps details[open] .personnel-office::after { content: ' −'; }
+.personnel-badge { font-size: .7rem; text-align: right; line-height: 1.35; overflow-wrap: anywhere; }
+.personnel-steps [data-verdict=APPROVED] .personnel-badge { color: var(--success); font-weight: 850; }
+.personnel-steps [data-verdict=APPROVED] .personnel-badge::before { content: '✓ '; }
+.personnel-steps [data-verdict=REJECTED] .personnel-badge { color: var(--warning); font-weight: 850; }
+.personnel-steps [data-verdict=REJECTED] .personnel-badge::before { content: '× '; }
+.personnel-steps dl { margin: 0 0 12px; padding: 12px; background: var(--white); border-left: 3px solid var(--accent-deep); font-size: .78rem; }
+.personnel-steps dl div + div { margin-top: 10px; }
+.personnel-steps dt { font-weight: 850; }
+.personnel-steps dd { margin: 2px 0 0; overflow-wrap: anywhere; }
+.personnel-record-note { font-size: .72rem; color: var(--ink-soft); }
+@media(max-width:640px){.personnel-case {padding:14px;} .personnel-steps summary {grid-template-columns:18px minmax(0,1fr) minmax(0,70px);gap:6px;}}
+@media(forced-colors:active){.personnel-case,.personnel-rehearsals {border-color:CanvasText;} .personnel-steps [data-verdict] .personnel-badge {color:CanvasText;}}
