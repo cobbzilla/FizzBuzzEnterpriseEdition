@@ -26,6 +26,18 @@ JavaScript. Add new pages to both builders and to the route list in
 
 ## Human review and limits
 
+The Institutional Memory Court uses a labeled native selector with inherited
+text sizing and a 48px minimum target, focus-preserving submission, and five
+native office disclosures. Expand/collapse state tracks individual disclosures.
+The pending announcement sits outside the busy document list, so it is not
+deferred until the final verdict replaces it. Read-only review checked keyboard
+submission, duplicate-submit prevention, error recovery, stale-response
+suppression after restoring a mandate case, native Space disclosure, unchanged
+numerical output and unchanged chronicle reading position during ongoing output.
+Expanded court papers pass axe rules; 320px, 200% text, increased spacing and
+reduced motion retain all controls without horizontal overflow. Automated and
+DOM review supplement the real assistive-technology limits below.
+
 The reading-position regression check uses actual wheel-up and keyboard scrolling
 during ongoing output. Earlier text stays in place without unchecking following;
 returning to the bottom resumes it. Resizing while reading does not move the

@@ -97,7 +97,7 @@ function tryDesk(spec: Spec, path: string, method: string, operation: Operation)
   const productParameter = (operation.parameters || []).map(parameter => resolve(spec, parameter)).find(parameter => parameter?.name === 'product'||parameter?.name === 'scenario');
   let productSelect: HTMLSelectElement | null = null;
   if (productParameter) {
-    const label = element('label', '', productParameter.name==='scenario'?'Personnel scenario':'Authorized product');
+    const label = element('label', '', productParameter.name==='scenario'?(operation.operationId==='rehearsePriorWork'?'Court petition':'Personnel scenario'):'Authorized product');
     productSelect = element('select'); productSelect.id = `${id}-product`;
     productSelect.setAttribute('aria-describedby', `${id}-status`);
     for (const product of productParameter.schema?.enum || []) {

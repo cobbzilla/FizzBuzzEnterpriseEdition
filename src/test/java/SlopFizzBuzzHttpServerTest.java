@@ -266,7 +266,7 @@ public class SlopFizzBuzzHttpServerTest {
 		assertEquals(new HashSet<String>(Arrays.asList("/fizzbuzz", "/capacity/forecast",
 				"/healthz", "/readyz", "/operations/scorecard", "/operations/release",
 				"/operations/canary", "/operations/recovery", "/cache/status",
-                "/audit/status", "/audit/evidence", "/openapi.json", "/operations/runtime", "/procurement/dossier", "/fizzbuzz/window", "/capacity/forecast/extended", "/onboarding/rehearsal", "/fizzbuzz/explained", "/fizzbuzz/window/explained")), paths);
+                "/audit/status", "/audit/evidence", "/openapi.json", "/operations/runtime", "/procurement/dossier", "/fizzbuzz/window", "/capacity/forecast/extended", "/onboarding/rehearsal", "/precedent/rehearsal", "/fizzbuzz/explained", "/fizzbuzz/window/explained")), paths);
 		for (final String path : paths) {
 			final String target = ("/fizzbuzz".equals(path) || "/capacity/forecast".equals(path))
 					? path + "?limit=0" : path;

@@ -37,7 +37,7 @@ export async function verifyPublic(origin: string, revision: string) {
    const businessRequests: string[] = [];
    page.on('request', request => {
     const url = new URL(request.url());
-    if (url.origin === origin && /^\/(fizzbuzz|healthz|readyz|audit|operations|capacity|cache|procurement|onboarding)(\/|\?|$)/.test(url.pathname)) businessRequests.push(url.pathname);
+    if (url.origin === origin && /^\/(fizzbuzz|healthz|readyz|audit|operations|capacity|cache|procurement|onboarding|precedent)(\/|\?|$)/.test(url.pathname)) businessRequests.push(url.pathname);
    });
    await page.goto(origin + '/demo/');
    await expect(page.locator('#health-value')).toHaveText('LIVE');
@@ -68,6 +68,12 @@ export async function verifyPublic(origin: string, revision: string) {
    await expect(page.locator('#cache-result')).toHaveText('HIT');
    await expect(page.locator('#personnel-origin')).toHaveText('Institutional memory answered. No new HR proceedings.');
    await expect(page.locator('#chronicle-entries')).toContainText('No fresh recruitment');
+   await expect(page.locator('#precedent-status')).toContainText('Certificate of Authorized Non-Performance issued for 15 lines');
+   await expect(page.locator('#precedent-steps li')).toHaveCount(5);
+   assert.ok((await page.locator('#precedent-scenario').boundingBox())!.height>=48,'Court selector must retain its accessible native control height');
+   await page.selectOption('#precedent-scenario','lowercase-fizz');await page.click('#precedent-submit');
+   await expect(page.locator('#precedent-status')).toContainText('Reuse rejected by Independent Lexical Bench');
+   await page.click('#precedent-latest');await expect(page.locator('#precedent-status')).toContainText('Reuse approved');
    await page.click('[data-personnel-scenario="zero"]');await expect(page.locator('#personnel-verdict')).toHaveText('Application rejected');
    await expect(page.locator('#personnel-status')).toContainText('Identity Office');
    await page.fill('#limit','1001');await page.click('#run-button');
@@ -99,6 +105,8 @@ export async function verifyPublic(origin: string, revision: string) {
    await page.click('[data-personnel-scenario="missing-induction"]');await expect(page.locator('#personnel-verdict')).toHaveText('Application rejected');
    await expect(page.locator('#personnel-status')).toContainText('Probation Review');
    assert.equal((await page.locator('#output').textContent())?.trim().split('\n').at(-1), '16');
+   await page.selectOption('#precedent-scenario','wrong-mandate');await page.click('#precedent-submit');
+   await expect(page.locator('#precedent-status')).toContainText('Reuse rejected by Mandate Jurisdiction Chamber');
    await page.goto(origin+'/#operations');
    await page.click('#procurement-button');
    await expect(page.locator('#procurement-status')).toContainText('8 separate line items');

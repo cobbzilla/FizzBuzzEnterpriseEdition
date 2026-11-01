@@ -12,8 +12,9 @@ test.beforeAll(async()=>{
   const compile=async(contents:string)=>(await build({stdin:{contents,resolveDir:`${process.cwd()}/tests/fixtures`,loader:'ts'},bundle:true,write:false,format:'iife',target:'es2022'})).outputFiles[0].text;
   // The frozen transport fixture loads this build's compiled Java. Strip only
   // the newly introduced response headers to model its pre-HR business release.
-  legacyWorker=await compile(source.replace("reply({kind: 'reply', id: message.id, revision: config.revision, leader, result});","delete result.headers['X-SlopBuzz-Onboarding-Trace']; delete result.headers['X-SlopBuzz-Onboarding-State']; reply({kind: 'reply', id: message.id, revision: config.revision, leader, result});"));
-  personnelWorker=await compile(source);
+  const preCourt=source.replace("reply({kind: 'reply', id: message.id, revision: config.revision, leader, result});","delete result.headers['X-SlopBuzz-Precedent-Trace']; reply({kind: 'reply', id: message.id, revision: config.revision, leader, result});");
+  legacyWorker=await compile(preCourt.replace("delete result.headers['X-SlopBuzz-Precedent-Trace'];","delete result.headers['X-SlopBuzz-Precedent-Trace']; delete result.headers['X-SlopBuzz-Onboarding-Trace']; delete result.headers['X-SlopBuzz-Onboarding-State'];"));
+  personnelWorker=await compile(preCourt);
   unsupportedWorker=await compile(source.replace('protocol:1','protocol:999'));
 });
 async function invoke(page:Page,path:string){
@@ -58,6 +59,8 @@ test('hard reload beside a frozen legacy owner keeps demo, BigInt and one durabl
   await next.click('[data-personnel-scenario="zero"]');await expect(next.locator('#personnel-verdict')).toHaveText('Application rejected');
   const afterRehearsal=await invoke(next,'/audit/evidence');expect(JSON.parse(afterRehearsal.body).journalEntries).toBe(JSON.parse(beforeRehearsal.body).journalEntries);
   expect(JSON.parse(retained.body).journalEntries).toBe(33);
+  await next.selectOption('#precedent-scenario','lowercase-fizz');await next.click('#precedent-submit');await expect(next.locator('#precedent-status')).toContainText('Reuse rejected by Independent Lexical Bench');
+  await next.fill('#limit','17');await next.click('#run-button');await expect(next.locator('#run-status')).toContainText('Mandate complete');await expect(next.locator('#precedent-source')).toContainText('earlier administration');
   const window=await invoke(next,'/fizzbuzz/window?start=9007199254740993&count=2');
   expect(window.status).toBe(200);expect(window.body).toBe('Fizz\n9007199254740994\n');expect(window.revision).toBe(currentRevision);
   const forecast=await invoke(next,'/capacity/forecast/extended?limit=9007199254740993');
@@ -76,6 +79,7 @@ test('hard reload beside a frozen legacy owner keeps demo, BigInt and one durabl
   expect(JSON.parse(after.body).headDigest).toBe(before.headDigest);expect(JSON.parse(after.body).journalEntries).toBe(52);
   await next.fill('#limit','17');await next.selectOption('#display-speed','0');await next.click('#run-button');
   await expect(next.locator('#run-status')).toContainText('Mandate complete');await expect(next.locator('#cache-result')).toHaveText('HIT');
+  await expect(next.locator('#precedent-status')).toContainText('Certificate of Authorized Non-Performance');
 });
 test('an earlier HR-aware owner contributes its real personnel record without invented later proceedings',async({page,context},info)=>{
  await page.route('**/runtime-config.json',async route=>{const response=await route.fetch();await route.fulfill({json:{...await response.json(),revision:legacyRevision,engine:info.project.metadata.engine}});});

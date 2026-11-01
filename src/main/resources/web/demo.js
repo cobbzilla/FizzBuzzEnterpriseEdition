@@ -50,7 +50,7 @@ function trackUsage(detail) {
 // web/runtime-protocol.ts
 var runtimeProtocol = 1;
 function isTransientOperation(path, method = "GET") {
-  return method === "GET" && ["/operations/runtime", "/fizzbuzz/window", "/fizzbuzz/window/explained", "/capacity/forecast/extended", "/procurement/dossier", "/onboarding/rehearsal"].includes(path.split("?")[0]);
+  return method === "GET" && ["/operations/runtime", "/fizzbuzz/window", "/fizzbuzz/window/explained", "/capacity/forecast/extended", "/procurement/dossier", "/onboarding/rehearsal", "/precedent/rehearsal"].includes(path.split("?")[0]);
 }
 
 // web/release-assets.ts
@@ -193,7 +193,7 @@ var request = (path, options) => path === "/openapi.json" && (!options?.method |
 if ("serviceWorker" in navigator && config.mode === "browser") {
   void navigator.serviceWorker.register(new URL("sw.js", scope), { scope: new URL(scope).pathname }).catch((error) => console.warn("Offline installation unavailable", error));
 }
-var desks = /^\/(?:fizzbuzz|onboarding\/rehearsal|procurement\/dossier|capacity\/forecast|healthz|readyz|cache\/status|operations\/|audit\/)/;
+var desks = /^\/(?:fizzbuzz|onboarding\/rehearsal|precedent\/rehearsal|procurement\/dossier|capacity\/forecast|healthz|readyz|cache\/status|operations\/|audit\/)/;
 if (config.mode === "browser") document.querySelectorAll("a[href]").forEach((link) => {
   const url = new URL(link.href);
   const base = new URL(scope).pathname.replace(/\/$/, "");
@@ -403,10 +403,138 @@ var PersonnelProceedings = class {
   }
 };
 
+// web/precedent.ts
+function parsePrecedent(value) {
+  const d = value;
+  if (!d || d.schema !== "slopbuzz-precedent/v1" || !["MANDATE", "REHEARSAL"].includes(d.purpose) || typeof d.caseId !== "string" || !["APPROVED", "REJECTED"].includes(d.status) || !Number.isSafeInteger(d.limit) || d.limit < 0 || d.limit > 1e3 || !Number.isSafeInteger(d.repositoryLimit) || !Number.isSafeInteger(d.bodyCharacters) || d.bodyCharacters < 0 || !Array.isArray(d.steps) || d.steps.length !== 5 || d.steps.some((s) => !s || !["APPROVED", "REJECTED", "NOT_REACHED"].includes(s.state) || ["office", "rule", "received", "finding", "document"].some((k) => typeof s[k] !== "string"))) throw new Error("The court returned an unrecognized case file.");
+  const rejected = d.steps.findIndex((s) => s.state === "REJECTED");
+  if (d.status === "APPROVED" ? d.certifiedLines !== d.limit || d.steps.some((s) => s.state !== "APPROVED") : d.certifiedLines !== null || rejected < 0 || d.steps.some((s, i) => s.state !== (i < rejected ? "APPROVED" : i === rejected ? "REJECTED" : "NOT_REACHED"))) throw new Error("The court returned inconsistent decisions.");
+  return d;
+}
+function element(tag, text) {
+  const n = document.createElement(tag);
+  if (text !== void 0) n.textContent = text;
+  return n;
+}
+var PrecedentView = class {
+  serial = 0;
+  busy = false;
+  latest;
+  form = byId("precedent-form");
+  button = byId("precedent-submit");
+  list = byId("precedent-steps");
+  expand = byId("precedent-expand");
+  constructor() {
+    this.form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      if (!this.busy) void this.rehearse();
+    });
+    this.expand.addEventListener("click", () => {
+      const details = [...this.list.querySelectorAll("details")];
+      const open = details.some((d) => !d.open);
+      details.forEach((d) => d.open = open);
+      this.synchronize();
+    });
+    byId("precedent-latest").addEventListener("click", () => {
+      if (this.latest) {
+        ++this.serial;
+        this.setBusy(false);
+        this.show(this.latest);
+      }
+    });
+  }
+  setBusy(busy) {
+    this.busy = busy;
+    this.button.setAttribute("aria-disabled", String(busy));
+    this.list.setAttribute("aria-busy", String(busy));
+  }
+  synchronize() {
+    const details = [...this.list.querySelectorAll("details")], all = details.length > 0 && details.every((d) => d.open);
+    this.expand.setAttribute("aria-expanded", String(all));
+    this.expand.textContent = all ? "Collapse court documents" : "Expand court documents";
+  }
+  waiting(extended = false) {
+    ++this.serial;
+    this.latest = void 0;
+    this.setBusy(false);
+    this.clear(extended ? "Extended proceedings bypass retained institutional memory. No prior-work court is convened." : "Awaiting a repository result. The court convenes only if prior text is offered.");
+  }
+  mandate(data, cache) {
+    ++this.serial;
+    this.setBusy(false);
+    this.latest = data;
+    byId("precedent-latest").setAttribute("aria-disabled", String(!data));
+    if (data) this.show(data);
+    else this.clear(cache === "HIT" ? "An earlier administration reused institutional memory without forwarding current court papers. Historical approvals are not reconstructed." : cache === "MISS" ? "The repository offered no prior text. Fresh production proceeded without convening a reuse court." : "The repository was bypassed. No prior-work license was required.");
+  }
+  clear(message) {
+    setText("precedent-source", message);
+    setText("precedent-status", "No court case is open.");
+    this.list.replaceChildren();
+    this.expand.hidden = true;
+    byId("precedent-latest").setAttribute("aria-disabled", String(!this.latest));
+    this.synchronize();
+  }
+  show(d) {
+    setText("precedent-source", `${d.purpose === "MANDATE" ? "Actual mandate reuse proceedings" : "Read-only specimen rehearsal"} \xB7 Case ${d.caseId} \xB7 Requested ${d.limit} lines \xB7 Repository key ${d.repositoryLimit}. These are current reuse decisions, not the original production history.${d.purpose === "MANDATE" && d.status === "REJECTED" ? " This cached candidate was refused before the ordinary fresh-production path was attempted. The numerical result is shown above." : ""}`);
+    const objection = d.steps.find((s) => s.state === "REJECTED");
+    setText("precedent-status", d.status === "APPROVED" ? `Reuse approved. Certificate of Authorized Non-Performance issued for ${d.certifiedLines} lines.` : `Reuse rejected by ${objection.office}. ${objection.finding}`);
+    const rows = d.steps.map((step, index) => {
+      const item = element("li");
+      item.dataset.verdict = step.state;
+      const details = element("details"), summary = element("summary");
+      const order = element("span", String(index + 1).padStart(2, "0"));
+      order.className = "personnel-index";
+      order.setAttribute("aria-hidden", "true");
+      const office = element("span", step.office);
+      office.className = "personnel-office";
+      const state = element("span", step.state === "APPROVED" ? "Approved" : step.state === "REJECTED" ? "Rejected" : "Not reached");
+      state.className = "personnel-badge";
+      summary.append(order, office, state);
+      details.append(summary);
+      const facts = element("dl");
+      for (const [label, text] of [["Published rule", step.rule], ["Received", step.received], ["Finding", step.finding], ["Issued document", step.document]]) {
+        const row = element("div");
+        row.append(element("dt", label), element("dd", text));
+        facts.append(row);
+      }
+      details.append(facts);
+      details.addEventListener("toggle", () => this.synchronize());
+      item.append(details);
+      return item;
+    });
+    this.list.replaceChildren(...rows);
+    this.expand.hidden = false;
+    this.synchronize();
+  }
+  async rehearse() {
+    const serial = ++this.serial, scenario = byId("precedent-scenario").value;
+    this.setBusy(true);
+    setText("precedent-status", "The court is examining a read-only specimen. Your numerical output and cache are retained.");
+    try {
+      const response = await request(`/precedent/rehearsal?scenario=${encodeURIComponent(scenario)}`);
+      if (!response.ok) throw new Error(`Court desk returned ${response.status}.`);
+      const data = parsePrecedent(await response.json());
+      if (data.purpose !== "REHEARSAL") throw new Error("The specimen desk returned a different purpose.");
+      if (serial === this.serial) this.show(data);
+    } catch (error) {
+      if (serial === this.serial) setText("precedent-status", `The court rehearsal could not be opened: ${error.message} No numerical mandate was submitted.`);
+    } finally {
+      if (serial === this.serial) this.setBusy(false);
+    }
+  }
+};
+
 // web/chronicle.ts
 async function readProclamation(response) {
   const runtime2 = JSON.parse(response.headers.get("X-SlopBuzz-Execution-Runtime") || "{}");
   const packet = { text: "", events: [], omitted: 0, cache: response.headers.get("X-SlopBuzz-Cache") || "UNKNOWN", runtime: runtime2, recorded: false };
+  const precedent2 = response.headers.get("X-SlopBuzz-Precedent-Trace");
+  if (precedent2 && precedent2.length <= 8192) try {
+    const data2 = parsePrecedent(JSON.parse(precedent2));
+    if (data2.purpose === "MANDATE") packet.precedent = data2;
+  } catch {
+  }
   if (!response.headers.get("Content-Type")?.includes("application/json")) {
     const raw = response.headers.get("X-SlopBuzz-Onboarding-Trace");
     if (raw && raw.length <= 8192) try {
@@ -586,8 +714,12 @@ var ExecutiveChronicle = class {
         this.groups.set(event.ordinal, group);
       }
     }
-    const global = packet.events.filter((e) => e.ordinal === null && !["COMPLETE", "FAILED"].includes(e.kind));
+    const global = packet.events.filter((e) => e.ordinal === null && !["COMPLETE", "FAILED"].includes(e.kind) && !e.kind.startsWith("PRECEDENT_"));
     if (global.length) this.note(global.map((e) => `${e.office}: ${e.finding}`).join(" "), "Recorded reception and operating path");
+    if (packet.precedent) {
+      this.note(packet.precedent.status === "APPROVED" ? "Institutional Memory offered prior text. Five actual Java offices examined the current reuse petition. Doing no new numerical work is an outcome for which the company requires considerable fresh paperwork." : "Institutional Memory offered an inadmissible precedent. The court refused reuse before a single fresh production run was authorized. The rejected text has not been disclosed as the answer.", "Prior Work Ratification and Institutional Memory Court");
+      for (const step of packet.precedent.steps) this.note(`${step.state === "APPROVED" ? "Approved" : step.state === "REJECTED" ? "Rejected" : "Not reached"}. ${step.finding} ${step.document}`, step.office);
+    }
     const { engine, storage, cache } = packet.runtime;
     if (engine) this.note(`The appointed implementation is ${String(engine)}. Its declared repository is ${String(storage || "unspecified")} and its cache adapter is ${String(cache || "unspecified")}. ${packet.cache === "HIT" ? "Institutional memory answered without convening a fresh production workforce." : "The following account distinguishes actual Java decisions from explanatory context."}`, "Execution arrangements");
     if (packet.omitted) this.note(`${packet.omitted} observation entries exceeded the finite dossier allowance. Numerical output remains independently available.`, "Observation allowance");
@@ -774,6 +906,7 @@ var wakeReading;
 var activityMode = "mandate";
 var manualStep = false;
 var chronicle = new ExecutiveChronicle();
+var precedent = new PrecedentView();
 var currentLimit = "15";
 var lastPlayback;
 var inspection;
@@ -1035,6 +1168,7 @@ async function runMandate(event) {
   personnel.loading();
   chronicle.begin(currentLimit);
   runButton.setAttribute("aria-disabled", "true");
+  precedent.waiting(typeof limit === "bigint" || limit > 1e3);
   byId("output").setAttribute("aria-busy", "true");
   setText("run-status", `The committee is considering ${limit} numbers\u2026`);
   setText("trace-result", "Awaiting a receipt");
@@ -1056,6 +1190,7 @@ async function runMandate(event) {
     if (answer.ok) trackUsage({ event: "slopbuzz_demo_run", outcome: "success", runtime_mode: config.mode, duration_ms: elapsed, cache_outcome: answer.headers.get("X-SlopBuzz-Cache") || "UNKNOWN" });
     if (sequence !== mandateSequence) return;
     chronicle.receive(packet);
+    precedent.mandate(packet.precedent, packet.cache);
     setText("latency", `${Math.round(elapsed)} ms`);
     setText("cache-result", answer.headers.get("X-SlopBuzz-Cache") || "UNKNOWN");
     setText("trace-result", answer.headers.get("X-SlopBuzz-Trace-Id") || "UNAVAILABLE");
