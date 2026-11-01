@@ -54,6 +54,14 @@ export async function verifyPublic(origin: string, revision: string) {
    await expect(page.locator('#chronicle-entries')).toContainText('4 separately certified z’s');
    assert.equal(await page.locator('#chronicle-scroll').evaluate(element=>element.clientHeight),chronicleHeight);
    await expect.poll(()=>page.locator('#chronicle-scroll').evaluate(element=>Math.abs(element.scrollTop+element.clientHeight-element.scrollHeight)<3)).toBe(true);
+   const chronicle=page.locator('#chronicle-scroll');
+   await chronicle.hover();await page.mouse.wheel(0,-260);
+   await expect.poll(()=>chronicle.evaluate(element=>element.scrollHeight-element.clientHeight-element.scrollTop>50)).toBe(true);
+   await page.setViewportSize({width:1100,height:800});
+   await page.evaluate(()=>new Promise<void>(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>resolve()))));
+   assert.ok(await chronicle.evaluate(element=>element.scrollHeight-element.clientHeight-element.scrollTop>50),'Reading earlier minutes must survive layout changes without being pulled to the bottom');
+   await chronicle.focus();await page.keyboard.press('End');
+   await expect.poll(()=>chronicle.evaluate(element=>Math.abs(element.scrollTop+element.clientHeight-element.scrollHeight)<3)).toBe(true);
    const expected = Array.from({length: 15}, (_, i) => (i + 1) % 15 === 0 ? 'FizzBuzz' : (i + 1) % 3 === 0 ? 'Fizz' : (i + 1) % 5 === 0 ? 'Buzz' : String(i + 1));
    assert.deepEqual((await page.locator('#output').textContent())?.trim().split('\n'), expected);
    await page.click('#run-button');

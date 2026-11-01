@@ -472,11 +472,42 @@ var ExecutiveChronicle = class {
   inspected;
   pending = false;
   pendingNotes = [];
+  pinned = true;
+  pinAfterResize = false;
   body = byId("chronicle-scroll");
   entries = byId("chronicle-entries");
   follow = byId("follow-chronicle");
   selector = byId("chronicle-ordinal");
   constructor() {
+    const pause = () => {
+      if (this.body.scrollHeight - this.body.clientHeight <= 4) return;
+      this.pinned = false;
+      this.pinAfterResize = false;
+    };
+    this.body.addEventListener("scroll", () => {
+      if (this.pinAfterResize) return;
+      this.pinned = this.atBottom();
+      if (this.pinned && this.follow.checked && this.pending) this.latest();
+    }, { passive: true });
+    this.body.addEventListener("wheel", (event) => {
+      if (event.deltaY < 0 && !event.ctrlKey) pause();
+    }, { passive: true });
+    this.body.addEventListener("keydown", (event) => {
+      if (["ArrowUp", "PageUp", "Home"].includes(event.key) || event.key === " " && event.shiftKey) pause();
+    });
+    let touchY;
+    this.body.addEventListener("touchstart", (event) => {
+      touchY = event.touches[0]?.clientY;
+    }, { passive: true });
+    this.body.addEventListener("touchmove", (event) => {
+      const next = event.touches[0]?.clientY;
+      if (next !== void 0 && touchY !== void 0 && next > touchY) pause();
+      touchY = next;
+    }, { passive: true });
+    this.body.addEventListener("pointerdown", (event) => {
+      const bounds = this.body.getBoundingClientRect();
+      if (this.body.offsetWidth - this.body.clientWidth > 2 && event.clientX >= bounds.left + this.body.clientWidth) pause();
+    }, { passive: true });
     this.follow.addEventListener("change", () => {
       if (this.follow.checked) this.latest();
     });
@@ -497,7 +528,10 @@ var ExecutiveChronicle = class {
       setText("chronicle-current", `Inspecting recorded ordinal ${folio.ordinal}. New output can continue without moving this reading position.`);
     });
     const layout = () => {
-      this.followBottom();
+      if (this.pinAfterResize) {
+        this.pinAfterResize = false;
+        this.followBottom();
+      }
       const panel = byId("mandate-output");
       panel.dataset.viewportFit = String(innerHeight > 600 && panel.getBoundingClientRect().height <= innerHeight - 24);
     };
@@ -513,7 +547,10 @@ var ExecutiveChronicle = class {
     resize.observe(this.entries);
     resize.observe(byId("mandate-output"));
     resize.observe(byId("mandate-output").querySelector(".output-dock"));
-    window.addEventListener("resize", schedule);
+    window.addEventListener("resize", () => {
+      this.pinAfterResize = this.isFollowing();
+      schedule();
+    });
   }
   get records() {
     return [...this.snapshots.values()];
@@ -529,6 +566,8 @@ var ExecutiveChronicle = class {
     this.pending = false;
     this.pendingNotes = [];
     this.follow.checked = true;
+    this.pinned = true;
+    this.pinAfterResize = false;
     this.inspected?.remove();
     this.inspected = void 0;
     this.entries.replaceChildren();
@@ -581,7 +620,8 @@ var ExecutiveChronicle = class {
         }
       }
     }
-    if (!this.follow.checked) {
+    this.pauseIfReading();
+    if (!this.isFollowing()) {
       this.pending = true;
       return;
     }
@@ -641,7 +681,8 @@ var ExecutiveChronicle = class {
     }
   }
   note(text, heading = "Corporate minutes") {
-    if (!this.follow.checked) {
+    this.pauseIfReading();
+    if (!this.isFollowing()) {
       this.pending = true;
       this.pendingNotes.push({ text, heading });
       if (this.pendingNotes.length > 16) this.pendingNotes.shift();
@@ -655,6 +696,7 @@ var ExecutiveChronicle = class {
     this.followBottom();
   }
   rehearsal(data, count) {
+    this.pauseIfReading();
     const key = `rehearsal-${data.caseId}`;
     let article = this.entries.querySelector(`[data-rehearsal="${CSS.escape(key)}"]`);
     if (!article) {
@@ -675,13 +717,24 @@ var ExecutiveChronicle = class {
     const denied = [...this.groups.values()].filter((events) => !this.snapshots.has(events[0]?.ordinal || "")).flat().filter((e) => e.kind === "CONTINUATION");
     this.note((denied.length ? denied.map((e) => e.finding).join(" ") + " " : "") + "The requested disclosures are complete. Replay and inspection read these retained minutes without submitting another mandate.", "Proceedings concluded");
   }
+  atBottom() {
+    return this.body.scrollHeight - this.body.clientHeight - this.body.scrollTop <= 4;
+  }
+  isFollowing() {
+    return this.follow.checked && this.pinned;
+  }
+  pauseIfReading() {
+    if (!this.pinAfterResize && !this.atBottom()) this.pinned = false;
+  }
   followBottom() {
-    if (this.follow.checked) this.body.scrollTop = this.body.scrollHeight;
+    if (this.isFollowing()) this.body.scrollTop = this.body.scrollHeight;
   }
   latest() {
     this.inspected?.remove();
     this.inspected = void 0;
     this.follow.checked = true;
+    this.pinned = true;
+    this.pinAfterResize = false;
     this.selector.value = "latest";
     for (const [ordinal, option] of this.options) if (!this.snapshots.has(ordinal)) {
       option.remove();

@@ -37,6 +37,28 @@ test('an archive inspection survives new output and Latest restores chronologica
  expect(await page.locator('.chronicle-folio').last().getAttribute('data-ordinal')).toBe('100');await bottom(page);
 });
 
+test('scrolling up pauses automatic following and reaching the bottom resumes it',async({page})=>{
+ await page.goto('/demo/');await page.selectOption('#display-speed','225');await page.fill('#limit','100');await page.click('#run-button');await expect(page.locator('#chronicle-ordinal option[value="3"]')).toHaveCount(1);await bottom(page);
+ const scroll=page.locator('#chronicle-scroll');await scroll.hover();await page.mouse.wheel(0,-260);
+ await expect.poll(()=>scroll.evaluate(e=>e.scrollHeight-e.clientHeight-e.scrollTop>100)).toBe(true);
+ await scroll.evaluate(()=>new Promise<void>(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>resolve()))));
+ const before={top:await scroll.evaluate(e=>e.scrollTop),text:await page.locator('#chronicle-entries').textContent()};await expect(page.locator('#follow-chronicle')).toBeChecked();
+ await page.selectOption('#display-speed','0');await expect(page.locator('#run-status')).toContainText('Mandate complete');
+ expect(await scroll.evaluate(e=>e.scrollTop)).toBeCloseTo(before.top,0);expect(await page.locator('#chronicle-entries').textContent()).toBe(before.text);
+ await page.setViewportSize({width:1100,height:800});await expect.poll(()=>scroll.evaluate(e=>e.scrollHeight-e.clientHeight-e.scrollTop>50)).toBe(true);
+ await scroll.hover();
+ // Firefox limits a single wheel gesture to roughly a viewport; keep scrolling
+ // until the reader actually reaches the bottom instead of assuming a huge delta does.
+ await expect.poll(async()=>{await page.mouse.wheel(0,600);await scroll.evaluate(()=>new Promise<void>(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>resolve()))));return scroll.evaluate(e=>Math.abs(e.scrollTop+e.clientHeight-e.scrollHeight)<3);}).toBe(true);
+ await expect(page.locator('#chronicle-current')).toContainText('Ordinal 100');
+ expect((await invoke(page,'/audit/evidence')).journalEntries).toBe(100);
+});
+test('keyboard scrolling retains earlier minutes and End restores the latest',async({page})=>{
+ await page.goto('/demo/');await page.selectOption('#display-speed','225');await page.fill('#limit','100');await page.click('#run-button');await expect(page.locator('#chronicle-ordinal option[value="3"]')).toHaveCount(1);await bottom(page);
+ const scroll=page.locator('#chronicle-scroll');await scroll.focus();await page.keyboard.press('Home');await expect.poll(()=>scroll.evaluate(e=>e.scrollTop)).toBe(0);
+ const text=await page.locator('#chronicle-entries').textContent();await page.selectOption('#display-speed','0');await expect(page.locator('#run-status')).toContainText('Mandate complete');expect(await page.locator('#chronicle-entries').textContent()).toBe(text);expect(await scroll.evaluate(e=>e.scrollTop)).toBe(0);
+ await scroll.focus();await page.keyboard.press('End');await bottom(page);await expect(page.locator('#chronicle-current')).toContainText('Ordinal 100');
+});
 test('turning following off preserves the visible minutes while the business continues',async({page})=>{
  await page.goto('/demo/');await page.selectOption('#display-speed','225');await page.fill('#limit','100');await page.click('#run-button');await expect(page.locator('#chronicle-ordinal option[value="3"]')).toHaveCount(1);
  await page.uncheck('#follow-chronicle');const before=await page.locator('#chronicle-entries').textContent();await page.selectOption('#display-speed','0');await expect(page.locator('#run-status')).toContainText('Mandate complete');expect(await page.locator('#chronicle-entries').textContent()).toBe(before);

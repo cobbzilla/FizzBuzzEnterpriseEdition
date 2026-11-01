@@ -26,6 +26,13 @@ JavaScript. Add new pages to both builders and to the route list in
 
 ## Human review and limits
 
+The reading-position regression check uses actual wheel-up and keyboard scrolling
+during ongoing output. Earlier text stays in place without unchecking following;
+returning to the bottom resumes it. Resizing while reading does not move the
+reader to the latest entry. Manual checkbox-off and archive inspection still
+retain their explicit state. The targeted read-only accessibility review confirmed
+these behaviors with no browser errors or extra business execution.
+
 The Executive Chronicle review covers its named fixed-height scroll region,
 optional following, stable archive inspection during ongoing output, restoration
 of the latest announcement, native personnel-paper dialog and explicit opener

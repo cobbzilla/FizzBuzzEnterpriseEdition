@@ -71,6 +71,13 @@ the browser responsive between finite windows.
 
 The named chronicle region handles scrolling for long prose and document text.
 Following is optional; resize preserves the bottom when following is enabled.
+Automatic following additionally requires the reader to be at the bottom, within
+four CSS pixels for fractional scroll positions. Wheel-up, upward keyboard
+navigation, touch movement and scrollbar manipulation suspend it before queued
+layout work can reposition the reader. Returning to the bottom automatically
+discloses pending minutes when the checkbox remains enabled. The observer that
+measures layout no longer scrolls on every notification. Explicit checkbox-off
+and archive inspection continue to require an explicit return to Latest/following.
 Only concise current-action summaries are live-announced. Native details expose
 department records, and the native HR dialog has explicit close/Escape behavior
 and returns focus to its opener, including WebKit mouse activation.
