@@ -84,6 +84,17 @@ and returns focus to its opener, including WebKit mouse activation.
 
 ## Validation
 
+Chronicle language has 420 templates across 35 situation-specific phrase pools
+and a rotating pool of 32 general corporate asides. Shuffle bags choose each template before
+repeating it and avoid an immediate repeat across bag boundaries. The exact
+recorded findings remain literal in every variant; presentation randomness never
+changes Java decisions, output or retained evidence. A folio keeps the wording
+chosen on its first rendering, so archive inspection, re-rendering and replay do
+not rewrite a paragraph while somebody is reading it. Rehearsal paragraphs are
+likewise retained for the life of their case object. Phrase tests exhaust every
+pool, preserve hostile literal text, and check the no-repeat policy; browser
+tests compare original, inspected and replayed prose and unchanged documents.
+
 JVM checks cover single execution, output identity, actual event order, glyph
 allocation identity, honest cache/zero/extended paths, observer failure isolation,
 finite collection, nested and concurrent custody, error status and JSON escaping.

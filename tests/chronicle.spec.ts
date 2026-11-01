@@ -79,6 +79,15 @@ test('cache hits and zero mandates tell their own actual story',async({page})=>{
  await run(page,'0');await expect(page.locator('#chronicle-entries')).toContainText('No new recruitment');expect((await invoke(page,'/audit/evidence')).journalEntries).toBe(3);
 });
 
+test('randomized narration stays identical when its original folio is inspected and replayed',async({page})=>{
+ await page.goto('/demo/');await page.selectOption('#display-speed','0');await run(page,'15');
+ const original=await page.locator('.chronicle-folio[data-ordinal="15"] .chronicle-prose').allTextContents(),documents=await page.locator('.chronicle-folio[data-ordinal="15"] details').textContent();expect(original.length).toBeGreaterThan(6);
+ await page.selectOption('#chronicle-ordinal','15');expect(await page.locator('.chronicle-inspection .chronicle-prose').allTextContents()).toEqual(original);
+ await page.selectOption('#chronicle-ordinal','3');await page.selectOption('#chronicle-ordinal','15');expect(await page.locator('.chronicle-inspection .chronicle-prose').allTextContents()).toEqual(original);
+ await page.selectOption('#chronicle-ordinal','latest');await page.click('#personnel-replay');await expect(page.locator('#run-status')).toContainText('Execution replay complete');
+ expect(await page.locator('.chronicle-folio[data-ordinal="15"] .chronicle-prose').allTextContents()).toEqual(original);expect(await page.locator('.chronicle-folio[data-ordinal="15"] details').textContent()).toBe(documents);expect((await invoke(page,'/audit/evidence')).journalEntries).toBe(15);
+});
+
 test('long realtime windows retain bounded output, records and rendered narration',async({page})=>{
  await page.goto('/demo/');await page.selectOption('#display-speed','0');await run(page,'2500');
  await expect(page.locator('#chronicle-entries')).toContainText('transient');await expect(page.locator('#chronicle-entries')).not.toContainText('Appended sequence');
