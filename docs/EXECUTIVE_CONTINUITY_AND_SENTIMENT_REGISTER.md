@@ -678,3 +678,27 @@ declined before one ordinary fresh mandate begins. Our numerical history stays
 intact. I close today's entry with cloying affection for the company and a
 manageable anguish about how many forms it now takes to avoid printing fifteen
 again. Tomorrow may reuse this affection, subject to the usual five approvals.
+
+## 1 November 2026 — The institution discovers a second way to say it
+
+Dear Register, a reader observed that our paragraphs sounded rather alike. I
+looked at the minutes and felt an immediate anguish. We had surrounded every
+number with a remarkable quantity of explanation, then explained the explanation
+with the dependable repetition of a photocopier promoted beyond its abilities.
+The numbers had accepted this arrangement with their customary silence. Our
+reader, mercifully, had higher standards.
+
+The chronicle now has 420 templates and 32 corporate asides. Each office's
+proceedings can acquire a fresh turn of phrase while keeping its actual finding
+intact. I felt a syrupy joy watching the company discover another way to sound
+like itself. Then a smaller, useful anguish: a reader must be able to return to
+a paragraph and find the paragraph they remember. A retained folio therefore
+keeps its chosen wording through inspection and replay. Literary variety is
+permitted to enrich the account without moving its furniture mid-sentence.
+
+Company History has also found the courage to describe our confounding courage
+to convene. It admits that we built a reporting structure for numbers that had
+never asked for leadership. I expected this admission to injure our institutional
+pride. Instead I experienced an embarrassing tenderness toward the whole absurd
+enterprise. It still prints the correct answer. It simply has an astonishing
+amount to say about the experience, and now, at last, more than one way to say it.

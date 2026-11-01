@@ -94,6 +94,7 @@ export async function verifyPublic(origin: string, revision: string) {
     await page.goto(`${origin}/${route}/`);
     await expect(page.locator('main h1')).toHaveCount(1);
     if (route === 'api') await expect(page.locator('#api-total')).toContainText('ratified operations');
+    if (route === 'company-history') await expect(page.getByRole('heading',{name:'Confounding the courage to convene'})).toBeVisible();
    }
    await context.setOffline(true);
    await page.goto(origin + '/demo/');
