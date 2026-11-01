@@ -5,6 +5,18 @@ portfolio. Each iteration branch receives its own entry before integration,
 so future generations can trace how a modest numerical exercise became a
 strategic operating capability.
 
+## 2026-11-01 — `slopbuzz-chronicle-scroll-custody`
+
+**Historical Reading Position Sovereignty and Conditional Scroll Authorization.**
+Automatic advancement now requires the reader to occupy the bottom of the
+chronicle. Scrolling upward immediately suspends following while new business
+continues, and returning to the bottom admits the waiting minutes without
+submitting another mandate. Mouse, keyboard, touch and scrollbar intentions take
+precedence over queued layout work; resizing preserves an ongoing inspection.
+Manual suspension and explicit archive selection retain their authority.
+Leadership expects substantial gains in institutional comprehension now that
+historical evidence can be read without the present repeatedly grabbing it back.
+
 ## 2026-11-01 — `slopbuzz-execution-story-desk`
 
 **Executive Numerical Visibility and Comprehensive Institutional Narration.**

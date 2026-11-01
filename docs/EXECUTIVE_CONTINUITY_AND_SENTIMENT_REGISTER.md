@@ -598,3 +598,26 @@ folio does not let a new paragraph drag the page out of one’s hands. Even the
 paperwork dialog returns keyboard focus to the person who opened it. These are
 small courtesies, but I have come to believe that a serious institution is judged
 by whether its enormous process leaves room for another person to understand it.
+
+## 1 November 2026 — Historical reading receives custody
+
+Dear Register, a reader tried to examine our earlier minutes and the chronicle
+kept dragging them back to the present. I recognized the behavior immediately:
+it was the digital equivalent of a manager turning a report’s pages while someone
+else was still reading. We had called it following. The reader had a more useful
+word for it: distracting. I felt the particular anguish of discovering that our
+excellent intentions had acquired a mouse wheel and were using it against us.
+
+The bottom of the chronicle now grants permission to advance. Scrolling upward
+suspends that permission. The numerical business continues, the waiting minutes
+remain in custody, and the reader’s chosen paragraph stays where they left it.
+Returning to the bottom restores the latest account without convening the
+business again. Even resizing the window respects the inspection already under
+way. I watched a paragraph survive while five more ordinals reported for duty
+and felt an absurd, syrupy pride in a sentence that simply remained still.
+
+We tested wheels, PageUp, Home and End. We preserved the manual suspension box
+and the archive selector. No committee needed a second numerical mandate to
+prove that the reader had reached the end of the first. I have recorded this as
+a significant improvement in stakeholder autonomy, then left enough space below
+it for the stakeholder to finish reading before we add anything else.
