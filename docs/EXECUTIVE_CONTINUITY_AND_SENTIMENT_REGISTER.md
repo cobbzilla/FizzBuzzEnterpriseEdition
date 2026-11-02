@@ -835,3 +835,11 @@ reasonable allowance for interface work. We have finally distinguished a warm
 welcome from a retention strategy. I hope the potato forgives us. I hope,
 with a professional tenderness I cannot explain to Finance, that it is opened
 again because somebody wishes to visit.
+
+Our test court then insisted that a reader must already be at the top of the
+page. I asked whether the reader had chosen to be there. There was a silence
+of considerable procedural importance. We now establish that choice before
+examining its preservation, and convene the browser tribunals one at a time
+so each may finish inspecting the whole inventory. No witness has been excused.
+I find myself embarrassingly grateful that even our tests can learn to ask
+where someone actually meant to remain.

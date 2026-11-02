@@ -56,6 +56,9 @@ test('keyboard reading controls preserve focus, pause output and allow immediate
   await page.keyboard.press('Enter');
   await expect(page.locator('#run-status')).toContainText('resumed');
   await page.locator('#follow-output').uncheck();
+  // Choose a reading position explicitly; paced disclosure may already have scrolled before pause.
+  await page.locator('#output').focus(); await page.keyboard.press('Home');
+  await expect.poll(()=>page.locator('#output').evaluate(e=>e.scrollTop)).toBe(0);
   await page.locator('#reveal-all').focus(); await page.keyboard.press('Enter');
   await expect(page.locator('#run-status')).toContainText('All 100 lines are visible');
   expect(await page.locator('#output').evaluate(e=>e.scrollTop)).toBe(0);
