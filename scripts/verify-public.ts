@@ -16,6 +16,7 @@ export async function verifyPublic(origin: string, revision: string) {
  assert.equal(evidence.revision, revision);
  assert.equal(evidence.status, 'PASSED');
  assert.equal(evidence.browserLifecycle.status, 'PASSED');
+ const license=await fetch(origin+'/unicode-license.txt');assert.equal(license.status,200);assert.match(license.headers.get('content-type')||'',/text\/plain/);assert.ok((await license.text()).includes('UNICODE LICENSE V3'));
  const config = await get('/runtime-config.json');
  assert.equal(config.mode, 'browser');
  assert.equal(config.apiBaseUrl, '');

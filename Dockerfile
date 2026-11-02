@@ -5,6 +5,7 @@ COPY core/pom.xml core/pom.xml
 COPY server/pom.xml server/pom.xml
 COPY CHANGELOG.md .
 COPY docs/EXECUTIVE_CONTINUITY_AND_SENTIMENT_REGISTER.md ./docs/
+COPY data/unicode/LICENSE.txt ./data/unicode/LICENSE.txt
 COPY src ./src
 COPY resources ./resources
 RUN mvn -q -DskipTests install && mvn -q -f server/pom.xml dependency:copy-dependencies -DoutputDirectory=target/dependency

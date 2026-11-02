@@ -22,6 +22,13 @@
     </dependency>
   </dependencies>
   <build>
+    <resources>
+      <resource>
+        <directory>../data/unicode</directory>
+        <targetPath>META-INF/licenses/unicode</targetPath>
+        <includes><include>LICENSE.txt</include></includes>
+      </resource>
+    </resources>
     <sourceDirectory>../src/main/java</sourceDirectory>
     <plugins>
       <plugin>
