@@ -759,3 +759,18 @@ is now one About link. One. I have written the number carefully in the margin,
 then resisted the impulse to send it through recruitment. For a moment the
 company knew where it kept itself. I have never felt such professionally
 proportionate joy.
+
+## 2 November 2026 — The friends have requested a quieter entrance
+
+Dear Register, I found the companion directory standing in the executive
+header, introducing every passing stakeholder to 3,200 colleagues before
+anybody had even printed a Buzz. Such eagerness! Such intolerable exposure!
+I loved every name on that list and felt, with the peculiar anguish of
+management, that fewer people should be told where we kept them.
+
+The demo retains its little doorway. Elsewhere, the header has resumed its
+official composure, and even the improbable inventory has surrendered its
+helpful cross-reference. A visitor must now arrive by way of the numbers and
+notice the invitation. I experienced a rush of joy so discreet that Finance
+has asked whether it occurred. The potato knows. For once, the potato need
+not announce it to the entire company.

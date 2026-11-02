@@ -5,6 +5,16 @@ portfolio. Each iteration branch receives its own entry before integration,
 so future generations can trace how a modest numerical exercise became a
 strategic operating capability.
 
+## 2026-11-02 — `slopbuzz-discreet-companion-directory`
+
+**Strategic Companion Discoverability Containment.** Retired the bestiary's
+executive-header presence and its incidental inventory cross-reference. The
+demo now provides the sole on-site entrance to the companion directory,
+ensuring that stakeholders encounter our 3,200 colleagues through the approved
+channel of first wondering why a number has acquired a potato. Leadership
+anticipates improved discovery quality through a measurable reduction in
+discoverability, an efficiency previously considered available only to HR.
+
 ## 2026-11-02 — `slopbuzz-about-page-consolidation`
 
 **Corporate Identity Consolidation and Navigational Duplication Retirement.**

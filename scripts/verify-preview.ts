@@ -27,6 +27,7 @@ try {
   for(const route of ['demo','bestiary','department-of-improbable-appointments','about','company-history','accessibility','api','validation']) {
    await page.goto(`http://localhost:${port}/${route}/`);
    assert.equal(await page.getByRole('navigation',{name:'Primary navigation'}).getByRole('link',{name:'About',exact:true}).count(),1);
+   assert.equal(await page.getByRole('navigation',{name:'Primary navigation'}).getByRole('link',{name:'Companion bestiary',exact:true}).count(),0);
    assert.equal(await page.locator('main h1').count(),1);
    if(route==='bestiary')await page.waitForFunction(()=>document.querySelector('#bestiary-status')?.textContent?.includes('3200 companions'));
    if(route==='department-of-improbable-appointments')await page.waitForFunction(()=>document.querySelector('#rarity-rows')?.children.length===3200);

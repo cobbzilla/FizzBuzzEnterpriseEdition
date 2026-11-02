@@ -17,7 +17,7 @@ for (const route of routes) {
     if(route === '') await expect(page.locator('#health-value')).toHaveText('LIVE');
     if(route === 'response/') await expect(page.locator('#response-status')).toContainText('Response received');
     const nav = page.getByRole('navigation',{name:'Primary navigation',exact:true});
-    expect(await nav.getByRole('link').allTextContents()).toEqual(['Live demo','Operations','Companion bestiary','API charter','About','Validation tribunal']);
+    expect(await nav.getByRole('link').allTextContents()).toEqual(['Live demo','Operations','API charter','About','Validation tribunal']);
     await expect(page.locator('main h1')).toHaveCount(1);
     await expect(page.locator('#runtime-status, #offline-status')).toHaveCount(0);
     await page.keyboard.press(browserName === 'webkit' ? 'Alt+Tab' : 'Tab');

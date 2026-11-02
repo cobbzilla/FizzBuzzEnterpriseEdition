@@ -101,6 +101,7 @@ export async function verifyPublic(origin: string, revision: string) {
    for (const route of ['demo', 'bestiary', 'department-of-improbable-appointments', 'api', 'about', 'company-history', 'changelog', 'continuity-register', 'accessibility', 'validation', 'response']) {
     await page.goto(`${origin}/${route}/`);
     await expect(page.locator('main h1')).toHaveCount(1);
+    await expect(page.getByRole('navigation',{name:'Primary navigation',exact:true}).getByRole('link',{name:'Companion bestiary',exact:true})).toHaveCount(0);
     if (route === 'bestiary') await expect(page.locator('#bestiary-status')).toContainText('3200 companions');
     if (route === 'department-of-improbable-appointments') await expect(page.locator('#rarity-rows tr')).toHaveCount(3200);
     if (route === 'api') await expect(page.locator('#api-total')).toContainText('ratified operations');
@@ -121,7 +122,7 @@ export async function verifyPublic(origin: string, revision: string) {
    await page.goto(origin+'/#operations');
    await page.click('#procurement-button');
    await expect(page.locator('#procurement-status')).toContainText('8 separate line items');
-   await page.goto(origin+'/bestiary/');await expect(page.locator('#bestiary-status')).toContainText('3200 companions');await page.selectOption('#bestiary-kind','single');await page.fill('#bestiary-search','unicorn');await expect(page.locator('#bestiary-results article')).toHaveCount(1);
+   await page.goto(origin+'/demo/');await page.locator('#companion-help a').click();await expect(page).toHaveURL(/\/bestiary\/$/);await expect(page.locator('#bestiary-status')).toContainText('3200 companions');await page.selectOption('#bestiary-kind','single');await page.fill('#bestiary-search','unicorn');await expect(page.locator('#bestiary-results article')).toHaveCount(1);
    await page.goto(origin + '/api/');
    await expect(page.locator('#api-total')).toContainText('ratified operations');
    assert.deepEqual(businessRequests, []);
