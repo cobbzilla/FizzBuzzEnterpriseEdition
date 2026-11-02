@@ -3,7 +3,7 @@
 // web/runtime-protocol.ts
 var runtimeProtocol = 1;
 function isTransientOperation(path, method = "GET") {
-  return method === "GET" && ["/companions/catalog", "/companions/strategies", "/companions/window", "/operations/runtime", "/fizzbuzz/window", "/fizzbuzz/window/explained", "/capacity/forecast/extended", "/procurement/dossier", "/onboarding/rehearsal", "/precedent/rehearsal"].includes(path.split("?")[0]);
+  return method === "GET" && ["/premises/rehearsal", "/companions/catalog", "/companions/strategies", "/companions/window", "/operations/runtime", "/fizzbuzz/window", "/fizzbuzz/window/explained", "/capacity/forecast/extended", "/procurement/dossier", "/onboarding/rehearsal", "/precedent/rehearsal"].includes(path.split("?")[0]);
 }
 
 // web/release-assets.ts
@@ -733,6 +733,34 @@ var PrecedentView = class {
 // web/chronicle-language.ts
 var lines = (source) => Object.freeze(source.trim().split("\n").map((line) => line.trim()));
 var narrativeTemplates = {
+  premises: lines(`
+{facts} Facilities has proved that the empty room was empty, an achievement it intends to occupy prominently in its annual report.
+The numerical tenant has completed its property formalities. {facts}
+{facts} An absence of characters has been established through a sufficient presence of officials.
+The company has obtained documentary title to the space between nothing and something. {facts}
+{facts} The premises were inspected before anyone had the opportunity to write on them.
+Our new address contains no addressable occupants yet. {facts}
+{facts} Facilities has issued permission for the deliverable to have somewhere to be.
+An empty buffer has secured the institutional recognition previously denied to empty buffers. {facts}
+{facts} The vacancy certificate is a historical finding; the company expects its successful premises to become less vacant shortly.
+The lease covers exactly the room the inspector visited, a detail Legal has underlined twice. {facts}
+{facts} No character acquired tenancy through the mere availability of floor space.
+The organization can now distinguish an empty string from an empty string without the appropriate documents. {facts}
+`),
+  premisesDiscovery: lines(`
+{facts} The invisible tenant was visible to the department whose entire operating model requires finding one.
+Facilities discovered that nothing was already being occupied. {facts}
+{facts} The room contained an unauthorized absence with a Unicode identity.
+An apparently vacant property has produced a surprisingly articulate eviction file. {facts}
+{facts} The inspector declined to accept invisibility as evidence of non-residence.
+The hidden occupant's code point has been entered into the minutes with unusual satisfaction. {facts}
+{facts} A character had acquired premises without acquiring permission to be a character here.
+The company has removed the squatter while retaining its forwarding designation. {facts}
+{facts} The board appreciates an inspection capable of detecting the sort of tenant the board cannot see.
+Vacancy has required corrective action, which Facilities regards as a particularly profitable form of emptiness. {facts}
+{facts} The occupant left before numerical move-in; its documentary footprint remains considerable.
+The property now qualifies as empty for reasons considerably longer than its former contents. {facts}
+`),
   one: lines(`
 {facts} The starting position has achieved the headcount traditionally associated with being first.
 The numerical reception desk can finally point to an occupant. {facts}
@@ -1288,6 +1316,142 @@ var ChronicleLanguage = class {
   }
 };
 
+// web/premises-model.ts
+var offices = ["Premises Allocation Office", "Character-by-Character Vacancy Inspector", "Hidden Occupant Eviction Authority", "Vacancy Reinspection Office", "Single-Use Occupancy Lease Authority", "Independent Premises Auditor"];
+function parsePremises(value) {
+  const d = value;
+  const invalid = () => {
+    throw new Error("The premises office supplied inconsistent inspection papers.");
+  };
+  if (!d || d.schema !== "slopbuzz-premises/v1" || typeof d.ordinal !== "string" || !/^\d+$/.test(d.ordinal) || d.ordinal[0] === "0" || !["MANDATE", "REHEARSAL"].includes(d.purpose) || !["APPROVED", "REJECTED"].includes(d.status) || typeof d.vacancyCertified !== "boolean" || !(d.initialLength === null || Number.isSafeInteger(d.initialLength) && d.initialLength >= 0 && d.initialLength <= 256) || !Array.isArray(d.tenants) || d.tenants.length > 256 || !Array.isArray(d.steps) || d.steps.length !== offices.length) invalid();
+  let position = 0;
+  for (const tenant of d.tenants) {
+    if (!tenant || tenant.position !== position || typeof tenant.name !== "string" || typeof tenant.excuse !== "string" || typeof tenant.recognized !== "boolean" || typeof tenant.codePoint !== "string" || !/^U\+[0-9A-F]{4,6}$/.test(tenant.codePoint)) invalid();
+    const point = Number.parseInt(tenant.codePoint.slice(2), 16);
+    if (point > 1114111) invalid();
+    position += point > 65535 ? 2 : 1;
+  }
+  if (d.initialLength === null && d.tenants.length > 0 || d.initialLength !== null && d.initialLength !== position) invalid();
+  let rejected = false;
+  for (const [index, step] of d.steps.entries()) {
+    if (!step || step.office !== offices[index] || typeof step.finding !== "string" || typeof step.document !== "string") invalid();
+    if (rejected) {
+      if (step.state !== "NOT_REACHED") invalid();
+      continue;
+    }
+    if (step.state === "REJECTED") {
+      rejected = true;
+      continue;
+    }
+    const allowed = index === 1 ? ["APPROVED", "DISCOVERED"] : index === 2 ? ["APPROVED", "NOT_REQUIRED"] : ["APPROVED"];
+    if (!allowed.includes(step.state)) invalid();
+  }
+  if (rejected !== (d.status === "REJECTED") || d.status === "APPROVED" && (d.initialLength === null || d.tenants.some((t) => !t.recognized))) invalid();
+  if (d.steps[1].state === "DISCOVERED" && d.tenants.length === 0) invalid();
+  if (d.vacancyCertified !== (d.steps[3].state === "APPROVED")) invalid();
+  if (["APPROVED", "DISCOVERED"].includes(d.steps[1].state) && d.initialLength === null) invalid();
+  if (d.steps[1].state === "APPROVED" && d.tenants.length !== 0) invalid();
+  if (d.steps[2].state === "NOT_REQUIRED" && d.tenants.length !== 0) invalid();
+  if (d.steps[2].state === "APPROVED" && d.tenants.length === 0) invalid();
+  return d;
+}
+
+// web/premises.ts
+function element2(tag, text, className) {
+  const n = document.createElement(tag);
+  if (text !== void 0) n.textContent = text;
+  if (className) n.className = className;
+  return n;
+}
+function premisesCard(d, details = false) {
+  const card = element2("div", void 0, "premises-card");
+  card.dataset.premisesOrdinal = d.ordinal;
+  card.dataset.premisesVerdict = d.status;
+  card.append(element2("p", `Premises inspection \xB7 Ordinal ${d.ordinal}`, "eyebrow"));
+  const verdict = d.status === "REJECTED" ? "Occupancy refused" : d.tenants.length ? "Hidden occupants removed; vacancy certified" : "Vacancy certified; lease issued";
+  card.append(element2("p", verdict, "premises-verdict"));
+  const plan = element2("dl", void 0, "premises-floorplan");
+  const before = d.initialLength === null ? "No valid initial survey received" : d.tenants.length ? `${d.initialLength} UTF-16 unit${d.initialLength === 1 ? "" : "s"} occupied` : "Empty: 0 characters";
+  for (const [label, text] of [["Initial survey", before], ["Before numerical occupancy", d.vacancyCertified ? "Reinspection confirmed 0 characters" : "Vacancy authorization withheld"], ["Lease", d.status === "APPROVED" ? "Issued to this request and this premises" : "No usable lease issued"]]) {
+    const row = element2("div");
+    row.append(element2("dt", label), element2("dd", text));
+    plan.append(row);
+  }
+  card.append(plan);
+  if (d.tenants.length) {
+    const list = element2("ul", void 0, "premises-tenants");
+    for (const tenant of d.tenants) {
+      const row = element2("li");
+      row.append(element2("strong", `${tenant.name} \xB7 ${tenant.codePoint}`), element2("p", `Position ${tenant.position}. ${tenant.excuse}`));
+      list.append(row);
+    }
+    card.append(list);
+  }
+  card.append(element2("p", d.purpose === "REHEARSAL" ? "Read-only specimen. Its lease is closed after inspection; no numerical output, cache entry or audit transaction is created." : "This is the actual pre-occupancy inspection. Authorized numerical text moves in after vacancy is certified.", "field-help"));
+  if (details) {
+    const list = element2("ol", void 0, "personnel-steps");
+    list.setAttribute("aria-label", "Six premises office decisions");
+    for (const [index, step] of d.steps.entries()) {
+      const item = element2("li");
+      item.dataset.verdict = step.state;
+      const disclosure = element2("details"), summary = element2("summary");
+      const number = element2("span", String(index + 1).padStart(2, "0"), "personnel-index");
+      number.setAttribute("aria-hidden", "true");
+      summary.append(number, element2("span", step.office, "personnel-office"), element2("span", step.state.replaceAll("_", " ").toLowerCase(), "personnel-badge"));
+      disclosure.append(summary, element2("p", step.finding), element2("p", step.document, "field-help"));
+      item.append(disclosure);
+      list.append(item);
+    }
+    card.append(list);
+  }
+  return card;
+}
+var PremisesDesk = class {
+  busy = false;
+  serial = 0;
+  constructor() {
+    byId("premises-form").addEventListener("submit", (event) => {
+      event.preventDefault();
+      if (!this.busy) void this.inspect();
+    });
+  }
+  async inspect() {
+    const ordinal = byId("premises-ordinal"), scenario = byId("premises-scenario").value;
+    if (!/^[1-9][0-9]*$/.test(ordinal.value)) {
+      ordinal.setAttribute("aria-invalid", "true");
+      setText("premises-error", "Enter a positive whole number with no leading zeros.");
+      ordinal.focus();
+      return;
+    }
+    ordinal.removeAttribute("aria-invalid");
+    setText("premises-error", "");
+    const requestedOrdinal = ordinal.value;
+    const serial = ++this.serial;
+    this.busy = true;
+    byId("premises-submit").setAttribute("aria-disabled", "true");
+    byId("premises-result").setAttribute("aria-busy", "true");
+    setText("premises-status", "The property offices are inspecting a read-only specimen\u2026");
+    try {
+      const response = await request(`/premises/rehearsal?scenario=${encodeURIComponent(scenario)}&ordinal=${requestedOrdinal}`);
+      if (!response.ok) throw new Error(`Inspection desk returned ${response.status}.`);
+      const data = parsePremises(await response.json());
+      if (data.purpose !== "REHEARSAL" || data.ordinal !== requestedOrdinal) throw new Error("The specimen belongs to another premises request.");
+      if (serial !== this.serial) return;
+      byId("premises-result").replaceChildren(premisesCard(data, true));
+      const refusal = data.steps.find((s) => s.state === "REJECTED");
+      setText("premises-status", refusal ? `Occupancy refused by ${refusal.office}. ${refusal.finding}` : data.tenants.length ? `Inspection identified and removed ${data.tenants.map((t) => `${t.name}, ${t.codePoint}`).join("; ")}. Reinspection passed; specimen lease issued and closed.` : "Vacant premises approved. Specimen lease issued and closed.");
+    } catch (error) {
+      if (serial === this.serial) setText("premises-status", `The property inspection could not be completed: ${error.message} No numerical mandate was submitted.`);
+    } finally {
+      if (serial === this.serial) {
+        this.busy = false;
+        byId("premises-submit").setAttribute("aria-disabled", "false");
+        byId("premises-result").setAttribute("aria-busy", "false");
+      }
+    }
+  }
+};
+
 // web/chronicle.ts
 async function readProclamation(response) {
   const runtime2 = JSON.parse(response.headers.get("X-SlopBuzz-Execution-Runtime") || "{}");
@@ -1343,6 +1507,8 @@ function paragraphs(folio, language) {
   }
   const assembly = events.find((e) => e.kind === "ASSEMBLY");
   if (assembly) add("assembly", assembly.finding + " The visitor then consulted each certified strategy before allowing its printer to speak.");
+  const premises = events.filter((e) => e.kind.startsWith("PREMISES_") && e.kind !== "PREMISES_CERTIFICATE");
+  if (premises.length) add(premises.some((e) => e.kind === "PREMISES_DISCOVERY") ? "premisesDiscovery" : "premises", premises.map((e) => `${e.office}: ${e.finding}`).join(" "));
   const classification = events.find((e) => e.kind === "CLASSIFICATION" || e.kind === "EXTENDED_CLASSIFICATION");
   if (classification) add("classification", classification.finding);
   const procurement = events.filter((e) => ["REQUISITION", "DELIVERY", "GLYPH_ACCEPTED", "GLYPH_ASSEMBLED"].includes(e.kind));
@@ -1557,6 +1723,12 @@ var ExecutiveChronicle = class {
     article.append(node2("p", `Ordinal ${folio.ordinal} \xB7 ${folio.cache === "HIT" ? "Institutional memory" : folio.recorded ? "Recorded Java proceedings" : folio.events.length ? "Recorded personnel \xB7 procedure explained" : "Observed output \xB7 procedure explained"}`, "chronicle-source"), node2("h4", title(folio)));
     folio.narrative ??= Object.freeze(paragraphs(folio, this.language));
     for (const paragraph of folio.narrative) article.append(node2("p", paragraph, "chronicle-prose"));
+    const certificate = folio.events.find((e) => e.kind === "PREMISES_CERTIFICATE");
+    if (certificate?.document) try {
+      const data = parsePremises(JSON.parse(certificate.document));
+      if (data.ordinal === folio.ordinal && data.purpose === "MANDATE" && folio.cache !== "HIT") article.append(premisesCard(data));
+    } catch {
+    }
     if (folio.events.length) {
       const details = node2("details");
       details.append(node2("summary", `Inspect ${folio.events.length} department records for ordinal ${folio.ordinal}`));
@@ -1689,6 +1861,7 @@ var activityMode = "mandate";
 var manualStep = false;
 var chronicle = new ExecutiveChronicle();
 var precedent = new PrecedentView();
+new PremisesDesk();
 var companions = new CompanionDesk();
 var currentLimit = "15";
 var lastPlayback;

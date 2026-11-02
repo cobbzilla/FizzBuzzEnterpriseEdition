@@ -2,6 +2,7 @@ import {byId,setText} from './dom';
 import {parseDossier,type PersonnelDossier} from './onboarding';
 import {parsePrecedent,type PrecedentDossier} from './precedent';
 import {ChronicleLanguage,type NarrativeSituation} from './chronicle-language';
+import {parsePremises,premisesCard} from './premises';
 export interface ExecutionEvent {ordinal:string|null;kind:string;office:string;finding:string;document:string|null}
 export interface ExecutionPacket {text:string;events:ExecutionEvent[];omitted:number;cache:string;runtime:Record<string,unknown>;recorded:boolean;precedent?:PrecedentDossier}
 export interface Folio {ordinal:string;text:string;events:readonly ExecutionEvent[];cache:string;recorded:boolean;runtime:Record<string,unknown>;narrative?:readonly string[]}
@@ -36,6 +37,8 @@ function paragraphs(folio:Folio,language:ChronicleLanguage):string[]{
  if(hr.length)add('personnel','Personnel has supplied the actual case file. '+hr.map(e=>`${e.office}: ${e.finding}`).join(' '));
  if(!folio.recorded){add('legacy',`The observed proclamation is “${folio.text}”. The earlier administration returned the answer without forwarding a detailed execution dossier. ${hr.length?'Its supplied personnel approvals are recorded above; the other departments are explained as procedure.':'We can explain the company’s procedure while keeping those explanations distinct from recorded decisions.'}`);add('procedure',`Under the current procedure, One completes recruitment and induction before a new sequence starts. Each ordinal is classified for Fizz, Buzz or its own decimal identity, and word output obtains its approved characters through procurement. The procedure’s contracts are described here; individual historical approvals are not reconstructed.`);add('procedure',`A retained mandate uses staged output, an independent notary, the audit repository and its message queue. Extended-magnitude windows use exact arithmetic and an independent lexical witness without retained audit transactions. The selected runtime’s old receipt does not establish which newer offices attended this particular case.`);return parts;}
  const assembly=events.find(e=>e.kind==='ASSEMBLY');if(assembly)add('assembly',assembly.finding+' The visitor then consulted each certified strategy before allowing its printer to speak.');
+ const premises=events.filter(e=>e.kind.startsWith('PREMISES_')&&e.kind!=='PREMISES_CERTIFICATE');
+ if(premises.length)add(premises.some(e=>e.kind==='PREMISES_DISCOVERY')?'premisesDiscovery':'premises',premises.map(e=>`${e.office}: ${e.finding}`).join(' '));
  const classification=events.find(e=>e.kind==='CLASSIFICATION'||e.kind==='EXTENDED_CLASSIFICATION');if(classification)add('classification',classification.finding);
  const procurement=events.filter(e=>['REQUISITION','DELIVERY','GLYPH_ACCEPTED','GLYPH_ASSEMBLED'].includes(e.kind));
  if(procurement.length){const received=procurement.filter(e=>e.kind==='GLYPH_ACCEPTED');const zs=received.filter(e=>e.finding.includes('character z,'));add('procurement',`Glyph Procurement received ${received.length} individually inspected character allocations${zs.length?`, including ${zs.length} separately certified z’s`:''}. `+procurement.filter(e=>e.kind!=='GLYPH_ACCEPTED').map(e=>e.finding).join(' ')+' Every position’s receiving decision is available in the department documents.');}
@@ -125,6 +128,7 @@ export class ExecutiveChronicle {
   article.append(node('p',`Ordinal ${folio.ordinal} · ${folio.cache==='HIT'?'Institutional memory':folio.recorded?'Recorded Java proceedings':folio.events.length?'Recorded personnel · procedure explained':'Observed output · procedure explained'}`,'chronicle-source'),node('h4',title(folio)));
   folio.narrative??=Object.freeze(paragraphs(folio,this.language));
   for(const paragraph of folio.narrative)article.append(node('p',paragraph,'chronicle-prose'));
+  const certificate=folio.events.find(e=>e.kind==='PREMISES_CERTIFICATE');if(certificate?.document)try{const data=parsePremises(JSON.parse(certificate.document));if(data.ordinal===folio.ordinal&&data.purpose==='MANDATE'&&folio.cache!=='HIT')article.append(premisesCard(data));}catch{/* Optional property papers cannot erase an observed numerical answer. */}
   if(folio.events.length){const details=node('details');details.append(node('summary',`Inspect ${folio.events.length} department records for ordinal ${folio.ordinal}`));const list=node('ol');for(const event of folio.events){const item=node('li');item.append(node('strong',event.office),node('p',event.finding));if(event.document)item.append(node('pre',event.document,'chronicle-document'));list.append(item);}details.append(list);article.append(details);}
   return article;
  }

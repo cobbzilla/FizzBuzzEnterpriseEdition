@@ -84,7 +84,7 @@ and returns focus to its opener, including WebKit mouse activation.
 
 ## Validation
 
-Chronicle language has 420 templates across 35 situation-specific phrase pools
+Chronicle language has 444 templates across 37 situation-specific phrase pools
 and a rotating pool of 32 general corporate asides. Shuffle bags choose each template before
 repeating it and avoid an immediate repeat across bag boundaries. The exact
 recorded findings remain literal in every variant; presentation randomness never

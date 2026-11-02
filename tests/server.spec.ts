@@ -12,6 +12,8 @@ test('generated TypeScript interface runs against the optional Spring JVM server
     await page.goto(`http://127.0.0.1:${port}/demo/`);await expect(page.locator('#health-value')).toHaveText('LIVE');
     await page.selectOption('#display-speed','0');await page.click('#run-button');await expect(page.locator('#run-status')).toContainText('Mandate complete');await expect(page.locator('#cache-result')).toHaveText('BYPASS');
     await expect(page.locator('#personnel-verdict')).toHaveText('Approved to start at 1');
+    await expect(page.locator('#chronicle-entries [data-premises-ordinal="7"]')).toContainText('U+00A0');
+    await page.selectOption('#premises-scenario','bell');await page.click('#premises-submit');await expect(page.locator('#premises-status')).toContainText('U+0007');
     await page.selectOption('#precedent-scenario','lowercase-fizz');await page.click('#precedent-submit');await expect(page.locator('#precedent-status')).toContainText('Reuse rejected by Independent Lexical Bench');
     await page.click('[data-personnel-scenario="zero"]');await expect(page.locator('#personnel-verdict')).toHaveText('Application rejected');
     await page.fill('#limit','1001');await page.click('#run-button');await expect(page.locator('#run-status')).toContainText('Mandate complete. 1001 lines disclosed');
