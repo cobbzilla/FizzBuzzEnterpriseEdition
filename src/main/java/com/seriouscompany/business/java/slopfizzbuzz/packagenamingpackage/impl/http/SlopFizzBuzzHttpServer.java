@@ -41,10 +41,13 @@ public final class SlopFizzBuzzHttpServer implements AutoCloseable {
 	public SlopFizzBuzzHttpServer(final InetSocketAddress address, final SlopFizzBuzz service,
 			final OutputTransactionCoordinator transactions, final OutputAuditJournal journal,
 			final OutputCache cache, final ReleaseCustodyReport release) throws IOException {
-		this.server = HttpServer.create(address, 0);
+		this(address,service,transactions,journal,cache,release,com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.companions.CompanionDirectorate.standard());
+ }
+ public SlopFizzBuzzHttpServer(final InetSocketAddress address,final SlopFizzBuzz service,final OutputTransactionCoordinator transactions,final OutputAuditJournal journal,final OutputCache cache,final ReleaseCustodyReport release,final com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.companions.CompanionDirectorate companions)throws IOException {
+        this.server = HttpServer.create(address, 0);
 		this.workers = Executors.newFixedThreadPool(4);
 		this.server.setExecutor(this.workers);
-        final EnterpriseDispatcher dispatcher=new EnterpriseDispatcher(service,transactions,journal,cache,release);
+        final EnterpriseDispatcher dispatcher=new EnterpriseDispatcher(service,transactions,journal,cache,release,new com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.runtime.SystemRuntimeClock(),new com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.runtime.RuntimeIdentity(){public String toJson(){return "{\"mode\":\"server\",\"engine\":\"JVM\",\"storage\":\"configured JVM audit repository\",\"cache\":\"Redis adapter\",\"protocol\":1,\"narrative\":1}";}},companions);
         final TraceCustodyFilter trace=new TraceCustodyFilter();
         final HttpHandler adapter=new HttpHandler(){public void handle(HttpExchange exchange) throws IOException {
             try {
@@ -55,11 +58,11 @@ public final class SlopFizzBuzzHttpServer implements AutoCloseable {
                 exchange.getResponseBody().write(bytes);
             } finally {exchange.close();}
         }};
-        for(String path:new String[]{"/operations/runtime", "/onboarding/rehearsal", "/precedent/rehearsal", "/procurement/dossier","/fizzbuzz","/fizzbuzz/explained","/fizzbuzz/window","/fizzbuzz/window/explained","/capacity/forecast","/capacity/forecast/extended","/healthz","/readyz","/cache/status","/audit/status","/audit/evidence","/operations/scorecard","/operations/canary","/operations/recovery","/operations/release"}) register(path,adapter,trace);
+        for(String path:new String[]{"/companions/catalog","/companions/strategies","/companions/window","/operations/runtime", "/onboarding/rehearsal", "/precedent/rehearsal", "/procurement/dossier","/fizzbuzz","/fizzbuzz/explained","/fizzbuzz/window","/fizzbuzz/window/explained","/capacity/forecast","/capacity/forecast/extended","/healthz","/readyz","/cache/status","/audit/status","/audit/evidence","/operations/scorecard","/operations/canary","/operations/recovery","/operations/release"}) register(path,adapter,trace);
         register("/",new StaticSiteHandler(),trace);
 	}
 
-	private static ReleaseCustodyReport configuredRelease() {
+	static ReleaseCustodyReport configuredRelease() {
 		final String value = System.getenv("SLOPBUZZ_RELEASE_SHA");
 		return new ReleaseCustodyReport(value == null || value.trim().isEmpty()
 				? "unknown" : value, System.currentTimeMillis());

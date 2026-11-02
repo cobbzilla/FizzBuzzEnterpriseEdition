@@ -2,6 +2,7 @@ package com.seriouscompany.browser;
 import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.audit.*;
 import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.cache.*;
 import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.http.*;
+import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.companions.CompanionDirectorate;
 import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.operations.ReleaseCustodyReport;
 import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.runtime.ExplicitEnterpriseAssembly;
 import java.util.*;
@@ -43,7 +44,7 @@ public final class BrowserRuntime {
             };
             OutputAuditJournal journal=new OutputAuditJournal(store,text->host("sha256",text));
             OutputTransactionCoordinator transactions=new OutputTransactionCoordinator(journal);
-            dispatcher=new EnterpriseDispatcher(ExplicitEnterpriseAssembly.assemble(transactions),transactions,journal,new CacheAuthority(new BrowserCache()),new ReleaseCustodyReport(revision,clock.currentTimeMillis()),clock,()->host("runtime",""));
+            dispatcher=new EnterpriseDispatcher(ExplicitEnterpriseAssembly.assemble(transactions),transactions,journal,new CacheAuthority(new BrowserCache()),new ReleaseCustodyReport(revision,clock.currentTimeMillis()),clock,()->host("runtime",""),CompanionDirectorate.standard());
             return JSString.valueOf("READY");
         });
     }

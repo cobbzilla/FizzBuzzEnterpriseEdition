@@ -43,6 +43,10 @@
     {
       "name": "Prior work ratification",
       "description": "Five real offices must license the reuse of a cached answer."
+    },
+    {
+      "name": "Companion Procurement",
+      "description": "Read-only deterministic nonhuman companion inspection and a spectacularly unequal scarcity charter."
     }
   ],
   "paths": {
@@ -1129,6 +1133,213 @@
           }
         }
       }
+    },
+    "/companions/catalog": {
+      "get": {
+        "tags": [
+          "Companion Procurement"
+        ],
+        "operationId": "inspectCompanionCatalog",
+        "summary": "Inspect 3,200 nonhuman character dossiers (1,364 singles and 1,836 themed pairs)",
+        "description": "Read-only shared Java inspection, available in the browser and Java server. No numerical production, audit writes or cache changes. No query parameters are accepted.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Inspection completed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "schema": {
+                      "const": "slopbuzz-companions/v1"
+                    },
+                    "version": {
+                      "type": "string"
+                    },
+                    "tickets": {
+                      "const": 1000000000
+                    },
+                    "entries": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Companion"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed parameters or unknown strategy"
+          },
+          "405": {
+            "description": "Only GET is authorized"
+          }
+        }
+      }
+    },
+    "/companions/strategies": {
+      "get": {
+        "tags": [
+          "Companion Procurement"
+        ],
+        "operationId": "inspectCompanionStrategies",
+        "summary": "List interchangeable Java assignment strategies",
+        "description": "Read-only shared Java inspection, available in the browser and Java server. No numerical production, audit writes or cache changes. No query parameters are accepted.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Inspection completed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "strategies": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "explanation": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed parameters or unknown strategy"
+          },
+          "405": {
+            "description": "Only GET is authorized"
+          }
+        }
+      }
+    },
+    "/companions/window": {
+      "get": {
+        "tags": [
+          "Companion Procurement"
+        ],
+        "operationId": "inspectCompanionWindow",
+        "summary": "Assign companions to a finite exact-ordinal window",
+        "description": "Read-only shared Java inspection, available in the browser and Java server. No numerical production, audit writes or cache changes. Only Fizz, Buzz and FizzBuzz ordinals have assignments. Repeating the same catalog, strategy and ordinal returns the same companion. Factor extraction is bounded; unresolved cofactors are not certified prime.",
+        "parameters": [
+          {
+            "name": "start",
+            "in": "query",
+            "required": true,
+            "description": "Positive exact decimal ordinal; no precision is lost through a floating-point conversion.",
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9]+$",
+              "default": "1"
+            }
+          },
+          {
+            "name": "count",
+            "in": "query",
+            "required": true,
+            "description": "Number of ordinals inspected, including plain numerals which receive no companion.",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 15
+            }
+          },
+          {
+            "name": "strategy",
+            "in": "query",
+            "required": true,
+            "description": "Versioned swappable assignment provider. The default demo uses factor-resonance-v1.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "factor-resonance-v1",
+                "ordinal-constellation-v1"
+              ],
+              "default": "factor-resonance-v1"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Inspection completed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "schema": {
+                      "const": "slopbuzz-companion-window/v1"
+                    },
+                    "catalogVersion": {
+                      "type": "string"
+                    },
+                    "strategy": {
+                      "type": "string"
+                    },
+                    "start": {
+                      "type": "string"
+                    },
+                    "count": {
+                      "type": "integer"
+                    },
+                    "assignments": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "ordinal": {
+                            "type": "string"
+                          },
+                          "flavor": {
+                            "enum": [
+                              "Fizz",
+                              "Buzz",
+                              "FizzBuzz"
+                            ]
+                          },
+                          "companionId": {
+                            "type": "string"
+                          },
+                          "ticket": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 999999999
+                          },
+                          "factors": {
+                            "$ref": "#/components/schemas/CompanionFactorEvidence"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed parameters or unknown strategy"
+          },
+          "405": {
+            "description": "Only GET is authorized"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -2031,6 +2242,101 @@
             "items": {
               "$ref": "#/components/schemas/PrecedentDecision"
             }
+          }
+        }
+      },
+      "Companion": {
+        "type": "object",
+        "required": [
+          "id",
+          "emoji",
+          "name",
+          "category",
+          "rarity",
+          "personality",
+          "backstory",
+          "energy",
+          "goal",
+          "weight",
+          "kind",
+          "components"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "emoji": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string"
+          },
+          "rarity": {
+            "type": "string"
+          },
+          "personality": {
+            "type": "string"
+          },
+          "backstory": {
+            "type": "string"
+          },
+          "energy": {
+            "type": "string"
+          },
+          "goal": {
+            "type": "string"
+          },
+          "weight": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Exact allocation weight in a billion-ticket inventory."
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "single",
+              "pair"
+            ]
+          },
+          "components": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 2,
+            "items": {
+              "type": "string"
+            },
+            "description": "One or two admitted Unicode emoji sequences. Pairs are themed characters, not newly invented Unicode glyphs."
+          }
+        }
+      },
+      "CompanionFactorEvidence": {
+        "type": "object",
+        "properties": {
+          "factors": {
+            "type": "string",
+            "description": "Extracted exact prime factors, possibly a partial factorization."
+          },
+          "cofactor": {
+            "type": "string",
+            "description": "Exact remaining cofactor; 1 means complete."
+          },
+          "complete": {
+            "type": "boolean"
+          },
+          "divisions": {
+            "type": "integer",
+            "maximum": 128
+          },
+          "divisionBudget": {
+            "type": "integer",
+            "const": 128
+          },
+          "trialPrimeCeiling": {
+            "type": "integer",
+            "const": 97
           }
         }
       }

@@ -10,9 +10,10 @@ let legacyWorker:string,unsupportedWorker:string,personnelWorker:string;
 test.beforeAll(async()=>{
   const source=await readFile('tests/fixtures/legacy-runtime-worker.ts','utf8');
   const compile=async(contents:string)=>(await build({stdin:{contents,resolveDir:`${process.cwd()}/tests/fixtures`,loader:'ts'},bundle:true,write:false,format:'iife',target:'es2022'})).outputFiles[0].text;
-  // The frozen transport fixture loads this build's compiled Java. Strip only
-  // the newly introduced response headers to model its pre-HR business release.
-  const preCourt=source.replace("reply({kind: 'reply', id: message.id, revision: config.revision, leader, result});","delete result.headers['X-SlopBuzz-Precedent-Trace']; reply({kind: 'reply', id: message.id, revision: config.revision, leader, result});");
+  // The frozen transport fixture loads this build's compiled Java. Hide companion
+  // endpoints and later response headers to model the older business release.
+  const preCompanion=source.replace("} else result = JSON.parse(await java!.request(message.method!, message.path!, message.traceparent || ''));","} else if(message.path?.startsWith('/companions/')) result={status:404,headers:{},body:'Unknown desk\\n'}; else result = JSON.parse(await java!.request(message.method!, message.path!, message.traceparent || ''));");
+  const preCourt=preCompanion.replace("reply({kind: 'reply', id: message.id, revision: config.revision, leader, result});","delete result.headers['X-SlopBuzz-Precedent-Trace']; reply({kind: 'reply', id: message.id, revision: config.revision, leader, result});");
   legacyWorker=await compile(preCourt.replace("delete result.headers['X-SlopBuzz-Precedent-Trace'];","delete result.headers['X-SlopBuzz-Precedent-Trace']; delete result.headers['X-SlopBuzz-Onboarding-Trace']; delete result.headers['X-SlopBuzz-Onboarding-State'];"));
   personnelWorker=await compile(preCourt);
   unsupportedWorker=await compile(source.replace('protocol:1','protocol:999'));
@@ -56,6 +57,10 @@ test('hard reload beside a frozen legacy owner keeps demo, BigInt and one durabl
   await expect(next.locator('#chronicle-entries')).toContainText('One has reported for duty');
   await expect(next.locator('#chronicle-entries')).toContainText('without forwarding a detailed execution dossier');
   const beforeRehearsal=await invoke(next,'/audit/evidence');
+  await expect(next.locator('#companion-list li')).toHaveCount(8);
+  const catalog=await invoke(next,'/companions/catalog');expect(catalog.status).toBe(200);expect(JSON.parse(catalog.body).entries).toHaveLength(3200);expect(catalog.revision).toBe(currentRevision);
+  const companionWindow=await invoke(next,'/companions/window?start=9007199254740993&count=3&strategy=factor-resonance-v1');expect(companionWindow.status).toBe(200);expect(companionWindow.revision).toBe(currentRevision);
+  expect(JSON.parse((await invoke(next,'/audit/evidence')).body).headDigest).toBe(JSON.parse(beforeRehearsal.body).headDigest);
   await next.click('[data-personnel-scenario="zero"]');await expect(next.locator('#personnel-verdict')).toHaveText('Application rejected');
   const afterRehearsal=await invoke(next,'/audit/evidence');expect(JSON.parse(afterRehearsal.body).journalEntries).toBe(JSON.parse(beforeRehearsal.body).journalEntries);
   expect(JSON.parse(retained.body).journalEntries).toBe(33);

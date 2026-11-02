@@ -37,7 +37,7 @@ export async function verifyPublic(origin: string, revision: string) {
    const businessRequests: string[] = [];
    page.on('request', request => {
     const url = new URL(request.url());
-    if (url.origin === origin && /^\/(fizzbuzz|healthz|readyz|audit|operations|capacity|cache|procurement|onboarding|precedent)(\/|\?|$)/.test(url.pathname)) businessRequests.push(url.pathname);
+    if (url.origin === origin && /^\/(fizzbuzz|healthz|readyz|audit|operations|capacity|cache|procurement|onboarding|precedent|companions)(\/|\?|$)/.test(url.pathname)) businessRequests.push(url.pathname);
    });
    await page.goto(origin + '/demo/');
    await expect(page.locator('#health-value')).toHaveText('LIVE');
@@ -64,6 +64,13 @@ export async function verifyPublic(origin: string, revision: string) {
    await expect.poll(()=>chronicle.evaluate(element=>Math.abs(element.scrollTop+element.clientHeight-element.scrollHeight)<3)).toBe(true);
    const expected = Array.from({length: 15}, (_, i) => (i + 1) % 15 === 0 ? 'FizzBuzz' : (i + 1) % 3 === 0 ? 'Fizz' : (i + 1) % 5 === 0 ? 'Buzz' : String(i + 1));
    assert.deepEqual((await page.locator('#output').textContent())?.trim().split('\n'), expected);
+   await expect(page.locator('#companion-list li')).toHaveCount(7);
+   await page.selectOption('#companion-strategy','ordinal-constellation-v1');
+   await expect(page.locator('#companion-list')).toContainText('3 · Fizz · pickle — Keeper of Annotated Recipes');
+   await page.uncheck('#emoji-companions');await expect(page.locator('#companion-list li')).toHaveCount(0);
+   assert.deepEqual((await page.locator('#output').textContent())?.trim().split('\n'),expected);
+   await page.check('#emoji-companions');await expect(page.locator('#companion-list li')).toHaveCount(7);
+   await page.selectOption('#companion-strategy','factor-resonance-v1');
    await page.click('#run-button');
    await expect(page.locator('#cache-result')).toHaveText('HIT');
    await expect(page.locator('#personnel-origin')).toHaveText('Institutional memory answered. No new HR proceedings.');
@@ -90,9 +97,11 @@ export async function verifyPublic(origin: string, revision: string) {
    await page.click('#recovery-button');
    await expect(page.locator('#recovery-value')).toHaveText('COPY MATCHED');
    await page.waitForFunction(() => !!navigator.serviceWorker.controller, null, {timeout: 120000});
-   for (const route of ['demo', 'api', 'company-history', 'changelog', 'continuity-register', 'accessibility', 'validation', 'response']) {
+   for (const route of ['demo', 'bestiary', 'department-of-improbable-appointments', 'api', 'company-history', 'changelog', 'continuity-register', 'accessibility', 'validation', 'response']) {
     await page.goto(`${origin}/${route}/`);
     await expect(page.locator('main h1')).toHaveCount(1);
+    if (route === 'bestiary') await expect(page.locator('#bestiary-status')).toContainText('3200 companions');
+    if (route === 'department-of-improbable-appointments') await expect(page.locator('#rarity-rows tr')).toHaveCount(3200);
     if (route === 'api') await expect(page.locator('#api-total')).toContainText('ratified operations');
     if (route === 'company-history') await expect(page.getByRole('heading',{name:'Confounding the courage to convene'})).toBeVisible();
    }
@@ -111,6 +120,7 @@ export async function verifyPublic(origin: string, revision: string) {
    await page.goto(origin+'/#operations');
    await page.click('#procurement-button');
    await expect(page.locator('#procurement-status')).toContainText('8 separate line items');
+   await page.goto(origin+'/bestiary/');await expect(page.locator('#bestiary-status')).toContainText('3200 companions');await page.selectOption('#bestiary-kind','single');await page.fill('#bestiary-search','unicorn');await expect(page.locator('#bestiary-results article')).toHaveCount(1);
    await page.goto(origin + '/api/');
    await expect(page.locator('#api-total')).toContainText('ratified operations');
    assert.deepEqual(businessRequests, []);

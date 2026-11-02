@@ -36,6 +36,12 @@
                 <p class="magnitude-warning" id="magnitude-warning" role="status" aria-live="polite" aria-atomic="true" hidden></p>
                 <p class="field-error" id="limit-error" aria-live="polite"></p>
               </form>
+              <fieldset class="companion-controls"><legend>Optional Companion Appointments</legend>
+                <label class="check-label"><input type="checkbox" id="emoji-companions" checked aria-describedby="companion-help"> Commission emoji companions</label>
+                <label for="companion-strategy">Swappable allocation authority</label>
+                <select id="companion-strategy" disabled aria-describedby="companion-help"><option value="factor-resonance-v1">Prime Factor Affinity Directorate</option></select>
+                <p id="companion-help" class="field-help">Fizz, Buzz and FizzBuzz receive deterministic friends. Changing this policy appoints new companions to disclosed output without repeating the numerical business. <a href="/bestiary/">Meet all 3,200 companions and inspect the scarcity charter.</a></p>
+              </fieldset>
               <div class="presets" role="group" aria-label="Suggested mandates">
                 <span>Try a brief:</span>
                 <button type="button" data-limit="15" aria-label="Run mandate for 15 numbers">15</button>
@@ -93,6 +99,12 @@
               <div class="output-heading"><h2 id="output-title">Official output</h2><span id="output-count">0 lines</span></div>
               <p class="inline-status" id="run-status" role="status" aria-live="polite" aria-atomic="true">Ready to receive a mandate.</p>
               <pre class="terminal" id="output" tabindex="0" role="region" aria-label="FizzBuzz output">Awaiting a duly authorized number.</pre>
+              <section class="companion-roll" aria-labelledby="companion-title"><h3 id="companion-title">Companion roll call</h3>
+                <p id="companion-status" class="field-help" role="status" aria-live="polite" aria-atomic="true">Awaiting the first disclosed Fizz, Buzz or FizzBuzz.</p>
+                <p class="field-help" id="companion-scroll-help">Select a companion for its story. Latest 100 encounters; reading older entries pauses following.</p>
+                <button type="button" class="button button-secondary" id="companion-latest" hidden>Show latest companions</button>
+                <div class="companion-scroll" id="companion-scroll" tabindex="0" role="region" aria-label="Disclosed emoji companions" aria-describedby="companion-scroll-help"><ol id="companion-list"></ol></div>
+              </section>
               </div>
               <section class="chronicle" aria-labelledby="chronicle-title">
                 <h3 id="chronicle-title">Executive Chronicle of Numerical Affairs</h3>
@@ -166,6 +178,7 @@
               </section>
 
   </dialog>
+  <dialog id="companion-dialog" class="companion-dialog" aria-labelledby="companion-dialog-title"><h2 id="companion-dialog-title">Companion personnel file</h2><button class="button button-secondary" type="button" autofocus>Close companion file</button><div data-companion-story></div></dialog>
   <!--SITE_FOOTER-->
 </body>
 </html>

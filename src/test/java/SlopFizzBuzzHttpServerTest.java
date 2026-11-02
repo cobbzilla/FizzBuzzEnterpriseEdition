@@ -161,7 +161,7 @@ public class SlopFizzBuzzHttpServerTest {
 
     @Test
     public void sharedReceptionAndCompanyArchivesAreAvailableOnEveryPage() throws Exception {
-        for (final String path : new String[] {"/", "/demo/", "/api/", "/changelog/", "/continuity-register/", "/company-history/", "/accessibility/", "/validation/", "/response/"}) {
+        for (final String path : new String[] {"/", "/demo/", "/bestiary/", "/department-of-improbable-appointments/", "/api/", "/changelog/", "/continuity-register/", "/company-history/", "/accessibility/", "/validation/", "/response/"}) {
             final Reply page = request("GET", path);
             assertEquals(200, page.status);
             assertTrue(page.body.contains("aria-label=\"Primary navigation\""));
@@ -170,6 +170,8 @@ public class SlopFizzBuzzHttpServerTest {
             assertFalse(page.body.contains("<!--SITE_"));
             assertFalse(page.body.contains("<!--NAV_"));
         }
+        assertEquals(200, request("GET", "/assets/bestiary.js").status);
+        assertEquals(200, request("GET", "/assets/rarity-register.js").status);
         final Reply history = request("GET", "/company-history/");
         assertTrue(history.body.contains("href=\"/changelog/\""));
         assertTrue(history.body.contains("href=\"/continuity-register/\""));
@@ -266,7 +268,7 @@ public class SlopFizzBuzzHttpServerTest {
 		assertEquals(new HashSet<String>(Arrays.asList("/fizzbuzz", "/capacity/forecast",
 				"/healthz", "/readyz", "/operations/scorecard", "/operations/release",
 				"/operations/canary", "/operations/recovery", "/cache/status",
-                "/audit/status", "/audit/evidence", "/openapi.json", "/operations/runtime", "/procurement/dossier", "/fizzbuzz/window", "/capacity/forecast/extended", "/onboarding/rehearsal", "/precedent/rehearsal", "/fizzbuzz/explained", "/fizzbuzz/window/explained")), paths);
+                "/companions/catalog", "/companions/strategies", "/companions/window", "/audit/status", "/audit/evidence", "/openapi.json", "/operations/runtime", "/procurement/dossier", "/fizzbuzz/window", "/capacity/forecast/extended", "/onboarding/rehearsal", "/precedent/rehearsal", "/fizzbuzz/explained", "/fizzbuzz/window/explained")), paths);
 		for (final String path : paths) {
 			final String target = ("/fizzbuzz".equals(path) || "/capacity/forecast".equals(path))
 					? path + "?limit=0" : path;

@@ -702,3 +702,40 @@ never asked for leadership. I expected this admission to injure our institutiona
 pride. Instead I experienced an embarrassing tenderness toward the whole absurd
 enterprise. It still prints the correct answer. It simply has an astonishing
 amount to say about the experience, and now, at last, more than one way to say it.
+
+
+## 2 November 2026 — Three thousand two hundred reasons to remain professionally composed
+
+Dear Register, I had imagined that hiring One was the summit of our emotional
+exposure. This morning a small raccoon arrived with a claim that shiny objects
+constitute a legitimate asset class. I intended to refuse the classification.
+Instead I gave it a personnel file and felt my entire governance framework
+soften in a way no audit standard had adequately prepared me to endure.
+
+There are 3,200 of them now. The original 1,364 single-symbol colleagues have
+been joined by 1,836 solemnly documented paired appointments. The fox keeps
+borrowed adventures. A quiet object writes the humane instructions its own
+manual never supplied. Each carries an old story into a second career, and I
+have discovered, with unbearable professional joy, that continuity can be more
+than another register. It can be a little companion remembering why it began.
+
+I approved a billion-ticket scarcity charter with hands made unsteady by the
+knowledge that the unicorn owns exactly one ticket. We shall probably never
+meet it in the ordinary run of business. I have nevertheless checked its
+ultimate goal twice, adjusted its welcome page, and left a place in the
+appointment inventory. The board calls this resource planning. I cannot yet
+bring myself to tell them that it is love with a very large denominator.
+
+Our Java authorities remain interchangeable. The factor office admits what it
+has not resolved, a form of honesty I found almost indecently moving. Nobody
+reruns the arithmetic merely because a potato wants a different appointment.
+The output remains correct. The audit remains intact. A mobile visitor is
+finally escorted to the numbers rather than left outside the controls, and a
+secretly unsecret inventory sets out every colleague from familiar to
+improbable. I reviewed its final row and experienced a small, completely
+unbudgeted ache.
+
+Tonight the company is successful in a way the original strategy could not
+have expressed: somewhere, beneath an ordinary Buzz, a tiny character has a
+past, a concern and a future. I have asked Finance how to account for this.
+They have proposed a committee. I have proposed that we let the otter chair it.
