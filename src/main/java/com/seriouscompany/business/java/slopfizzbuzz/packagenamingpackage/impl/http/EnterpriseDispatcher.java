@@ -43,6 +43,25 @@ public final class EnterpriseDispatcher {
  this(service,transactions,journal,cache,release,clock,new com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.runtime.RuntimeIdentity(){public String toJson(){return "{\"mode\":\"server\",\"engine\":\"JVM\",\"storage\":\"configured JVM audit repository\",\"cache\":\"Redis adapter\",\"protocol\":1,\"narrative\":1}";}});
  }
  public EnterpriseDispatcher(SlopFizzBuzz service, OutputTransactionCoordinator transactions, OutputAuditJournal journal, OutputCache cache, ReleaseCustodyReport release, final RuntimeClock clock, final com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.runtime.RuntimeIdentity identity) {
+ this(service,transactions,journal,cache,release,clock,identity,com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.companions.CompanionDirectorate.standard());
+ }
+ public EnterpriseDispatcher(SlopFizzBuzz service, OutputTransactionCoordinator transactions, OutputAuditJournal journal, OutputCache cache, ReleaseCustodyReport release, final RuntimeClock clock, final com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.runtime.RuntimeIdentity identity, final com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.companions.CompanionDirectorate companions) {
+  for(final String path:new String[]{"/companions/catalog","/companions/strategies","/companions/window"})register(path,new DeskHandler(){public void handle(EnterpriseExchange exchange)throws IOException{
+   if(!"GET".equals(exchange.getRequestMethod())){exchange.headers.set("Allow","GET");respond(exchange,405,"Method not authorized\n");return;}
+   String query=exchange.getRequestURI().getRawQuery();String result;
+   try{
+    if("/companions/window".equals(path)){
+     // Iterate over unbounded decimals: recursive regex matching can exhaust TeaVM's stack.
+     int countAt=query==null?-1:query.indexOf("&count=");int strategyAt=query==null?-1:query.indexOf("&strategy=");
+     if(query==null||!query.startsWith("start=")||countAt<7||strategyAt<countAt+8)throw new IllegalArgumentException();
+     String start=query.substring(6,countAt),count=query.substring(countAt+7,strategyAt),strategy=query.substring(strategyAt+10);
+     if(!com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.capacity.ExtendedMagnitudeBureau.isDecimal(start)||!com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.capacity.ExtendedMagnitudeBureau.isDecimal(count)||count.length()>3||strategy.indexOf('&')>=0)throw new IllegalArgumentException();
+     result=companions.window(new java.math.BigInteger(start),Integer.parseInt(count),strategy);
+    }else{if(query!=null)throw new IllegalArgumentException();result="/companions/catalog".equals(path)?companions.catalogJson():companions.strategiesJson();}
+   }catch(IllegalArgumentException invalid){respond(exchange,400,"Use a positive decimal start, count 1..100 and a published strategy; catalog and strategies accept no parameters\n");return;}
+   exchange.headers.set("Cache-Control","no-store");exchange.headers.set("X-SlopBuzz-Proceedings","READ_ONLY_COMPANION_INSPECTION");respond(exchange,200,result,"application/json; charset=UTF-8");
+  }});
+
   final com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.capacity.ExtendedMagnitudeBureau magnitude=new com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.capacity.ExtendedMagnitudeBureau();
   register("/fizzbuzz/window",new DeskHandler(){public void handle(EnterpriseExchange exchange)throws IOException {
    if(!"GET".equals(exchange.getRequestMethod())) {exchange.headers.set("Allow","GET");respond(exchange,405,"Method not authorized\n");return;}

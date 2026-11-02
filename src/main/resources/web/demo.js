@@ -1,56 +1,9 @@
 // Generated from web/*.ts by scripts/build.ts. Do not edit.
 
-// web/mandate-input.ts
-function parseMandate(raw) {
-  const text = raw.trim();
-  if (!/^[0-9]+$/.test(text)) return null;
-  const ordinary = Number(text);
-  return Number.isSafeInteger(ordinary) ? ordinary : BigInt(text);
-}
-var autocorrectMandate = (raw) => raw.replace(/[^0-9]/g, "");
-var addOrdinals = (value, count) => typeof value === "bigint" ? value + BigInt(count) : value + count;
-function windowCount(next, limit) {
-  if (typeof next === "bigint" && typeof limit === "bigint") return Number(limit - next + 1n < 100n ? limit - next + 1n : 100n);
-  return Math.min(100, Number(limit) - Number(next) + 1);
-}
-var magnitudeWarnings = Object.freeze([
-  "PROVISIONAL INCIDENT: Your integer may possibly have exceeded its delegated magnitude authority.",
-  "POLICY REVIEW PENDING: This request might have crossed an undocumented numerical border.",
-  "PRELIMINARY ESCALATION: An oversized ordinal may have entered circulation without executive indemnity.",
-  "POSSIBLE CONTROL BREACH: The requested magnitude appears larger than the committee\u2019s confidence.",
-  "UNCONFIRMED NUMERICAL EMERGENCY: Your upper limit may require a larger filing cabinet.",
-  "POTENTIAL JURISDICTIONAL EVENT: This integer might be operating beyond the ordinary-number charter.",
-  "TENTATIVE COMPLIANCE ALERT: A digit may have arrived without its magnitude escort.",
-  "CONDITIONAL SEVERITY ONE: Your request could conceivably exceed our ceremonial insurance allowance.",
-  "SUSPECTED ORDINAL EXCESS: Management cannot presently exclude the possibility of too much number.",
-  "PROVISIONAL GOVERNANCE FAILURE: This value may have outgrown its approved organizational chart.",
-  "MAGNITUDE EXCEPTION SUSPECTED: The decimal expansion might require a second board of directors.",
-  "POSSIBLE POLICY DEVIATION: An unauthorized quantity of integer may be present in this request.",
-  "PRECAUTIONARY EXECUTIVE NOTICE: Your number could be larger than the policy author anticipated.",
-  "UNVERIFIED BOUNDARY INCIDENT: The requested ordinal may have escaped the standard arithmetic enclosure.",
-  "CONTINGENT DISCIPLINARY REVIEW: Someone might possibly need to explain all these digits.",
-  "PRELIMINARY RISK FINDING: This upper limit may have exceeded the building\u2019s authorized numerical load.",
-  "POTENTIAL CHARTER OVERRUN: The committee has not ruled out a surplus of mathematical ambition.",
-  "PROVISIONAL EXCESS-MAGNITUDE NOTICE: This request may require an unusually solemn signature.",
-  "SUSPECTED SCALE VIOLATION: Your integer might be too substantial for the current stationery.",
-  "POSSIBLE ENTERPRISE INCIDENT: This value may have activated a policy nobody has finished writing."
-]);
-function chooseMagnitudeWarning(previous = -1, random = Math.random) {
-  const width = previous >= 0 ? magnitudeWarnings.length - 1 : magnitudeWarnings.length;
-  let index = Math.min(width - 1, Math.floor(random() * width));
-  if (previous >= 0 && index >= previous) index++;
-  return { index, text: magnitudeWarnings[index] };
-}
-
-// web/telemetry.ts
-function trackUsage(detail) {
-  window.dispatchEvent(new CustomEvent("slopbuzz:usage", { detail }));
-}
-
 // web/runtime-protocol.ts
 var runtimeProtocol = 1;
 function isTransientOperation(path, method = "GET") {
-  return method === "GET" && ["/operations/runtime", "/fizzbuzz/window", "/fizzbuzz/window/explained", "/capacity/forecast/extended", "/procurement/dossier", "/onboarding/rehearsal", "/precedent/rehearsal"].includes(path.split("?")[0]);
+  return method === "GET" && ["/companions/catalog", "/companions/strategies", "/companions/window", "/operations/runtime", "/fizzbuzz/window", "/fizzbuzz/window/explained", "/capacity/forecast/extended", "/procurement/dossier", "/onboarding/rehearsal", "/precedent/rehearsal"].includes(path.split("?")[0]);
 }
 
 // web/release-assets.ts
@@ -193,7 +146,7 @@ var request = (path, options) => path === "/openapi.json" && (!options?.method |
 if ("serviceWorker" in navigator && config.mode === "browser") {
   void navigator.serviceWorker.register(new URL("sw.js", scope), { scope: new URL(scope).pathname }).catch((error) => console.warn("Offline installation unavailable", error));
 }
-var desks = /^\/(?:fizzbuzz|onboarding\/rehearsal|precedent\/rehearsal|procurement\/dossier|capacity\/forecast|healthz|readyz|cache\/status|operations\/|audit\/)/;
+var desks = /^\/(?:companions\/|fizzbuzz|onboarding\/rehearsal|precedent\/rehearsal|procurement\/dossier|capacity\/forecast|healthz|readyz|cache\/status|operations\/|audit\/)/;
 if (config.mode === "browser") document.querySelectorAll("a[href]").forEach((link) => {
   const url = new URL(link.href);
   const base = new URL(scope).pathname.replace(/\/$/, "");
@@ -202,11 +155,263 @@ if (config.mode === "browser") document.querySelectorAll("a[href]").forEach((lin
   link.href = new URL(`response/?path=${encodeURIComponent(path)}`, scope).href;
 });
 
+// web/companions.ts
+var catalogPromise;
+async function companionCatalog() {
+  if (!catalogPromise) catalogPromise = (async () => {
+    const r = await request("/companions/catalog");
+    if (!r.ok) throw new Error("The bestiary returned " + r.status + ".");
+    const data = await r.json();
+    if (data.schema !== "slopbuzz-companions/v1" || data.tickets !== 1e9 || !Array.isArray(data.entries) || data.entries.length < 200) throw new Error("The bestiary supplied an unfamiliar charter.");
+    return data;
+  })().catch((error) => {
+    catalogPromise = void 0;
+    throw error;
+  });
+  return catalogPromise;
+}
+async function companionPolicies() {
+  const r = await request("/companions/strategies");
+  if (!r.ok) throw new Error("The strategy registry returned " + r.status + ".");
+  const data = await r.json();
+  if (!Array.isArray(data.strategies) || !data.strategies.length) throw new Error("No assignment strategy was supplied.");
+  return data.strategies;
+}
+function node(tag, text) {
+  const n = document.createElement(tag);
+  if (text) n.textContent = text;
+  return n;
+}
+function characterStory(c) {
+  const fragment = document.createDocumentFragment();
+  const glyph = node("span", c.emoji);
+  glyph.className = "companion-glyph";
+  glyph.setAttribute("aria-hidden", "true");
+  fragment.append(glyph, node("p", (c.kind === "pair" ? "Themed emoji pair" : "Single emoji") + " \xB7 " + c.category + " \xB7 " + c.rarity + " \xB7 target frequency: " + c.weight.toLocaleString() + " of 1,000,000,000 tickets."));
+  const dl = node("dl");
+  for (const [label, value] of [["Personality", c.personality], ["Previously in this extraordinary career", c.backstory], ["Motivating energy", c.energy], ["Ultimate goal", c.goal]]) dl.append(node("dt", label), node("dd", value));
+  fragment.append(dl);
+  return fragment;
+}
+var CompanionDesk = class {
+  enabled = document.querySelector("#emoji-companions");
+  policy = document.querySelector("#companion-strategy");
+  list = document.querySelector("#companion-list");
+  scroller = document.querySelector("#companion-scroll");
+  status = document.querySelector("#companion-status");
+  dialog = document.querySelector("#companion-dialog");
+  latest = document.querySelector("#companion-latest");
+  visible = /* @__PURE__ */ new Map();
+  batches = /* @__PURE__ */ new Map();
+  assigned = /* @__PURE__ */ new Map();
+  lastSignature = "";
+  entries = /* @__PURE__ */ new Map();
+  version = "";
+  generation = 0;
+  following = true;
+  invoker;
+  constructor() {
+    this.enabled.addEventListener("change", () => {
+      this.generation++;
+      this.following = true;
+      this.list.replaceChildren();
+      this.lastSignature = "";
+      this.latest.hidden = true;
+      if (this.enabled.checked) {
+        this.status.textContent = "Opening companion appointments for disclosed output\u2026";
+        void this.refresh();
+      } else this.status.textContent = "Companion allocation suspended. Official numerical output remains available.";
+    });
+    this.policy.addEventListener("change", () => {
+      this.generation++;
+      this.batches.clear();
+      this.assigned.clear();
+      this.list.replaceChildren();
+      this.lastSignature = "";
+      this.following = true;
+      this.status.textContent = "Consulting the selected allocation authority\u2026";
+      void this.refresh();
+    });
+    this.scroller.addEventListener("scroll", () => {
+      const atBottom = this.scroller.scrollHeight - this.scroller.clientHeight - this.scroller.scrollTop < 24;
+      const resume = atBottom && !this.following;
+      this.following = atBottom;
+      if (resume) this.render();
+    });
+    this.latest.addEventListener("click", () => {
+      this.following = true;
+      this.render();
+      this.scroller.scrollTop = this.scroller.scrollHeight;
+    });
+    this.dialog.querySelector("button").addEventListener("click", () => this.dialog.close());
+    this.dialog.addEventListener("close", () => {
+      if (this.invoker?.isConnected) this.invoker.focus();
+    });
+    void companionPolicies().then((policies) => {
+      const selected = this.policy.value;
+      this.policy.replaceChildren(...policies.map((p) => {
+        const option = node("option", p.name);
+        option.value = p.id;
+        return option;
+      }));
+      if (policies.some((p) => p.id === selected)) this.policy.value = selected;
+      this.policy.disabled = false;
+    }).catch((error) => {
+      this.status.textContent = "Companion policy registry unavailable: " + error.message;
+    });
+  }
+  reset() {
+    this.generation++;
+    this.visible.clear();
+    this.assigned.clear();
+    this.batches.clear();
+    this.list.replaceChildren();
+    this.lastSignature = "";
+    this.following = true;
+    this.latest.hidden = true;
+    this.status.textContent = this.enabled.checked ? "Awaiting the first disclosed Fizz, Buzz or FizzBuzz." : "Companions are disabled.";
+  }
+  disclose(start, lines2) {
+    for (let i = 0; i < lines2.length; i++) {
+      this.visible.set((BigInt(start) + BigInt(i)).toString(), lines2[i]);
+    }
+    while (this.visible.size > 1e3) this.visible.delete(this.visible.keys().next().value);
+    if (this.enabled.checked) void this.refresh();
+  }
+  async refresh() {
+    const generation = this.generation;
+    if (!this.enabled.checked) return;
+    const policy = this.policy.value || "factor-resonance-v1";
+    try {
+      const catalog = await companionCatalog();
+      if (generation !== this.generation) return;
+      if (!this.entries.size) {
+        this.entries = new Map(catalog.entries.map((c) => [c.id, c]));
+        this.version = catalog.version;
+      }
+      const starts = /* @__PURE__ */ new Set();
+      for (const [ordinal, text] of this.visible) if (/^(Fizz|Buzz|FizzBuzz)$/.test(text)) starts.add(((BigInt(ordinal) - 1n) / 100n * 100n + 1n).toString());
+      for (const start of starts) {
+        const key = policy + "|" + start;
+        let batch = this.batches.get(key);
+        if (!batch) {
+          batch = (async () => {
+            const reply = await request("/companions/window?start=" + start + "&count=100&strategy=" + policy);
+            if (!reply.ok) throw new Error("Assignment desk returned " + reply.status + ".");
+            const data = await reply.json();
+            if (data.catalogVersion !== this.version || data.strategy !== policy || data.start !== start || data.count !== 100 || !Array.isArray(data.assignments)) throw new Error("Assignment evidence belongs to a different charter.");
+            return data.assignments;
+          })();
+          this.batches.set(key, batch);
+          batch.catch(() => {
+            if (this.batches.get(key) === batch) this.batches.delete(key);
+          });
+        }
+        const assignments = await batch;
+        if (generation !== this.generation || !this.enabled.checked) return;
+        for (const a of assignments) if (this.visible.get(a.ordinal) === a.flavor && this.entries.has(a.companionId)) this.assigned.set(a.ordinal, a);
+      }
+      for (const ordinal of this.assigned.keys()) if (!this.visible.has(ordinal)) this.assigned.delete(ordinal);
+      while (this.batches.size > 12) this.batches.delete(this.batches.keys().next().value);
+      if (generation === this.generation) this.render();
+    } catch (error) {
+      if (generation === this.generation) this.status.textContent = "Companion paperwork unavailable: " + error.message + " Numerical output is still valid. Toggle companions to retry.";
+    }
+  }
+  render() {
+    const rows = [...this.visible.keys()].map((key) => this.assigned.get(key)).filter((a) => !!a).slice(-100);
+    const signature = rows.map((a) => a.ordinal + ":" + a.companionId).join("|");
+    if (signature === this.lastSignature) return;
+    if ((!this.following || this.list.contains(document.activeElement) || this.dialog.open) && this.list.childElementCount) {
+      this.latest.hidden = false;
+      return;
+    }
+    this.latest.hidden = true;
+    const fragment = document.createDocumentFragment();
+    for (const a of rows) {
+      const c2 = this.entries.get(a.companionId);
+      const li = node("li");
+      const button = node("button");
+      button.type = "button";
+      button.setAttribute("aria-haspopup", "dialog");
+      button.setAttribute("aria-controls", "companion-dialog");
+      const glyph = node("span", c2.emoji);
+      glyph.setAttribute("aria-hidden", "true");
+      button.append(glyph, node("span", a.ordinal + " \xB7 " + a.flavor + " \xB7 " + c2.name + " \xB7 " + c2.rarity));
+      button.addEventListener("click", () => this.inspect(a, c2, button));
+      li.append(button);
+      fragment.append(li);
+    }
+    this.list.replaceChildren(fragment);
+    this.lastSignature = signature;
+    this.scroller.scrollTop = this.scroller.scrollHeight;
+    const last = rows.at(-1);
+    const c = last ? this.entries.get(last.companionId) : void 0;
+    this.status.textContent = c ? last.ordinal + " has welcomed " + c.name + ". " + c.rarity + " companion; latest " + rows.length + " encounters shown." : this.visible.size ? "No companion-bearing proclamation disclosed yet." : "Awaiting the first disclosed Fizz, Buzz or FizzBuzz.";
+  }
+  inspect(a, c, invoker) {
+    this.following = false;
+    this.invoker = invoker;
+    this.dialog.querySelector("h2").textContent = c.name + " \xB7 " + a.ordinal + " " + a.flavor;
+    const body = this.dialog.querySelector("[data-companion-story]");
+    body.replaceChildren(characterStory(c));
+    body.append(node("h3", "Allocation evidence"), node("p", "Strategy: " + this.policy.value + ". Catalog: " + this.version + ". Ticket: " + a.ticket + "."), node("p", "Extracted exact factors: " + a.factors.factors + ". " + (a.factors.complete ? "Complete factorization." : "Unresolved exact cofactor: " + a.factors.cofactor + ". This cofactor is not certified prime.") + " Division checks: " + a.factors.divisions + " of " + a.factors.divisionBudget + "."));
+    this.dialog.showModal();
+  }
+};
+
+// web/mandate-input.ts
+function parseMandate(raw) {
+  const text = raw.trim();
+  if (!/^[0-9]+$/.test(text)) return null;
+  const ordinary = Number(text);
+  return Number.isSafeInteger(ordinary) ? ordinary : BigInt(text);
+}
+var autocorrectMandate = (raw) => raw.replace(/[^0-9]/g, "");
+var addOrdinals = (value, count) => typeof value === "bigint" ? value + BigInt(count) : value + count;
+function windowCount(next, limit) {
+  if (typeof next === "bigint" && typeof limit === "bigint") return Number(limit - next + 1n < 100n ? limit - next + 1n : 100n);
+  return Math.min(100, Number(limit) - Number(next) + 1);
+}
+var magnitudeWarnings = Object.freeze([
+  "PROVISIONAL INCIDENT: Your integer may possibly have exceeded its delegated magnitude authority.",
+  "POLICY REVIEW PENDING: This request might have crossed an undocumented numerical border.",
+  "PRELIMINARY ESCALATION: An oversized ordinal may have entered circulation without executive indemnity.",
+  "POSSIBLE CONTROL BREACH: The requested magnitude appears larger than the committee\u2019s confidence.",
+  "UNCONFIRMED NUMERICAL EMERGENCY: Your upper limit may require a larger filing cabinet.",
+  "POTENTIAL JURISDICTIONAL EVENT: This integer might be operating beyond the ordinary-number charter.",
+  "TENTATIVE COMPLIANCE ALERT: A digit may have arrived without its magnitude escort.",
+  "CONDITIONAL SEVERITY ONE: Your request could conceivably exceed our ceremonial insurance allowance.",
+  "SUSPECTED ORDINAL EXCESS: Management cannot presently exclude the possibility of too much number.",
+  "PROVISIONAL GOVERNANCE FAILURE: This value may have outgrown its approved organizational chart.",
+  "MAGNITUDE EXCEPTION SUSPECTED: The decimal expansion might require a second board of directors.",
+  "POSSIBLE POLICY DEVIATION: An unauthorized quantity of integer may be present in this request.",
+  "PRECAUTIONARY EXECUTIVE NOTICE: Your number could be larger than the policy author anticipated.",
+  "UNVERIFIED BOUNDARY INCIDENT: The requested ordinal may have escaped the standard arithmetic enclosure.",
+  "CONTINGENT DISCIPLINARY REVIEW: Someone might possibly need to explain all these digits.",
+  "PRELIMINARY RISK FINDING: This upper limit may have exceeded the building\u2019s authorized numerical load.",
+  "POTENTIAL CHARTER OVERRUN: The committee has not ruled out a surplus of mathematical ambition.",
+  "PROVISIONAL EXCESS-MAGNITUDE NOTICE: This request may require an unusually solemn signature.",
+  "SUSPECTED SCALE VIOLATION: Your integer might be too substantial for the current stationery.",
+  "POSSIBLE ENTERPRISE INCIDENT: This value may have activated a policy nobody has finished writing."
+]);
+function chooseMagnitudeWarning(previous = -1, random = Math.random) {
+  const width = previous >= 0 ? magnitudeWarnings.length - 1 : magnitudeWarnings.length;
+  let index = Math.min(width - 1, Math.floor(random() * width));
+  if (previous >= 0 && index >= previous) index++;
+  return { index, text: magnitudeWarnings[index] };
+}
+
+// web/telemetry.ts
+function trackUsage(detail) {
+  window.dispatchEvent(new CustomEvent("slopbuzz:usage", { detail }));
+}
+
 // web/dom.ts
 var byId = (id) => {
-  const node2 = document.getElementById(id);
-  if (!node2) throw new Error(`Missing element ${id}`);
-  return node2;
+  const node3 = document.getElementById(id);
+  if (!node3) throw new Error(`Missing element ${id}`);
+  return node3;
 };
 function setText(id, value) {
   byId(id).textContent = String(value);
@@ -1106,7 +1311,7 @@ async function readProclamation(response) {
   if (data?.schema !== "slopbuzz-execution/v1" || typeof data.text !== "string" || !Array.isArray(data.trace?.events) || data.trace.events.length > 5e4 || !Number.isSafeInteger(data.trace.omitted) || data.trace.omitted < 0 || data.trace.events.some((e) => !e || e.ordinal !== null && (typeof e.ordinal !== "string" || !/^\d+$/.test(e.ordinal)) || ["kind", "office", "finding"].some((k) => typeof e[k] !== "string") || e.document !== null && typeof e.document !== "string")) throw new Error("The execution dossier could not be read. No second mandate was submitted.");
   return { ...packet, text: data.text, events: data.trace.events, omitted: data.trace.omitted, recorded: true };
 }
-function node(tag, text, className) {
+function node2(tag, text, className) {
   const result = document.createElement(tag);
   if (text !== void 0) result.textContent = text;
   if (className) result.className = className;
@@ -1220,7 +1425,7 @@ var ExecutiveChronicle = class {
       this.follow.checked = false;
       this.inspected?.remove();
       this.inspected = this.render(folio);
-      this.inspected.prepend(node("p", "Archive inspection \xB7 original completed record", "chronicle-source"));
+      this.inspected.prepend(node2("p", "Archive inspection \xB7 original completed record", "chronicle-source"));
       this.inspected.classList.add("chronicle-inspection");
       this.body.prepend(this.inspected);
       this.body.scrollTop = 0;
@@ -1270,7 +1475,7 @@ var ExecutiveChronicle = class {
     this.inspected?.remove();
     this.inspected = void 0;
     this.entries.replaceChildren();
-    this.selector.replaceChildren(node("option", "Latest proceedings"));
+    this.selector.replaceChildren(node2("option", "Latest proceedings"));
     this.selector.options[0].value = "latest";
     this.note(this.language.write(mode === "replay" ? "replay" : "reception", mode === "replay" ? "The clerk is rereading completed proceedings. No business operation will be executed again." : `Reception accepted an upper limit of ${limit}. The input passed decimal validation. The company is obtaining a result and will explain each number as it becomes visible.`), "Mandate reception");
     setText("chronicle-current", mode === "replay" ? "Replaying completed corporate minutes." : "The committees have received a numerical mandate.");
@@ -1309,7 +1514,7 @@ var ExecutiveChronicle = class {
     for (const folio of folios) {
       this.snapshots.set(folio.ordinal, folio);
       if (!this.options.has(folio.ordinal)) {
-        const option = node("option", `Ordinal ${folio.ordinal}`);
+        const option = node2("option", `Ordinal ${folio.ordinal}`);
         option.value = folio.ordinal;
         this.options.set(folio.ordinal, option);
         this.selector.append(option);
@@ -1347,19 +1552,19 @@ var ExecutiveChronicle = class {
     this.followBottom();
   }
   render(folio) {
-    const article = node("article", void 0, "chronicle-folio");
+    const article = node2("article", void 0, "chronicle-folio");
     article.dataset.ordinal = folio.ordinal;
-    article.append(node("p", `Ordinal ${folio.ordinal} \xB7 ${folio.cache === "HIT" ? "Institutional memory" : folio.recorded ? "Recorded Java proceedings" : folio.events.length ? "Recorded personnel \xB7 procedure explained" : "Observed output \xB7 procedure explained"}`, "chronicle-source"), node("h4", title(folio)));
+    article.append(node2("p", `Ordinal ${folio.ordinal} \xB7 ${folio.cache === "HIT" ? "Institutional memory" : folio.recorded ? "Recorded Java proceedings" : folio.events.length ? "Recorded personnel \xB7 procedure explained" : "Observed output \xB7 procedure explained"}`, "chronicle-source"), node2("h4", title(folio)));
     folio.narrative ??= Object.freeze(paragraphs(folio, this.language));
-    for (const paragraph of folio.narrative) article.append(node("p", paragraph, "chronicle-prose"));
+    for (const paragraph of folio.narrative) article.append(node2("p", paragraph, "chronicle-prose"));
     if (folio.events.length) {
-      const details = node("details");
-      details.append(node("summary", `Inspect ${folio.events.length} department records for ordinal ${folio.ordinal}`));
-      const list = node("ol");
+      const details = node2("details");
+      details.append(node2("summary", `Inspect ${folio.events.length} department records for ordinal ${folio.ordinal}`));
+      const list = node2("ol");
       for (const event of folio.events) {
-        const item = node("li");
-        item.append(node("strong", event.office), node("p", event.finding));
-        if (event.document) item.append(node("pre", event.document, "chronicle-document"));
+        const item = node2("li");
+        item.append(node2("strong", event.office), node2("p", event.finding));
+        if (event.document) item.append(node2("pre", event.document, "chronicle-document"));
         list.append(item);
       }
       details.append(list);
@@ -1378,7 +1583,7 @@ var ExecutiveChronicle = class {
     let notice = this.entries.querySelector(".chronicle-archive-note");
     if (this.collapsed) {
       if (!notice) {
-        notice = node("p", void 0, "chronicle-archive-note");
+        notice = node2("p", void 0, "chronicle-archive-note");
         this.entries.prepend(notice);
       }
       notice.textContent = `Earlier narration has been condensed for a finite browser. Inspect any of the latest ${this.snapshots.size} disclosed ordinals using the selector.`;
@@ -1392,8 +1597,8 @@ var ExecutiveChronicle = class {
       if (this.pendingNotes.length > 16) this.pendingNotes.shift();
       return;
     }
-    const article = node("article", void 0, "chronicle-note");
-    article.append(node("h4", heading), node("p", text));
+    const article = node2("article", void 0, "chronicle-note");
+    article.append(node2("h4", heading), node2("p", text));
     this.entries.append(article);
     const notes = this.entries.querySelectorAll(".chronicle-note");
     if (notes.length > 16) notes[0].remove();
@@ -1404,7 +1609,7 @@ var ExecutiveChronicle = class {
     const key = `rehearsal-${data.caseId}`;
     let article = this.entries.querySelector(`[data-rehearsal="${CSS.escape(key)}"]`);
     if (!article) {
-      article = node("article", void 0, "chronicle-note");
+      article = node2("article", void 0, "chronicle-note");
       article.dataset.rehearsal = key;
       this.entries.append(article);
     }
@@ -1413,8 +1618,8 @@ var ExecutiveChronicle = class {
       prose = Object.freeze([this.language.write("rehearsal", "This is a read-only rehearsal using the actual personnel offices. Existing numerical output is retained; the rehearsal creates no numerical audit entries."), ...data.steps.map((decision) => this.language.write("office", `${decision.office} \u2014 ${decision.state === "APPROVED" ? "Approved" : decision.state === "REJECTED" ? "Rejected" : "Not reached"}. ${decision.finding} ${decision.document}`))]);
       this.rehearsals.set(data, prose);
     }
-    article.replaceChildren(node("h4", `Management intervention: applicant ${data.candidate}`), node("p", prose[0]));
-    for (const paragraph of prose.slice(1, count + 1)) article.append(node("p", paragraph));
+    article.replaceChildren(node2("h4", `Management intervention: applicant ${data.candidate}`), node2("p", prose[0]));
+    for (const paragraph of prose.slice(1, count + 1)) article.append(node2("p", paragraph));
     setText("chronicle-current", count === 7 ? data.status === "APPROVED" ? "Personnel rehearsal approved: One may start work." : `Personnel rehearsal rejected by ${data.steps.find((e) => e.state === "REJECTED").office}.` : `Reading completed personnel rehearsal: ${count} of 7 offices.`);
     const rehearsals = this.entries.querySelectorAll("[data-rehearsal]");
     if (rehearsals.length > 8) rehearsals[0].remove();
@@ -1484,6 +1689,7 @@ var activityMode = "mandate";
 var manualStep = false;
 var chronicle = new ExecutiveChronicle();
 var precedent = new PrecedentView();
+var companions = new CompanionDesk();
 var currentLimit = "15";
 var lastPlayback;
 var inspection;
@@ -1491,6 +1697,7 @@ var personnel = new PersonnelProceedings({ rehearse: (scenario) => void rehearse
   if (data.purpose === "REHEARSAL") chronicle.rehearsal(data, count);
 } });
 function discloseLines(start, lines2) {
+  companions.disclose(start, lines2);
   chronicle.disclose(start, lines2);
   lastPlayback = { kind: "mandate", folios: chronicle.records, limit: currentLimit, personnel: personnel.record };
   personnel.setPlaybackAvailable(true);
@@ -1732,6 +1939,7 @@ async function runMandate(event) {
   const limit = validateLimit();
   if (limit === null) return;
   const sequence = ++mandateSequence;
+  companions.reset();
   wakeReading?.();
   reading = false;
   streaming = false;
@@ -1751,6 +1959,10 @@ async function runMandate(event) {
   setText("trace-result", "Awaiting a receipt");
   byId("output").textContent = "Awaiting a duly authorized number.";
   setText("output-count", "0 lines");
+  if (matchMedia("(max-width: 900px)").matches) {
+    byId("output").focus({ preventScroll: true });
+    byId("mandate-output").scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth", block: "start" });
+  }
   void loadForecast(limit, sequence).catch(() => {
     if (sequence === mandateSequence) setText("forecast-units", "Unavailable");
   });
@@ -1871,6 +2083,7 @@ async function replayPersonnel() {
     }
     return;
   }
+  companions.reset();
   chronicle.begin(saved.limit, "replay");
   setText("run-status", "Replaying the retained numerical output and its corporate minutes. No mandate was submitted.");
   const output = byId("output");
@@ -1879,6 +2092,7 @@ async function replayPersonnel() {
     while (paused && sequence === mandateSequence) await waitForPace();
     if (sequence !== mandateSequence) return;
     const batch = revealAll || Number(speedControl.value) === 0 ? saved.folios.slice(i) : saved.folios.slice(i, i + 1);
+    for (const folio of batch) companions.disclose(folio.ordinal, [folio.text]);
     chronicle.discloseFolios(batch);
     output.append(document.createTextNode(batch.map((f) => f.text + "\n").join("")));
     i += batch.length;

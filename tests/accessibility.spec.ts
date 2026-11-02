@@ -2,7 +2,7 @@ import {test, expect, type Page} from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 // These DOM tests mock fixtures; offline cache behavior has its own lifecycle suite.
 test.use({serviceWorkers:'block'});
-const routes = ['', 'demo/', 'api/', 'company-history/', 'changelog/', 'continuity-register/', 'validation/', 'response/', 'accessibility/'];
+const routes = ['', 'demo/', 'bestiary/', 'department-of-improbable-appointments/', 'api/', 'company-history/', 'changelog/', 'continuity-register/', 'validation/', 'response/', 'accessibility/'];
 async function audit(page: Page) {
   const result = await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21a','wcag21aa','wcag22aa','best-practice']).analyze();
   expect(result.violations.map(v=>({id:v.id,nodes:v.nodes.map(n=>n.target)}))).toEqual([]);
@@ -11,11 +11,13 @@ test.beforeEach(({}, info) => {test.skip(info.project.metadata.engine === 'js', 
 for (const route of routes) {
   test(`accessible shared reception and reflow: /${route}`, async({page, browserName})=>{
     await page.goto(`/${route}`);
+    if(route === 'bestiary/')await expect(page.locator('#bestiary-status')).toContainText('3200 companions');
+    if(route === 'department-of-improbable-appointments/')await expect(page.locator('#rarity-status')).toContainText('All 3,200');
     if(route === 'api/') await expect(page.locator('#api-total')).toContainText('ratified operations');
     if(route === '') await expect(page.locator('#health-value')).toHaveText('LIVE');
     if(route === 'response/') await expect(page.locator('#response-status')).toContainText('Response received');
     const nav = page.getByRole('navigation',{name:'Primary navigation',exact:true});
-    expect(await nav.getByRole('link').allTextContents()).toEqual(['Live demo','Operations','API charter','Company History','About','Validation tribunal']);
+    expect(await nav.getByRole('link').allTextContents()).toEqual(['Live demo','Operations','Companion bestiary','API charter','Company History','About','Validation tribunal']);
     await expect(page.locator('main h1')).toHaveCount(1);
     await expect(page.locator('#runtime-status, #offline-status')).toHaveCount(0);
     await page.keyboard.press(browserName === 'webkit' ? 'Alt+Tab' : 'Tab');

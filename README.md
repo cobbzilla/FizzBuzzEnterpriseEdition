@@ -142,6 +142,24 @@ The demo's mandatory disclosure cadence defaults to **Full Board Ratification**
 and scrolls as each line appears. Choose **Executive Fiat** for immediate display with
 no artificial delay; the measured service response time excludes playback.
 
+Fizz, Buzz and FizzBuzz also receive optional **emoji companions**, enabled by
+default. The bestiary has **3,200 characters: 1,364 single emoji and 1,836 themed
+pairs**, each with a personality, backstory, motivating energy and ultimate goal.
+The most familiar 10% receive 80% of appointments; the unicorn has one ticket
+in a billion and cannot slip into a common paired appointment. Inspect the
+searchable `/bestiary/`, or the unlisted full rarity inventory at
+`/department-of-improbable-appointments/`.
+
+The [companion charter](docs/ADR-0027-companion-appointment-strategies.md)
+documents the actual Spring-injected Java strategies, exact bounded factor
+evidence and scarcity weights. Read-only `GET /companions/catalog`,
+`GET /companions/strategies` and
+`GET /companions/window?start=1&count=15&strategy=factor-resonance-v1`
+work in both runtimes. Switching strategies or companions never submits another
+numerical mandate. `catalog/bestiary.ts` is the canonical TypeScript constant;
+`node scripts/generate-companions.ts` emits portable Java, and
+`pnpm test:companions` checks all dossiers, weights and generated-source custody.
+
 Read the human API charter guide at `http://localhost:18088/api` in the shared
 preview, or fetch `GET /openapi.json` for the OpenAPI 3.2.1 source used to
 build that guide. The [charter decision](docs/ADR-0018-api-charter-and-ceremonial-playback.md)

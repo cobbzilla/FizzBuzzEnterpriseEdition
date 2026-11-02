@@ -63,13 +63,13 @@ function tryDesk(spec: Spec, path: string, method: string, operation: Operation)
   panel.append(element('h4', '', 'Live request desk'));
   const hasLimit = (operation.parameters || []).some((parameter) =>
     parameter.$ref?.endsWith('/Limit') || (parameter.name === 'limit' && parameter.schema?.type !== 'string'));
-  const magnitudeFields: {name:string;label:string;value:string;minimum:number;maximum?:number}[] = path.startsWith('/fizzbuzz/window')
+  const magnitudeFields: {name:string;label:string;value:string;minimum:number;maximum?:number}[] = (path.startsWith('/fizzbuzz/window')||path==='/companions/window')
     ? [{name:'start',label:'Starting ordinal',value:'9007199254740990',minimum:1},{name:'count',label:'Window lines',value:'15',minimum:1,maximum:100}]
     : path === '/capacity/forecast/extended' ? [{name:'limit',label:'Upper limit',value:'9007199254740993',minimum:0}] : [];
   const requestedPath = hasLimit ? `${path}?limit=15` : magnitudeFields.length ? `${path}?${new URLSearchParams(magnitudeFields.map(field=>[field.name,field.value]))}` : path;
   const command = method === 'post'
     ? `curl -i -X POST '${config.mode === 'server' ? new URL(config.apiBaseUrl || '/', location.origin).href.replace(/\/$/, '') : 'http://localhost:18089'}${path}'`
-    : `curl -i '${config.mode === 'server' ? new URL(config.apiBaseUrl || '/', location.origin).href.replace(/\/$/, '') : 'http://localhost:18089'}${requestedPath}'`;
+    : `curl -i '${config.mode === 'server' ? new URL(config.apiBaseUrl || '/', location.origin).href.replace(/\/$/, '') : 'http://localhost:18089'}${requestedPath}${path==='/companions/window'?'&strategy=factor-resonance-v1':''}'`;
   panel.append(element('p', '', 'Server deployment example (cURL cannot call an in-browser runtime):'));
   panel.append(element('code', '', command));
   const id = `request-${method}-${path.replace(/[^a-z0-9]/gi,'-')}`;
@@ -94,10 +94,10 @@ function tryDesk(spec: Spec, path: string, method: string, operation: Operation)
     input.addEventListener('input',()=>input.removeAttribute('aria-invalid'));
     label.append(input);controls.append(label);return {field,input};
   });
-  const productParameter = (operation.parameters || []).map(parameter => resolve(spec, parameter)).find(parameter => parameter?.name === 'product'||parameter?.name === 'scenario');
+  const productParameter = (operation.parameters || []).map(parameter => resolve(spec, parameter)).find(parameter => parameter?.name === 'product'||parameter?.name === 'scenario'||parameter?.name==='strategy');
   let productSelect: HTMLSelectElement | null = null;
   if (productParameter) {
-    const label = element('label', '', productParameter.name==='scenario'?(operation.operationId==='rehearsePriorWork'?'Court petition':'Personnel scenario'):'Authorized product');
+    const label = element('label', '', productParameter.name==='strategy'?'Assignment authority':productParameter.name==='scenario'?(operation.operationId==='rehearsePriorWork'?'Court petition':'Personnel scenario'):'Authorized product');
     productSelect = element('select'); productSelect.id = `${id}-product`;
     productSelect.setAttribute('aria-describedby', `${id}-status`);
     for (const product of productParameter.schema?.enum || []) {
@@ -144,7 +144,7 @@ function tryDesk(spec: Spec, path: string, method: string, operation: Operation)
       decimal.removeAttribute('aria-invalid');
     }
     input?.removeAttribute('aria-invalid');
-    const url = magnitudeInputs.length ? `${path}?${new URLSearchParams(magnitudeInputs.map(({field,input})=>[field.name,input.value.trim()]))}` : input ? `${path}?limit=${input.value}` : productSelect ? `${path}?${productParameter!.name}=${encodeURIComponent(productSelect.value)}` : path;
+    const url = magnitudeInputs.length ? `${path}?${new URLSearchParams([...magnitudeInputs.map(({field,input})=>[field.name,input.value.trim()]),...(productSelect?[[productParameter!.name!,productSelect.value]]:[])])}` : input ? `${path}?limit=${input.value}` : productSelect ? `${path}?${productParameter!.name}=${encodeURIComponent(productSelect.value)}` : path;
     button.setAttribute('aria-disabled', 'true');
     report.textContent = 'The desk is reviewing your request…';
     const started = performance.now();

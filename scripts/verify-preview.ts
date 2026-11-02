@@ -24,10 +24,12 @@ try {
  assert.ok(await page.locator('#chronicle-scroll').evaluate(element=>element.scrollHeight>element.clientHeight));
  assert.equal(await page.locator('#runtime-status, #offline-status').count(),0);
  for(const port of [18088,18089]) {
-  for(const route of ['demo','company-history','accessibility','api','validation']) {
+  for(const route of ['demo','bestiary','department-of-improbable-appointments','company-history','accessibility','api','validation']) {
    await page.goto(`http://localhost:${port}/${route}/`);
    assert.equal(await page.getByRole('navigation',{name:'Primary navigation'}).getByRole('link',{name:'Company History',exact:true}).count(),1);
    assert.equal(await page.locator('main h1').count(),1);
+   if(route==='bestiary')await page.waitForFunction(()=>document.querySelector('#bestiary-status')?.textContent?.includes('3200 companions'));
+   if(route==='department-of-improbable-appointments')await page.waitForFunction(()=>document.querySelector('#rarity-rows')?.children.length===3200);
   }
  }
  console.log(`Deployed static runtime verified at ${revision}`);

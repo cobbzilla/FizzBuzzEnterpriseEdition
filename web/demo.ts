@@ -1,3 +1,4 @@
+import {CompanionDesk} from './companions';
 import {parseMandate,autocorrectMandate,addOrdinals,windowCount,chooseMagnitudeWarning,type MandateInteger} from './mandate-input';
 import {trackUsage} from './telemetry';
 import { request, config,proclamation } from './runtime';
@@ -23,11 +24,12 @@ let activityMode:'mandate'|'rehearsal'|'replay'|'inspection'='mandate';
 let manualStep=false;
 const chronicle=new ExecutiveChronicle();
 const precedent=new PrecedentView();
+const companions=new CompanionDesk();
 let currentLimit='15';
 let lastPlayback:{kind:'mandate';folios:Folio[];limit:string;personnel?:PersonnelDossier}|{kind:'rehearsal';data:PersonnelDossier}|undefined;
 let inspection:{folios:Folio[];index:number}|undefined;
 const personnel=new PersonnelProceedings({rehearse:scenario=>void rehearsePersonnel(scenario),replay:()=>void replayPersonnel(),step:stepPersonnel,disclosed:(data,count)=>{if(data.purpose==='REHEARSAL')chronicle.rehearsal(data,count);}});
-function discloseLines(start:string,lines:readonly string[]){chronicle.disclose(start,lines);lastPlayback={kind:'mandate',folios:chronicle.records,limit:currentLimit,personnel:personnel.record};personnel.setPlaybackAvailable(true);}
+function discloseLines(start:string,lines:readonly string[]){companions.disclose(start,lines);chronicle.disclose(start,lines);lastPlayback={kind:'mandate',folios:chronicle.records,limit:currentLimit,personnel:personnel.record};personnel.setPlaybackAvailable(true);}
 function readingControls() {
   stopButton.setAttribute('aria-disabled', String(!reading));
   revealButton.textContent = activityMode==='rehearsal'||activityMode==='replay'?'Reveal completed proceedings':streaming ? 'Waive disclosure delays' : 'Reveal complete output';
@@ -210,6 +212,7 @@ async function runMandate(event: Event) {
   const limit = validateLimit();
   if (limit === null) return;
   const sequence = ++mandateSequence;
+  companions.reset();
   wakeReading?.(); reading = false; streaming=false;activityMode='mandate';manualStep=false;inspection=undefined;lastPlayback=undefined;currentLimit=String(limit);readingControls();personnel.setPlaybackAvailable(false);personnel.loading();chronicle.begin(currentLimit);
   runButton.setAttribute('aria-disabled', 'true');
   precedent.waiting(typeof limit==='bigint'||limit>1000);
@@ -218,6 +221,7 @@ async function runMandate(event: Event) {
   setText('trace-result', 'Awaiting a receipt');
   byId('output').textContent = 'Awaiting a duly authorized number.';
   setText('output-count', '0 lines');
+  if(matchMedia('(max-width: 900px)').matches){byId('output').focus({preventScroll:true});byId('mandate-output').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth',block:'start'});}
   void loadForecast(limit, sequence).catch(() => {
     if (sequence === mandateSequence) setText('forecast-units', 'Unavailable');
   });
@@ -294,12 +298,12 @@ async function replayPersonnel(){
   await personnel.read(saved.data,personnelClock(sequence),'Replay of read-only rehearsal');
   if(sequence===mandateSequence){reading=false;readingControls();setText('run-status','Personnel replay complete. The recorded business operation was not executed again.');}return;
  }
- chronicle.begin(saved.limit,'replay');setText('run-status','Replaying the retained numerical output and its corporate minutes. No mandate was submitted.');
+ companions.reset();chronicle.begin(saved.limit,'replay');setText('run-status','Replaying the retained numerical output and its corporate minutes. No mandate was submitted.');
  const output=byId('output');output.textContent='';
  for(let i=0;i<saved.folios.length;){
   while(paused&&sequence===mandateSequence)await waitForPace();if(sequence!==mandateSequence)return;
   const batch=revealAll||Number(speedControl.value)===0?saved.folios.slice(i):saved.folios.slice(i,i+1);
-  chronicle.discloseFolios(batch);output.append(document.createTextNode(batch.map(f=>f.text+'\n').join('')));i+=batch.length;
+  for(const folio of batch)companions.disclose(folio.ordinal,[folio.text]);chronicle.discloseFolios(batch);output.append(document.createTextNode(batch.map(f=>f.text+'\n').join('')));i+=batch.length;
   followLatest();setText('output-count',i+' of '+saved.folios.length+' retained lines');
   if(i<saved.folios.length&&!revealAll&&Number(speedControl.value)>0)await waitForPace(Number(speedControl.value));
  }

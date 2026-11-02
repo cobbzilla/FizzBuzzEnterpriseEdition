@@ -1,6 +1,7 @@
 package com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.http;
 
 import java.net.InetSocketAddress;
+import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.companions.CompanionDirectorate;
 
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
@@ -30,7 +31,8 @@ public final class HttpMain {
 			final OutputAuditJournal journal = context.getBean(OutputAuditJournal.class);
 			final SlopFizzBuzzHttpServer server =
 					new SlopFizzBuzzHttpServer(new InetSocketAddress(port), service, transactions, journal,
-                            RedisOutputCache.configured(context.getBean(PriorWorkRatificationDirectorate.class)));
+                            RedisOutputCache.configured(context.getBean(PriorWorkRatificationDirectorate.class)),SlopFizzBuzzHttpServer.configuredRelease(),
+                            context.getBean(CompanionDirectorate.class));
 			Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
 				@Override
 				public void run() {

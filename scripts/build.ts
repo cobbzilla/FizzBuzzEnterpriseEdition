@@ -3,11 +3,13 @@ import {mkdir, readFile, writeFile, cp, rm, readdir} from 'node:fs/promises';
 import {build} from 'esbuild';
 import {marked} from 'marked';
 import {createHash} from 'node:crypto';
+import {generateCompanions} from './generate-companions.ts';
 import {analyticsConfig} from './analytics-config.ts';
 import {sourceIdentity} from './source-identity.ts';
+await generateCompanions();
 const analytics = await analyticsConfig();
 const run = (command: string, args: string[]) => execFileSync(command, args, {stdio:'inherit'});
-await build({entryPoints:['web/analytics.ts','web/site.ts','web/demo.ts','web/api.ts','web/response.ts','web/validation.ts'],outdir:'src/main/resources/web',bundle:true,format:'esm',target:'es2022',banner:{js:'// Generated from web/*.ts by scripts/build.ts. Do not edit.'}});
+await build({entryPoints:['web/analytics.ts','web/site.ts','web/demo.ts','web/api.ts','web/response.ts','web/validation.ts','web/bestiary.ts','web/rarity-register.ts'],outdir:'src/main/resources/web',bundle:true,format:'esm',target:'es2022',banner:{js:'// Generated from web/*.ts by scripts/build.ts. Do not edit.'}});
 if (!process.argv.includes('--assets-only')) {
   run('mvn', ['-q', 'install']);
   run('mvn', ['-q', '-f', 'browser/pom.xml', 'package']);
@@ -21,7 +23,7 @@ await mkdir('dist/assets', {recursive:true});
 const assets = `assets/${identity}/`;
 await cp('browser/target/gate/wasm', `dist/${assets}wasm`, {recursive:true});
 await cp('browser/target/gate/js', `dist/${assets}js`, {recursive:true});
-const entryScripts=['analytics','site','demo','api','response','validation','tribunal'];
+const entryScripts=['analytics','site','demo','api','response','validation','bestiary','rarity-register','tribunal'];
 await build({entryPoints:entryScripts.map(name=>`web/${name}.ts`),outdir:'dist/assets',bundle:true,format:'esm',target:'es2022',define:{RELEASE_ASSET_DIRECTORY:JSON.stringify(assets)}});
 for(const name of entryScripts) await cp(`dist/assets/${name}.js`,`dist/assets/${name}.${identity}.js`);
 await build({entryPoints:['web/runtime-worker.ts'],outfile:`dist/${assets}runtime-worker.js`,bundle:true,format:'iife',target:'es2022'});
@@ -30,20 +32,20 @@ for (const asset of ['site.css','api.css','mark.svg','openapi.json']) await cp(`
 for (const stylesheet of ['site.css','api.css']) await cp(`src/main/resources/web/${stylesheet}`, `dist/${assets}${stylesheet}`);
 const raw = [['CHANGELOG.md','CHANGELOG.md'],['docs/EXECUTIVE_CONTINUITY_AND_SENTIMENT_REGISTER.md','continuity-register.md']];
 for (const [source,target] of raw) await cp(source, `dist/${target}`);
-const pages = [['index.html',''],['demo.html','demo'],['api.html','api'],['changelog.html','changelog'],['continuity.html','continuity-register'],['history.html','company-history'],['accessibility.html','accessibility'],['validation.html','validation'],['response.html','response']];
+const pages = [['rarity-register.html','department-of-improbable-appointments'],['bestiary.html','bestiary'],['index.html',''],['demo.html','demo'],['api.html','api'],['changelog.html','changelog'],['continuity.html','continuity-register'],['history.html','company-history'],['accessibility.html','accessibility'],['validation.html','validation'],['response.html','response']];
 const header = await readFile('src/main/resources/web/components/header.html', 'utf8');
 const footer = await readFile('src/main/resources/web/components/footer.html', 'utf8');
 function relativeLinks(html: string, nested: boolean) {
   return html.replace(/(href|src)="\/(?!\/)([^"]*)"/g, (_, attr, path) => {
     const [base, suffix = ''] = path.split(/(?=[?#])/);
-    const folder = ['demo','api','changelog','continuity-register','validation','response','company-history','accessibility'].includes(base) ? `${base}/` : base;
+    const folder = ['department-of-improbable-appointments','bestiary','demo','api','changelog','continuity-register','validation','response','company-history','accessibility'].includes(base) ? `${base}/` : base;
     return `${attr}="${nested ? '../' : './'}${folder}${suffix}"`;
   });
 }
 for (const [template,folder] of pages) {
   let html = await readFile(`src/main/resources/web/${template}`, 'utf8');
   html = html.replace('<!--LEDGER_CONTENT-->', await marked.parse(await readFile(raw[0][0],'utf8'))).replace('<!--REGISTER_CONTENT-->', await marked.parse(await readFile(raw[1][0],'utf8')));
-  const active = folder === 'demo' ? 'DEMO' : folder === 'api' ? 'API' : folder === 'company-history' ? 'HISTORY' : folder === 'validation' ? 'VALIDATION' : '';
+  const active = folder === 'bestiary' ? 'BESTIARY' : folder === 'demo' ? 'DEMO' : folder === 'api' ? 'API' : folder === 'company-history' ? 'HISTORY' : folder === 'validation' ? 'VALIDATION' : '';
   html = html.replace('<!--SITE_HEADER-->', header).replace('<!--SITE_FOOTER-->', footer).replace(`<!--NAV_${active}-->`, 'aria-current="page"').replace(/<!--NAV_[A-Z]+-->/g, '').replace('Run the real Java service. Repeat a mandate to observe Redis remember what the committee already decided.', 'Run the real Java enterprise in your browser. Repeat a mandate to observe institutional memory recall the committee’s decision.').replaceAll('Redis memory','Institutional cache').replaceAll('>Redis<','>Cache<').replace('shared Redis memory','swappable institutional memory').replace('HTTP liveness','Runtime liveness');
   for (const stylesheet of ['site.css','api.css']) html = html.replaceAll(`href="/assets/${stylesheet}"`, `href="/${assets}${stylesheet}"`);
   for (const script of entryScripts) html = html.replaceAll(`src="/assets/${script}.js"`,`src="/assets/${script}.${identity}.js"`);
@@ -76,7 +78,7 @@ async function files(directory: string): Promise<string[]> {
   } return result;
 }
 const paths = await files('dist');
-paths.push('', 'demo/', 'api/', 'changelog/', 'continuity-register/', 'response/', 'validation/', 'company-history/', 'accessibility/');
+paths.push('department-of-improbable-appointments/', 'bestiary/', '', 'demo/', 'api/', 'changelog/', 'continuity-register/', 'response/', 'validation/', 'company-history/', 'accessibility/');
 // Evidence can arrive after the first preview of the same source revision.
 // Give that complete bundle a new cache so installed previews receive the sealed report.
 const evidenceSeal = createHash('sha256').update(await readFile('dist/validation/report.json')).digest('hex').slice(0,12);
