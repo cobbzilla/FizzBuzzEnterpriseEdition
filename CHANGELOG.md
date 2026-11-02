@@ -15,6 +15,9 @@ strategic interest in allowing visitors to leave. Keyboard focus returns to the
 companion who opened the file. Ordinary reading and text selection preserve
 their jurisdiction. Leadership expects a substantial improvement in the quality
 of engagement now that engagement no longer depends upon involuntary residence.
+Reading-position verification now begins with an explicit stakeholder choice,
+and browser tribunals convene in series to respect the available testing estate.
+Every existing case and deadline retains its authority.
 
 ## 2026-11-02 — `slopbuzz-vacant-string-premises`
 
