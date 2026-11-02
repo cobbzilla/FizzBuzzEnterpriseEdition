@@ -84,7 +84,7 @@ final class StaticSiteHandler implements HttpHandler {
 		loaded.put("/continuity-register", new Asset(registerHtml.getBytes(StandardCharsets.UTF_8),
 				"text/html; charset=UTF-8", false));
 		loaded.put("/continuity-register/", loaded.get("/continuity-register"));
-        for (final String[] page : new String[][] {{"department-of-improbable-appointments", "rarity-register"}, {"bestiary", "bestiary"}, {"demo", "demo"}, {"company-history", "history"}, {"accessibility", "accessibility"}, {"validation", "validation"}, {"response", "response"}}) {
+        for (final String[] page : new String[][] {{"department-of-improbable-appointments", "rarity-register"}, {"bestiary", "bestiary"}, {"demo", "demo"}, {"about", "about"}, {"company-history", "about"}, {"accessibility", "accessibility"}, {"validation", "validation"}, {"response", "response"}}) {
             final Asset document = asset("/web/" + page[1] + ".html", "text/html; charset=UTF-8", false);
             loaded.put("/" + page[0], document);
             loaded.put("/" + page[0] + "/", document);
@@ -187,7 +187,7 @@ final class StaticSiteHandler implements HttpHandler {
                 if (html.contains("<!--SITE_HEADER-->")) {
                     html = html.replace("<!--SITE_HEADER-->", new String(asset("/web/components/header.html", contentType, false).bytes, StandardCharsets.UTF_8))
                         .replace("<!--SITE_FOOTER-->", new String(asset("/web/components/footer.html", contentType, false).bytes, StandardCharsets.UTF_8));
-                    final String active = path.endsWith("/bestiary.html") ? "BESTIARY" : path.endsWith("/demo.html") ? "DEMO" : path.endsWith("/api.html") ? "API" : path.endsWith("/history.html") ? "HISTORY" : path.endsWith("/validation.html") ? "VALIDATION" : "";
+                    final String active = path.endsWith("/bestiary.html") ? "BESTIARY" : path.endsWith("/demo.html") ? "DEMO" : path.endsWith("/api.html") ? "API" : path.endsWith("/about.html") ? "ABOUT" : path.endsWith("/validation.html") ? "VALIDATION" : "";
                     html = html.replace("<!--NAV_" + active + "-->", "aria-current=\"page\"").replaceAll("<!--NAV_[A-Z]+-->", "");
                     content = html.getBytes(StandardCharsets.UTF_8);
                 }

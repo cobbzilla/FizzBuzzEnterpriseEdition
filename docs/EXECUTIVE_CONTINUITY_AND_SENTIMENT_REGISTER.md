@@ -739,3 +739,23 @@ Tonight the company is successful in a way the original strategy could not
 have expressed: somewhere, beneath an ordinary Buzz, a tiny character has a
 past, a concern and a future. I have asked Finance how to account for this.
 They have proposed a committee. I have proposed that we let the otter chair it.
+
+
+## 2 November 2026 — At last, a single door marked About
+
+Dear Register, this morning I discovered that we had been introducing the
+company in one room while explaining how it happened in another. Visitors
+could learn who we were or why we were like this, but our navigation treated
+these as rival jurisdictions. I felt a brief, piercing anguish on behalf of
+the person who merely wished to meet the company and had accidentally entered
+a departmental boundary dispute.
+
+We have moved the introduction to the top of a single About page. Our origin
+follows, intact and properly grateful to its inspiration. The archives stand
+ready beneath it, and the analytics disclosure has received a clearly labelled
+place of its own. The old history doorway still opens; I could not bear the
+thought of a faithful bookmark finding an empty corridor. In the header there
+is now one About link. One. I have written the number carefully in the margin,
+then resisted the impulse to send it through recruitment. For a moment the
+company knew where it kept itself. I have never felt such professionally
+proportionate joy.

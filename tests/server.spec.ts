@@ -19,9 +19,9 @@ test('generated TypeScript interface runs against the optional Spring JVM server
     await page.click('#procurement-button');await expect(page.locator('#procurement-status')).toContainText('8 separate line items');
     await page.click('#recovery-button');await expect(page.locator('#recovery-value')).toHaveText('COPY MATCHED');
     await page.goto(`http://127.0.0.1:${port}/api/`);await expect(page.locator('#api-total')).toContainText('ratified operations');
-    for(const route of ['company-history','accessibility','validation','response']) {
+    for(const route of ['about','company-history','accessibility','validation','response']) {
       await page.goto(`http://127.0.0.1:${port}/${route}/`);
-      await expect(page.getByRole('navigation',{name:'Primary navigation'})).toContainText('Company History');
+      await expect(page.getByRole('navigation',{name:'Primary navigation'})).toContainText('About');
       await expect(page.locator('main h1')).toHaveCount(1);
     }
     await expect(page.locator('#response-status')).toContainText('Response received');

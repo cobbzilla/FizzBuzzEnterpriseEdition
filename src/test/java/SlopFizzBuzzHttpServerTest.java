@@ -149,9 +149,9 @@ public class SlopFizzBuzzHttpServerTest {
 		assertTrue(demo.body.contains("Executive Fiat waives the queue for real-time reading."));
 		assertTrue(request("GET", "/assets/demo.js").body.contains("runtime-config.json"));
 		assertFalse(page.body.contains("leisurely"));
-		assertTrue(page.body.contains("href=\"/api\""));
-		assertTrue(page.body.contains("href=\"/company-history/\""));
-		assertTrue(page.body.contains("href=\"/continuity-register\""));
+		assertTrue(page.body.contains("href=\"/api/\""));
+		assertTrue(page.body.contains("href=\"/about/\""));
+		assertFalse(page.body.contains("id=\"about\""));
 		assertTrue(page.contentSecurityPolicy.contains("script-src 'self'"));
 		assertTrue(page.body.matches("(?s).*href=\"/assets/site\\.css\\?v=[0-9a-f]{64}\".*"));
 		assertTrue(request("GET", "/assets/site.css").body.contains("prefers-reduced-motion"));
@@ -161,11 +161,11 @@ public class SlopFizzBuzzHttpServerTest {
 
     @Test
     public void sharedReceptionAndCompanyArchivesAreAvailableOnEveryPage() throws Exception {
-        for (final String path : new String[] {"/", "/demo/", "/bestiary/", "/department-of-improbable-appointments/", "/api/", "/changelog/", "/continuity-register/", "/company-history/", "/accessibility/", "/validation/", "/response/"}) {
+        for (final String path : new String[] {"/", "/demo/", "/bestiary/", "/department-of-improbable-appointments/", "/api/", "/changelog/", "/continuity-register/", "/about/", "/company-history/", "/accessibility/", "/validation/", "/response/"}) {
             final Reply page = request("GET", path);
             assertEquals(200, page.status);
             assertTrue(page.body.contains("aria-label=\"Primary navigation\""));
-            assertTrue(page.body.contains(">Company History</a>"));
+            assertTrue(page.body.contains(">About</a>"));
             assertTrue(page.body.contains("Skip to main content"));
             assertFalse(page.body.contains("<!--SITE_"));
             assertFalse(page.body.contains("<!--NAV_"));
@@ -173,7 +173,11 @@ public class SlopFizzBuzzHttpServerTest {
         assertTrue(request("GET", "/unicode-license.txt").body.contains("UNICODE LICENSE V3"));
         assertEquals(200, request("GET", "/assets/bestiary.js").status);
         assertEquals(200, request("GET", "/assets/rarity-register.js").status);
-        final Reply history = request("GET", "/company-history/");
+        final Reply history = request("GET", "/about/");
+        assertEquals(history.body,request("GET", "/company-history/").body);
+        assertTrue(history.body.indexOf("id=\"company-profile\"")<history.body.indexOf("id=\"company-origin\""));
+        assertTrue(history.body.indexOf("id=\"company-origin\"")<history.body.indexOf("id=\"corporate-archives\""));
+        assertTrue(history.body.indexOf("id=\"corporate-archives\"")<history.body.indexOf("id=\"visitor-measurement\""));
         assertTrue(history.body.contains("href=\"/changelog/\""));
         assertTrue(history.body.contains("href=\"/continuity-register/\""));
         assertTrue(history.body.contains("aria-current=\"page\""));
