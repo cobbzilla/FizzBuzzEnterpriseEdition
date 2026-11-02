@@ -74,6 +74,8 @@ test('whole release works with its origin server stopped',async({page},info)=>{
     await page.goto(`http://127.0.0.1:${port}/#operations`);
     await page.click('#procurement-button');await expect(page.locator('#procurement-status')).toContainText('8 separate line items');
     await page.goto(`http://127.0.0.1:${port}/api/`);await expect(page.locator('#api-total')).toContainText('ratified operations');
+    await page.goto(`http://127.0.0.1:${port}/about/`);await expect(page.locator('#company-profile')).toContainText('fictional institution');await expect(page.locator('#founding-title')).toHaveText('Confounding the courage to convene');
+    await page.goto(`http://127.0.0.1:${port}/company-history/`);await expect(page.locator('#about-title')).toContainText('About The Serious Business Company');
     await page.goto(`http://127.0.0.1:${port}/continuity-register/`);await expect(page.locator('main')).toContainText('WebAssembly');
   }finally{server.close();server.closeAllConnections();}
 });

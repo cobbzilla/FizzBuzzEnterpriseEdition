@@ -2,7 +2,7 @@ import {test, expect, type Page} from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 // These DOM tests mock fixtures; offline cache behavior has its own lifecycle suite.
 test.use({serviceWorkers:'block'});
-const routes = ['', 'demo/', 'bestiary/', 'department-of-improbable-appointments/', 'api/', 'company-history/', 'changelog/', 'continuity-register/', 'validation/', 'response/', 'accessibility/'];
+const routes = ['', 'demo/', 'bestiary/', 'department-of-improbable-appointments/', 'api/', 'about/', 'company-history/', 'changelog/', 'continuity-register/', 'validation/', 'response/', 'accessibility/'];
 async function audit(page: Page) {
   const result = await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21a','wcag21aa','wcag22aa','best-practice']).analyze();
   expect(result.violations.map(v=>({id:v.id,nodes:v.nodes.map(n=>n.target)}))).toEqual([]);
@@ -17,7 +17,7 @@ for (const route of routes) {
     if(route === '') await expect(page.locator('#health-value')).toHaveText('LIVE');
     if(route === 'response/') await expect(page.locator('#response-status')).toContainText('Response received');
     const nav = page.getByRole('navigation',{name:'Primary navigation',exact:true});
-    expect(await nav.getByRole('link').allTextContents()).toEqual(['Live demo','Operations','Companion bestiary','API charter','Company History','About','Validation tribunal']);
+    expect(await nav.getByRole('link').allTextContents()).toEqual(['Live demo','Operations','Companion bestiary','API charter','About','Validation tribunal']);
     await expect(page.locator('main h1')).toHaveCount(1);
     await expect(page.locator('#runtime-status, #offline-status')).toHaveCount(0);
     await page.keyboard.press(browserName === 'webkit' ? 'Alt+Tab' : 'Tab');
@@ -33,7 +33,7 @@ for (const route of routes) {
       for(const rule of ['html {font-size:200% !important}', '* {line-height:1.5 !important; letter-spacing:.12em !important; word-spacing:.16em !important;}', 'p {margin-bottom:2em !important;}']) sheet.insertRule(rule, sheet.cssRules.length);
     });
     expect(await page.evaluate(()=>document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true);
-    if(route === 'company-history/') {
+    if((route === 'about/'||route === 'company-history/')) {
       await expect(page.getByRole('link',{name:'Read the changelog',exact:true})).toBeVisible();
       await expect(page.getByRole('link',{name:'Read the continuity register',exact:true})).toBeVisible();
     }

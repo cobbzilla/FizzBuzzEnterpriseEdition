@@ -98,13 +98,13 @@ export async function verifyPublic(origin: string, revision: string) {
    await page.click('#recovery-button');
    await expect(page.locator('#recovery-value')).toHaveText('COPY MATCHED');
    await page.waitForFunction(() => !!navigator.serviceWorker.controller, null, {timeout: 120000});
-   for (const route of ['demo', 'bestiary', 'department-of-improbable-appointments', 'api', 'company-history', 'changelog', 'continuity-register', 'accessibility', 'validation', 'response']) {
+   for (const route of ['demo', 'bestiary', 'department-of-improbable-appointments', 'api', 'about', 'company-history', 'changelog', 'continuity-register', 'accessibility', 'validation', 'response']) {
     await page.goto(`${origin}/${route}/`);
     await expect(page.locator('main h1')).toHaveCount(1);
     if (route === 'bestiary') await expect(page.locator('#bestiary-status')).toContainText('3200 companions');
     if (route === 'department-of-improbable-appointments') await expect(page.locator('#rarity-rows tr')).toHaveCount(3200);
     if (route === 'api') await expect(page.locator('#api-total')).toContainText('ratified operations');
-    if (route === 'company-history') await expect(page.getByRole('heading',{name:'Confounding the courage to convene'})).toBeVisible();
+    if ((route === 'about'||route === 'company-history')) await expect(page.getByRole('heading',{name:'Confounding the courage to convene'})).toBeVisible();
    }
    await context.setOffline(true);
    await page.goto(origin + '/demo/');

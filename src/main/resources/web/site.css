@@ -395,3 +395,9 @@ body { overflow-wrap: anywhere; }
 .bestiary-pagination button[aria-disabled="true"]{cursor:default;background:var(--paper-deep)}
 .companion-controls .check-label{display:flex;align-items:center;gap:.5rem;min-height:48px}
 .companion-controls input[type="checkbox"]{width:22px;height:22px;flex:none;accent-color:var(--ink)}
+
+.about-intro h1{font-size:clamp(2.4rem,5vw,4.5rem);line-height:1.08;letter-spacing:-.04em}
+.about-reading{padding-top:0}
+.about-contents{display:flex;flex-wrap:wrap;gap:.5rem 1.5rem;padding:1rem 0;border-block:1px solid var(--line);margin-bottom:2rem}
+.about-contents a{display:inline-flex;align-items:center;min-height:44px;text-underline-offset:.2em;font-weight:700}
+.about-reading>section+section{margin-top:3rem;padding-top:1rem;border-top:1px solid var(--line)}

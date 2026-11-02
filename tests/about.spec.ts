@@ -1,0 +1,11 @@
+import {test,expect} from '@playwright/test';
+
+test('one About destination unites the company profile, approved origin and archives',async({page})=>{
+ await page.goto('/');await expect(page.locator('main #about')).toHaveCount(0);
+ const nav=page.getByRole('navigation',{name:'Primary navigation',exact:true});await expect(nav.getByRole('link',{name:'Company History',exact:true})).toHaveCount(0);await expect(nav.getByRole('link',{name:'About',exact:true})).toHaveCount(1);await expect(nav.getByRole('link',{name:'About',exact:true})).toHaveAttribute('href',/about\/$/);
+ await page.getByRole('link',{name:'Meet the company',exact:true}).click();await expect(page).toHaveURL(/\/about\/$/);await expect(page.locator('main h1')).toHaveText('About The Serious Business Company, Inc.');await expect(page.locator('#company-profile')).toContainText('fictional institution entrusted with turning elementary arithmetic');
+ await expect(page.getByRole('navigation',{name:'Primary navigation'}).getByRole('link',{name:'About',exact:true})).toHaveAttribute('aria-current','page');await expect(page.locator('main')).toContainText('Please enjoy your stay in our recursive nightmare.');await expect(page.locator('#company-origin a[href="https://github.com/EnterpriseQualityCoding/FizzBuzzEnterpriseEdition"]')).toHaveCount(2);
+ const ids=await page.locator('main section[id]').evaluateAll(sections=>sections.map(s=>s.id));expect(ids).toEqual(['company-profile','company-origin','corporate-archives','visitor-measurement']);await expect(page.locator('#visitor-measurement')).toContainText('Do Not Track and Global Privacy Control signals do not disable');await expect(page.getByRole('link',{name:'Read the changelog',exact:true})).toBeVisible();await expect(page.getByRole('link',{name:'Read the continuity register',exact:true})).toBeVisible();
+ const origin=await page.locator('#company-origin').textContent();await page.goto('/company-history/');await expect(page.locator('#company-origin')).toHaveText(origin!);await expect(page.locator('link[rel=canonical]')).toHaveAttribute('href',/about\/$/);
+ await page.getByRole('link',{name:'Inspect our evidence',exact:true}).click();await expect(page.locator('#response-status')).toContainText('Response received. Status 200');await expect(page.locator('#response-output')).toContainText('journalEntries');
+});
