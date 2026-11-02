@@ -10,8 +10,10 @@ public final class ExtendedMagnitudeBureau {
  private static final BigInteger THREE=BigInteger.valueOf(3),FIVE=BigInteger.valueOf(5),FIFTEEN=BigInteger.valueOf(15);
  private final GlyphProcurementDirectorate procurement=GlyphProcurementDirectorate.standard();
  private final com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.loop.LoopInitializer origin;
+ private final com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.premises.VacantStringPremisesDirectorate premises;
  public ExtendedMagnitudeBureau(){this(new com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.loop.LoopInitializer());}
- public ExtendedMagnitudeBureau(com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.loop.LoopInitializer origin){this.origin=origin;}
+ public ExtendedMagnitudeBureau(com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.loop.LoopInitializer origin){this(origin,com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.premises.VacantStringPremisesDirectorate.standard());}
+ public ExtendedMagnitudeBureau(com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.loop.LoopInitializer origin,com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.premises.VacantStringPremisesDirectorate premises){this.origin=origin;this.premises=premises;}
  public static boolean isDecimal(String value) {
   if(value==null||value.isEmpty())return false;
   for(int i=0;i<value.length();i++)if(value.charAt(i)<'0'||value.charAt(i)>'9')return false;
@@ -25,15 +27,18 @@ public final class ExtendedMagnitudeBureau {
   if(!number.equals(start))throw new IllegalStateException("Initial ordinal clearance changed the requested window origin.");
   for(int i=0;i<count;i++) {
    if(ExecutionCustody.observing()){ExecutionCustody.ordinal(number.toString());ExecutionCustody.record("EXTENDED_CLASSIFICATION","BigInteger Classification Office","Divisibility by 3: "+(number.mod(THREE).signum()==0)+"; divisibility by 5: "+(number.mod(FIVE).signum()==0)+". This path uses exact BigInteger arithmetic.");}
-   String text="";
-   if(number.mod(THREE).signum()==0) text+=procurement.procure("Fizz").text();
-   if(number.mod(FIVE).signum()==0) text+=procurement.procure("Buzz").text();
-   if(text.isEmpty()) text=number.toString();
+   try(com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.premises.PremisesDocuments.Lease room=premises.lease(number.toString())) {
+   if(number.mod(THREE).signum()==0) room.append(procurement.procure("Fizz").text());
+   if(number.mod(FIVE).signum()==0) room.append(procurement.procure("Buzz").text());
+   if(room.length()==0) room.append(number.toString());
+   String text=room.text();
    // Independent lexical witness does not source its answer from procurement.
    String expected=number.remainder(FIFTEEN).signum()==0?"FizzBuzz":number.remainder(THREE).signum()==0?"Fizz":number.remainder(FIVE).signum()==0?"Buzz":number.toString();
    if(!expected.equals(text)) throw new IllegalStateException("Extended-magnitude lexical inspection rejected the proclamation.");
-   if(ExecutionCustody.observing())ExecutionCustody.record("EXTENDED_NOTARY","Independent Lexical Witness","Independently verified the exact text and appended LF to this finite response window.",text+"\n");
-   output.append(text).append('\n');
+   room.append("\n");
+   if(ExecutionCustody.observing())ExecutionCustody.record("EXTENDED_NOTARY","Independent Lexical Witness","Independently verified the exact text and appended LF to this finite response window.",room.text());
+   output.append(room.text());
+   }
    if(ExecutionCustody.observing())ExecutionCustody.record("EXTENDED_SUCCESSION","BigInteger Advancement Office","Advanced exactly from "+number+" to "+number.add(BigInteger.ONE)+". This path does not issue bounded-integer succession certificates.");
    number=number.add(BigInteger.ONE);
   }

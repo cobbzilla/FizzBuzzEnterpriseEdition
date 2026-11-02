@@ -21,6 +21,8 @@ try {
  await page.waitForFunction(()=>document.querySelector('#run-status')?.textContent?.includes('Mandate complete'));
  assert.equal((await page.locator('#output').textContent())?.split('\n').filter(Boolean).length,15);
  assert.ok((await page.locator('#chronicle-entries').textContent())?.includes('One has reported for duty'));
+ assert.ok((await page.locator('#chronicle-entries [data-premises-ordinal="7"]').textContent())?.includes('U+00A0'));
+ await page.selectOption('#premises-scenario','bell');await page.click('#premises-submit');await page.waitForFunction(()=>document.querySelector('#premises-status')?.textContent?.includes('U+0007'));
  assert.ok(await page.locator('#chronicle-scroll').evaluate(element=>element.scrollHeight>element.clientHeight));
  assert.equal(await page.locator('#runtime-status, #offline-status').count(),0);
  for(const port of [18088,18089]) {

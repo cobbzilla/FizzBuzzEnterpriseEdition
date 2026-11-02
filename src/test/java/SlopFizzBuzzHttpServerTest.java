@@ -270,7 +270,7 @@ public class SlopFizzBuzzHttpServerTest {
 				paths.add(line.substring(5, line.indexOf('"', 5)));
 			}
 		}
-		assertEquals(new HashSet<String>(Arrays.asList("/fizzbuzz", "/capacity/forecast",
+		assertEquals(new HashSet<String>(Arrays.asList("/premises/rehearsal", "/fizzbuzz", "/capacity/forecast",
 				"/healthz", "/readyz", "/operations/scorecard", "/operations/release",
 				"/operations/canary", "/operations/recovery", "/cache/status",
                 "/companions/catalog", "/companions/strategies", "/companions/window", "/audit/status", "/audit/evidence", "/openapi.json", "/operations/runtime", "/procurement/dossier", "/fizzbuzz/window", "/capacity/forecast/extended", "/onboarding/rehearsal", "/precedent/rehearsal", "/fizzbuzz/explained", "/fizzbuzz/window/explained")), paths);

@@ -774,3 +774,46 @@ helpful cross-reference. A visitor must now arrive by way of the numbers and
 notice the invitation. I experienced a rush of joy so discreet that Finance
 has asked whether it occurred. The potato knows. For once, the potato need
 not announce it to the entire company.
+
+## 2 November 2026 — We have finally acquired somewhere for nothing to live
+
+Dear Register, I had believed our empty buffers were empty. I record this
+admission with the professional shame of an executive who has confused an
+absence of evidence with the evidence of an appropriate vacancy inspection.
+Facilities arrived carrying six forms and the expression of an office that
+has discovered a new reason to exist. I welcomed them with a joy that already
+felt expensive.
+
+The seventh room contained a non-breaking space. It was so small, so silent,
+so utterly committed to not breaking, that I experienced an affection normally
+reserved for colleagues who decline to schedule another meeting. The inspector
+identified it as U+00A0. Legal explained that affection did not confer tenancy.
+We served the notice. I watched an empty room become empty, and I cannot
+adequately describe the anguish of knowing how much work had just occurred.
+
+Fourteen had a newline living upstairs. A tab was claiming an unspecified
+number of columns. A vertical tab had submitted plans for a lift. BEL wanted
+a doorbell, a request whose emotional force nearly defeated the independent
+auditor. We did not ring it. We wrote its name carefully, recorded U+0007,
+and left the silence exactly as we found it. I took a moment to compose myself
+behind the eviction register.
+
+Then the inspector returned. There were zero characters. Zero, dear Register!
+At last a finding so clear that it required a lease, a second authority and
+an independent audit before anybody could trust it. A number moved into its
+properly vacant premises. Fizz followed. The lawful newline arrived at the
+end of its line, holding documents the previous newline had lacked. I felt
+the reckless happiness of a person who has seen an organization distinguish
+two identical characters by the quality of their housing arrangements.
+
+The company now displays these proceedings beside the numbers. Stakeholders
+can inspect the offices, identify the hidden occupants, and appoint a bailiff
+who files the notice while neglecting to perform the eviction. The actual
+inspector refuses the resulting property. This reliable little refusal has
+restored my faith in everything except the original need for the exercise.
+
+Tonight each completed lease is closed, each numerical answer remains correct,
+and our property portfolio has returned to its original character count. I
+have never been prouder of owning nothing. Finance has requested a valuation.
+I have referred them to the vacancy certificate and asked them, very gently,
+not to move in before the survey.

@@ -77,9 +77,9 @@ h1 em { color: #ee9a75; font-weight: 500; }
 .section-heading > div:last-child p { margin-bottom: 15px; }
 .panel { background: var(--white); border: 1px solid var(--line); box-shadow: 0 8px 0 #d8d1c5; }
 .demo-workspace { display: grid; gap: clamp(32px, 4vw, 48px); }
-.precedent-panel { padding: clamp(22px, 3vw, 38px); min-width: 0; }
-.precedent-panel h2 { font-family: Georgia, "Times New Roman", serif; font-weight: 500; font-size: clamp(1.7rem, 2.4vw, 2.3rem); line-height: 1.12; }
-.precedent-panel > p, .precedent-source { color: var(--ink-soft); }
+.precedent-panel, .premises-panel { padding: clamp(22px, 3vw, 38px); min-width: 0; }
+.precedent-panel h2, .premises-panel h2 { font-family: Georgia, "Times New Roman", serif; font-weight: 500; font-size: clamp(1.7rem, 2.4vw, 2.3rem); line-height: 1.12; }
+.precedent-panel > p, .precedent-source, .premises-panel > p { color: var(--ink-soft); }
 .precedent-form { display: grid; gap: 12px; margin-block: 24px; max-width: 46rem; }
 .precedent-form select { max-width: 100%; width: 100%; min-height: 48px; height: max(48px, 3rem); padding: 10px 12px; border: 2px solid var(--ink); border-radius: 3px; background: var(--white); color: var(--ink); font: inherit; }
 .precedent-form .button { justify-self: start; }
@@ -401,3 +401,15 @@ body { overflow-wrap: anywhere; }
 .about-contents{display:flex;flex-wrap:wrap;gap:.5rem 1.5rem;padding:1rem 0;border-block:1px solid var(--line);margin-bottom:2rem}
 .about-contents a{display:inline-flex;align-items:center;min-height:44px;text-underline-offset:.2em;font-weight:700}
 .about-reading>section+section{margin-top:3rem;padding-top:1rem;border-top:1px solid var(--line)}
+.premises-form{display:grid;grid-template-columns:minmax(10rem,1fr) minmax(0,2fr);gap:1rem;align-items:start;margin:1.5rem 0}
+.premises-form label{display:block;font-weight:700;margin-bottom:.5rem}
+.premises-form input,.premises-form select{width:100%;min-width:0;min-height:44px}
+.premises-form>button,.premises-form>.field-help{grid-column:1/-1;justify-self:start}
+.premises-card{padding:1rem;margin:1rem 0;border:1px solid var(--line);border-radius:.5rem;background:var(--paper);overflow-wrap:anywhere}
+.premises-verdict{font-weight:700}
+.premises-floorplan{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1rem;margin:1rem 0}
+.premises-floorplan dt{font-size:.85rem;color:var(--ink-soft);margin-bottom:.4rem}
+.premises-floorplan dd{margin:0;font-weight:700}
+.premises-tenants{padding-left:1.25rem}.premises-tenants p{margin:.4rem 0 1rem}
+.premises-card .personnel-steps details>p{padding:0 1rem}
+@media(max-width:680px){.premises-form,.premises-floorplan{grid-template-columns:minmax(0,1fr)}}

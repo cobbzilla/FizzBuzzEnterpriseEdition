@@ -65,6 +65,7 @@ test('hard reload beside a frozen legacy owner keeps demo, BigInt and one durabl
   const afterRehearsal=await invoke(next,'/audit/evidence');expect(JSON.parse(afterRehearsal.body).journalEntries).toBe(JSON.parse(beforeRehearsal.body).journalEntries);
   expect(JSON.parse(retained.body).journalEntries).toBe(33);
   await next.selectOption('#precedent-scenario','lowercase-fizz');await next.click('#precedent-submit');await expect(next.locator('#precedent-status')).toContainText('Reuse rejected by Independent Lexical Bench');
+  await next.selectOption('#premises-scenario','bell');await next.click('#premises-submit');await expect(next.locator('#premises-status')).toContainText('U+0007');
   await next.fill('#limit','17');await next.click('#run-button');await expect(next.locator('#run-status')).toContainText('Mandate complete');await expect(next.locator('#precedent-source')).toContainText('earlier administration');
   const window=await invoke(next,'/fizzbuzz/window?start=9007199254740993&count=2');
   expect(window.status).toBe(200);expect(window.body).toBe('Fizz\n9007199254740994\n');expect(window.revision).toBe(currentRevision);

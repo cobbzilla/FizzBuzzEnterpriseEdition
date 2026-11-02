@@ -160,6 +160,24 @@
               <ol id="precedent-steps" class="personnel-steps" role="list" aria-label="Five prior-work office decisions"></ol>
             </section>
           </section>
+          <section class="panel premises-panel" aria-labelledby="premises-title">
+            <p class="eyebrow">Facilities / Vacant String Real Estate and Occupancy Directorate</p>
+            <h2 id="premises-title">Nothing may move in until nothing is there</h2>
+            <p>Every new numerical line needs inspected premises and a single-use lease. Occasionally the inspector finds an invisible tenant: a space with conditions, a tab with territorial ambitions, or a BEL demanding a doorbell. The offices identify the character, remove it and inspect again before numerical text moves in.</p>
+            <p>Actual production findings appear with each number in the Executive Chronicle. The ordinary portfolio presents a hidden occupant at every seventh ordinal; the same ordinal starts with the same property condition. Cached answers acquire no new inspections.</p>
+            <form id="premises-form" class="premises-form" novalidate aria-describedby="premises-help">
+              <div><label for="premises-ordinal">Prospective numerical tenant</label><input id="premises-ordinal" type="text" inputmode="numeric" autocomplete="off" spellcheck="false" value="7" required aria-describedby="premises-help premises-error"><p id="premises-error" class="field-error" aria-live="polite"></p></div>
+              <div><label for="premises-scenario">Property condition or management intervention</label><select id="premises-scenario">
+                <option value="survey">Survey the ordinary property portfolio</option><option value="vacant">Present genuinely vacant premises</option>
+                <option value="non-breaking-space">Discover a non-breaking space</option><option value="newline">Discover an unauthorized newline</option><option value="tab">Discover a territorial tab</option><option value="vertical-tab">Discover a vertical tab</option><option value="bell">Discover a BEL with doorbell ambitions</option><option value="carriage-return">Discover a carriage return</option><option value="form-feed">Discover a form feed</option><option value="zero-width-space">Discover a zero-width space</option><option value="byte-order-mark">Discover a byte-order mark</option><option value="word-joiner">Discover a word joiner</option>
+                <option value="occupied">Let Fizz move in before the inspection</option><option value="failed-eviction">Appoint a bailiff who files paperwork and does nothing</option><option value="borrowed-lease">Borrow another request's lease</option><option value="reused-lease">Present an already closed lease</option>
+              </select></div>
+              <button id="premises-submit" class="button button-primary" type="submit" aria-controls="premises-result">Commission a read-only inspection</button>
+              <p id="premises-help" class="field-help">Use any positive whole ordinal without leading zeros. These specimens use the real Java offices. No human approval is required. They leave Official output, the numerical audit and the cache untouched. Hidden characters are named and shown as code points; BEL plays no sound.</p>
+            </form>
+            <p id="premises-status" class="inline-status" role="status" aria-live="polite" aria-atomic="true">No specimen inspection has been commissioned.</p>
+            <div id="premises-result" aria-busy="false"></div>
+          </section>
         </div>
       </div>
     </section>

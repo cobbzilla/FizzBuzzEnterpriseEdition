@@ -38,7 +38,7 @@ export async function verifyPublic(origin: string, revision: string) {
    const businessRequests: string[] = [];
    page.on('request', request => {
     const url = new URL(request.url());
-    if (url.origin === origin && /^\/(fizzbuzz|healthz|readyz|audit|operations|capacity|cache|procurement|onboarding|precedent|companions)(\/|\?|$)/.test(url.pathname)) businessRequests.push(url.pathname);
+    if (url.origin === origin && /^\/(fizzbuzz|healthz|readyz|audit|operations|capacity|cache|procurement|onboarding|precedent|companions|premises)(\/|\?|$)/.test(url.pathname)) businessRequests.push(url.pathname);
    });
    await page.goto(origin + '/demo/');
    await expect(page.locator('#health-value')).toHaveText('LIVE');
@@ -53,6 +53,8 @@ export async function verifyPublic(origin: string, revision: string) {
    await expect(page.locator('#personnel-verdict')).toHaveText('Approved to start at 1');
    await expect(page.locator('#chronicle-entries')).toContainText('One has reported for duty');
    await expect(page.locator('#chronicle-entries')).toContainText('4 separately certified z’s');
+   await expect(page.locator('#chronicle-entries [data-premises-ordinal="7"]')).toContainText('U+00A0');
+   await expect(page.locator('#chronicle-entries [data-premises-ordinal="14"]')).toContainText('U+000A');
    assert.equal(await page.locator('#chronicle-scroll').evaluate(element=>element.clientHeight),chronicleHeight);
    await expect.poll(()=>page.locator('#chronicle-scroll').evaluate(element=>Math.abs(element.scrollTop+element.clientHeight-element.scrollHeight)<3)).toBe(true);
    const chronicle=page.locator('#chronicle-scroll');
@@ -119,6 +121,8 @@ export async function verifyPublic(origin: string, revision: string) {
    assert.equal((await page.locator('#output').textContent())?.trim().split('\n').at(-1), '16');
    await page.selectOption('#precedent-scenario','wrong-mandate');await page.click('#precedent-submit');
    await expect(page.locator('#precedent-status')).toContainText('Reuse rejected by Mandate Jurisdiction Chamber');
+   await page.selectOption('#premises-scenario','bell');await page.click('#premises-submit');await expect(page.locator('#premises-status')).toContainText('U+0007');
+   await page.selectOption('#premises-scenario','borrowed-lease');await page.click('#premises-submit');await expect(page.locator('#premises-status')).toContainText('Occupancy refused');await expect(page.locator('#premises-result')).toContainText('Reinspection confirmed 0 characters');
    await page.goto(origin+'/#operations');
    await page.click('#procurement-button');
    await expect(page.locator('#procurement-status')).toContainText('8 separate line items');

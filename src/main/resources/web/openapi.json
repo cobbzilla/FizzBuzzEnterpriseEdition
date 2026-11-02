@@ -47,6 +47,10 @@
     {
       "name": "Companion Procurement",
       "description": "Read-only deterministic nonhuman companion inspection and a spectacularly unequal scarcity charter."
+    },
+    {
+      "name": "Vacant premises",
+      "description": "Inspected empty buffers, named hidden occupants, eviction and single-use numerical habitation leases."
     }
   ],
   "paths": {
@@ -1340,6 +1344,76 @@
           }
         }
       }
+    },
+    "/premises/rehearsal": {
+      "get": {
+        "tags": [
+          "Vacant premises"
+        ],
+        "operationId": "rehearsePremisesInspection",
+        "summary": "Inspect vacant numerical premises and hidden occupants",
+        "description": "Runs the real allocation, inspection, eviction, reinspection, lease and independent audit offices on a read-only specimen. The ordinary portfolio presents one hidden occupant at every seventh positive ordinal and cycles through ten explicitly named characters. Recognized occupants are removed before vacancy is certified. Visible or unregistered occupants, failed eviction, borrowed leases and closed leases are refused. A business refusal is a readable 200 dossier with REJECTED status. Each specimen lease is closed after inspection. No numerical output, cache entry or audit transaction is created. Actual production findings appear in explained numerical responses and are never invented on cache hits. Names and code points are displayed instead of raw controls; BEL plays no sound. The operation works locally and offline in browser mode.",
+        "parameters": [
+          {
+            "name": "scenario",
+            "in": "query",
+            "required": false,
+            "description": "Ordinary property survey, a named hidden occupant, or an isolated management objection.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "survey",
+                "vacant",
+                "non-breaking-space",
+                "newline",
+                "tab",
+                "vertical-tab",
+                "bell",
+                "carriage-return",
+                "form-feed",
+                "zero-width-space",
+                "byte-order-mark",
+                "word-joiner",
+                "occupied",
+                "borrowed-lease",
+                "reused-lease",
+                "failed-eviction"
+              ],
+              "default": "survey"
+            }
+          },
+          {
+            "name": "ordinal",
+            "in": "query",
+            "required": false,
+            "description": "Positive canonical decimal ordinal of arbitrary magnitude; no leading zeros. This identifies the prospective tenant and reproducible ordinary property condition.",
+            "schema": {
+              "type": "string",
+              "pattern": "^[1-9][0-9]*$",
+              "default": "7"
+            },
+            "example": "7"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Immutable inspection findings and six office decisions. APPROVED means a usable specimen lease was issued and then closed. Vacancy certification remains separately recorded if a subsequent lease was refused.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PremisesDossier"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Unrecognized scenario, invalid ordinal, empty query, unknown or duplicated query parameter."
+          },
+          "405": {
+            "description": "Only GET is authorized; Allow: GET."
+          }
+        }
+      }
     }
   },
   "components": {
@@ -2337,6 +2411,136 @@
           "trialPrimeCeiling": {
             "type": "integer",
             "const": 97
+          }
+        }
+      },
+      "PremisesTenant": {
+        "type": "object",
+        "required": [
+          "position",
+          "codePoint",
+          "name",
+          "excuse",
+          "recognized"
+        ],
+        "properties": {
+          "position": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255,
+            "description": "Zero-based UTF-16 position in the initial premises."
+          },
+          "codePoint": {
+            "type": "string",
+            "pattern": "^U\\+[0-9A-F]{4,6}$",
+            "example": "U+0007"
+          },
+          "name": {
+            "type": "string",
+            "example": "ALERT (BEL, historically called bell)"
+          },
+          "excuse": {
+            "type": "string",
+            "description": "The fictional occupant’s reported property ambitions."
+          },
+          "recognized": {
+            "type": "boolean",
+            "description": "Whether the registered hidden-character eviction procedure covers this code point."
+          }
+        }
+      },
+      "PremisesDecision": {
+        "type": "object",
+        "required": [
+          "office",
+          "state",
+          "finding",
+          "document"
+        ],
+        "properties": {
+          "office": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "APPROVED",
+              "DISCOVERED",
+              "NOT_REQUIRED",
+              "REJECTED",
+              "NOT_REACHED"
+            ]
+          },
+          "finding": {
+            "type": "string"
+          },
+          "document": {
+            "type": "string"
+          }
+        }
+      },
+      "PremisesDossier": {
+        "type": "object",
+        "required": [
+          "schema",
+          "ordinal",
+          "purpose",
+          "status",
+          "initialLength",
+          "vacancyCertified",
+          "tenants",
+          "steps"
+        ],
+        "properties": {
+          "schema": {
+            "type": "string",
+            "const": "slopbuzz-premises/v1"
+          },
+          "ordinal": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]*$"
+          },
+          "purpose": {
+            "type": "string",
+            "enum": [
+              "MANDATE",
+              "REHEARSAL"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "APPROVED",
+              "REJECTED"
+            ]
+          },
+          "initialLength": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0,
+            "maximum": 256,
+            "description": "Initial UTF-16 occupancy; null when no valid initial survey was received. This limit bounds only initial fault specimens and does not limit subsequent output or ordinal magnitude."
+          },
+          "vacancyCertified": {
+            "type": "boolean",
+            "description": "Whether reinspection actually certified zero characters. May remain true when a later lease or audit was refused; it is a pre-occupancy finding, not a promise of perpetual emptiness."
+          },
+          "tenants": {
+            "type": "array",
+            "maxItems": 256,
+            "items": {
+              "$ref": "#/components/schemas/PremisesTenant"
+            }
+          },
+          "steps": {
+            "type": "array",
+            "minItems": 6,
+            "maxItems": 6,
+            "items": {
+              "$ref": "#/components/schemas/PremisesDecision"
+            }
           }
         }
       }

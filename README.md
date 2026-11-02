@@ -160,6 +160,15 @@ numerical mandate. `catalog/bestiary.ts` is the canonical TypeScript constant;
 `node scripts/generate-companions.ts` emits portable Java, and
 `pnpm test:companions` checks all dossiers, weights and generated-source custody.
 
+Each freshly produced line also leases its actual output buffer through the
+[Vacant String Real Estate and Occupancy Directorate](docs/ADR-0028-vacant-string-premises.md).
+Every seventh ordinal initially houses one of ten named hidden characters.
+The inspector identifies it, the eviction office removes it, and reinspection
+proves actual vacancy before text moves in. The Executive Chronicle displays
+those Java findings. The demo's read-only property desk and
+`GET /premises/rehearsal?scenario=bell&ordinal=35` inspect the same authorities
+without printing numbers or changing the audit/cache. BEL is named, never sounded.
+
 Read the human API charter guide at `http://localhost:18088/api` in the shared
 preview, or fetch `GET /openapi.json` for the OpenAPI 3.2.1 source used to
 build that guide. The [charter decision](docs/ADR-0018-api-charter-and-ceremonial-playback.md)

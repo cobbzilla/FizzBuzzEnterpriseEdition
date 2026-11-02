@@ -8,7 +8,7 @@ function trackUsage(detail) {
 // web/runtime-protocol.ts
 var runtimeProtocol = 1;
 function isTransientOperation(path, method = "GET") {
-  return method === "GET" && ["/companions/catalog", "/companions/strategies", "/companions/window", "/operations/runtime", "/fizzbuzz/window", "/fizzbuzz/window/explained", "/capacity/forecast/extended", "/procurement/dossier", "/onboarding/rehearsal", "/precedent/rehearsal"].includes(path.split("?")[0]);
+  return method === "GET" && ["/premises/rehearsal", "/companions/catalog", "/companions/strategies", "/companions/window", "/operations/runtime", "/fizzbuzz/window", "/fizzbuzz/window/explained", "/capacity/forecast/extended", "/procurement/dossier", "/onboarding/rehearsal", "/precedent/rehearsal"].includes(path.split("?")[0]);
 }
 
 // web/release-assets.ts
@@ -223,7 +223,7 @@ function tryDesk(spec, path, method, operation) {
   const panel = element("div", "api-try");
   panel.append(element("h4", "", "Live request desk"));
   const hasLimit = (operation.parameters || []).some((parameter) => parameter.$ref?.endsWith("/Limit") || parameter.name === "limit" && parameter.schema?.type !== "string");
-  const magnitudeFields = path.startsWith("/fizzbuzz/window") || path === "/companions/window" ? [{ name: "start", label: "Starting ordinal", value: "9007199254740990", minimum: 1 }, { name: "count", label: "Window lines", value: "15", minimum: 1, maximum: 100 }] : path === "/capacity/forecast/extended" ? [{ name: "limit", label: "Upper limit", value: "9007199254740993", minimum: 0 }] : [];
+  const magnitudeFields = path.startsWith("/fizzbuzz/window") || path === "/companions/window" ? [{ name: "start", label: "Starting ordinal", value: "9007199254740990", minimum: 1 }, { name: "count", label: "Window lines", value: "15", minimum: 1, maximum: 100 }] : path === "/capacity/forecast/extended" ? [{ name: "limit", label: "Upper limit", value: "9007199254740993", minimum: 0 }] : path === "/premises/rehearsal" ? [{ name: "ordinal", label: "Prospective numerical tenant", value: "7", minimum: 1 }] : [];
   const requestedPath = hasLimit ? `${path}?limit=15` : magnitudeFields.length ? `${path}?${new URLSearchParams(magnitudeFields.map((field) => [field.name, field.value]))}` : path;
   const command = method === "post" ? `curl -i -X POST '${config.mode === "server" ? new URL(config.apiBaseUrl || "/", location.origin).href.replace(/\/$/, "") : "http://localhost:18089"}${path}'` : `curl -i '${config.mode === "server" ? new URL(config.apiBaseUrl || "/", location.origin).href.replace(/\/$/, "") : "http://localhost:18089"}${requestedPath}${path === "/companions/window" ? "&strategy=factor-resonance-v1" : ""}'`;
   panel.append(element("p", "", "Server deployment example (cURL cannot call an in-browser runtime):"));
@@ -266,7 +266,7 @@ function tryDesk(spec, path, method, operation) {
   const productParameter = (operation.parameters || []).map((parameter) => resolve(spec, parameter)).find((parameter) => parameter?.name === "product" || parameter?.name === "scenario" || parameter?.name === "strategy");
   let productSelect = null;
   if (productParameter) {
-    const label = element("label", "", productParameter.name === "strategy" ? "Assignment authority" : productParameter.name === "scenario" ? operation.operationId === "rehearsePriorWork" ? "Court petition" : "Personnel scenario" : "Authorized product");
+    const label = element("label", "", productParameter.name === "strategy" ? "Assignment authority" : productParameter.name === "scenario" ? path === "/premises/rehearsal" ? "Property condition" : operation.operationId === "rehearsePriorWork" ? "Court petition" : "Personnel scenario" : "Authorized product");
     productSelect = element("select");
     productSelect.id = `${id}-product`;
     productSelect.setAttribute("aria-describedby", `${id}-status`);
@@ -308,8 +308,8 @@ function tryDesk(spec, path, method, operation) {
     }
     for (const { field, input: decimal } of magnitudeInputs) {
       const value = decimal.value.trim();
-      if (!/^[0-9]+$/.test(value) || field.minimum === 1 && /^0+$/.test(value) || field.maximum && Number(value) > field.maximum) {
-        report.textContent = field.maximum ? "Enter a window count from 1 through 100." : field.minimum === 1 ? "Enter a positive whole number using digits 0\u20139." : "Enter a non-negative whole number using digits 0\u20139.";
+      if (!/^[0-9]+$/.test(value) || field.minimum === 1 && /^0+$/.test(value) || path === "/premises/rehearsal" && value[0] === "0" || field.maximum && Number(value) > field.maximum) {
+        report.textContent = path === "/premises/rehearsal" ? "Enter a positive whole ordinal without leading zeros." : field.maximum ? "Enter a window count from 1 through 100." : field.minimum === 1 ? "Enter a positive whole number using digits 0\u20139." : "Enter a non-negative whole number using digits 0\u20139.";
         decimal.setAttribute("aria-invalid", "true");
         decimal.focus();
         return;

@@ -45,7 +45,18 @@ public final class EnterpriseDispatcher {
  public EnterpriseDispatcher(SlopFizzBuzz service, OutputTransactionCoordinator transactions, OutputAuditJournal journal, OutputCache cache, ReleaseCustodyReport release, final RuntimeClock clock, final com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.runtime.RuntimeIdentity identity) {
  this(service,transactions,journal,cache,release,clock,identity,com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.companions.CompanionDirectorate.standard());
  }
- public EnterpriseDispatcher(SlopFizzBuzz service, OutputTransactionCoordinator transactions, OutputAuditJournal journal, OutputCache cache, ReleaseCustodyReport release, final RuntimeClock clock, final com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.runtime.RuntimeIdentity identity, final com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.companions.CompanionDirectorate companions) {
+ public EnterpriseDispatcher(SlopFizzBuzz service, final OutputTransactionCoordinator transactions, OutputAuditJournal journal, OutputCache cache, ReleaseCustodyReport release, final RuntimeClock clock, final com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.runtime.RuntimeIdentity identity, final com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.companions.CompanionDirectorate companions) {
+  register("/premises/rehearsal",new DeskHandler(){public void handle(EnterpriseExchange exchange)throws IOException {
+   if(!"GET".equals(exchange.getRequestMethod())){exchange.headers.set("Allow","GET");respond(exchange,405,"Method not authorized\n");return;}
+   String scenario="survey",ordinal="7",query=exchange.getRequestURI().getRawQuery();
+   try {
+    if(query!=null){if(query.isEmpty())throw new IllegalArgumentException();boolean hasScenario=false,hasOrdinal=false;
+     for(String part:query.split("&",-1)){if(part.startsWith("scenario=")&&!hasScenario){scenario=part.substring(9);hasScenario=true;}else if(part.startsWith("ordinal=")&&!hasOrdinal){ordinal=part.substring(8);hasOrdinal=true;}else throw new IllegalArgumentException();}
+    }
+    com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.premises.PremisesDossier dossier=transactions.premises().rehearse(ordinal,scenario);
+    exchange.headers.set("Cache-Control","no-store");exchange.headers.set("X-SlopBuzz-Proceedings","READ_ONLY_REHEARSAL");respond(exchange,200,dossier.toJson(),"application/json; charset=UTF-8");
+   }catch(IllegalArgumentException invalid){respond(exchange,400,"Use a recognized premises scenario and a positive canonical decimal ordinal\n");}
+  }});
   for(final String path:new String[]{"/companions/catalog","/companions/strategies","/companions/window"})register(path,new DeskHandler(){public void handle(EnterpriseExchange exchange)throws IOException{
    if(!"GET".equals(exchange.getRequestMethod())){exchange.headers.set("Allow","GET");respond(exchange,405,"Method not authorized\n");return;}
    String query=exchange.getRequestURI().getRawQuery();String result;
@@ -62,7 +73,7 @@ public final class EnterpriseDispatcher {
    exchange.headers.set("Cache-Control","no-store");exchange.headers.set("X-SlopBuzz-Proceedings","READ_ONLY_COMPANION_INSPECTION");respond(exchange,200,result,"application/json; charset=UTF-8");
   }});
 
-  final com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.capacity.ExtendedMagnitudeBureau magnitude=new com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.capacity.ExtendedMagnitudeBureau();
+  final com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.capacity.ExtendedMagnitudeBureau magnitude=new com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.capacity.ExtendedMagnitudeBureau(new com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.loop.LoopInitializer(),transactions.premises());
   register("/fizzbuzz/window",new DeskHandler(){public void handle(EnterpriseExchange exchange)throws IOException {
    if(!"GET".equals(exchange.getRequestMethod())) {exchange.headers.set("Allow","GET");respond(exchange,405,"Method not authorized\n");return;}
    String query=exchange.getRequestURI().getRawQuery();

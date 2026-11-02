@@ -7,6 +7,8 @@ import java.util.logging.Logger;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.premises.VacantStringPremisesDirectorate;
+import com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.premises.PremisesDocuments.Lease;
 
 /**
  * Stages fragments until an entire SlopFizzBuzz line can be published at once.
@@ -19,17 +21,19 @@ public final class OutputTransactionCoordinator {
 	private final ThreadLocal<OutputCapture> capture = new ThreadLocal<OutputCapture>();
 	private final OutputAuditJournal journal;
 	private final ProclamationNotary notary = new ProclamationNotary();
+	private final VacantStringPremisesDirectorate premises;
 
-	@Autowired
 	public OutputTransactionCoordinator(final OutputAuditJournal journal) {
-		this.journal = journal;
+		this(journal, VacantStringPremisesDirectorate.standard());
 	}
+	@Autowired public OutputTransactionCoordinator(final OutputAuditJournal journal, final VacantStringPremisesDirectorate premises) { this.journal = journal; this.premises = premises; }
+	public VacantStringPremisesDirectorate premises() { return premises; }
 
 	public void begin(final int number) {
 		if (this.pending.get() != null) {
 			throw new IllegalStateException("Nested output transactions require a separate committee.");
 		}
-		this.pending.set(new PendingOutput(number));
+		this.pending.set(new PendingOutput(number, this.premises.lease(String.valueOf(number))));
         if(ExecutionCustody.observing())ExecutionCustody.record("TRANSACTION_BEGIN","Output Transaction Coordinator","Opened an isolated staging buffer for ordinal "+number+". Fragments cannot publish a partial line.");
 	}
 
@@ -65,7 +69,7 @@ public final class OutputTransactionCoordinator {
 			throw new IllegalStateException("No output transaction is pending.");
 		}
 		try {
-			final String payload = transaction.payload.toString();
+			final String payload = transaction.payload.text();
 			this.notary.certify(transaction.number, payload).authorize(transaction.number, payload);
             if(ExecutionCustody.observing())ExecutionCustody.record("NOTARY","Independent Proclamation Notary","An independent arithmetic and lexical check authorized this complete payload.",payload);
 			final byte[] bytes = payload.getBytes(StandardCharsets.UTF_8);
@@ -74,10 +78,11 @@ public final class OutputTransactionCoordinator {
 			this.journal.record(transaction.number, payload, OutputDisposition.COMMITTED);
             ExecutionCustody.record("TRANSACTION_COMMIT","Output Transaction Coordinator","The numerical line and its committed audit entry completed their transaction.");
 		} catch (final RuntimeException failure) {
-			this.journal.record(transaction.number, transaction.payload.toString(), OutputDisposition.ABORTED);
+			this.journal.record(transaction.number, transaction.payload.text(), OutputDisposition.ABORTED);
 			LOGGER.warning("Output transaction aborted for number " + transaction.number);
 			throw failure;
 		} finally {
+			transaction.payload.close();
 			this.pending.remove();
             ExecutionCustody.record("TRANSACTION_CLEANUP","Output Transaction Coordinator","Released this ordinal's staging buffer.");
 		}
@@ -99,18 +104,19 @@ public final class OutputTransactionCoordinator {
 	public void abort() {
 		final PendingOutput transaction = this.pending.get();
 		if (transaction != null) {
-			this.journal.record(transaction.number, transaction.payload.toString(), OutputDisposition.ABORTED);
-			this.pending.remove();
+			try { this.journal.record(transaction.number, transaction.payload.text(), OutputDisposition.ABORTED); }
+			finally { transaction.payload.close(); this.pending.remove(); }
 			LOGGER.warning("Output transaction aborted for number " + transaction.number);
 		}
 	}
 
 	private static final class PendingOutput {
 		private final int number;
-		private final StringBuilder payload = new StringBuilder();
+		private final Lease payload;
 
-		private PendingOutput(final int number) {
+		private PendingOutput(final int number, final Lease payload) {
 			this.number = number;
+			this.payload = payload;
 		}
 	}
 }

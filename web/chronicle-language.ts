@@ -1,6 +1,34 @@
 /** Editorial discretion never supplies a business decision. Every variant retains its recorded facts. */
 const lines=(source:string):readonly string[]=>Object.freeze(source.trim().split('\n').map(line=>line.trim()));
 export const narrativeTemplates={
+ premises:lines(`
+{facts} Facilities has proved that the empty room was empty, an achievement it intends to occupy prominently in its annual report.
+The numerical tenant has completed its property formalities. {facts}
+{facts} An absence of characters has been established through a sufficient presence of officials.
+The company has obtained documentary title to the space between nothing and something. {facts}
+{facts} The premises were inspected before anyone had the opportunity to write on them.
+Our new address contains no addressable occupants yet. {facts}
+{facts} Facilities has issued permission for the deliverable to have somewhere to be.
+An empty buffer has secured the institutional recognition previously denied to empty buffers. {facts}
+{facts} The vacancy certificate is a historical finding; the company expects its successful premises to become less vacant shortly.
+The lease covers exactly the room the inspector visited, a detail Legal has underlined twice. {facts}
+{facts} No character acquired tenancy through the mere availability of floor space.
+The organization can now distinguish an empty string from an empty string without the appropriate documents. {facts}
+`),
+ premisesDiscovery:lines(`
+{facts} The invisible tenant was visible to the department whose entire operating model requires finding one.
+Facilities discovered that nothing was already being occupied. {facts}
+{facts} The room contained an unauthorized absence with a Unicode identity.
+An apparently vacant property has produced a surprisingly articulate eviction file. {facts}
+{facts} The inspector declined to accept invisibility as evidence of non-residence.
+The hidden occupant's code point has been entered into the minutes with unusual satisfaction. {facts}
+{facts} A character had acquired premises without acquiring permission to be a character here.
+The company has removed the squatter while retaining its forwarding designation. {facts}
+{facts} The board appreciates an inspection capable of detecting the sort of tenant the board cannot see.
+Vacancy has required corrective action, which Facilities regards as a particularly profitable form of emptiness. {facts}
+{facts} The occupant left before numerical move-in; its documentary footprint remains considerable.
+The property now qualifies as empty for reasons considerably longer than its former contents. {facts}
+`),
  one:lines(`
 {facts} The starting position has achieved the headcount traditionally associated with being first.
 The numerical reception desk can finally point to an occupant. {facts}
