@@ -16,6 +16,19 @@ test('default companions tell exact stories without changing output or audit; st
  await page.click('#personnel-replay');await expect(page.locator('#run-status')).toContainText('Execution replay complete');await expect(page.locator('#companion-list li')).toHaveCount(7);const after=await inspect(page);expect(after.journalEntries).toBe(15);expect(after.headDigest).toBe(before.headDigest);expect(network).toEqual([]);
 });
 
+test.describe('companion biography dismissal',()=>{
+ test.use({hasTouch:true});
+ test('mobile biography keeps its X visible, dismisses from the backdrop and preserves reading gestures and focus',async({page},info)=>{
+  await page.setViewportSize({width:390,height:667});await page.goto('/demo/');await run(page);const opener=page.locator('#companion-list button').first();const dialog=page.locator('#companion-dialog'),close=dialog.getByRole('button',{name:'Close companion file'}),body=dialog.getByRole('region',{name:'Companion biography'});
+  await opener.tap();await expect(dialog).toBeVisible();await expect(close).toBeFocused();await body.getByText('Personality',{exact:true}).tap();await expect(dialog).toBeVisible();
+  expect(await body.evaluate(e=>e.scrollHeight>e.clientHeight)).toBe(true);await body.evaluate(e=>{e.scrollTop=e.scrollHeight;});await expect(close).toBeInViewport();const target=(await close.boundingBox())!;expect(target.width).toBeGreaterThanOrEqual(44);expect(target.height).toBeGreaterThanOrEqual(44);
+  if(info.project.metadata.engine!=='js')expect((await new AxeBuilder({page}).include('#companion-dialog').withTags(['wcag2a','wcag2aa','wcag21aa','wcag22aa','best-practice']).analyze()).violations).toEqual([]);
+  await close.tap();await expect(dialog).not.toBeVisible();await expect(opener).toBeFocused();
+  await opener.tap();expect(await body.evaluate(e=>e.scrollTop)).toBe(0);await page.touchscreen.tap(4,4);await expect(dialog).not.toBeVisible();await expect(opener).toBeFocused();
+  await opener.tap();const inside=(await body.boundingBox())!;await page.mouse.move(inside.x+30,inside.y+60);await page.mouse.down();await page.mouse.move(4,4);await page.mouse.up();await expect(dialog).toBeVisible();await page.evaluate(()=>document.styleSheets[0].insertRule('html{font-size:200% !important}'));await expect(close).toBeInViewport();expect(await dialog.evaluate(e=>e.scrollWidth<=e.clientWidth+1)).toBe(true);await page.keyboard.press('Escape');await expect(dialog).not.toBeVisible();await expect(opener).toBeFocused();
+ });
+});
+
 test('all 3200 stories are searchable and scarce companions disclose honest ticket weights',async({page})=>{
  await page.goto('/demo/');await page.locator('#companion-help a').click();await expect(page).toHaveURL(/\/bestiary\/$/);await expect(page.locator('#bestiary-status')).toContainText('3200 companions found. Page 1 of 134');await expect(page.locator('#bestiary-results article')).toHaveCount(24);
  await page.selectOption('#bestiary-kind','single');await page.fill('#bestiary-search','unicorn');await expect(page.locator('#bestiary-results article')).toHaveCount(1);await expect(page.locator('#bestiary-results')).toContainText('1 of 1,000,000,000 tickets');await expect(page.locator('#bestiary-results')).toContainText('Make one impossible promise responsibly possible.');

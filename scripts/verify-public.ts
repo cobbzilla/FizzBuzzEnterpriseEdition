@@ -68,6 +68,9 @@ export async function verifyPublic(origin: string, revision: string) {
    const expected = Array.from({length: 15}, (_, i) => (i + 1) % 15 === 0 ? 'FizzBuzz' : (i + 1) % 3 === 0 ? 'Fizz' : (i + 1) % 5 === 0 ? 'Buzz' : String(i + 1));
    assert.deepEqual((await page.locator('#output').textContent())?.trim().split('\n'), expected);
    await expect(page.locator('#companion-list li')).toHaveCount(7);
+   const bioOpener=page.locator('#companion-list button').first(),bio=page.locator('#companion-dialog');
+   await bioOpener.click();await expect(bio.getByRole('button',{name:'Close companion file'})).toBeVisible();await bio.getByRole('button',{name:'Close companion file'}).click();await expect(bio).not.toBeVisible();await expect(bioOpener).toBeFocused();
+   await bioOpener.click();await page.mouse.click(4,4);await expect(bio).not.toBeVisible();await expect(bioOpener).toBeFocused();
    await page.selectOption('#companion-strategy','ordinal-constellation-v1');
    await expect(page.locator('#companion-list')).toContainText('3 · Fizz · pickle — Keeper of Annotated Recipes');
    await page.uncheck('#emoji-companions');await expect(page.locator('#companion-list li')).toHaveCount(0);

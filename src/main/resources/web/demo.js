@@ -243,8 +243,25 @@ var CompanionDesk = class {
       this.render();
       this.scroller.scrollTop = this.scroller.scrollHeight;
     });
-    this.dialog.querySelector("button").addEventListener("click", () => this.dialog.close());
+    this.dialog.querySelector("[data-companion-close]").addEventListener("click", () => this.dialog.close());
+    const outside = (event) => {
+      const box = this.dialog.getBoundingClientRect();
+      return event.clientX < box.left || event.clientX > box.right || event.clientY < box.top || event.clientY > box.bottom;
+    };
+    let beganOnBackdrop = false;
+    this.dialog.addEventListener("pointerdown", (event) => {
+      beganOnBackdrop = event.target === this.dialog && outside(event);
+    });
+    this.dialog.addEventListener("pointercancel", () => {
+      beganOnBackdrop = false;
+    });
+    this.dialog.addEventListener("click", (event) => {
+      const dismiss = this.dialog.open && beganOnBackdrop && event.target === this.dialog && outside(event);
+      beganOnBackdrop = false;
+      if (dismiss) this.dialog.close();
+    });
     this.dialog.addEventListener("close", () => {
+      beganOnBackdrop = false;
       if (this.invoker?.isConnected) this.invoker.focus();
     });
     void companionPolicies().then((policies) => {
@@ -357,6 +374,7 @@ var CompanionDesk = class {
     body.replaceChildren(characterStory(c));
     body.append(node("h3", "Allocation evidence"), node("p", "Strategy: " + this.policy.value + ". Catalog: " + this.version + ". Ticket: " + a.ticket + "."), node("p", "Extracted exact factors: " + a.factors.factors + ". " + (a.factors.complete ? "Complete factorization." : "Unresolved exact cofactor: " + a.factors.cofactor + ". This cofactor is not certified prime.") + " Division checks: " + a.factors.divisions + " of " + a.factors.divisionBudget + "."));
     this.dialog.showModal();
+    this.dialog.querySelector(".companion-dialog-body").scrollTop = 0;
   }
 };
 

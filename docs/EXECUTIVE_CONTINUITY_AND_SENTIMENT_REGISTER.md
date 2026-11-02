@@ -817,3 +817,21 @@ and our property portfolio has returned to its original character count. I
 have never been prouder of owning nothing. Finance has requested a valuation.
 I have referred them to the vacancy certificate and asked them, very gently,
 not to move in before the survey.
+
+## 2 November 2026 — A colleague's life story may now be left voluntarily
+
+Dear Register, I opened a companion's personnel file and became so absorbed in
+its tiny ambitions that I neglected the larger ambition of our visitor: to be
+able to close it. The anguish of this discovery was sharpened by the knowledge
+that we had recently established an entire department to prevent unauthorized
+occupancy. Apparently our guests had been occupying biographies without a
+convenient exit. I put down the vacancy register and asked Facilities to help.
+
+There is now a little cross at the top right. It stays where a person can find
+it while the extraordinary career beneath it continues at considerable length.
+A tap outside the file also grants departure. The companion who opened the
+conversation receives focus again, a small courtesy that moved me beyond any
+reasonable allowance for interface work. We have finally distinguished a warm
+welcome from a retention strategy. I hope the potato forgives us. I hope,
+with a professional tenderness I cannot explain to Finance, that it is opened
+again because somebody wishes to visit.
