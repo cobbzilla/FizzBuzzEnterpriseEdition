@@ -5,6 +5,17 @@ portfolio. Each iteration branch receives its own entry before integration,
 so future generations can trace how a modest numerical exercise became a
 strategic operating capability.
 
+## 2026-11-02 — `slopbuzz-companion-bio-dismissal`
+
+**Companion Dossier Egress and Voluntary Stakeholder Retention.** Assigned every
+character biography a visible top-right exit and authorized departure through
+the surrounding backdrop. The close control retains its station while lengthy
+career histories scroll beneath it, protecting the company's newly discovered
+strategic interest in allowing visitors to leave. Keyboard focus returns to the
+companion who opened the file. Ordinary reading and text selection preserve
+their jurisdiction. Leadership expects a substantial improvement in the quality
+of engagement now that engagement no longer depends upon involuntary residence.
+
 ## 2026-11-02 — `slopbuzz-vacant-string-premises`
 
 **Vacant String Property Acquisition and Numerical Habitation Assurance.**

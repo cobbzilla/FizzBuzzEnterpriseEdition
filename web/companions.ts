@@ -32,8 +32,13 @@ export class CompanionDesk {
   this.policy.addEventListener('change',()=>{this.generation++;this.batches.clear();this.assigned.clear();this.list.replaceChildren();this.lastSignature='';this.following=true;this.status.textContent='Consulting the selected allocation authority…';void this.refresh();});
   this.scroller.addEventListener('scroll',()=>{const atBottom=this.scroller.scrollHeight-this.scroller.clientHeight-this.scroller.scrollTop<24;const resume=atBottom&&!this.following;this.following=atBottom;if(resume)this.render();});
   this.latest.addEventListener('click',()=>{this.following=true;this.render();this.scroller.scrollTop=this.scroller.scrollHeight;});
-  this.dialog.querySelector('button')!.addEventListener('click',()=>this.dialog.close());
-  this.dialog.addEventListener('close',()=>{if(this.invoker?.isConnected)this.invoker.focus();});
+  this.dialog.querySelector('[data-companion-close]')!.addEventListener('click',()=>this.dialog.close());
+  const outside=(event:MouseEvent)=>{const box=this.dialog.getBoundingClientRect();return event.clientX<box.left||event.clientX>box.right||event.clientY<box.top||event.clientY>box.bottom;};
+  let beganOnBackdrop=false;
+  this.dialog.addEventListener('pointerdown',event=>{beganOnBackdrop=event.target===this.dialog&&outside(event);});
+  this.dialog.addEventListener('pointercancel',()=>{beganOnBackdrop=false;});
+  this.dialog.addEventListener('click',event=>{const dismiss=this.dialog.open&&beganOnBackdrop&&event.target===this.dialog&&outside(event);beganOnBackdrop=false;if(dismiss)this.dialog.close();});
+  this.dialog.addEventListener('close',()=>{beganOnBackdrop=false;if(this.invoker?.isConnected)this.invoker.focus();});
   void companionPolicies().then(policies=>{const selected=this.policy.value;this.policy.replaceChildren(...policies.map(p=>{const option=node('option',p.name);option.value=p.id;return option;}));if(policies.some(p=>p.id===selected))this.policy.value=selected;this.policy.disabled=false;}).catch(error=>{this.status.textContent='Companion policy registry unavailable: '+error.message;});
  }
  reset(){this.generation++;this.visible.clear();this.assigned.clear();this.batches.clear();this.list.replaceChildren();this.lastSignature='';this.following=true;this.latest.hidden=true;this.status.textContent=this.enabled.checked?'Awaiting the first disclosed Fizz, Buzz or FizzBuzz.':'Companions are disabled.';}
@@ -72,5 +77,6 @@ export class CompanionDesk {
   const body=this.dialog.querySelector<HTMLElement>('[data-companion-story]')!;body.replaceChildren(characterStory(c));
   body.append(node('h3','Allocation evidence'),node('p','Strategy: '+this.policy.value+'. Catalog: '+this.version+'. Ticket: '+a.ticket+'.'),node('p','Extracted exact factors: '+a.factors.factors+'. '+(a.factors.complete?'Complete factorization.':'Unresolved exact cofactor: '+a.factors.cofactor+'. This cofactor is not certified prime.')+' Division checks: '+a.factors.divisions+' of '+a.factors.divisionBudget+'.'));
   this.dialog.showModal();
+  this.dialog.querySelector<HTMLElement>('.companion-dialog-body')!.scrollTop=0;
  }
 }

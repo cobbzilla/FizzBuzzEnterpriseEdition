@@ -372,7 +372,14 @@ body { overflow-wrap: anywhere; }
 .companion-scroll button{width:100%;min-height:48px;text-align:left;display:flex;gap:.6rem;align-items:center;padding:.5rem;background:transparent;color:inherit;border:0;border-bottom:1px solid var(--line);font:inherit;cursor:pointer;overflow-wrap:anywhere}
 .companion-scroll button:hover{background:var(--paper-deep)}
 .companion-scroll button span:first-child{font-size:1.5rem;flex:none}
-.companion-dialog{max-width:min(44rem,calc(100vw - 2rem));max-height:85dvh;overflow:auto;padding:1.5rem;color:var(--ink);background:var(--paper);border:2px solid var(--ink);border-radius:8px;overflow-wrap:anywhere}
+.companion-dialog{width:min(44rem,calc(100vw - 2rem));max-width:100%;max-height:85dvh;overflow:hidden;padding:0;color:var(--ink);background:var(--paper);border:2px solid var(--ink);border-radius:8px;overflow-wrap:anywhere}
+.companion-dialog[open]{display:flex;flex-direction:column}
+.companion-dialog-tools{display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-shrink:0;padding:.65rem 1rem;border-bottom:1px solid var(--line)}
+.companion-dialog-tools .eyebrow{margin:0}
+.companion-dialog-close{display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;width:44px;height:44px;padding:0;font-size:28px;line-height:1;cursor:pointer;color:var(--ink);background:var(--white);border:1px solid var(--ink);border-radius:4px}
+.companion-dialog-close:hover{background:var(--paper-deep)}
+.companion-dialog-body{min-height:0;overflow:auto;padding:1.25rem;overscroll-behavior:contain}
+.companion-dialog-body h2{margin-top:0;font-size:1.4rem;line-height:1.25}
 .companion-dialog::backdrop{background:rgb(0 0 0 / .55)}
 .companion-dialog dt,.bestiary-card dt{font-weight:700;margin:1rem 0 .25rem}
 .companion-dialog dd,.bestiary-card dd{margin:0;line-height:1.6}
