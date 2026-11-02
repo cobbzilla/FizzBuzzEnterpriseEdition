@@ -170,6 +170,7 @@ public class SlopFizzBuzzHttpServerTest {
             assertFalse(page.body.contains("<!--SITE_"));
             assertFalse(page.body.contains("<!--NAV_"));
         }
+        assertTrue(request("GET", "/unicode-license.txt").body.contains("UNICODE LICENSE V3"));
         assertEquals(200, request("GET", "/assets/bestiary.js").status);
         assertEquals(200, request("GET", "/assets/rarity-register.js").status);
         final Reply history = request("GET", "/company-history/");

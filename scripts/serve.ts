@@ -5,7 +5,7 @@ import {resolve,extname} from 'node:path';
 import {fileURLToPath} from 'node:url';
 export function createStaticServer(directory='dist',base='/',configOverride?: Record<string,unknown>) {
 const root=resolve(directory);
-const types:Record<string,string>={'.html':'text/html; charset=utf-8','.js':'text/javascript','.css':'text/css','.json':'application/json','.wasm':'application/wasm','.svg':'image/svg+xml','.md':'text/markdown'};
+const types:Record<string,string>={'.html':'text/html; charset=utf-8','.js':'text/javascript','.css':'text/css','.json':'application/json','.wasm':'application/wasm','.svg':'image/svg+xml','.txt':'text/plain; charset=utf-8','.md':'text/markdown'};
 return createServer(async(req,res)=>{
   try {
     const url=new URL(req.url!,`http://${req.headers.host||'localhost'}`);

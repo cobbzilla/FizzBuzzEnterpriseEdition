@@ -60,6 +60,11 @@
     <testSourceDirectory>../src/test/java</testSourceDirectory>
     <resources>
       <resource>
+        <directory>../data/unicode</directory>
+        <targetPath>META-INF/licenses/unicode</targetPath>
+        <includes><include>LICENSE.txt</include></includes>
+      </resource>
+      <resource>
         <directory>${project.basedir}/..</directory>
         <includes>
           <include>CHANGELOG.md</include>

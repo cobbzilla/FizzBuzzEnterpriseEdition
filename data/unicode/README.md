@@ -17,3 +17,6 @@ admitted 1,364 sequences are recorded in catalog/symbols.ts; some established
 editorial names are retained from the original Emoji 16.0 drafting inventory.
 The other 1,836 characters combine two admitted sequences and are labelled as
 themed pairs. They do not claim to add new Unicode emoji.
+
+The notice also ships in each Java artifact at META-INF/licenses/unicode/LICENSE.txt
+and with the static site at /unicode-license.txt, including its offline cache.

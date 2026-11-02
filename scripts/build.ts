@@ -32,6 +32,7 @@ for (const asset of ['site.css','api.css','mark.svg','openapi.json']) await cp(`
 for (const stylesheet of ['site.css','api.css']) await cp(`src/main/resources/web/${stylesheet}`, `dist/${assets}${stylesheet}`);
 const raw = [['CHANGELOG.md','CHANGELOG.md'],['docs/EXECUTIVE_CONTINUITY_AND_SENTIMENT_REGISTER.md','continuity-register.md']];
 for (const [source,target] of raw) await cp(source, `dist/${target}`);
+await cp('data/unicode/LICENSE.txt','dist/unicode-license.txt');
 const pages = [['rarity-register.html','department-of-improbable-appointments'],['bestiary.html','bestiary'],['index.html',''],['demo.html','demo'],['api.html','api'],['changelog.html','changelog'],['continuity.html','continuity-register'],['history.html','company-history'],['accessibility.html','accessibility'],['validation.html','validation'],['response.html','response']];
 const header = await readFile('src/main/resources/web/components/header.html', 'utf8');
 const footer = await readFile('src/main/resources/web/components/footer.html', 'utf8');
@@ -49,7 +50,7 @@ for (const [template,folder] of pages) {
   html = html.replace('<!--SITE_HEADER-->', header).replace('<!--SITE_FOOTER-->', footer).replace(`<!--NAV_${active}-->`, 'aria-current="page"').replace(/<!--NAV_[A-Z]+-->/g, '').replace('Run the real Java service. Repeat a mandate to observe Redis remember what the committee already decided.', 'Run the real Java enterprise in your browser. Repeat a mandate to observe institutional memory recall the committee’s decision.').replaceAll('Redis memory','Institutional cache').replaceAll('>Redis<','>Cache<').replace('shared Redis memory','swappable institutional memory').replace('HTTP liveness','Runtime liveness');
   for (const stylesheet of ['site.css','api.css']) html = html.replaceAll(`href="/assets/${stylesheet}"`, `href="/${assets}${stylesheet}"`);
   for (const script of entryScripts) html = html.replaceAll(`src="/assets/${script}.js"`,`src="/assets/${script}.${identity}.js"`);
-  html=html.replaceAll('href="/openapi.json"',`href="/${assets}openapi.json"`);
+  html=html.replaceAll('href="/openapi.json"',`href="/${assets}openapi.json"`).replaceAll('href="/unicode-license.txt"',`href="/${assets}unicode-license.txt"`);
   await mkdir(`dist/${folder}`,{recursive:true});
   await writeFile(`dist/${folder ? folder+'/' : ''}index.html`,relativeLinks(html,!!folder));
 }
@@ -67,7 +68,7 @@ await mkdir('dist/validation',{recursive:true});
 await writeFile('dist/validation/report.json',JSON.stringify(report,null,2));
 try { await cp('validation/fixtures.json','dist/validation/fixtures.json'); } catch { /* Fixtures are produced by the JVM validation runner. */ }
 await mkdir(`dist/${assets}validation`,{recursive:true});
-for(const path of ['runtime-config.json','analytics-config.json','release.json','openapi.json','validation/report.json','validation/fixtures.json']) {
+for(const path of ['runtime-config.json','analytics-config.json','release.json','openapi.json','unicode-license.txt','validation/report.json','validation/fixtures.json']) {
   try {await cp(`dist/${path}`,`dist/${assets}${path}`);} catch(error) {if(path!=='validation/fixtures.json')throw error;}
 }
 async function files(directory: string): Promise<string[]> {

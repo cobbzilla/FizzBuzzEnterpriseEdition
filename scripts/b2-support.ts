@@ -11,7 +11,7 @@ export function settings(e:Record<string,string|undefined>){
  return {url,prefix,worker,dry:e.B2_PUBLISH_DRY_RUN==='true'};
 }
 export function metadata(path:string){
- const type:Record<string,string>={html:'text/html; charset=utf-8',js:'text/javascript; charset=utf-8',css:'text/css; charset=utf-8',json:'application/json',wasm:'application/wasm',svg:'image/svg+xml',md:'text/plain; charset=utf-8',map:'application/json'};
+ const type:Record<string,string>={html:'text/html; charset=utf-8',js:'text/javascript; charset=utf-8',css:'text/css; charset=utf-8',json:'application/json',wasm:'application/wasm',svg:'image/svg+xml',txt:'text/plain; charset=utf-8',md:'text/plain; charset=utf-8',map:'application/json'};
  const contentType=type[path.split('.').pop()!]||'application/octet-stream';
  const cache=/^assets\/(?:[a-f0-9]{16}\/|[a-z-]+\.[a-f0-9]{16}\.js$)/.test(path)?'public, max-age=31536000, immutable':'no-cache';
  const stage=path==='sw.js'?3:path.endsWith('.html')||path==='release.json'?2:path.startsWith('assets/')?0:1;

@@ -21,7 +21,7 @@ factor evidence discloses unresolved cofactors without launching an infinite
 consulting engagement. The demo commissions companions by default, offers full
 personnel files, preserves numerical output and audit custody, and brings mobile
 stakeholders directly to Official output upon mandate submission. A searchable
-bestiary and unlisted complete scarcity register operationalize transparency at
+bestiary, downloadable Unicode license and unlisted complete scarcity register operationalize transparency at
 an exceptionally cute scale. Leadership projects unprecedented stakeholder
 attachment, improved potato discoverability and a defensible moat consisting
 primarily of an otter with unusually strong career objectives.
