@@ -1,3 +1,4 @@
+import {OfficeTourDesk} from './office-tour';
 import {prepareSharedEncounter} from './shared-encounter';
 import {CompanionDesk} from './companions';
 import {parseMandate,autocorrectMandate,addOrdinals,windowCount,chooseMagnitudeWarning,type MandateInteger} from './mandate-input';
@@ -27,12 +28,13 @@ let manualStep=false;
 const chronicle=new ExecutiveChronicle();
 const precedent=new PrecedentView();
 new PremisesDesk();
-const companions=new CompanionDesk();
+const office=new OfficeTourDesk();
+const companions=new CompanionDesk(office);
 let currentLimit='15';
 let lastPlayback:{kind:'mandate';folios:Folio[];limit:string;personnel?:PersonnelDossier}|{kind:'rehearsal';data:PersonnelDossier}|undefined;
 let inspection:{folios:Folio[];index:number}|undefined;
 const personnel=new PersonnelProceedings({rehearse:scenario=>void rehearsePersonnel(scenario),replay:()=>void replayPersonnel(),step:stepPersonnel,disclosed:(data,count)=>{if(data.purpose==='REHEARSAL')chronicle.rehearsal(data,count);}});
-function discloseLines(start:string,lines:readonly string[]){companions.disclose(start,lines);chronicle.disclose(start,lines);lastPlayback={kind:'mandate',folios:chronicle.records,limit:currentLimit,personnel:personnel.record};personnel.setPlaybackAvailable(true);}
+function discloseLines(start:string,lines:readonly string[]){companions.disclose(start,lines);const folios=chronicle.disclose(start,lines);office.disclose(currentLimit,folios);lastPlayback={kind:'mandate',folios:chronicle.records,limit:currentLimit,personnel:personnel.record};personnel.setPlaybackAvailable(true);}
 function readingControls() {
   stopButton.setAttribute('aria-disabled', String(!reading));
   revealButton.textContent = activityMode==='rehearsal'||activityMode==='replay'?'Reveal completed proceedings':streaming ? 'Waive disclosure delays' : 'Reveal complete output';
@@ -150,7 +152,7 @@ async function revealOutput(text: string, sequence: number, serviceMillis: numbe
   if (sequence === mandateSequence) {
     setText('output-count', `${lines.length} ${lines.length === 1 ? 'line' : 'lines'}`);
     reading = false; readingControls();
-    chronicle.finish(lines.length===0);
+    chronicle.finish(lines.length===0);office.complete(lines.length===0);
     setText('run-status', `Mandate complete. The service answered in ${serviceMillis} milliseconds; ${serviceMillis < 1000 ? 'under' : 'above'} the one-second target. All ${lines.length} lines are visible.`);
   }
 }
@@ -179,7 +181,7 @@ async function streamMandate(limit: MandateInteger, sequence: number, started: n
   const lines=answer.ok?text.trimEnd().split('\n'):[];
   if(answer.ok&&lines.length!==count)throw new Error('The response did not contain the authorized number of lines.');
   if(sequence!==mandateSequence)return;
-  chronicle.receive(packet);
+  chronicle.receive(packet);office.receive(packet);
   setText('trace-result',answer.headers.get('X-SlopBuzz-Trace-Id')||'UNAVAILABLE');
   if(first) {
    first=false;const elapsed=Math.round(performance.now()-started);
@@ -216,7 +218,7 @@ async function runMandate(event: Event) {
   if (limit === null) return;
   const sequence = ++mandateSequence;
   companions.reset(String(limit));
-  wakeReading?.(); reading = false; streaming=false;activityMode='mandate';manualStep=false;inspection=undefined;lastPlayback=undefined;currentLimit=String(limit);readingControls();personnel.setPlaybackAvailable(false);personnel.loading();chronicle.begin(currentLimit);
+  wakeReading?.(); reading = false; streaming=false;activityMode='mandate';manualStep=false;inspection=undefined;lastPlayback=undefined;currentLimit=String(limit);readingControls();personnel.setPlaybackAvailable(false);personnel.loading();chronicle.begin(currentLimit);office.begin(currentLimit);
   runButton.setAttribute('aria-disabled', 'true');
   precedent.waiting(typeof limit==='bigint'||limit>1000);
   byId('output').setAttribute('aria-busy', 'true');
@@ -236,7 +238,7 @@ async function runMandate(event: Event) {
     const packet=await readProclamation(answer);const text=packet.text;
     if(answer.ok)trackUsage({event:'slopbuzz_demo_run',outcome:'success',runtime_mode:config.mode,duration_ms:elapsed,cache_outcome:answer.headers.get('X-SlopBuzz-Cache')||'UNKNOWN'});
     if (sequence !== mandateSequence) return;
-    chronicle.receive(packet);
+    chronicle.receive(packet);office.receive(packet);
     precedent.mandate(packet.precedent,packet.cache);
     setText('latency', `${Math.round(elapsed)} ms`);
     setText('cache-result', answer.headers.get('X-SlopBuzz-Cache') || 'UNKNOWN');
@@ -301,16 +303,16 @@ async function replayPersonnel(){
   await personnel.read(saved.data,personnelClock(sequence),'Replay of read-only rehearsal');
   if(sequence===mandateSequence){reading=false;readingControls();setText('run-status','Personnel replay complete. The recorded business operation was not executed again.');}return;
  }
- companions.reset(saved.limit);chronicle.begin(saved.limit,'replay');setText('run-status','Replaying the retained numerical output and its corporate minutes. No mandate was submitted.');
+ companions.reset(saved.limit);chronicle.begin(saved.limit,'replay');office.begin(saved.limit,'replay');setText('run-status','Replaying the retained numerical output and its corporate minutes. No mandate was submitted.');
  const output=byId('output');output.textContent='';
  for(let i=0;i<saved.folios.length;){
   while(paused&&sequence===mandateSequence)await waitForPace();if(sequence!==mandateSequence)return;
   const batch=revealAll||Number(speedControl.value)===0?saved.folios.slice(i):saved.folios.slice(i,i+1);
-  for(const folio of batch)companions.disclose(folio.ordinal,[folio.text]);chronicle.discloseFolios(batch);output.append(document.createTextNode(batch.map(f=>f.text+'\n').join('')));i+=batch.length;
+  for(const folio of batch)companions.disclose(folio.ordinal,[folio.text]);chronicle.discloseFolios(batch);office.disclose(saved.limit,batch);output.append(document.createTextNode(batch.map(f=>f.text+'\n').join('')));i+=batch.length;
   followLatest();setText('output-count',i+' of '+saved.folios.length+' retained lines');
   if(i<saved.folios.length&&!revealAll&&Number(speedControl.value)>0)await waitForPace(Number(speedControl.value));
  }
- if(sequence===mandateSequence){if(!saved.folios.length)output.textContent='The zero-number mandate produces no lines.';chronicle.finish(saved.limit==='0');reading=false;readingControls();setText('run-status','Execution replay complete. No business operation was executed again.');}
+ if(sequence===mandateSequence){if(!saved.folios.length)output.textContent='The zero-number mandate produces no lines.';chronicle.finish(saved.limit==='0');office.complete(saved.limit==='0');reading=false;readingControls();setText('run-status','Execution replay complete. No business operation was executed again.');}
 }
 function stepPersonnel(){
  const saved=lastPlayback;if(!saved)return;
@@ -319,7 +321,7 @@ function stepPersonnel(){
   personnel.step();setText('run-status','Inspecting recorded personnel paperwork: '+personnel.progress+' of 7 offices disclosed. Numerical output is retained.');return;
  }
  if(!manualStep||!inspection||inspection.index>=inspection.folios.length){beginPersonnelActivity('inspection');inspection={folios:saved.folios,index:0};chronicle.begin(saved.limit,'replay');}
- const folio=inspection.folios[inspection.index++];if(folio)chronicle.discloseFolios([folio]);else chronicle.finish(saved.limit==='0');
+ const folio=inspection.folios[inspection.index++];if(folio){chronicle.discloseFolios([folio]);office.inspect(folio);}else chronicle.finish(saved.limit==='0');
  setText('personnel-step',inspection.index<inspection.folios.length?'Next ordinal':'Step through');
  setText('run-status','Inspecting completed execution: '+Math.min(inspection.index,inspection.folios.length)+' of '+inspection.folios.length+' retained ordinals. Numerical output is retained.');
 }

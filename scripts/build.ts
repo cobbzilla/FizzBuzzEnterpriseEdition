@@ -10,6 +10,7 @@ await generateCompanions();
 const analytics = await analyticsConfig();
 const run = (command: string, args: string[]) => execFileSync(command, args, {stdio:'inherit'});
 await build({entryPoints:['web/analytics.ts','web/site.ts','web/demo.ts','web/api.ts','web/response.ts','web/validation.ts','web/bestiary.ts','web/rarity-register.ts','web/rare-finds.ts'],outdir:'src/main/resources/web',bundle:true,format:'esm',target:'es2022',banner:{js:'// Generated from web/*.ts by scripts/build.ts. Do not edit.'}});
+await build({entryPoints:['web/office-world.ts'],outfile:'src/main/resources/web/office-world.js',bundle:true,format:'esm',target:'es2022',minify:true,legalComments:'eof',banner:{js:'// Generated from web/office-world.ts. Babylon.js license: office-licenses.txt.'}});
 if (!process.argv.includes('--assets-only')) {
   run('mvn', ['-q', 'install']);
   run('mvn', ['-q', '-f', 'browser/pom.xml', 'package']);
@@ -23,13 +24,16 @@ await mkdir('dist/assets', {recursive:true});
 const assets = `assets/${identity}/`;
 await cp('browser/target/gate/wasm', `dist/${assets}wasm`, {recursive:true});
 await cp('browser/target/gate/js', `dist/${assets}js`, {recursive:true});
+const officeBytes=await readFile('src/main/resources/web/office-world.js');
+await writeFile(`dist/${assets}office-world.js`,officeBytes);
+await writeFile(`dist/${assets}office-pack.json`,JSON.stringify({schema:'slopbuzz-office-pack/v1',file:'office-world.js',bytes:officeBytes.length,sha256:createHash('sha256').update(officeBytes).digest('hex')}));
 const entryScripts=['analytics','site','demo','api','response','validation','bestiary','rarity-register','rare-finds','tribunal'];
 await build({entryPoints:entryScripts.map(name=>`web/${name}.ts`),outdir:'dist/assets',bundle:true,format:'esm',target:'es2022',define:{RELEASE_ASSET_DIRECTORY:JSON.stringify(assets)}});
 for(const name of entryScripts) await cp(`dist/assets/${name}.js`,`dist/assets/${name}.${identity}.js`);
 await build({entryPoints:['web/runtime-worker.ts'],outfile:`dist/${assets}runtime-worker.js`,bundle:true,format:'iife',target:'es2022'});
-for (const asset of ['site.css','api.css','mark.svg','openapi.json']) await cp(`src/main/resources/web/${asset}`, `dist/${asset === 'openapi.json' ? '' : 'assets/'}${asset}`);
+for (const asset of ['site.css','api.css','office.css','office-preview.svg','office-licenses.txt','mark.svg','openapi.json']) await cp(`src/main/resources/web/${asset}`, `dist/${asset === 'openapi.json' ? '' : 'assets/'}${asset}`);
 // Older offline workers ignore query strings. New markup needs its own CSS path.
-for (const stylesheet of ['site.css','api.css']) await cp(`src/main/resources/web/${stylesheet}`, `dist/${assets}${stylesheet}`);
+for (const stylesheet of ['site.css','api.css','office.css','office-preview.svg','office-licenses.txt']) await cp(`src/main/resources/web/${stylesheet}`, `dist/${assets}${stylesheet}`);
 const raw = [['CHANGELOG.md','CHANGELOG.md'],['docs/EXECUTIVE_CONTINUITY_AND_SENTIMENT_REGISTER.md','continuity-register.md']];
 for (const [source,target] of raw) await cp(source, `dist/${target}`);
 await cp('data/unicode/LICENSE.txt','dist/unicode-license.txt');
@@ -48,7 +52,8 @@ for (const [template,folder] of pages) {
   html = html.replace('<!--LEDGER_CONTENT-->', await marked.parse(await readFile(raw[0][0],'utf8'))).replace('<!--REGISTER_CONTENT-->', await marked.parse(await readFile(raw[1][0],'utf8')));
   const active = folder === 'bestiary' ? 'BESTIARY' : folder === 'demo' ? 'DEMO' : folder === 'api' ? 'API' : (folder === 'about'||folder === 'company-history') ? 'ABOUT' : folder === 'validation' ? 'VALIDATION' : '';
   html = html.replace('<!--SITE_HEADER-->', header).replace('<!--SITE_FOOTER-->', footer).replace(`<!--NAV_${active}-->`, 'aria-current="page"').replace(/<!--NAV_[A-Z]+-->/g, '').replace('Run the real Java service. Repeat a mandate to observe Redis remember what the committee already decided.', 'Run the real Java enterprise in your browser. Repeat a mandate to observe institutional memory recall the committee’s decision.').replaceAll('Redis memory','Institutional cache').replaceAll('>Redis<','>Cache<').replace('shared Redis memory','swappable institutional memory').replace('HTTP liveness','Runtime liveness');
-  for (const stylesheet of ['site.css','api.css']) html = html.replaceAll(`href="/assets/${stylesheet}"`, `href="/${assets}${stylesheet}"`);
+  for (const stylesheet of ['site.css','api.css','office.css']) html = html.replaceAll(`href="/assets/${stylesheet}"`, `href="/${assets}${stylesheet}"`);
+  html=html.replaceAll('src="/assets/office-preview.svg"',`src="/${assets}office-preview.svg"`).replaceAll('href="/assets/office-licenses.txt"',`href="/${assets}office-licenses.txt"`);
   for (const script of entryScripts) html = html.replaceAll(`src="/assets/${script}.js"`,`src="/assets/${script}.${identity}.js"`);
   html=html.replaceAll('href="/openapi.json"',`href="/${assets}openapi.json"`).replaceAll('href="/unicode-license.txt"',`href="/${assets}unicode-license.txt"`);
   await mkdir(`dist/${folder}`,{recursive:true});
@@ -83,5 +88,5 @@ paths.push('department-of-improbable-appointments/', 'bestiary/', '', 'demo/', '
 // Evidence can arrive after the first preview of the same source revision.
 // Give that complete bundle a new cache so installed previews receive the sealed report.
 const evidenceSeal = createHash('sha256').update(await readFile('dist/validation/report.json')).digest('hex').slice(0,12);
-await build({entryPoints:['web/sw.ts'],outfile:'dist/sw.js',bundle:true,format:'iife',define:{RELEASE:JSON.stringify(`${identity}-${evidenceSeal}`),FILES:JSON.stringify(paths)}});
+await build({entryPoints:['web/sw.ts'],outfile:'dist/sw.js',bundle:true,format:'iife',define:{RELEASE:JSON.stringify(`${identity}-${evidenceSeal}`),FILES:JSON.stringify(paths.filter(path=>!path.endsWith('/office-world.js')))}});
 console.log(`Static enterprise ratified in dist/ (${revision}${dirty ? ', working tree' : ''}).`);

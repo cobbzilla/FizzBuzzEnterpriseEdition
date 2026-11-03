@@ -434,3 +434,9 @@ body { padding-bottom: var(--discovery-height, 32dvh); }
 .discovery-register li button > span:last-child { max-width: 11rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .75rem; }
 #companion-share-link { display: block; width: 100%; margin: .4rem 0 .75rem; }
 html { scroll-padding-bottom: calc(var(--discovery-height, 0px) + 1rem); }
+.office-preview-section { background: var(--paper-deep); border-bottom: 1px solid var(--line); }
+.office-preview-grid { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1.2fr); align-items: center; gap: 2rem; }
+.office-preview-grid h2 { font-size: clamp(1.6rem,3vw,2.6rem); line-height: 1.15; }
+.office-preview-grid p { line-height: 1.7; }
+.office-preview-grid img { display: block; width: 100%; height: auto; border: 1px solid var(--line); border-radius: 8px; }
+@media(max-width:800px) { .office-preview-grid { grid-template-columns: minmax(0,1fr); } }

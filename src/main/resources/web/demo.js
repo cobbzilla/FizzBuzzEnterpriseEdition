@@ -1,9 +1,177 @@
 // Generated from web/*.ts by scripts/build.ts. Do not edit.
 
-// web/runtime-protocol.ts
-var runtimeProtocol = 1;
-function isTransientOperation(path, method = "GET") {
-  return method === "GET" && ["/premises/rehearsal", "/companions/catalog", "/companions/strategies", "/companions/window", "/operations/runtime", "/fizzbuzz/window", "/fizzbuzz/window/explained", "/capacity/forecast/extended", "/procurement/dossier", "/onboarding/rehearsal", "/precedent/rehearsal"].includes(path.split("?")[0]);
+// web/office-content.ts
+var prop = (id, name, object, story, a, aa, b, bb) => ({ id, name, object, story, actions: [{ label: a, answer: aa }, { label: b, answer: bb }] });
+var officeVersion = "office-v1";
+var rooms = [
+  { id: "reception", name: "Reception & Queue Formation", short: "Reception", subtitle: "Please take a number. Numbers must first take a number.", color: "#d7bf83", x: -10.8, z: -3.4, props: [
+    prop("ticket-machine", "The ticket machine", "kiosk", "A brass plaque explains that the queue for tickets is ticketed. The machine is very proud of having eliminated uncertainty about where to wait.", "Request a ticket", "Your request has been placed in the queue for permission to join the queue. The estimated waiting time is one successful organizational transformation.", "Ask who is ahead of you", "The machine prints a blank ticket. Nobody is ahead of you. Nobody has seniority."),
+    prop("authorized-shortcut", "Authorized shortcut", "door", "The arrow promises Reception in only one corridor. You are standing in Reception. The arrow is technically delivering exceptional value.", "Take the shortcut", "You arrive at Reception. A congratulatory notice welcomes you back from your successful cross-functional journey. Your departure and arrival have been recorded as two office visits.", "Suggest a shorter route", "The Committee for Reducing Corridors requests a longer corridor in which to discuss your suggestion."),
+    prop("suggestion-shredder", "Your Voice Matters", "shredder", "The suggestion box sits directly on a shredder. A little green lamp indicates that stakeholder feedback is being processed in real time.", "Submit a suggestion", "The machine makes a thoughtful noise and produces twelve narrow action items. The company celebrates its most granular feedback to date.", "Ask for a receipt", "A receipt is printed, read aloud to the shredder, and processed. You are thanked for your commitment to a paperless feedback culture."),
+    prop("visitor-badge", "Visitor identity desk", "badge", "A badge says VISITOR. Under it, in smaller type: A visitor is someone wearing a visitor badge. The definition has survived three independent audits.", "Request a permanent badge", "Your permanent badge says TEMPORARY PERMANENT VISITOR. It expires when permanence is redefined.", "Ask to leave", "Departure is available at any time through the visible Close office control. Reception is disappointed by this unusually humane policy.")
+  ] },
+  { id: "personnel", name: "First Ordinal Recruitment", short: "Recruitment", subtitle: "One vacancy. One candidate. Seven offices. Tremendous competition.", color: "#b7d0ba", x: -3.6, z: -3.4, props: [
+    prop("portrait-of-one", "Employee of the Entire Sequence", "portrait", "A framed numeral 1 looks down upon an empty chair. Nobody can remember whether the portrait was taken before or after its induction.", "Congratulate One", "One thanks you for recognizing its individual contribution. It would also like to recognize itself as the team that made the contribution possible.", "Nominate Two", "Two has excellent potential but was not present at the beginning. The panel encourages it to apply for a later beginning."),
+    prop("orientation-chair", "Orientation chair", "chair", "The chair has completed orientation six times. It understands the company better than anyone and is therefore ineligible for promotion.", "Offer the chair a promotion", "The chair declines a standing appointment. HR records a regrettable lack of flexibility.", "Ask where One sits", "One has been granted a flexible seating arrangement consisting of this one chair. The company calls this choice."),
+    prop("welcome-cake", "The induction cake", "cake", "A cake reads WELCOME TO YOUR PROBATIONARY COMMENCEMENT. The slice marked 1 has its own probationary period.", "Request a slice", "Catering asks whether you intend to eat the slice or merely occupy it. Facilities has strong views about unauthorized occupancy.", "Read the ingredients", "Sugar, flour, and the unanimous confidence of seven independently appointed offices. May contain traces of ambition."),
+    prop("headcount-chart", "Strategic headcount forecast", "chart", "A chart rises impressively from zero to one. The vertical axis begins at 0.999. The board has described the growth as unprecedented.", "Ask about recruitment costs", "The company recruited exactly one employee and established seven offices to support the appointment. HR describes the ratio as people-first.", "Set a stretch target", "The stretch target is 1.0. HR has already convened a working group to distinguish it from 1.")
+  ] },
+  { id: "procurement", name: "Glyph Procurement & Receiving", short: "Procurement", subtitle: "The second z is a separate commercial obligation.", color: "#e0b19c", x: 3.6, z: -3.4, props: [
+    prop("second-z", "The second z", "crate", "Two identical crates contain two different contractual obligations. The second z insists that similarity is not consent to unpaid overtime.", "Ask to reuse the first z", "Receiving refuses. The first z is already at work. Asking it to appear twice would constitute an undocumented secondment.", "Offer the second z a title", "The z accepts Senior Terminal Consonant. The other z immediately requests a parity review."),
+    prop("approved-forklift", "The requisition forklift", "forklift", "A tiny forklift is licensed to carry one letter. It has been waiting all morning for written confirmation that F is not two letters standing on each other.", "Load a capital B", "The forklift requests a structural drawing showing whether the two bulges are independent business units.", "Ask about lowercase stock", "Lowercase inventory is competitively priced and entirely inadmissible. Procurement calls this a strong supplier relationship."),
+    prop("purchase-order", "Eight positions, eight promises", "papers", "An enormous purchase order itemizes F, i, z, z, B, u, z, z. Each z has initialed its own row, creating an exciting new legibility problem.", "Consolidate the line items", "Four z requisitions are merged into one requisition to request four separate z requisitions. Procurement reports a 75% reduction in top-level complexity.", "Request expedited shipping", "Your letters arrive in alphabetical order. Assembly requests that they return through the approved entrance."),
+    prop("supplier-phone", "The inexhaustible supplier", "phone", "A telephone connects to an inexhaustible fictional supplier. Its hold message says that your character is very important to us.", "Ask when z will arrive", "The supplier says z is last on its list, then clarifies that the list is alphabetical and delivery is immediate.", "Request a supplier review", "The supplier awards Procurement five stars for ordering the same five things forever. Both parties describe this as a diversified portfolio.")
+  ] },
+  { id: "premises", name: "Vacant String Estate Agency", short: "Premises", subtitle: "Certified nothing. Ready for immediate numerical occupation.", color: "#b4c9d9", x: 10.8, z: -3.4, props: [
+    prop("invisible-tenant", "The invisible tenant", "room", "An apparently empty miniature room contains a tiny sign reading SITTING TENANT. This is fictional tour scenery; an actual discovered character is identified in the evidence panel.", "Knock politely", "A non-breaking space says it cannot leave because it has made a binding commitment to remain attached to the premises.", "Request an inspection", "The sign produces a tenancy agreement whose signature is a blank space. Legal considers the execution flawless."),
+    prop("bel-doorbell", "The confiscated BEL", "bell", "A brass bell is labeled BEL, NOT A PERSONALITY TRAIT. The inspector keeps it in a soundproof evidence cabinet.", "Ring the bell", "The cabinet displays DING. An internal memo apologizes for the unauthorized appearance of a word outside the numerical production system.", "Ask why it was evicted", "The bell was found occupying an empty string and repeatedly announcing that nobody was there."),
+    prop("vertical-staircase", "The vertical tab staircase", "stairs", "A staircase goes up exactly one decorative step and immediately comes back down. The sign calls it an executive development pathway.", "Take the development pathway", "You return with exactly the same elevation and a certificate of increased potential.", "Ask for a horizontal tab", "The horizontal tab has requested a transfer to Workplace Spacing. Both departments have become considerably wider."),
+    prop("vacancy-certificate", "Certificate of nothing", "frame", "A large frame contains no picture. It is the most comprehensively documented object in the room.", "Inspect the frame", "The frame is occupied by its vacancy certificate. Facilities has opened an incident concerning the certificate\u2019s effect on vacancy.", "Move in", "This is a tour display. Actual numerical occupants obtain real request-bound leases through the production offices. The miniature landlord nevertheless asks for three references.")
+  ] },
+  { id: "notary", name: "Independent Proclamation Notary", short: "Notary", subtitle: "Trust, but convene a separate office to inspect the trust.", color: "#c3bad6", x: -10.8, z: 3.4, props: [
+    prop("rubber-stamp", "The approval stamp", "stamp", "The stamp reads APPROVED. A smaller stamp reads APPROVED FOR APPROVAL. The second stamp is waiting for the first to become available.", "Stamp the approval", "A third stamp appears: ACKNOWLEDGED. It declines to express an opinion on the first two stamps.", "Ask for a digital signature", "The stamp is photographed at extremely high resolution. Digital transformation is declared complete."),
+    prop("magnifying-glass", "The independent lens", "lens", "A magnifying glass sits under a second magnifying glass. The second has been appointed to ensure that the first is not making things up.", "Look more closely", "The company becomes larger while its purpose remains exactly the same. Strategy considers this a successful growth intervention.", "Ask who inspects the second lens", "The inspector points to the perfectly visible lens directory. The tour mercifully declines to generate an infinite number of lenses."),
+    prop("capitalization-court", "The capitalization bench", "papers", "A capital F and a lowercase f sit at opposite ends of a desk. The lowercase f has brought excellent references and the wrong identity.", "Hear the lowercase appeal", "The bench recognizes the applicant\u2019s potential while declining to recognize it as Fizz.", "Approve BuzzFizz", "Both words have arrived, but the independent witness notices that they are standing in the wrong order. Communications blames a matrix reporting structure."),
+    prop("notary-plant", "Independent botanical witness", "plant", "A plant has been placed beside the desk to make scrutiny feel more welcoming. It has received no instructions and is therefore the most independent thing in the room.", "Ask for its opinion", "The plant offers a new leaf. The bench records this as constructive feedback.", "Request more transparency", "The pot is replaced by an identical pot containing a policy on transparency. The plant\u2019s roots remain undisclosed.")
+  ] },
+  { id: "memory", name: "Institutional Memory Archives", short: "Memory", subtitle: "We remember everything except why.", color: "#c4c5a0", x: -3.6, z: 3.4, props: [
+    prop("forgotten-shelf", "The forgotten shelf", "shelves", "Rows of files are impeccably indexed under THINGS WE WILL CERTAINLY REMEMBER. A sticky note asks whose files these are.", "Ask whether we met before", "The archive finds a perfect record of our previous meeting and asks you to introduce yourself for continuity purposes.", "Find the filing policy", "The policy is filed under FINDING THE FILING POLICY. Access requires familiarity with the filing policy."),
+    prop("memory-ladder", "The career ladder", "stairs", "A ladder reaches a shelf labeled LOW-HANGING FRUIT. A second sign says the ladder is reserved for senior stakeholders.", "Climb the career ladder", "At the top is a memorandum congratulating you on the climb and inviting you to support someone else\u2019s ladder.", "Ask what is on the bottom shelf", "The bottom shelf contains strategic priorities. They have been placed there to ensure that everyone can step over them."),
+    prop("reuse-court", "The Non-Performance Award", "trophy", "A trophy celebrates work that was correctly not done again. Its maker has produced an identical second trophy pending review.", "Congratulate the archive", "The archive recalls your congratulations from an earlier engagement and returns a certified copy of its thanks.", "Demand fresh work", "The archive asks why. It records your answer, in case someone asks the same question again."),
+    prop("expiry-clock", "The relevance clock", "clock", "A clock has two hands: CURRENT and FORMERLY CURRENT. Their disagreement is described as a healthy succession pipeline.", "Ask what time it is", "It is the right time to revisit our assumptions. The clock declines to give a more operational answer.", "Request permanent relevance", "Your request will remain permanently relevant until the applicable expiry policy changes.")
+  ] },
+  { id: "publication", name: "Official Publication & Distribution", short: "Publication", subtitle: "Please remain calm. A complete line is about to happen.", color: "#9fc9c2", x: 3.6, z: 3.4, props: [
+    prop("serious-printer", "The very serious printer", "printer", "A printer waits beneath a banner reading EVERY LINE A MILESTONE. It has never experienced a normal day.", "Print a test page", "The test page says TEST PAGE. A committee is astonished by the precision of the deliverable.", "Ask why it is so large", "The printer accommodates both the numerical output and the organization\u2019s expectations of itself."),
+    prop("paper-airport", "The paper departure lounge", "papers", "A single sheet waits at a miniature departure gate. Its destination is THE USER. It has arrived three hours early.", "Announce boarding", "The sheet is asked to prove that it is the same sheet whose boarding was announced. Boarding pauses for document reconciliation.", "Request priority boarding", "Priority boarding gives the sheet permission to wait in a smaller, more exclusive queue."),
+    prop("output-conveyor", "The complete-line conveyor", "conveyor", "A conveyor carries perfectly ordinary sheets with extraordinary confidence. A sign warns that fragments must travel together.", "Separate the fragments", "The belt refuses to stage a family separation. Fizz and its line ending continue under joint custody.", "Accelerate the conveyor", "The conveyor writes URGENT on the same delivery schedule. Operations calls this an escalation path."),
+    prop("celebration-budget", "Strategic confetti reserve", "confetti", "A small jar contains a single paper triangle. The celebration budget has been optimized for shareholder confidence.", "Release the confetti", "The triangle moves ceremonially to the other side of the jar. Leadership thanks everyone for making the moment possible.", "Request a larger celebration", "The company authorizes a larger jar. The triangle is encouraged to grow into its expanded responsibilities.")
+  ] },
+  { id: "executive", name: "Executive Alignment & Exemptions", short: "Executive", subtitle: "The organization has never been more organized around organizing.", color: "#c9b48c", x: 10.8, z: 3.4, props: [
+    prop("open-door", "Open Door Policy", "door", "A closed door carries an OPEN DOOR POLICY poster. Behind it is another closed door, demonstrating depth of commitment.", "Open the door", "The second door welcomes you to a more senior level of openness. It has requested that you knock through the appropriate channels.", "Ask to speak directly", "Direct communication is available by scheduling a conversation with the office that schedules direct communication."),
+    prop("work-life-plant", "Work\u2013Life Balance", "plant", "A plant labeled WORK\u2013LIFE BALANCE leans toward the exit. It has submitted a flexible growing request.", "Water the plant", "The plant receives a resilience webinar. It would still quite like water.", "Approve flexible growing", "The plant may lean toward any window, provided it remains facing its desk during core hours."),
+    prop("strategy-whiteboard", "The strategy whiteboard", "chart", "The board contains one enormous circle labeled ALIGNMENT. Around it is a second circle labeled ALIGNMENT ON ALIGNMENT.", "Request a concrete action", "A third circle is drawn. It is labeled ACTION ORIENTATION. The meeting declares itself outcome-focused.", "Erase a circle", "The company forms a task force to understand the emerging alignment gap."),
+    prop("exit-strategy", "The Exit Strategy", "badge", "An exquisitely framed EXIT STRATEGY points toward a stationery cupboard. The actual Close office control remains available to every visitor.", "Inspect the strategy", "The cupboard contains several ways forward, all of them folders. The company celebrates a diversified exit portfolio.", "Leave a final thought", "Thank you for your time and attention. Your continued ability to leave has been approved as an exceptional stakeholder benefit.")
+  ] }
+];
+var roomById = (id) => rooms.find((r) => r.id === id);
+
+// web/office-model.ts
+var roomForEvent = (e) => {
+  const k = e.kind;
+  if (k.startsWith("HR_")) return "personnel";
+  if (k.startsWith("PREMISES_")) return "premises";
+  if (["REQUISITION", "DELIVERY", "GLYPH_ACCEPTED", "GLYPH_ASSEMBLED"].includes(k)) return "procurement";
+  if (k === "NOTARY" || k === "EXTENDED_NOTARY") return "notary";
+  if (k.startsWith("CACHE_") || k.startsWith("PRECEDENT_")) return "memory";
+  if (["PUBLICATION", "AUDIT_APPEND", "QUEUE_ENQUEUED", "TRANSACTION_COMMIT"].includes(k)) return "publication";
+  if (["ASSEMBLY", "CLASSIFICATION", "EXTENDED_CLASSIFICATION", "TRANSACTION_BEGIN", "NUMERAL", "SUCCESSION", "EXTENDED_SUCCESSION"].includes(k)) return "reception";
+  return void 0;
+};
+function routeFor(file) {
+  if (!file) return [];
+  if (file.cache === "HIT") return [{ room: "memory", label: "Institutional memory returned prior text", source: "receipt", finding: "The response reported a cache hit. Fresh recruitment, procurement and printing are not inferred." }, { room: "publication", label: "Retained result disclosed", source: "disclosed", finding: "The retained text " + file.text + " was disclosed in the demo." }];
+  const route = [];
+  for (const e of file.events) {
+    const room = roomForEvent(e);
+    if (room && route.at(-1)?.room !== room) route.push({ room, label: e.office, source: "recorded", finding: e.finding });
+  }
+  const capped = route.slice(0, 23);
+  if (capped.at(-1)?.room !== "publication") capped.push({ room: "publication", label: "Observed output disclosed", source: "disclosed", finding: "The demo disclosed " + file.text + ". " + (file.recorded ? "The route summarizes the supplied records." : "No complete production dossier accompanied this result.") });
+  return capped;
+}
+var OfficeArchive = class {
+  mandate = "15";
+  mode = "mandate";
+  latest;
+  files = /* @__PURE__ */ new Map();
+  companions = /* @__PURE__ */ new Map();
+  globals = [];
+  selected = "latest";
+  omitted = 0;
+  disclosed = 0;
+  begin(mandate, mode = "mandate") {
+    this.mandate = mandate;
+    this.mode = mode;
+    this.latest = void 0;
+    this.files.clear();
+    this.companions.clear();
+    this.globals = [];
+    this.selected = "latest";
+    this.omitted = 0;
+    this.disclosed = 0;
+  }
+  receive(events, omitted) {
+    this.globals = events.filter((e) => e.ordinal === null).slice(0, 300);
+    this.omitted = omitted;
+  }
+  disclose(folios) {
+    for (const f of folios) {
+      if (!this.files.has(f.ordinal)) this.disclosed++;
+      this.latest = f.ordinal;
+      this.files.set(f.ordinal, { mandate: this.mandate, ordinal: f.ordinal, text: f.text, events: f.events.slice(0, 300), cache: f.cache, recorded: f.recorded, omitted: Math.max(0, f.events.length - 300), globals: this.globals, sourceOmitted: this.omitted });
+    }
+    this.trim();
+  }
+  trim() {
+    while (this.files.size > 32) {
+      const victim = [...this.files.keys()].find((k) => k !== "1" && k !== this.selected && k !== this.latest);
+      if (!victim) break;
+      this.files.delete(victim);
+      this.companions.delete(victim);
+    }
+  }
+  choose(ordinal, snapshot, companion) {
+    if (ordinal === "latest") {
+      this.selected = "latest";
+      return;
+    }
+    if (!this.files.has(ordinal)) {
+      if (!snapshot || snapshot.ordinal !== ordinal || snapshot.mandate !== this.mandate) return;
+      this.files.set(ordinal, snapshot);
+    }
+    this.selected = ordinal;
+    if (companion) this.remember(companion);
+    this.trim();
+  }
+  inspect(f) {
+    if (!this.files.has(f.ordinal)) this.files.set(f.ordinal, { mandate: this.mandate, ordinal: f.ordinal, text: f.text, events: f.events.slice(0, 300), cache: f.cache, recorded: f.recorded, omitted: Math.max(0, f.events.length - 300), globals: [], sourceOmitted: 0 });
+    this.selected = f.ordinal;
+    this.mode = "inspection";
+    this.trim();
+  }
+  current() {
+    return this.selected === "latest" ? this.files.get(this.latest || "") : this.files.get(this.selected);
+  }
+  remember(d) {
+    if (d.mandate !== this.mandate || !this.files.has(d.assignment.ordinal)) return;
+    this.companions.set(d.assignment.ordinal, d);
+  }
+  evidence(room) {
+    const file = this.current();
+    const actual = (file?.cache === "HIT" ? [] : file?.events || []).filter((e) => roomForEvent(e) === room);
+    const global = (file?.globals || this.globals).filter((e) => roomForEvent(e) === room);
+    return [...global, ...actual].slice(0, 60);
+  }
+};
+function tourSeed(text2) {
+  let h = 2166136261;
+  for (let i = 0; i < text2.length; i++) h = Math.imul(h ^ text2.charCodeAt(i), 16777619);
+  return h >>> 0;
+}
+function officeShare(scope2, mandate, room, prop2, authority = "factor-resonance-v1", action) {
+  const url = new URL("demo/", scope2);
+  url.search = new URLSearchParams({ limit: mandate, authority, tour: officeVersion, room, ...prop2 ? { prop: prop2 } : {}, ...action === 0 || action === 1 ? { action: String(action) } : {} }).toString();
+  url.hash = "office-tour";
+  return url.href;
+}
+function parseTourLink(search) {
+  const p = new URLSearchParams(search);
+  if (p.get("tour") !== officeVersion) return;
+  const room = roomById(p.get("room") || "reception");
+  if (!room) return;
+  const prop2 = room.props.find((x) => x.id === p.get("prop"));
+  const action = p.get("action");
+  return { room: room.id, prop: prop2?.id, action: prop2 && (action === "0" || action === "1") ? Number(action) : void 0 };
 }
 
 // web/release-assets.ts
@@ -12,6 +180,825 @@ var releaseFile = (path) => new URL(
   (typeof RELEASE_ASSET_DIRECTORY === "string" ? RELEASE_ASSET_DIRECTORY : "") + path,
   scope
 );
+var releaseAsset = (path) => new URL((typeof RELEASE_ASSET_DIRECTORY === "string" ? RELEASE_ASSET_DIRECTORY : "assets/") + path, scope);
+
+// web/companion-story.ts
+function node(tag, text2) {
+  const n = document.createElement(tag);
+  if (text2) n.textContent = text2;
+  return n;
+}
+function characterStory(c) {
+  const fragment = document.createDocumentFragment();
+  const glyph = node("span", c.emoji);
+  glyph.className = "companion-glyph";
+  glyph.setAttribute("aria-hidden", "true");
+  fragment.append(glyph, node("p", (c.kind === "pair" ? "Themed emoji pair" : "Single emoji") + " \xB7 " + c.category + " \xB7 " + c.rarity + " \xB7 target frequency: " + c.weight.toLocaleString() + " of 1,000,000,000 tickets."));
+  const dl = node("dl");
+  for (const [label, value] of [["Personality", c.personality], ["Previously in this extraordinary career", c.backstory], ["Motivating energy", c.energy], ["Ultimate goal", c.goal]]) dl.append(node("dt", label), node("dd", value));
+  fragment.append(dl);
+  return fragment;
+}
+
+// web/mandate-input.ts
+function parseMandate(raw) {
+  const text2 = raw.trim();
+  if (!/^[0-9]+$/.test(text2)) return null;
+  const ordinary = Number(text2);
+  return Number.isSafeInteger(ordinary) ? ordinary : BigInt(text2);
+}
+var autocorrectMandate = (raw) => raw.replace(/[^0-9]/g, "");
+var addOrdinals = (value, count) => typeof value === "bigint" ? value + BigInt(count) : value + count;
+function windowCount(next, limit) {
+  if (typeof next === "bigint" && typeof limit === "bigint") return Number(limit - next + 1n < 100n ? limit - next + 1n : 100n);
+  return Math.min(100, Number(limit) - Number(next) + 1);
+}
+var magnitudeWarnings = Object.freeze([
+  "PROVISIONAL INCIDENT: Your integer may possibly have exceeded its delegated magnitude authority.",
+  "POLICY REVIEW PENDING: This request might have crossed an undocumented numerical border.",
+  "PRELIMINARY ESCALATION: An oversized ordinal may have entered circulation without executive indemnity.",
+  "POSSIBLE CONTROL BREACH: The requested magnitude appears larger than the committee\u2019s confidence.",
+  "UNCONFIRMED NUMERICAL EMERGENCY: Your upper limit may require a larger filing cabinet.",
+  "POTENTIAL JURISDICTIONAL EVENT: This integer might be operating beyond the ordinary-number charter.",
+  "TENTATIVE COMPLIANCE ALERT: A digit may have arrived without its magnitude escort.",
+  "CONDITIONAL SEVERITY ONE: Your request could conceivably exceed our ceremonial insurance allowance.",
+  "SUSPECTED ORDINAL EXCESS: Management cannot presently exclude the possibility of too much number.",
+  "PROVISIONAL GOVERNANCE FAILURE: This value may have outgrown its approved organizational chart.",
+  "MAGNITUDE EXCEPTION SUSPECTED: The decimal expansion might require a second board of directors.",
+  "POSSIBLE POLICY DEVIATION: An unauthorized quantity of integer may be present in this request.",
+  "PRECAUTIONARY EXECUTIVE NOTICE: Your number could be larger than the policy author anticipated.",
+  "UNVERIFIED BOUNDARY INCIDENT: The requested ordinal may have escaped the standard arithmetic enclosure.",
+  "CONTINGENT DISCIPLINARY REVIEW: Someone might possibly need to explain all these digits.",
+  "PRELIMINARY RISK FINDING: This upper limit may have exceeded the building\u2019s authorized numerical load.",
+  "POTENTIAL CHARTER OVERRUN: The committee has not ruled out a surplus of mathematical ambition.",
+  "PROVISIONAL EXCESS-MAGNITUDE NOTICE: This request may require an unusually solemn signature.",
+  "SUSPECTED SCALE VIOLATION: Your integer might be too substantial for the current stationery.",
+  "POSSIBLE ENTERPRISE INCIDENT: This value may have activated a policy nobody has finished writing."
+]);
+function chooseMagnitudeWarning(previous = -1, random = Math.random) {
+  const width = previous >= 0 ? magnitudeWarnings.length - 1 : magnitudeWarnings.length;
+  let index = Math.min(width - 1, Math.floor(random() * width));
+  if (previous >= 0 && index >= previous) index++;
+  return { index, text: magnitudeWarnings[index] };
+}
+
+// web/discovery-model.ts
+var seedPolicy = "mandate-v1";
+var discoveryStorageKey = "slopbuzz:extraordinary-appointments:v1";
+var decimal = (x) => typeof x === "string" && /^(0|[1-9][0-9]*)$/.test(x);
+var text = (x) => typeof x === "string" && x.length > 0;
+function validDiscovery(x) {
+  if (!x || !decimal(x.mandate) || !text(x.strategy) || !text(x.catalogVersion) || x.seedPolicy !== seedPolicy || typeof x.discoveredAt !== "string" || !Number.isFinite(Date.parse(x.discoveredAt))) return false;
+  const c = x.companion, a = x.assignment, f = a?.factors;
+  if (!c || !["single", "pair"].includes(c.kind) || !Array.isArray(c.components) || !c.components.every(text) || !["Common", "Uncommon", "Rare", "Legendary", "Mythic"].includes(c.rarity) || !Number.isSafeInteger(c.weight) || c.weight < 1 || c.weight > 1e9) return false;
+  if (!["id", "emoji", "name", "category", "personality", "backstory", "energy", "goal"].every((key) => text(c[key]))) return false;
+  if (!a || !decimal(a.ordinal) || a.ordinal === "0" || BigInt(a.ordinal) > BigInt(x.mandate) || !["Fizz", "Buzz", "FizzBuzz"].includes(a.flavor) || a.companionId !== c.id || !Number.isSafeInteger(a.ticket) || a.ticket < 0 || a.ticket >= 1e9) return false;
+  const n = BigInt(a.ordinal), flavor = n % 15n === 0n ? "FizzBuzz" : n % 3n === 0n ? "Fizz" : n % 5n === 0n ? "Buzz" : "";
+  return flavor === a.flavor && !!f && text(f.factors) && decimal(f.cofactor) && typeof f.complete === "boolean" && Number.isInteger(f.divisions) && f.divisions >= 0 && Number.isInteger(f.divisionBudget) && f.divisionBudget >= f.divisions && Number.isInteger(f.trialPrimeCeiling);
+}
+function discoveryIdentity(d) {
+  return d.catalogVersion + "|" + d.companion.id;
+}
+var provenance = (d) => JSON.stringify([d.discoveredAt, d.mandate, d.assignment.ordinal, d.strategy, d.assignment.ticket]);
+function rarestDiscoveries(...collections) {
+  const distinct = /* @__PURE__ */ new Map();
+  for (const collection of collections) for (const d of collection) {
+    if (!validDiscovery(d)) continue;
+    const id = discoveryIdentity(d), previous = distinct.get(id);
+    if (!previous || provenance(d) < provenance(previous)) distinct.set(id, d);
+  }
+  return [...distinct.values()].sort((a, b) => a.companion.weight - b.companion.weight || discoveryIdentity(a).localeCompare(discoveryIdentity(b), "en")).slice(0, 5);
+}
+function decodeDiscoveries(value) {
+  try {
+    const x = JSON.parse(value || "null");
+    return x?.schema === "slopbuzz-discoveries/v1" && Array.isArray(x.finds) ? rarestDiscoveries(x.finds) : [];
+  } catch {
+    return [];
+  }
+}
+var encodeDiscoveries = (finds) => JSON.stringify({ schema: "slopbuzz-discoveries/v1", finds });
+function discoveryLink(d, scope2) {
+  const url = new URL("demo/", scope2);
+  url.search = new URLSearchParams({ limit: d.mandate, authority: d.strategy, catalog: d.catalogVersion, seedPolicy: d.seedPolicy, ordinal: d.assignment.ordinal, companion: d.companion.id }).toString();
+  return url.href;
+}
+
+// web/companion-dialog.ts
+var controllerSymbol = /* @__PURE__ */ Symbol.for("slopbuzz.companion-dialog.v1");
+function companionDialog() {
+  const dialog = document.querySelector("#companion-dialog");
+  if (dialog[controllerSymbol]) return dialog[controllerSymbol];
+  let invoker, beganOnBackdrop = false;
+  dialog.querySelector("[data-companion-close]").addEventListener("click", () => dialog.close());
+  const outside = (e) => {
+    const b = dialog.getBoundingClientRect();
+    return e.clientX < b.left || e.clientX > b.right || e.clientY < b.top || e.clientY > b.bottom;
+  };
+  dialog.addEventListener("pointerdown", (e) => {
+    beganOnBackdrop = e.target === dialog && outside(e);
+  });
+  dialog.addEventListener("pointercancel", () => {
+    beganOnBackdrop = false;
+  });
+  dialog.addEventListener("click", (e) => {
+    const dismiss = dialog.open && beganOnBackdrop && e.target === dialog && outside(e);
+    beganOnBackdrop = false;
+    if (dismiss) dialog.close();
+  });
+  dialog.addEventListener("close", () => {
+    beganOnBackdrop = false;
+    if (invoker?.isConnected) invoker.focus();
+    dialog.dispatchEvent(new Event("companion-closed"));
+  });
+  const controller = { open(d, opener) {
+    invoker = opener;
+    const a = d.assignment, c = d.companion;
+    dialog.querySelector("h2").textContent = c.name + " \xB7 " + a.ordinal + " " + a.flavor;
+    const body = dialog.querySelector("[data-companion-story]");
+    body.replaceChildren(characterStory(c));
+    body.append(node("h3", "Allocation evidence"), node("p", "Mandate: " + d.mandate + ". Strategy: " + d.strategy + ". Seed policy: " + d.seedPolicy + ". Catalog: " + d.catalogVersion + ". Ticket: " + a.ticket + "."), node("p", "Extracted exact factors: " + a.factors.factors + ". " + (a.factors.complete ? "Complete factorization." : "Unresolved exact cofactor: " + a.factors.cofactor + ". This cofactor is not certified prime.") + " Division checks: " + a.factors.divisions + " of " + a.factors.divisionBudget + "."));
+    const label = node("label", "Reproducible encounter link");
+    label.htmlFor = "companion-share-link";
+    const link = node("input");
+    link.id = "companion-share-link";
+    link.type = "url";
+    link.readOnly = true;
+    link.value = discoveryLink(d, scope);
+    const copy = node("button", "Copy encounter link");
+    copy.type = "button";
+    const status = node("p");
+    status.setAttribute("role", "status");
+    copy.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(link.value);
+        status.textContent = "Encounter link copied. The recipient can inspect this appointment without running the full mandate.";
+      } catch {
+        link.focus();
+        link.select();
+        status.textContent = "Copy the selected link using your browser\u2019s copy command.";
+      }
+    });
+    body.append(label, link, copy, status);
+    if (!dialog.open) dialog.showModal();
+    dialog.querySelector(".companion-dialog-body").scrollTop = 0;
+  } };
+  dialog[controllerSymbol] = controller;
+  return controller;
+}
+
+// web/office-pack-contract.ts
+function parseOfficeManifest(x) {
+  const m = x;
+  if (!m || m.schema !== "slopbuzz-office-pack/v1" || m.file !== "office-world.js" || !Number.isSafeInteger(m.bytes) || m.bytes < 1 || typeof m.sha256 !== "string" || !/^[a-f0-9]{64}$/.test(m.sha256)) throw new Error("The building manifest is unfamiliar.");
+  return m;
+}
+async function verifyOfficePackage(manifest, bytes) {
+  const hash = [...new Uint8Array(await crypto.subtle.digest("SHA-256", bytes))].map((x) => x.toString(16).padStart(2, "0")).join("");
+  if (bytes.byteLength !== manifest.bytes || hash !== manifest.sha256) throw new Error("The delivered building does not match its manifest.");
+}
+
+// web/office-pack-key.ts
+var officePackPrefix = (base) => `slopbuzz-office-${encodeURIComponent(base)}-`;
+function officeCacheKey(base, url) {
+  const id = url.pathname.match(/\/assets\/([a-f0-9]{16})\/office-world\.js$/)?.[1];
+  return id ? officePackPrefix(base) + id : void 0;
+}
+
+// web/office-pack.ts
+var officePackKey = (base = scope, url = releaseAsset("office-world.js")) => officeCacheKey(base, url);
+async function saveOfficePack() {
+  const url = releaseAsset("office-world.js"), key = officePackKey();
+  if (!key) throw new Error("This deployment does not publish a versioned offline building.");
+  const manifestReply = await fetch(releaseAsset("office-pack.json"));
+  if (!manifestReply.ok) throw new Error("The building manifest could not be obtained.");
+  const manifest = parseOfficeManifest(await manifestReply.json());
+  const reply = await fetch(url);
+  if (!reply.ok) throw new Error("The building could not be downloaded.");
+  const bytes = await reply.arrayBuffer();
+  await verifyOfficePackage(manifest, bytes);
+  const cache = await caches.open(key);
+  await cache.put(url, new Response(bytes, { headers: { "Content-Type": "text/javascript; charset=UTF-8", "Cache-Control": "public, max-age=31536000, immutable" } }));
+  return bytes.byteLength;
+}
+
+// web/office-tour.ts
+var byId = (id) => document.getElementById(id);
+var curiosityKey = "slopbuzz:office-curiosities:v1";
+var OfficeTourDesk = class {
+  archive = new OfficeArchive();
+  offeredFiles = /* @__PURE__ */ new Map();
+  offeredCompanions = /* @__PURE__ */ new Map();
+  room = "reception";
+  selectedProp;
+  selectedAction;
+  renderer;
+  module;
+  completedZero = false;
+  exitFocus;
+  opened = false;
+  enlarged = false;
+  opening = 0;
+  paused = false;
+  routeIndex = -1;
+  routeKey = "";
+  lastEvidence;
+  visited = /* @__PURE__ */ new Set();
+  persistence = true;
+  audio;
+  intersecting = true;
+  walking = false;
+  root = byId("office-experience");
+  canvas = byId("office-canvas");
+  dialog = byId("office-modal");
+  enter = byId("office-enter");
+  fileSelect = byId("office-file");
+  motion = byId("office-motion");
+  follow = byId("office-follow");
+  media = matchMedia("(prefers-reduced-motion: reduce)");
+  directory = /* @__PURE__ */ new Map();
+  constructor() {
+    try {
+      const limit = new URL(location.href).searchParams.get("limit");
+      if (limit !== null) this.archive.mandate = String(parseMandate(limit));
+    } catch {
+    }
+    this.motion.checked = !this.media.matches;
+    this.follow.checked = true;
+    try {
+      const saved = JSON.parse(localStorage.getItem(curiosityKey) || "[]");
+      if (Array.isArray(saved)) {
+        for (const id of saved) if (typeof id === "string" && rooms.some((r) => r.props.some((p) => p.id === id))) this.visited.add(id);
+      }
+    } catch {
+      this.persistence = false;
+    }
+    rooms.forEach((room, index) => {
+      const b = node("button", String(index + 1).padStart(2, "0") + " \xB7 " + room.short);
+      b.type = "button";
+      b.title = room.name;
+      b.setAttribute("aria-pressed", String(room.id === this.room));
+      b.addEventListener("click", () => this.select(room.id));
+      this.directory.set(room.id, b);
+      byId("office-directory").append(b);
+    });
+    this.enter.addEventListener("click", () => void this.open());
+    byId("office-close").addEventListener("click", () => this.close());
+    byId("office-choose-mandate").addEventListener("click", () => {
+      const input = byId("limit");
+      this.close(input);
+      input.scrollIntoView({ block: "center", behavior: this.media.matches ? "instant" : "smooth" });
+    });
+    byId("office-enlarge").addEventListener("click", () => this.enlarged ? this.dialog.close() : this.enlarge());
+    byId("office-modal-close").addEventListener("click", () => this.dialog.close());
+    let backdrop = false;
+    const outside = (e) => {
+      const b = this.dialog.getBoundingClientRect();
+      return e.clientX < b.left || e.clientX > b.right || e.clientY < b.top || e.clientY > b.bottom;
+    };
+    this.dialog.addEventListener("pointerdown", (e) => {
+      backdrop = e.target === this.dialog && outside(e);
+    });
+    this.dialog.addEventListener("pointercancel", () => {
+      backdrop = false;
+    });
+    this.dialog.addEventListener("click", (e) => {
+      const dismiss = backdrop && e.target === this.dialog && outside(e);
+      backdrop = false;
+      if (dismiss) this.dialog.close();
+    });
+    this.dialog.addEventListener("close", () => {
+      backdrop = false;
+      this.enlarged = false;
+      byId("office-home-slot").append(this.root);
+      byId("office-enlarge").textContent = "Enlarge office";
+      this.renderer?.resize();
+      if (this.opened) byId("office-enlarge").focus();
+      else (this.exitFocus || this.enter).focus();
+    });
+    byId("office-overview").addEventListener("click", () => {
+      this.renderer?.overview();
+      this.routeCamera(false);
+    });
+    byId("office-walk").addEventListener("click", () => {
+      if (!this.renderer) return;
+      if (this.walking) {
+        this.renderer.overview();
+        return;
+      }
+      this.retainFile();
+      this.renderer.walk(this.room);
+      this.canvas.focus();
+    });
+    byId("office-zoom-in").addEventListener("click", () => this.renderer?.zoom(-1));
+    byId("office-zoom-out").addEventListener("click", () => this.renderer?.zoom(1));
+    document.querySelectorAll("[data-office-move]").forEach((b) => b.addEventListener("click", () => this.renderer?.move(b.dataset.officeMove)));
+    this.canvas.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && !this.dialog.open) {
+        this.renderer?.overview();
+        byId("office-walk").focus();
+      }
+    });
+    byId("office-pause").addEventListener("click", () => {
+      if (!this.motion.checked || !this.renderer) return;
+      this.paused = !this.paused;
+      this.syncRenderer();
+      this.playbackLabels();
+    });
+    byId("office-replay").addEventListener("click", () => {
+      if (!routeFor(this.archive.current()).length) return;
+      this.seekRoute(0);
+      this.paused = !this.renderer || !this.motion.checked;
+      this.syncRenderer();
+      this.playbackLabels();
+    });
+    byId("office-next").addEventListener("click", () => {
+      const route = routeFor(this.archive.current());
+      if (!route.length) {
+        this.status("A mandate must disclose a file before its recorded route can be stepped through.");
+        return;
+      }
+      this.paused = true;
+      this.seekRoute((this.routeIndex + 1) % route.length);
+      this.playbackLabels();
+    });
+    this.fileSelect.addEventListener("focus", () => {
+      this.offeredFiles = new Map(this.archive.files);
+      this.offeredCompanions = new Map(this.archive.companions);
+      this.retainFile();
+    });
+    this.fileSelect.addEventListener("blur", () => {
+      this.offeredFiles.clear();
+      this.offeredCompanions.clear();
+      this.updateFiles();
+    });
+    byId("office-evidence").addEventListener("focusin", () => this.retainFile());
+    byId("office-evidence").addEventListener("wheel", () => this.retainFile(), { passive: true });
+    this.fileSelect.addEventListener("change", () => {
+      const value = this.fileSelect.value;
+      this.archive.choose(value, this.offeredFiles.get(value), this.offeredCompanions.get(value));
+      this.follow.checked = value === "latest";
+      this.renderEvidence();
+      this.updateRoute();
+      this.syncRenderer();
+    });
+    this.follow.addEventListener("change", () => {
+      if (this.follow.checked) {
+        this.archive.selected = "latest";
+        this.fileSelect.value = "latest";
+        this.renderEvidence();
+        this.updateRoute();
+        this.syncRenderer();
+      } else this.retainFile();
+    });
+    byId("office-follow-route").addEventListener("change", () => {
+      if (byId("office-follow-route").checked && this.routeIndex >= 0) {
+        const route = routeFor(this.archive.current());
+        if (route[this.routeIndex]) this.select(route[this.routeIndex].room, false);
+      }
+    });
+    this.motion.addEventListener("change", () => {
+      this.syncRenderer();
+      this.playbackLabels();
+    });
+    this.media.addEventListener("change", () => {
+      this.motion.checked = !this.media.matches;
+      this.syncRenderer();
+      this.playbackLabels();
+    });
+    byId("office-quality").addEventListener("change", () => this.syncRenderer());
+    byId("office-sound").addEventListener("change", () => void this.soundPreference());
+    byId("office-offline").addEventListener("click", () => void this.saveOffline());
+    if (!officePackKey()) {
+      byId("office-offline").hidden = true;
+      byId("office-offline-status").textContent = "The building and its documents are served by this site.";
+    }
+    byId("office-share-copy").addEventListener("click", async () => {
+      const input = byId("office-share-link");
+      try {
+        await navigator.clipboard.writeText(input.value);
+        byId("office-share-status").textContent = "Visit link copied. It opens this room and prefills the mandate; counting starts when the recipient asks.";
+      } catch {
+        input.focus();
+        input.select();
+        byId("office-share-status").textContent = "Copy the selected visit link with your browser\u2019s copy command.";
+      }
+    });
+    byId("office-companion-story").addEventListener("click", () => {
+      const d = this.archive.companions.get(this.archive.current()?.ordinal || "");
+      if (d) companionDialog().open(d, byId("office-companion-story"));
+    });
+    const observer = new IntersectionObserver((entries) => {
+      this.intersecting = entries[0].isIntersecting;
+      this.activity();
+    }, { rootMargin: "100px" });
+    observer.observe(byId("office-stage"));
+    new ResizeObserver(() => this.renderer?.resize()).observe(byId("office-stage"));
+    document.addEventListener("visibilitychange", () => {
+      this.activity();
+      if (document.hidden) void this.audio?.suspend();
+      else if (byId("office-sound").checked) void this.audio?.resume();
+    });
+    addEventListener("pagehide", () => {
+      this.renderer?.dispose();
+      void this.audio?.close();
+    }, { once: true });
+    this.renderRoom();
+    this.updateFiles();
+    this.updateRoute();
+    const shared = parseTourLink(location.search);
+    if (shared) {
+      this.room = shared.room;
+      this.selectedProp = roomById(shared.room)?.props.find((p) => p.id === shared.prop);
+      this.renderRoom();
+      if (shared.action !== void 0) this.respond(shared.action);
+      void this.open(false);
+    } else if (location.hash === "#office-tour") this.status("Welcome. Enter the office to open its 3D building and complete room directory.");
+  }
+  begin(mandate, mode = "mandate") {
+    this.completedZero = false;
+    this.archive.begin(mandate, mode);
+    this.offeredFiles.clear();
+    this.offeredCompanions.clear();
+    this.follow.checked = true;
+    this.routeKey = "";
+    this.updateFiles();
+    this.renderEvidence();
+    this.updateRoute();
+    this.syncRenderer();
+    this.shareLink();
+  }
+  complete(zero = false) {
+    if (zero && !this.archive.current()) {
+      this.completedZero = true;
+      this.updateRoute();
+    }
+  }
+  receive(packet) {
+    this.archive.receive(packet.events, packet.omitted);
+    if (this.opened) this.renderEvidence();
+  }
+  disclose(mandate, folios) {
+    if (mandate !== this.archive.mandate) return;
+    this.archive.disclose(folios);
+    if (this.follow.checked) this.archive.selected = "latest";
+    if (this.opened) {
+      this.updateFiles();
+      this.renderEvidence();
+      this.updateRoute();
+      this.syncRenderer();
+    }
+  }
+  inspect(f) {
+    this.follow.checked = false;
+    this.archive.inspect(f);
+    this.updateFiles();
+    this.renderEvidence();
+    this.updateRoute();
+    this.syncRenderer();
+  }
+  remember(d) {
+    this.archive.remember(d);
+    if (this.opened) {
+      this.renderCompanion();
+      this.syncRenderer();
+    }
+  }
+  clearCompanions() {
+    this.archive.companions.clear();
+    this.offeredCompanions.clear();
+    if (this.opened) {
+      this.renderCompanion();
+      this.syncRenderer();
+    }
+  }
+  status(text2) {
+    byId("office-status").textContent = text2;
+  }
+  async open(scroll = true, focus = scroll) {
+    this.opened = true;
+    this.root.hidden = false;
+    this.enter.hidden = true;
+    const opening = ++this.opening;
+    this.renderEvidence();
+    this.updateRoute();
+    this.updateFiles();
+    if (focus) byId("office-close").focus({ preventScroll: true });
+    if (scroll) this.root.scrollIntoView({ behavior: this.media.matches ? "instant" : "smooth", block: "start" });
+    if (this.renderer) {
+      this.activity();
+      this.renderer.resize();
+      return;
+    }
+    const loading = byId("office-loading");
+    this.graphicsAvailable(false);
+    loading.hidden = false;
+    loading.replaceChildren(node("p", "Facilities is locating the building. The room directory and all inspections are already open."));
+    try {
+      this.module ||= import(releaseAsset("office-world.js").href);
+      const module = await this.module;
+      if (!this.opened || opening !== this.opening) return;
+      let readiness;
+      this.canvas.removeAttribute("data-rendered");
+      this.canvas.dataset.module = releaseAsset("office-world.js").href;
+      this.renderer = module.createOffice({ canvas: this.canvas, state: this.sceneState(), onRoom: (id) => this.select(id), onProp: (room, prop2) => {
+        this.select(room);
+        const p = roomById(room)?.props.find((x) => x.id === prop2);
+        if (p) this.inspectProp(p);
+      }, onStep: (index) => {
+        this.routeIndex = index;
+        this.highlightRoute();
+        if (byId("office-follow-route").checked && index >= 0) {
+          const r = routeFor(this.archive.current())[index];
+          if (r) this.select(r.room, false);
+        }
+        this.tone();
+      }, onView: (view) => {
+        this.walking = view === "walk";
+        byId("office-walk").setAttribute("aria-pressed", String(this.walking));
+        byId("office-walk").textContent = this.walking ? "Return to cutaway" : "Walk in this room";
+        byId("office-walking-controls").hidden = !this.walking;
+      }, onReady: () => {
+        clearTimeout(readiness);
+        loading.hidden = true;
+        this.graphicsAvailable(true);
+        this.playbackLabels();
+        this.status("The estate is open. Select any room or object; its actual evidence and fictional arrangements are labeled separately.");
+      }, onProblem: () => this.fallback() });
+      this.canvas.dataset.renderer = "babylon";
+      if (this.room !== "reception" || this.selectedProp) this.renderer.selectRoom(this.room);
+      this.activity();
+      readiness = setTimeout(() => {
+        if (this.opened && opening === this.opening && this.canvas.dataset.rendered !== "true") this.fallback();
+      }, 2e4);
+    } catch {
+      this.module = void 0;
+      if (this.opened && opening === this.opening) this.fallback();
+    }
+  }
+  fallback() {
+    this.renderer?.dispose();
+    this.renderer = void 0;
+    this.canvas.dataset.renderer = "directory";
+    this.graphicsAvailable(false);
+    this.playbackLabels();
+    const loading = byId("office-loading");
+    loading.hidden = false;
+    const retry = node("button", "Try the 3D display again");
+    retry.type = "button";
+    retry.addEventListener("click", () => void this.open(false, true));
+    loading.replaceChildren(node("p", "The 3D display could not open. All eight rooms, thirty-two stories and recorded papers remain available through the directory."), retry);
+    this.status("The office directory is open. The graphics display is unavailable on this visit.");
+  }
+  graphicsAvailable(value) {
+    for (const id of ["office-overview", "office-walk", "office-zoom-in", "office-zoom-out"]) byId(id).disabled = !value;
+    this.canvas.tabIndex = value ? 0 : -1;
+    if (value) this.canvas.removeAttribute("aria-hidden");
+    else this.canvas.setAttribute("aria-hidden", "true");
+  }
+  close(target = this.enter) {
+    this.exitFocus = target;
+    this.opened = false;
+    ++this.opening;
+    this.renderer?.active(false);
+    this.root.hidden = true;
+    this.enter.hidden = false;
+    if (this.dialog.open) this.dialog.close();
+    target.focus();
+    this.status("Your departure has been approved without an additional form. Reception is reviewing this precedent.");
+  }
+  enlarge() {
+    this.enlarged = true;
+    byId("office-modal-slot").append(this.root);
+    this.dialog.showModal();
+    byId("office-enlarge").textContent = "Return to page";
+    this.renderer?.resize();
+    byId("office-modal-close").focus();
+  }
+  select(id, user = true) {
+    if (user) this.retainFile();
+    this.room = id;
+    this.selectedProp = void 0;
+    this.selectedAction = void 0;
+    this.renderRoom();
+    this.syncRenderer();
+    this.renderer?.selectRoom(id);
+  }
+  retainFile() {
+    const file = this.archive.current();
+    if (file) this.archive.selected = file.ordinal;
+    this.follow.checked = false;
+    this.fileSelect.value = this.archive.selected;
+    this.routeCamera(false);
+  }
+  routeCamera(value) {
+    byId("office-follow-route").checked = value;
+  }
+  renderRoom() {
+    const room = roomById(this.room);
+    for (const [id, b] of this.directory) b.setAttribute("aria-pressed", String(id === this.room));
+    byId("office-room-label").textContent = "Room " + String(rooms.indexOf(room) + 1).padStart(2, "0");
+    byId("office-room-title").textContent = room.name;
+    byId("office-room-subtitle").textContent = room.subtitle;
+    const selected = this.selectedProp;
+    byId("office-props").replaceChildren(...room.props.map((p) => {
+      const b = node("button", p.name);
+      b.type = "button";
+      b.setAttribute("aria-pressed", String(p.id === selected?.id));
+      b.addEventListener("click", () => this.inspectProp(p));
+      return b;
+    }));
+    if (selected) this.inspectProp(selected);
+    else {
+      byId("office-story-title").textContent = "Welcome to " + room.short;
+      byId("office-story-text").textContent = "Select a named curiosity or click its object in the building. Facilities encourages looking closely while accepting no responsibility for what you notice.";
+      byId("office-story-answer").textContent = "";
+      byId("office-story-actions").replaceChildren();
+    }
+    this.curiosityLabel();
+    this.renderEvidence();
+    this.shareLink();
+    this.playbackLabels();
+  }
+  inspectProp(p) {
+    this.selectedProp = p;
+    this.selectedAction = void 0;
+    this.retainFile();
+    this.visited.add(p.id);
+    try {
+      localStorage.setItem(curiosityKey, JSON.stringify([...this.visited]));
+      this.persistence = true;
+    } catch {
+      this.persistence = false;
+    }
+    byId("office-story-title").textContent = p.name;
+    byId("office-story-text").textContent = p.story;
+    byId("office-story-answer").textContent = "";
+    byId("office-story-actions").replaceChildren(...p.actions.map((a, index) => {
+      const b = node("button", a.label);
+      b.type = "button";
+      b.addEventListener("click", () => this.respond(index));
+      return b;
+    }));
+    for (const b of byId("office-props").querySelectorAll("button")) b.setAttribute("aria-pressed", String(b.textContent === p.name));
+    this.curiosityLabel();
+    this.shareLink();
+  }
+  respond(index) {
+    const action = this.selectedProp?.actions[index];
+    if (!action) return;
+    this.selectedAction = index;
+    byId("office-story-answer").textContent = action.answer;
+    this.renderer?.react(this.selectedProp.id, index);
+    this.tone();
+    this.shareLink();
+  }
+  curiosityLabel() {
+    byId("office-curiosities").textContent = this.visited.size + " of 32 curiosities discovered." + (this.visited.size === 32 ? " Facilities appoints you Senior Visitor (Acting)." : "") + (this.persistence ? " Remembered in this browser." : " Storage is unavailable; this visit remembers them temporarily.");
+  }
+  updateFiles() {
+    if (document.activeElement === this.fileSelect) return;
+    const known = new Set(this.archive.files.keys());
+    for (const option of [...this.fileSelect.options]) if (option.value !== "latest" && !known.has(option.value)) option.remove();
+    for (const f of this.archive.files.values()) if (![...this.fileSelect.options].some((o) => o.value === f.ordinal)) {
+      const o = node("option", "Ordinal " + f.ordinal + " \xB7 " + f.text);
+      o.value = f.ordinal;
+      this.fileSelect.append(o);
+    }
+    this.fileSelect.value = this.archive.selected;
+  }
+  renderEvidence() {
+    const file = this.archive.current(), globals = file?.globals || this.archive.globals;
+    const previous = this.lastEvidence;
+    if (previous && previous.file === file && previous.room === this.room && previous.globals === globals) {
+      this.renderCompanion();
+      return;
+    }
+    this.lastEvidence = { file, room: this.room, globals };
+    const events = this.archive.evidence(this.room);
+    let source = file ? "File " + file.ordinal + " \xB7 disclosed text \u201C" + file.text + "\u201D. " + (file.cache === "HIT" ? "Institutional memory returned prior text; fresh production decisions are not inferred." : file.recorded ? "Only supplied execution records are shown." : "The complete production dossier was unavailable; supplied records remain identifiable.") : "No numerical file has been disclosed. These rooms are open for fictional inspection.";
+    if (this.room === "executive") source += " The executive room is tour scenery, not an additional production approval.";
+    if (file?.sourceOmitted || file?.omitted) source += " The source dossier or finite tour view omitted some records; the route is a summary.";
+    byId("office-evidence-source").textContent = source;
+    byId("office-evidence").replaceChildren(...events.map((e) => {
+      const li = node("li");
+      li.append(node("strong", e.office), node("p", e.finding));
+      if (e.document) {
+        const details = node("details"), summary = node("summary", "Inspect supplied document"), pre = node("pre", e.document.slice(0, 12e3) + (e.document.length > 12e3 ? "\n[First 12,000 of " + e.document.length + " characters shown.]" : ""));
+        details.append(summary, pre);
+        li.append(details);
+      }
+      return li;
+    }));
+    if (!events.length) byId("office-evidence").append(node("li", file ? "No supplied decision for this department accompanies this file. Its furnishings and conversations are fictional tour content." : "Run a mandate to supply actual proceedings."));
+    this.renderCompanion();
+  }
+  renderCompanion() {
+    const d = this.archive.companions.get(this.archive.current()?.ordinal || "");
+    byId("office-companion").textContent = d ? "Appointed companion: " + d.companion.name + " \xB7 " + d.companion.rarity + ". This is a disclosed companion assignment, separate from the numerical output." : "";
+    byId("office-companion-story").hidden = !d;
+  }
+  updateRoute() {
+    const file = this.archive.current(), route = routeFor(file), key = (file?.ordinal || "") + "|" + route.map((s) => s.room + ":" + s.source).join("|") + "|" + this.completedZero;
+    if (key === this.routeKey) return;
+    this.routeKey = key;
+    this.routeIndex = -1;
+    byId("office-route-status").textContent = file ? "Recorded route summary for " + file.ordinal + " \xB7 " + file.text + ". " + (this.archive.mode !== "mandate" ? "This is retained playback. " : "") + "The moving file illustrates these stops; it does not measure execution time." : this.completedZero ? "Zero\u2019s mandate is complete. No numerical file was needed. The estate\u2019s overhead remains fully funded." : "Run a mandate to supply a recorded file. Every room is open for fictional inspection.";
+    byId("office-route").replaceChildren(...route.map((s, i) => {
+      const li = node("li"), b = node("button", i + 1 + ". " + roomById(s.room).short + " \xB7 " + s.source);
+      b.type = "button";
+      b.title = s.finding;
+      b.addEventListener("click", () => {
+        this.paused = true;
+        this.routeIndex = i;
+        this.renderer?.seek(i);
+        this.select(s.room);
+        this.highlightRoute();
+        this.playbackLabels();
+      });
+      li.append(b);
+      return li;
+    }));
+    this.playbackLabels();
+    this.shareLink();
+  }
+  seekRoute(index) {
+    const step = routeFor(this.archive.current())[index];
+    if (!step) return;
+    this.routeIndex = index;
+    this.renderer?.seek(index);
+    this.select(step.room, false);
+    this.highlightRoute();
+  }
+  highlightRoute() {
+    [...byId("office-route").querySelectorAll("button")].forEach((b, i) => b.setAttribute("aria-pressed", String(i === this.routeIndex)));
+  }
+  playbackLabels() {
+    const empty = routeFor(this.archive.current()).length === 0;
+    for (const id of ["office-replay", "office-next"]) byId(id).setAttribute("aria-disabled", String(empty));
+    byId("office-pause").setAttribute("aria-disabled", String(!this.motion.checked || !this.renderer));
+    byId("office-pause").textContent = !this.renderer ? "Use recorded stops" : !this.motion.checked ? "Animation off" : this.paused ? "Resume route" : "Pause route";
+    byId("office-pause").setAttribute("aria-pressed", String(this.paused));
+  }
+  sceneState() {
+    const file = this.archive.current(), d = file ? this.archive.companions.get(file.ordinal) : void 0;
+    return { room: this.room, route: routeFor(file), ordinal: file?.ordinal || "", text: file?.text || "", emoji: d?.companion.emoji, companionName: d?.companion.name, paused: this.paused, reducedMotion: !this.motion.checked, quality: byId("office-quality").value, seed: tourSeed(this.archive.mandate) };
+  }
+  syncRenderer() {
+    this.renderer?.update(this.sceneState());
+  }
+  activity() {
+    this.renderer?.active(this.opened && this.intersecting && !document.hidden);
+  }
+  shareLink() {
+    byId("office-share-link").value = officeShare(scope, this.archive.mandate, this.room, this.selectedProp?.id, byId("companion-strategy").value || "factor-resonance-v1", this.selectedAction);
+  }
+  async soundPreference() {
+    const enabled = byId("office-sound").checked;
+    try {
+      if (enabled) {
+        this.audio ||= new AudioContext();
+        await this.audio.resume();
+        this.tone();
+      } else await this.audio?.suspend();
+    } catch {
+      byId("office-sound").checked = false;
+      this.status("Office sounds are unavailable. All tour dialogue remains readable.");
+    }
+  }
+  tone() {
+    if (!byId("office-sound").checked || this.audio?.state !== "running" || document.hidden) return;
+    const oscillator = this.audio.createOscillator(), gain = this.audio.createGain(), now = this.audio.currentTime;
+    oscillator.type = "sine";
+    oscillator.frequency.setValueAtTime(440 + this.routeIndex % 3 * 110, now);
+    gain.gain.setValueAtTime(0.025, now);
+    gain.gain.exponentialRampToValueAtTime(1e-3, now + 0.09);
+    oscillator.connect(gain);
+    gain.connect(this.audio.destination);
+    oscillator.start(now);
+    oscillator.stop(now + 0.1);
+  }
+  async saveOffline() {
+    const b = byId("office-offline");
+    if (b.getAttribute("aria-disabled") === "true") return;
+    b.setAttribute("aria-disabled", "true");
+    byId("office-offline-status").textContent = "Facilities is saving this release\u2019s 3D building\u2026";
+    try {
+      await saveOfficePack();
+      byId("office-offline-status").textContent = "The 3D office is saved for offline visits with this installed release.";
+    } catch (error) {
+      byId("office-offline-status").textContent = "The offline building could not be saved: " + error.message + " You can keep exploring online.";
+    } finally {
+      b.setAttribute("aria-disabled", "false");
+    }
+  }
+};
+
+// web/runtime-protocol.ts
+var runtimeProtocol = 1;
+function isTransientOperation(path, method = "GET") {
+  return method === "GET" && ["/premises/rehearsal", "/companions/catalog", "/companions/strategies", "/companions/window", "/operations/runtime", "/fizzbuzz/window", "/fizzbuzz/window/explained", "/capacity/forecast/extended", "/procurement/dossier", "/onboarding/rehearsal", "/precedent/rehearsal"].includes(path.split("?")[0]);
+}
 
 // web/runtime.ts
 var config = await fetch(releaseFile("runtime-config.json"), { cache: "no-cache" }).then((r) => {
@@ -155,129 +1142,6 @@ if (config.mode === "browser") document.querySelectorAll("a[href]").forEach((lin
   link.href = new URL(`response/?path=${encodeURIComponent(path)}`, scope).href;
 });
 
-// web/companion-story.ts
-function node(tag, text2) {
-  const n = document.createElement(tag);
-  if (text2) n.textContent = text2;
-  return n;
-}
-function characterStory(c) {
-  const fragment = document.createDocumentFragment();
-  const glyph = node("span", c.emoji);
-  glyph.className = "companion-glyph";
-  glyph.setAttribute("aria-hidden", "true");
-  fragment.append(glyph, node("p", (c.kind === "pair" ? "Themed emoji pair" : "Single emoji") + " \xB7 " + c.category + " \xB7 " + c.rarity + " \xB7 target frequency: " + c.weight.toLocaleString() + " of 1,000,000,000 tickets."));
-  const dl = node("dl");
-  for (const [label, value] of [["Personality", c.personality], ["Previously in this extraordinary career", c.backstory], ["Motivating energy", c.energy], ["Ultimate goal", c.goal]]) dl.append(node("dt", label), node("dd", value));
-  fragment.append(dl);
-  return fragment;
-}
-
-// web/discovery-model.ts
-var seedPolicy = "mandate-v1";
-var discoveryStorageKey = "slopbuzz:extraordinary-appointments:v1";
-var decimal = (x) => typeof x === "string" && /^(0|[1-9][0-9]*)$/.test(x);
-var text = (x) => typeof x === "string" && x.length > 0;
-function validDiscovery(x) {
-  if (!x || !decimal(x.mandate) || !text(x.strategy) || !text(x.catalogVersion) || x.seedPolicy !== seedPolicy || typeof x.discoveredAt !== "string" || !Number.isFinite(Date.parse(x.discoveredAt))) return false;
-  const c = x.companion, a = x.assignment, f = a?.factors;
-  if (!c || !["single", "pair"].includes(c.kind) || !Array.isArray(c.components) || !c.components.every(text) || !["Common", "Uncommon", "Rare", "Legendary", "Mythic"].includes(c.rarity) || !Number.isSafeInteger(c.weight) || c.weight < 1 || c.weight > 1e9) return false;
-  if (!["id", "emoji", "name", "category", "personality", "backstory", "energy", "goal"].every((key) => text(c[key]))) return false;
-  if (!a || !decimal(a.ordinal) || a.ordinal === "0" || BigInt(a.ordinal) > BigInt(x.mandate) || !["Fizz", "Buzz", "FizzBuzz"].includes(a.flavor) || a.companionId !== c.id || !Number.isSafeInteger(a.ticket) || a.ticket < 0 || a.ticket >= 1e9) return false;
-  const n = BigInt(a.ordinal), flavor = n % 15n === 0n ? "FizzBuzz" : n % 3n === 0n ? "Fizz" : n % 5n === 0n ? "Buzz" : "";
-  return flavor === a.flavor && !!f && text(f.factors) && decimal(f.cofactor) && typeof f.complete === "boolean" && Number.isInteger(f.divisions) && f.divisions >= 0 && Number.isInteger(f.divisionBudget) && f.divisionBudget >= f.divisions && Number.isInteger(f.trialPrimeCeiling);
-}
-function discoveryIdentity(d) {
-  return d.catalogVersion + "|" + d.companion.id;
-}
-var provenance = (d) => JSON.stringify([d.discoveredAt, d.mandate, d.assignment.ordinal, d.strategy, d.assignment.ticket]);
-function rarestDiscoveries(...collections) {
-  const distinct = /* @__PURE__ */ new Map();
-  for (const collection of collections) for (const d of collection) {
-    if (!validDiscovery(d)) continue;
-    const id = discoveryIdentity(d), previous = distinct.get(id);
-    if (!previous || provenance(d) < provenance(previous)) distinct.set(id, d);
-  }
-  return [...distinct.values()].sort((a, b) => a.companion.weight - b.companion.weight || discoveryIdentity(a).localeCompare(discoveryIdentity(b), "en")).slice(0, 5);
-}
-function decodeDiscoveries(value) {
-  try {
-    const x = JSON.parse(value || "null");
-    return x?.schema === "slopbuzz-discoveries/v1" && Array.isArray(x.finds) ? rarestDiscoveries(x.finds) : [];
-  } catch {
-    return [];
-  }
-}
-var encodeDiscoveries = (finds) => JSON.stringify({ schema: "slopbuzz-discoveries/v1", finds });
-function discoveryLink(d, scope2) {
-  const url = new URL("demo/", scope2);
-  url.search = new URLSearchParams({ limit: d.mandate, authority: d.strategy, catalog: d.catalogVersion, seedPolicy: d.seedPolicy, ordinal: d.assignment.ordinal, companion: d.companion.id }).toString();
-  return url.href;
-}
-
-// web/companion-dialog.ts
-var controllerSymbol = /* @__PURE__ */ Symbol.for("slopbuzz.companion-dialog.v1");
-function companionDialog() {
-  const dialog = document.querySelector("#companion-dialog");
-  if (dialog[controllerSymbol]) return dialog[controllerSymbol];
-  let invoker, beganOnBackdrop = false;
-  dialog.querySelector("[data-companion-close]").addEventListener("click", () => dialog.close());
-  const outside = (e) => {
-    const b = dialog.getBoundingClientRect();
-    return e.clientX < b.left || e.clientX > b.right || e.clientY < b.top || e.clientY > b.bottom;
-  };
-  dialog.addEventListener("pointerdown", (e) => {
-    beganOnBackdrop = e.target === dialog && outside(e);
-  });
-  dialog.addEventListener("pointercancel", () => {
-    beganOnBackdrop = false;
-  });
-  dialog.addEventListener("click", (e) => {
-    const dismiss = dialog.open && beganOnBackdrop && e.target === dialog && outside(e);
-    beganOnBackdrop = false;
-    if (dismiss) dialog.close();
-  });
-  dialog.addEventListener("close", () => {
-    beganOnBackdrop = false;
-    if (invoker?.isConnected) invoker.focus();
-    dialog.dispatchEvent(new Event("companion-closed"));
-  });
-  const controller = { open(d, opener) {
-    invoker = opener;
-    const a = d.assignment, c = d.companion;
-    dialog.querySelector("h2").textContent = c.name + " \xB7 " + a.ordinal + " " + a.flavor;
-    const body = dialog.querySelector("[data-companion-story]");
-    body.replaceChildren(characterStory(c));
-    body.append(node("h3", "Allocation evidence"), node("p", "Mandate: " + d.mandate + ". Strategy: " + d.strategy + ". Seed policy: " + d.seedPolicy + ". Catalog: " + d.catalogVersion + ". Ticket: " + a.ticket + "."), node("p", "Extracted exact factors: " + a.factors.factors + ". " + (a.factors.complete ? "Complete factorization." : "Unresolved exact cofactor: " + a.factors.cofactor + ". This cofactor is not certified prime.") + " Division checks: " + a.factors.divisions + " of " + a.factors.divisionBudget + "."));
-    const label = node("label", "Reproducible encounter link");
-    label.htmlFor = "companion-share-link";
-    const link = node("input");
-    link.id = "companion-share-link";
-    link.type = "url";
-    link.readOnly = true;
-    link.value = discoveryLink(d, scope);
-    const copy = node("button", "Copy encounter link");
-    copy.type = "button";
-    const status = node("p");
-    status.setAttribute("role", "status");
-    copy.addEventListener("click", async () => {
-      try {
-        await navigator.clipboard.writeText(link.value);
-        status.textContent = "Encounter link copied. The recipient can inspect this appointment without running the full mandate.";
-      } catch {
-        link.focus();
-        link.select();
-        status.textContent = "Copy the selected link using your browser\u2019s copy command.";
-      }
-    });
-    body.append(label, link, copy, status);
-    if (!dialog.open) dialog.showModal();
-    dialog.querySelector(".companion-dialog-body").scrollTop = 0;
-  } };
-  dialog[controllerSymbol] = controller;
-  return controller;
-}
-
 // web/discovery-store.ts
 var storeSymbol = /* @__PURE__ */ Symbol.for("slopbuzz.discovery-store.v1");
 function discoveryStore() {
@@ -340,24 +1204,10 @@ async function companionPolicies() {
   return data.strategies;
 }
 var CompanionDesk = class {
-  enabled = document.querySelector("#emoji-companions");
-  policy = document.querySelector("#companion-strategy");
-  list = document.querySelector("#companion-list");
-  scroller = document.querySelector("#companion-scroll");
-  status = document.querySelector("#companion-status");
-  dialog = document.querySelector("#companion-dialog");
-  latest = document.querySelector("#companion-latest");
-  visible = /* @__PURE__ */ new Map();
-  batches = /* @__PURE__ */ new Map();
-  assigned = /* @__PURE__ */ new Map();
-  lastSignature = "";
-  entries = /* @__PURE__ */ new Map();
-  version = "";
-  generation = 0;
-  following = true;
-  mandate = "15";
-  constructor() {
+  constructor(office2) {
+    this.office = office2;
     this.enabled.addEventListener("change", () => {
+      this.office?.clearCompanions();
       this.generation++;
       this.following = true;
       this.list.replaceChildren();
@@ -369,6 +1219,7 @@ var CompanionDesk = class {
       } else this.status.textContent = "Companion allocation suspended. Official numerical output remains available.";
     });
     this.policy.addEventListener("change", () => {
+      this.office?.clearCompanions();
       this.generation++;
       this.batches.clear();
       this.assigned.clear();
@@ -402,6 +1253,23 @@ var CompanionDesk = class {
       this.status.textContent = "Companion policy registry unavailable: " + error.message;
     });
   }
+  office;
+  enabled = document.querySelector("#emoji-companions");
+  policy = document.querySelector("#companion-strategy");
+  list = document.querySelector("#companion-list");
+  scroller = document.querySelector("#companion-scroll");
+  status = document.querySelector("#companion-status");
+  dialog = document.querySelector("#companion-dialog");
+  latest = document.querySelector("#companion-latest");
+  visible = /* @__PURE__ */ new Map();
+  batches = /* @__PURE__ */ new Map();
+  assigned = /* @__PURE__ */ new Map();
+  lastSignature = "";
+  entries = /* @__PURE__ */ new Map();
+  version = "";
+  generation = 0;
+  following = true;
+  mandate = "15";
   reset(mandate) {
     this.mandate = mandate;
     this.generation++;
@@ -457,7 +1325,10 @@ var CompanionDesk = class {
           this.assigned.set(a.ordinal, a);
           finds.push(this.discovery(a, this.entries.get(a.companionId), mandate, policy));
         }
-        if (finds.length) discoveryStore().remember(finds);
+        if (finds.length) {
+          discoveryStore().remember(finds);
+          for (const d of finds) this.office?.remember(d);
+        }
       }
       for (const ordinal of this.assigned.keys()) if (!this.visible.has(ordinal)) this.assigned.delete(ordinal);
       while (this.batches.size > 12) this.batches.delete(this.batches.keys().next().value);
@@ -506,48 +1377,6 @@ var CompanionDesk = class {
   }
 };
 
-// web/mandate-input.ts
-function parseMandate(raw) {
-  const text2 = raw.trim();
-  if (!/^[0-9]+$/.test(text2)) return null;
-  const ordinary = Number(text2);
-  return Number.isSafeInteger(ordinary) ? ordinary : BigInt(text2);
-}
-var autocorrectMandate = (raw) => raw.replace(/[^0-9]/g, "");
-var addOrdinals = (value, count) => typeof value === "bigint" ? value + BigInt(count) : value + count;
-function windowCount(next, limit) {
-  if (typeof next === "bigint" && typeof limit === "bigint") return Number(limit - next + 1n < 100n ? limit - next + 1n : 100n);
-  return Math.min(100, Number(limit) - Number(next) + 1);
-}
-var magnitudeWarnings = Object.freeze([
-  "PROVISIONAL INCIDENT: Your integer may possibly have exceeded its delegated magnitude authority.",
-  "POLICY REVIEW PENDING: This request might have crossed an undocumented numerical border.",
-  "PRELIMINARY ESCALATION: An oversized ordinal may have entered circulation without executive indemnity.",
-  "POSSIBLE CONTROL BREACH: The requested magnitude appears larger than the committee\u2019s confidence.",
-  "UNCONFIRMED NUMERICAL EMERGENCY: Your upper limit may require a larger filing cabinet.",
-  "POTENTIAL JURISDICTIONAL EVENT: This integer might be operating beyond the ordinary-number charter.",
-  "TENTATIVE COMPLIANCE ALERT: A digit may have arrived without its magnitude escort.",
-  "CONDITIONAL SEVERITY ONE: Your request could conceivably exceed our ceremonial insurance allowance.",
-  "SUSPECTED ORDINAL EXCESS: Management cannot presently exclude the possibility of too much number.",
-  "PROVISIONAL GOVERNANCE FAILURE: This value may have outgrown its approved organizational chart.",
-  "MAGNITUDE EXCEPTION SUSPECTED: The decimal expansion might require a second board of directors.",
-  "POSSIBLE POLICY DEVIATION: An unauthorized quantity of integer may be present in this request.",
-  "PRECAUTIONARY EXECUTIVE NOTICE: Your number could be larger than the policy author anticipated.",
-  "UNVERIFIED BOUNDARY INCIDENT: The requested ordinal may have escaped the standard arithmetic enclosure.",
-  "CONTINGENT DISCIPLINARY REVIEW: Someone might possibly need to explain all these digits.",
-  "PRELIMINARY RISK FINDING: This upper limit may have exceeded the building\u2019s authorized numerical load.",
-  "POTENTIAL CHARTER OVERRUN: The committee has not ruled out a surplus of mathematical ambition.",
-  "PROVISIONAL EXCESS-MAGNITUDE NOTICE: This request may require an unusually solemn signature.",
-  "SUSPECTED SCALE VIOLATION: Your integer might be too substantial for the current stationery.",
-  "POSSIBLE ENTERPRISE INCIDENT: This value may have activated a policy nobody has finished writing."
-]);
-function chooseMagnitudeWarning(previous = -1, random = Math.random) {
-  const width = previous >= 0 ? magnitudeWarnings.length - 1 : magnitudeWarnings.length;
-  let index = Math.min(width - 1, Math.floor(random() * width));
-  if (previous >= 0 && index >= previous) index++;
-  return { index, text: magnitudeWarnings[index] };
-}
-
 // web/shared-encounter.ts
 function prepareSharedEncounter(input) {
   const query = new URL(location.href).searchParams, limit = query.get("limit");
@@ -560,6 +1389,7 @@ function prepareSharedEncounter(input) {
   }
   input.value = mandate;
   input.dispatchEvent(new Event("input"));
+  if (!query.has("ordinal") && !query.has("companion")) return;
   const ordinal = query.get("ordinal"), strategy = query.get("authority"), catalogVersion = query.get("catalog"), expected = query.get("companion");
   const panel = node("section");
   panel.className = "shared-encounter";
@@ -608,13 +1438,13 @@ function trackUsage(detail) {
 }
 
 // web/dom.ts
-var byId = (id) => {
+var byId2 = (id) => {
   const node3 = document.getElementById(id);
   if (!node3) throw new Error(`Missing element ${id}`);
   return node3;
 };
 function setText(id, value) {
-  byId(id).textContent = String(value);
+  byId2(id).textContent = String(value);
 }
 
 // web/onboarding.ts
@@ -630,21 +1460,21 @@ var PersonnelProceedings = class {
     document.querySelectorAll("[data-personnel-scenario]").forEach((button) => button.addEventListener("click", () => {
       if (button.getAttribute("aria-disabled") !== "true") actions.rehearse(button.dataset.personnelScenario);
     }));
-    byId("personnel-replay").addEventListener("click", () => {
+    byId2("personnel-replay").addEventListener("click", () => {
       if ((this.dossier || this.playbackAvailable) && !this.busy) actions.replay();
     });
-    byId("personnel-step").addEventListener("click", () => {
+    byId2("personnel-step").addEventListener("click", () => {
       if ((this.dossier || this.playbackAvailable) && !this.busy) actions.step();
     });
-    byId("personnel-documents").addEventListener("click", () => {
+    byId2("personnel-documents").addEventListener("click", () => {
       if (!this.dossier || this.busy) return;
-      byId("personnel-documents").focus();
-      byId("personnel-dialog").showModal();
+      byId2("personnel-documents").focus();
+      byId2("personnel-dialog").showModal();
     });
-    byId("personnel-dialog-close").addEventListener("click", () => byId("personnel-dialog").close());
-    byId("personnel-dialog").addEventListener("close", () => byId("personnel-documents").focus({ preventScroll: true }));
-    byId("personnel-documents-toggle").addEventListener("click", () => {
-      const open = byId("personnel-documents-toggle").getAttribute("aria-expanded") !== "true";
+    byId2("personnel-dialog-close").addEventListener("click", () => byId2("personnel-dialog").close());
+    byId2("personnel-dialog").addEventListener("close", () => byId2("personnel-documents").focus({ preventScroll: true }));
+    byId2("personnel-documents-toggle").addEventListener("click", () => {
+      const open = byId2("personnel-documents-toggle").getAttribute("aria-expanded") !== "true";
       this.rows.forEach((row) => row.details.open = open);
       this.synchronizeDisclosure();
     });
@@ -663,7 +1493,7 @@ var PersonnelProceedings = class {
   }
   synchronizeDisclosure() {
     const open = this.rows.length > 0 && this.rows.every((row) => row.details.open);
-    byId("personnel-documents-toggle").setAttribute("aria-expanded", String(open));
+    byId2("personnel-documents-toggle").setAttribute("aria-expanded", String(open));
     setText("personnel-documents-toggle", open ? "Fold all documents" : "Expand all documents");
   }
   get record() {
@@ -677,8 +1507,8 @@ var PersonnelProceedings = class {
     this.updateControls();
   }
   updateControls() {
-    for (const id of ["personnel-replay", "personnel-step"]) byId(id).setAttribute("aria-disabled", String(!this.dossier && !this.playbackAvailable || this.busy));
-    byId("personnel-documents").setAttribute("aria-disabled", String(!this.dossier || this.busy));
+    for (const id of ["personnel-replay", "personnel-step"]) byId2(id).setAttribute("aria-disabled", String(!this.dossier && !this.playbackAvailable || this.busy));
+    byId2("personnel-documents").setAttribute("aria-disabled", String(!this.dossier || this.busy));
     document.querySelectorAll("[data-personnel-scenario]").forEach((button) => button.setAttribute("aria-disabled", String(this.busy)));
   }
   loading() {
@@ -690,12 +1520,12 @@ var PersonnelProceedings = class {
     this.rows = [];
     this.visible = 0;
     this.busy = false;
-    byId("personnel-steps").replaceChildren();
-    byId("personnel-steps").hidden = true;
+    byId2("personnel-steps").replaceChildren();
+    byId2("personnel-steps").hidden = true;
     setText("personnel-origin", message);
     setText("personnel-verdict", verdict);
     setText("personnel-status", "No new personnel decisions are available to read.");
-    byId("personnel-step").textContent = "Step through";
+    byId2("personnel-step").textContent = "Step through";
     this.synchronizeDisclosure();
     this.updateControls();
   }
@@ -742,13 +1572,13 @@ var PersonnelProceedings = class {
       number.className = "personnel-index";
       number.textContent = String(index + 1).padStart(2, "0");
       number.setAttribute("aria-hidden", "true");
-      const office = document.createElement("span");
-      office.className = "personnel-office";
-      office.textContent = step.office;
+      const office2 = document.createElement("span");
+      office2.className = "personnel-office";
+      office2.textContent = step.office;
       const badge = document.createElement("span");
       badge.className = "personnel-badge";
       badge.textContent = "Not yet read";
-      summary.append(number, office, badge);
+      summary.append(number, office2, badge);
       details.append(summary);
       const facts = document.createElement("dl");
       for (const [label, text2] of [["Rule", step.rule], ["Received", step.received], ["Recorded decision", step.state === "APPROVED" ? "Approved" : step.state === "REJECTED" ? "Rejected" : "Not reached"], ["Finding", step.finding], ["Issued document", step.document]]) {
@@ -765,8 +1595,8 @@ var PersonnelProceedings = class {
       item.append(details);
       return { item, badge, details };
     });
-    byId("personnel-steps").replaceChildren(...this.rows.map((row) => row.item));
-    byId("personnel-steps").hidden = false;
+    byId2("personnel-steps").replaceChildren(...this.rows.map((row) => row.item));
+    byId2("personnel-steps").hidden = false;
     this.setBusy(false);
     this.synchronizeDisclosure();
   }
@@ -825,10 +1655,10 @@ var PrecedentView = class {
   serial = 0;
   busy = false;
   latest;
-  form = byId("precedent-form");
-  button = byId("precedent-submit");
-  list = byId("precedent-steps");
-  expand = byId("precedent-expand");
+  form = byId2("precedent-form");
+  button = byId2("precedent-submit");
+  list = byId2("precedent-steps");
+  expand = byId2("precedent-expand");
   constructor() {
     this.form.addEventListener("submit", (event) => {
       event.preventDefault();
@@ -840,7 +1670,7 @@ var PrecedentView = class {
       details.forEach((d) => d.open = open);
       this.synchronize();
     });
-    byId("precedent-latest").addEventListener("click", () => {
+    byId2("precedent-latest").addEventListener("click", () => {
       if (this.latest) {
         ++this.serial;
         this.setBusy(false);
@@ -868,7 +1698,7 @@ var PrecedentView = class {
     ++this.serial;
     this.setBusy(false);
     this.latest = data;
-    byId("precedent-latest").setAttribute("aria-disabled", String(!data));
+    byId2("precedent-latest").setAttribute("aria-disabled", String(!data));
     if (data) this.show(data);
     else this.clear(cache === "HIT" ? "An earlier administration reused institutional memory without forwarding current court papers. Historical approvals are not reconstructed." : cache === "MISS" ? "The repository offered no prior text. Fresh production proceeded without convening a reuse court." : "The repository was bypassed. No prior-work license was required.");
   }
@@ -877,7 +1707,7 @@ var PrecedentView = class {
     setText("precedent-status", "No court case is open.");
     this.list.replaceChildren();
     this.expand.hidden = true;
-    byId("precedent-latest").setAttribute("aria-disabled", String(!this.latest));
+    byId2("precedent-latest").setAttribute("aria-disabled", String(!this.latest));
     this.synchronize();
   }
   show(d) {
@@ -891,11 +1721,11 @@ var PrecedentView = class {
       const order = element("span", String(index + 1).padStart(2, "0"));
       order.className = "personnel-index";
       order.setAttribute("aria-hidden", "true");
-      const office = element("span", step.office);
-      office.className = "personnel-office";
+      const office2 = element("span", step.office);
+      office2.className = "personnel-office";
       const state = element("span", step.state === "APPROVED" ? "Approved" : step.state === "REJECTED" ? "Rejected" : "Not reached");
       state.className = "personnel-badge";
-      summary.append(order, office, state);
+      summary.append(order, office2, state);
       details.append(summary);
       const facts = element("dl");
       for (const [label, text2] of [["Published rule", step.rule], ["Received", step.received], ["Finding", step.finding], ["Issued document", step.document]]) {
@@ -913,7 +1743,7 @@ var PrecedentView = class {
     this.synchronize();
   }
   async rehearse() {
-    const serial = ++this.serial, scenario = byId("precedent-scenario").value;
+    const serial = ++this.serial, scenario = byId2("precedent-scenario").value;
     this.setBusy(true);
     setText("precedent-status", "The court is examining a read-only specimen. Your numerical output and cache are retained.");
     try {
@@ -1610,13 +2440,13 @@ var PremisesDesk = class {
   busy = false;
   serial = 0;
   constructor() {
-    byId("premises-form").addEventListener("submit", (event) => {
+    byId2("premises-form").addEventListener("submit", (event) => {
       event.preventDefault();
       if (!this.busy) void this.inspect();
     });
   }
   async inspect() {
-    const ordinal = byId("premises-ordinal"), scenario = byId("premises-scenario").value;
+    const ordinal = byId2("premises-ordinal"), scenario = byId2("premises-scenario").value;
     if (!/^[1-9][0-9]*$/.test(ordinal.value)) {
       ordinal.setAttribute("aria-invalid", "true");
       setText("premises-error", "Enter a positive whole number with no leading zeros.");
@@ -1628,8 +2458,8 @@ var PremisesDesk = class {
     const requestedOrdinal = ordinal.value;
     const serial = ++this.serial;
     this.busy = true;
-    byId("premises-submit").setAttribute("aria-disabled", "true");
-    byId("premises-result").setAttribute("aria-busy", "true");
+    byId2("premises-submit").setAttribute("aria-disabled", "true");
+    byId2("premises-result").setAttribute("aria-busy", "true");
     setText("premises-status", "The property offices are inspecting a read-only specimen\u2026");
     try {
       const response = await request(`/premises/rehearsal?scenario=${encodeURIComponent(scenario)}&ordinal=${requestedOrdinal}`);
@@ -1637,7 +2467,7 @@ var PremisesDesk = class {
       const data = parsePremises(await response.json());
       if (data.purpose !== "REHEARSAL" || data.ordinal !== requestedOrdinal) throw new Error("The specimen belongs to another premises request.");
       if (serial !== this.serial) return;
-      byId("premises-result").replaceChildren(premisesCard(data, true));
+      byId2("premises-result").replaceChildren(premisesCard(data, true));
       const refusal = data.steps.find((s) => s.state === "REJECTED");
       setText("premises-status", refusal ? `Occupancy refused by ${refusal.office}. ${refusal.finding}` : data.tenants.length ? `Inspection identified and removed ${data.tenants.map((t) => `${t.name}, ${t.codePoint}`).join("; ")}. Reinspection passed; specimen lease issued and closed.` : "Vacant premises approved. Specimen lease issued and closed.");
     } catch (error) {
@@ -1645,8 +2475,8 @@ var PremisesDesk = class {
     } finally {
       if (serial === this.serial) {
         this.busy = false;
-        byId("premises-submit").setAttribute("aria-disabled", "false");
-        byId("premises-result").setAttribute("aria-busy", "false");
+        byId2("premises-submit").setAttribute("aria-disabled", "false");
+        byId2("premises-result").setAttribute("aria-busy", "false");
       }
     }
   }
@@ -1744,10 +2574,10 @@ var ExecutiveChronicle = class {
   pendingNotes = [];
   pinned = true;
   pinAfterResize = false;
-  body = byId("chronicle-scroll");
-  entries = byId("chronicle-entries");
-  follow = byId("follow-chronicle");
-  selector = byId("chronicle-ordinal");
+  body = byId2("chronicle-scroll");
+  entries = byId2("chronicle-entries");
+  follow = byId2("follow-chronicle");
+  selector = byId2("chronicle-ordinal");
   constructor() {
     const pause = () => {
       if (this.body.scrollHeight - this.body.clientHeight <= 4) return;
@@ -1802,7 +2632,7 @@ var ExecutiveChronicle = class {
         this.pinAfterResize = false;
         this.followBottom();
       }
-      const panel = byId("mandate-output");
+      const panel = byId2("mandate-output");
       panel.dataset.viewportFit = String(innerHeight > 600 && panel.getBoundingClientRect().height <= innerHeight - 24 - (document.querySelector("#discovery-register")?.getBoundingClientRect().height || 0));
     };
     let frame = 0;
@@ -1817,8 +2647,8 @@ var ExecutiveChronicle = class {
     if (discoveries) resize.observe(discoveries);
     resize.observe(this.body);
     resize.observe(this.entries);
-    resize.observe(byId("mandate-output"));
-    resize.observe(byId("mandate-output").querySelector(".output-dock"));
+    resize.observe(byId2("mandate-output"));
+    resize.observe(byId2("mandate-output").querySelector(".output-dock"));
     window.addEventListener("resize", () => {
       this.pinAfterResize = this.isFollowing();
       schedule();
@@ -2045,16 +2875,16 @@ var ExecutiveChronicle = class {
 };
 
 // web/demo.ts
-var runForm = byId("run-form");
-var limitInput = byId("limit");
-var speedControl = byId("display-speed");
-var runButton = byId("run-button");
+var runForm = byId2("run-form");
+var limitInput = byId2("limit");
+var speedControl = byId2("display-speed");
+var runButton = byId2("run-button");
 var mandateSequence = 0;
-var pauseButton = byId("pause-reading");
-var revealButton = byId("reveal-all");
-var stopButton = byId("stop-reading");
+var pauseButton = byId2("pause-reading");
+var revealButton = byId2("reveal-all");
+var stopButton = byId2("stop-reading");
 var streaming = false;
-var followOutput = byId("follow-output");
+var followOutput = byId2("follow-output");
 var reading = false;
 var paused = false;
 var revealAll = false;
@@ -2064,7 +2894,8 @@ var manualStep = false;
 var chronicle = new ExecutiveChronicle();
 var precedent = new PrecedentView();
 new PremisesDesk();
-var companions = new CompanionDesk();
+var office = new OfficeTourDesk();
+var companions = new CompanionDesk(office);
 var currentLimit = "15";
 var lastPlayback;
 var inspection;
@@ -2073,7 +2904,8 @@ var personnel = new PersonnelProceedings({ rehearse: (scenario) => void rehearse
 } });
 function discloseLines(start, lines2) {
   companions.disclose(start, lines2);
-  chronicle.disclose(start, lines2);
+  const folios = chronicle.disclose(start, lines2);
+  office.disclose(currentLimit, folios);
   lastPlayback = { kind: "mandate", folios: chronicle.records, limit: currentLimit, personnel: personnel.record };
   personnel.setPlaybackAvailable(true);
 }
@@ -2099,11 +2931,11 @@ revealButton.addEventListener("click", () => {
 });
 speedControl.addEventListener("change", () => wakeReading?.());
 function followLatest() {
-  if (followOutput.checked) byId("output").scrollTop = byId("output").scrollHeight;
+  if (followOutput.checked) byId2("output").scrollTop = byId2("output").scrollHeight;
 }
 followOutput.addEventListener("change", followLatest);
 readingControls();
-var autocorrect = byId("numeric-autocorrect");
+var autocorrect = byId2("numeric-autocorrect");
 var warnedValue = "";
 var warningIndex = -1;
 function inspectMagnitude() {
@@ -2122,7 +2954,7 @@ function inspectMagnitude() {
   } catch {
     limit = null;
   }
-  const warning = byId("magnitude-warning");
+  const warning = byId2("magnitude-warning");
   warning.hidden = typeof limit !== "bigint";
   if (typeof limit === "bigint" && limitInput.value !== warnedValue) {
     const selected = chooseMagnitudeWarning(warningIndex);
@@ -2163,7 +2995,7 @@ stopButton.addEventListener("click", () => {
   wakeReading?.();
   readingControls();
   runButton.removeAttribute("aria-disabled");
-  byId("output").removeAttribute("aria-busy");
+  byId2("output").removeAttribute("aria-busy");
   personnel.stopReading();
   chronicle.note("The ceremonial disclosure was adjourned. Already printed numbers and their minutes remain available; this does not reverse completed business operations.", "Proceedings adjourned");
   setText("run-status", "Proceedings stopped. Already disclosed lines remain visible.");
@@ -2197,7 +3029,7 @@ function waitForPace(milliseconds) {
 async function revealOutput(text2, sequence, serviceMillis) {
   readingControls();
   const lines2 = text2 ? text2.trimEnd().split(/\r?\n/) : [];
-  const output = byId("output");
+  const output = byId2("output");
   output.textContent = lines2.length ? "" : "The zero-number mandate produces no lines.";
   setText("output-count", `0 of ${lines2.length} lines`);
   setText("run-status", `Service answered in ${serviceMillis} milliseconds. The ceremonial reading is in progress.`);
@@ -2225,6 +3057,7 @@ async function revealOutput(text2, sequence, serviceMillis) {
     reading = false;
     readingControls();
     chronicle.finish(lines2.length === 0);
+    office.complete(lines2.length === 0);
     setText("run-status", `Mandate complete. The service answered in ${serviceMillis} milliseconds; ${serviceMillis < 1e3 ? "under" : "above"} the one-second target. All ${lines2.length} lines are visible.`);
   }
 }
@@ -2237,7 +3070,7 @@ async function streamMandate(limit, sequence, started) {
   paused = false;
   revealAll = false;
   readingControls();
-  const output = byId("output");
+  const output = byId2("output");
   output.textContent = "";
   function append(lines2) {
     discloseLines(String(addOrdinals(disclosed, 1)), lines2);
@@ -2267,6 +3100,7 @@ async function streamMandate(limit, sequence, started) {
     if (answer.ok && lines2.length !== count) throw new Error("The response did not contain the authorized number of lines.");
     if (sequence !== mandateSequence) return;
     chronicle.receive(packet);
+    office.receive(packet);
     setText("trace-result", answer.headers.get("X-SlopBuzz-Trace-Id") || "UNAVAILABLE");
     if (first) {
       first = false;
@@ -2327,16 +3161,17 @@ async function runMandate(event) {
   personnel.setPlaybackAvailable(false);
   personnel.loading();
   chronicle.begin(currentLimit);
+  office.begin(currentLimit);
   runButton.setAttribute("aria-disabled", "true");
   precedent.waiting(typeof limit === "bigint" || limit > 1e3);
-  byId("output").setAttribute("aria-busy", "true");
+  byId2("output").setAttribute("aria-busy", "true");
   setText("run-status", `The committee is considering ${limit} numbers\u2026`);
   setText("trace-result", "Awaiting a receipt");
-  byId("output").textContent = "Awaiting a duly authorized number.";
+  byId2("output").textContent = "Awaiting a duly authorized number.";
   setText("output-count", "0 lines");
   if (matchMedia("(max-width: 900px)").matches) {
-    byId("output").focus({ preventScroll: true });
-    byId("mandate-output").scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth", block: "start" });
+    byId2("output").focus({ preventScroll: true });
+    byId2("mandate-output").scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth", block: "start" });
   }
   void loadForecast(limit, sequence).catch(() => {
     if (sequence === mandateSequence) setText("forecast-units", "Unavailable");
@@ -2354,12 +3189,13 @@ async function runMandate(event) {
     if (answer.ok) trackUsage({ event: "slopbuzz_demo_run", outcome: "success", runtime_mode: config.mode, duration_ms: elapsed, cache_outcome: answer.headers.get("X-SlopBuzz-Cache") || "UNKNOWN" });
     if (sequence !== mandateSequence) return;
     chronicle.receive(packet);
+    office.receive(packet);
     precedent.mandate(packet.precedent, packet.cache);
     setText("latency", `${Math.round(elapsed)} ms`);
     setText("cache-result", answer.headers.get("X-SlopBuzz-Cache") || "UNKNOWN");
     setText("trace-result", answer.headers.get("X-SlopBuzz-Trace-Id") || "UNAVAILABLE");
     runButton.removeAttribute("aria-disabled");
-    byId("output").removeAttribute("aria-busy");
+    byId2("output").removeAttribute("aria-busy");
     reading = true;
     paused = false;
     revealAll = false;
@@ -2388,7 +3224,7 @@ async function runMandate(event) {
   } finally {
     if (sequence === mandateSequence) {
       runButton.removeAttribute("aria-disabled");
-      byId("output").removeAttribute("aria-busy");
+      byId2("output").removeAttribute("aria-busy");
     }
   }
 }
@@ -2413,7 +3249,7 @@ function beginPersonnelActivity(mode) {
   paused = false;
   revealAll = false;
   runButton.removeAttribute("aria-disabled");
-  byId("output").removeAttribute("aria-busy");
+  byId2("output").removeAttribute("aria-busy");
   readingControls();
   return sequence;
 }
@@ -2460,8 +3296,9 @@ async function replayPersonnel() {
   }
   companions.reset(saved.limit);
   chronicle.begin(saved.limit, "replay");
+  office.begin(saved.limit, "replay");
   setText("run-status", "Replaying the retained numerical output and its corporate minutes. No mandate was submitted.");
-  const output = byId("output");
+  const output = byId2("output");
   output.textContent = "";
   for (let i = 0; i < saved.folios.length; ) {
     while (paused && sequence === mandateSequence) await waitForPace();
@@ -2469,6 +3306,7 @@ async function replayPersonnel() {
     const batch = revealAll || Number(speedControl.value) === 0 ? saved.folios.slice(i) : saved.folios.slice(i, i + 1);
     for (const folio of batch) companions.disclose(folio.ordinal, [folio.text]);
     chronicle.discloseFolios(batch);
+    office.disclose(saved.limit, batch);
     output.append(document.createTextNode(batch.map((f) => f.text + "\n").join("")));
     i += batch.length;
     followLatest();
@@ -2478,6 +3316,7 @@ async function replayPersonnel() {
   if (sequence === mandateSequence) {
     if (!saved.folios.length) output.textContent = "The zero-number mandate produces no lines.";
     chronicle.finish(saved.limit === "0");
+    office.complete(saved.limit === "0");
     reading = false;
     readingControls();
     setText("run-status", "Execution replay complete. No business operation was executed again.");
@@ -2501,8 +3340,10 @@ function stepPersonnel() {
     chronicle.begin(saved.limit, "replay");
   }
   const folio = inspection.folios[inspection.index++];
-  if (folio) chronicle.discloseFolios([folio]);
-  else chronicle.finish(saved.limit === "0");
+  if (folio) {
+    chronicle.discloseFolios([folio]);
+    office.inspect(folio);
+  } else chronicle.finish(saved.limit === "0");
   setText("personnel-step", inspection.index < inspection.folios.length ? "Next ordinal" : "Step through");
   setText("run-status", "Inspecting completed execution: " + Math.min(inspection.index, inspection.folios.length) + " of " + inspection.folios.length + " retained ordinals. Numerical output is retained.");
 }

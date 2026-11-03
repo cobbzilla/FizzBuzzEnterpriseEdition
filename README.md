@@ -215,3 +215,15 @@ Companion sequences now include the exact mandate as a deterministic seed. Try
 different limits, retain your five rarest disclosed friends in the shared footer,
 and open a saved biography to copy its reproducible encounter link. Referrals
 can be inspected without running the entire mandate. See [ADR 0029](docs/ADR-0029-mandate-seeded-discoveries.md).
+
+
+The **Serious Business Office** opens from the homepage invitation or the demo's
+visitor panel. Its Babylon.js cutaway has eight departments, 32 curiosities and
+64 authored responses, with walking, room inspections and actual recorded file
+routes. The complete HTML directory also works when 3D graphics are unavailable.
+Use Facilities preferences to save the optional building for offline visits,
+control animation/sound or choose a lower graphics budget. Share a room's link
+to reopen a particular authored reply without automatically running its mandate.
+See [ADR 0030](docs/ADR-0030-serious-business-office.md). `pnpm test:office` runs
+its pure presentation/route/cache contract checks; browser tests cover the actual
+rendered office and offline installation.
