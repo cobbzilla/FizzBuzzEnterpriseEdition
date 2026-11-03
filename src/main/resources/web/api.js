@@ -279,6 +279,17 @@ function tryDesk(spec, path, method, operation) {
     label.append(productSelect);
     controls.append(label);
   }
+  let seedInput;
+  if (path === "/companions/window") {
+    const label = element("label", "", "Mandate seed (optional)");
+    seedInput = element("input");
+    seedInput.type = "text";
+    seedInput.inputMode = "numeric";
+    seedInput.id = `${id}-seed`;
+    seedInput.setAttribute("aria-describedby", `${id}-status`);
+    label.append(seedInput);
+    controls.append(label);
+  }
   const button = element("button", "", method === "post" ? "Send POST request" : "Send GET request");
   button.type = "button";
   button.setAttribute("aria-label", `${button.textContent} to ${path}`);
@@ -316,8 +327,15 @@ function tryDesk(spec, path, method, operation) {
       }
       decimal.removeAttribute("aria-invalid");
     }
+    if (seedInput?.value && !/^[0-9]+$/.test(seedInput.value)) {
+      seedInput.setAttribute("aria-invalid", "true");
+      report.textContent = "Enter a non-negative whole mandate seed, or leave it empty for legacy allocation.";
+      seedInput.focus();
+      return;
+    }
+    seedInput?.removeAttribute("aria-invalid");
     input?.removeAttribute("aria-invalid");
-    const url = magnitudeInputs.length ? `${path}?${new URLSearchParams([...magnitudeInputs.map(({ field, input: input2 }) => [field.name, input2.value.trim()]), ...productSelect ? [[productParameter.name, productSelect.value]] : []])}` : input ? `${path}?limit=${input.value}` : productSelect ? `${path}?${productParameter.name}=${encodeURIComponent(productSelect.value)}` : path;
+    const url = magnitudeInputs.length ? `${path}?${new URLSearchParams([...magnitudeInputs.map(({ field, input: input2 }) => [field.name, input2.value.trim()]), ...productSelect ? [[productParameter.name, productSelect.value]] : [], ...seedInput?.value ? [["seed", seedInput.value]] : []])}` : input ? `${path}?limit=${input.value}` : productSelect ? `${path}?${productParameter.name}=${encodeURIComponent(productSelect.value)}` : path;
     button.setAttribute("aria-disabled", "true");
     report.textContent = "The desk is reviewing your request\u2026";
     const started = performance.now();

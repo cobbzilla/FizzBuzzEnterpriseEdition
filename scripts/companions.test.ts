@@ -17,3 +17,16 @@ test('people, faces, gestures and skin-tone padding cannot enter the admitted in
 test('the eleven singular Mythics cannot sneak into common paired appointments',()=>{const mythicGlyphs=new Set(entries.filter(c=>c.kind==='single'&&c.rarity==='Mythic').map(c=>c.emoji));for(const c of entries.filter(c=>c.kind==='pair'))assert.ok(c.components.every(part=>!mythicGlyphs.has(part)),c.name);});
 
 test('the emitted portable Java sources match the canonical TypeScript constant',async()=>{assert.equal(catalogVersion,'nonhuman-18.0-v1');assert.equal(await generateCompanions(true),3200);});
+
+// A distinct little register is intentionally independent of the numerical audit database.
+import {rarestDiscoveries,decodeDiscoveries,encodeDiscoveries,discoveryLink,validDiscovery,type Discovery} from '../web/discovery-model.ts';
+function find(index:number,mandate='9007199254740993'):Discovery{return {companion:entries[index],assignment:{ordinal:'3',flavor:'Fizz',companionId:entries[index].id,ticket:42,factors:{factors:'3',cofactor:'1',complete:true,divisions:1,divisionBudget:128,trialPrimeCeiling:97}},mandate,strategy:'factor-resonance-v1',catalogVersion,seedPolicy:'mandate-v1',discoveredAt:'2026-11-03T00:00:00.000Z'};}
+test('rarest five distinct findings converge across order, repeated encounters and concurrent tabs',()=>{
+ const candidates=entries.map((_,i)=>find(i)),all=rarestDiscoveries(candidates),left=rarestDiscoveries(candidates.slice(0,1600)),right=rarestDiscoveries(candidates.slice(1600));assert.equal(all.length,5);assert.equal(all[0].companion.name,'unicorn');assert.deepEqual(all.map(d=>d.companion.weight),[1,2,3,4,5]);assert.deepEqual(rarestDiscoveries(left,right),all);assert.deepEqual(rarestDiscoveries(right,left,all,all),all);
+ const late={...all[0],mandate:'100',discoveredAt:'2026-11-04T00:00:00.000Z'};assert.deepEqual(rarestDiscoveries([late],all),all);
+});
+test('discovery persistence retains full dossiers and rejects malformed or incompatible evidence',()=>{
+ const d=find(0);assert.ok(validDiscovery(d));assert.deepEqual(decodeDiscoveries(encodeDiscoveries([d])),[d]);for(const raw of ['null','{','[]','{"schema":"old","finds":[]}'])assert.deepEqual(decodeDiscoveries(raw),[]);
+ for(const patch of [{mandate:'2'},{mandate:'-1'},{seedPolicy:'future'},{companion:{...d.companion,weight:0}},{assignment:{...d.assignment,flavor:'Buzz'}},{assignment:{...d.assignment,ticket:1e9}},{discoveredAt:'yesterday'}])assert.equal(validDiscovery({...d,...patch}),false);
+});
+test('share links retain exact magnitude and deployment base without executing a mandate',()=>{const d=find(0,'1'+'0'.repeat(1000)),url=new URL(discoveryLink(d,'https://example.com/enterprise/'));assert.equal(url.pathname,'/enterprise/demo/');assert.equal(url.searchParams.get('limit'),d.mandate);assert.equal(url.searchParams.get('ordinal'),'3');assert.equal(url.searchParams.get('companion'),d.companion.id);assert.equal(url.searchParams.get('seedPolicy'),'mandate-v1');});

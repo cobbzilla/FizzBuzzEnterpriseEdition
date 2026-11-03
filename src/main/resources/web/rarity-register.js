@@ -154,6 +154,13 @@ if (config.mode === "browser") document.querySelectorAll("a[href]").forEach((lin
   link.href = new URL(`response/?path=${encodeURIComponent(path)}`, scope).href;
 });
 
+// web/companion-story.ts
+function node(tag, text) {
+  const n = document.createElement(tag);
+  if (text) n.textContent = text;
+  return n;
+}
+
 // web/companions.ts
 var catalogPromise;
 async function companionCatalog() {
@@ -168,11 +175,6 @@ async function companionCatalog() {
     throw error;
   });
   return catalogPromise;
-}
-function node(tag, text) {
-  const n = document.createElement(tag);
-  if (text) n.textContent = text;
-  return n;
 }
 
 // web/rarity-register.ts

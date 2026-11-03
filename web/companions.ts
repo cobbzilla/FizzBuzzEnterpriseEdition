@@ -1,5 +1,10 @@
 import {request} from './runtime';
 import type {Companion} from '../catalog/bestiary';
+import {node} from './companion-story';
+export {node,characterStory} from './companion-story';
+import {companionDialog} from './companion-dialog';
+import {discoveryStore} from './discovery-store';
+import {seedPolicy,type Discovery} from './discovery-model';
 export type {Companion};
 export interface FactorEvidence {factors:string;cofactor:string;complete:boolean;divisions:number;divisionBudget:number;trialPrimeCeiling:number}
 export interface Assignment {ordinal:string;flavor:'Fizz'|'Buzz'|'FizzBuzz';companionId:string;ticket:number;factors:FactorEvidence}
@@ -11,11 +16,6 @@ export async function companionCatalog(){
  return catalogPromise;
 }
 export async function companionPolicies():Promise<Policy[]>{const r=await request('/companions/strategies');if(!r.ok)throw new Error('The strategy registry returned '+r.status+'.');const data=await r.json();if(!Array.isArray(data.strategies)||!data.strategies.length)throw new Error('No assignment strategy was supplied.');return data.strategies;}
-export function node<K extends keyof HTMLElementTagNameMap>(tag:K,text?:string){const n=document.createElement(tag);if(text)n.textContent=text;return n;}
-export function characterStory(c:Companion){
- const fragment=document.createDocumentFragment();const glyph=node('span',c.emoji);glyph.className='companion-glyph';glyph.setAttribute('aria-hidden','true');fragment.append(glyph,node('p',(c.kind==='pair'?'Themed emoji pair':'Single emoji')+' · '+c.category+' · '+c.rarity+' · target frequency: '+c.weight.toLocaleString()+' of 1,000,000,000 tickets.'));
- const dl=node('dl');for(const [label,value] of [['Personality',c.personality],['Previously in this extraordinary career',c.backstory],['Motivating energy',c.energy],['Ultimate goal',c.goal]])dl.append(node('dt',label),node('dd',value));fragment.append(dl);return fragment;
-}
 /** Read-only presentation department. Numerical production never depends on a companion request. */
 export class CompanionDesk {
  private readonly enabled=document.querySelector<HTMLInputElement>('#emoji-companions')!;
@@ -26,36 +26,29 @@ export class CompanionDesk {
  private readonly dialog=document.querySelector<HTMLDialogElement>('#companion-dialog')!;
  private readonly latest=document.querySelector<HTMLButtonElement>('#companion-latest')!;
  private visible=new Map<string,string>();private batches=new Map<string,Promise<Assignment[]>>();private assigned=new Map<string,Assignment>();
- private lastSignature='';private entries=new Map<string,Companion>();private version='';private generation=0;private following=true;private invoker:HTMLElement|undefined;
+ private lastSignature='';private entries=new Map<string,Companion>();private version='';private generation=0;private following=true;private mandate='15';
  constructor(){
   this.enabled.addEventListener('change',()=>{this.generation++;this.following=true;this.list.replaceChildren();this.lastSignature='';this.latest.hidden=true;if(this.enabled.checked){this.status.textContent='Opening companion appointments for disclosed output…';void this.refresh();}else this.status.textContent='Companion allocation suspended. Official numerical output remains available.';});
   this.policy.addEventListener('change',()=>{this.generation++;this.batches.clear();this.assigned.clear();this.list.replaceChildren();this.lastSignature='';this.following=true;this.status.textContent='Consulting the selected allocation authority…';void this.refresh();});
   this.scroller.addEventListener('scroll',()=>{const atBottom=this.scroller.scrollHeight-this.scroller.clientHeight-this.scroller.scrollTop<24;const resume=atBottom&&!this.following;this.following=atBottom;if(resume)this.render();});
   this.latest.addEventListener('click',()=>{this.following=true;this.render();this.scroller.scrollTop=this.scroller.scrollHeight;});
-  this.dialog.querySelector('[data-companion-close]')!.addEventListener('click',()=>this.dialog.close());
-  const outside=(event:MouseEvent)=>{const box=this.dialog.getBoundingClientRect();return event.clientX<box.left||event.clientX>box.right||event.clientY<box.top||event.clientY>box.bottom;};
-  let beganOnBackdrop=false;
-  this.dialog.addEventListener('pointerdown',event=>{beganOnBackdrop=event.target===this.dialog&&outside(event);});
-  this.dialog.addEventListener('pointercancel',()=>{beganOnBackdrop=false;});
-  this.dialog.addEventListener('click',event=>{const dismiss=this.dialog.open&&beganOnBackdrop&&event.target===this.dialog&&outside(event);beganOnBackdrop=false;if(dismiss)this.dialog.close();});
-  this.dialog.addEventListener('close',()=>{beganOnBackdrop=false;if(this.invoker?.isConnected)this.invoker.focus();});
-  void companionPolicies().then(policies=>{const selected=this.policy.value;this.policy.replaceChildren(...policies.map(p=>{const option=node('option',p.name);option.value=p.id;return option;}));if(policies.some(p=>p.id===selected))this.policy.value=selected;this.policy.disabled=false;}).catch(error=>{this.status.textContent='Companion policy registry unavailable: '+error.message;});
+  void companionPolicies().then(policies=>{const selected=new URL(location.href).searchParams.get('authority')||this.policy.value;this.policy.replaceChildren(...policies.map(p=>{const option=node('option',p.name);option.value=p.id;return option;}));if(policies.some(p=>p.id===selected))this.policy.value=selected;this.policy.disabled=false;}).catch(error=>{this.status.textContent='Companion policy registry unavailable: '+error.message;});
  }
- reset(){this.generation++;this.visible.clear();this.assigned.clear();this.batches.clear();this.list.replaceChildren();this.lastSignature='';this.following=true;this.latest.hidden=true;this.status.textContent=this.enabled.checked?'Awaiting the first disclosed Fizz, Buzz or FizzBuzz.':'Companions are disabled.';}
+ reset(mandate:string){this.mandate=mandate;this.generation++;this.visible.clear();this.assigned.clear();this.batches.clear();this.list.replaceChildren();this.lastSignature='';this.following=true;this.latest.hidden=true;this.status.textContent=this.enabled.checked?'Awaiting the first disclosed Fizz, Buzz or FizzBuzz.':'Companions are disabled.';}
  disclose(start:string,lines:readonly string[]){for(let i=0;i<lines.length;i++){this.visible.set((BigInt(start)+BigInt(i)).toString(),lines[i]);}while(this.visible.size>1000)this.visible.delete(this.visible.keys().next().value!);if(this.enabled.checked)void this.refresh();}
  private async refresh(){
   const generation=this.generation;if(!this.enabled.checked)return;
-  const policy=this.policy.value||'factor-resonance-v1';
+  const policy=this.policy.value||'factor-resonance-v1',mandate=this.mandate;
   try{
    const catalog=await companionCatalog();if(generation!==this.generation)return;
    if(!this.entries.size){this.entries=new Map(catalog.entries.map(c=>[c.id,c]));this.version=catalog.version;}
    const starts=new Set<string>();for(const [ordinal,text] of this.visible)if(/^(Fizz|Buzz|FizzBuzz)$/.test(text))starts.add((((BigInt(ordinal)-1n)/100n)*100n+1n).toString());
    // Requests are finite read-only Java inspections, shared by all disclosed lines in that window.
    for(const start of starts){
-    const key=policy+'|'+start;let batch=this.batches.get(key);
-    if(!batch){batch=(async()=>{const reply=await request('/companions/window?start='+start+'&count=100&strategy='+policy);if(!reply.ok)throw new Error('Assignment desk returned '+reply.status+'.');const data=await reply.json();if(data.catalogVersion!==this.version||data.strategy!==policy||data.start!==start||data.count!==100||!Array.isArray(data.assignments))throw new Error('Assignment evidence belongs to a different charter.');return data.assignments as Assignment[];})();this.batches.set(key,batch);batch.catch(()=>{if(this.batches.get(key)===batch)this.batches.delete(key);});}
+    const key=mandate+'|'+policy+'|'+start;let batch=this.batches.get(key);
+    if(!batch){batch=(async()=>{const reply=await request('/companions/window?start='+start+'&count=100&strategy='+policy+'&seed='+mandate);if(!reply.ok)throw new Error('Assignment desk returned '+reply.status+'.');const data=await reply.json();if(data.schema!=='slopbuzz-companion-window/v2'||data.seedPolicy!==seedPolicy||data.mandateSeed!==mandate||data.catalogVersion!==this.version||data.strategy!==policy||data.start!==start||data.count!==100||!Array.isArray(data.assignments))throw new Error('Assignment evidence belongs to a different charter.');return data.assignments as Assignment[];})();this.batches.set(key,batch);batch.catch(()=>{if(this.batches.get(key)===batch)this.batches.delete(key);});}
     const assignments=await batch;if(generation!==this.generation||!this.enabled.checked)return;
-    for(const a of assignments)if(this.visible.get(a.ordinal)===a.flavor&&this.entries.has(a.companionId))this.assigned.set(a.ordinal,a);
+    const finds:Discovery[]=[];for(const a of assignments)if(this.visible.get(a.ordinal)===a.flavor&&this.entries.has(a.companionId)){this.assigned.set(a.ordinal,a);finds.push(this.discovery(a,this.entries.get(a.companionId)!,mandate,policy));}if(finds.length)discoveryStore().remember(finds);
    }
    for(const ordinal of this.assigned.keys())if(!this.visible.has(ordinal))this.assigned.delete(ordinal);
    while(this.batches.size>12)this.batches.delete(this.batches.keys().next().value!);
@@ -72,11 +65,6 @@ export class CompanionDesk {
   const last=rows.at(-1);const c=last?this.entries.get(last.companionId):undefined;
   this.status.textContent=c?last!.ordinal+' has welcomed '+c.name+'. '+c.rarity+' companion; latest '+rows.length+' encounters shown.':this.visible.size?'No companion-bearing proclamation disclosed yet.':'Awaiting the first disclosed Fizz, Buzz or FizzBuzz.';
  }
- private inspect(a:Assignment,c:Companion,invoker:HTMLElement){
-  this.following=false;this.invoker=invoker;this.dialog.querySelector('h2')!.textContent=c.name+' · '+a.ordinal+' '+a.flavor;
-  const body=this.dialog.querySelector<HTMLElement>('[data-companion-story]')!;body.replaceChildren(characterStory(c));
-  body.append(node('h3','Allocation evidence'),node('p','Strategy: '+this.policy.value+'. Catalog: '+this.version+'. Ticket: '+a.ticket+'.'),node('p','Extracted exact factors: '+a.factors.factors+'. '+(a.factors.complete?'Complete factorization.':'Unresolved exact cofactor: '+a.factors.cofactor+'. This cofactor is not certified prime.')+' Division checks: '+a.factors.divisions+' of '+a.factors.divisionBudget+'.'));
-  this.dialog.showModal();
-  this.dialog.querySelector<HTMLElement>('.companion-dialog-body')!.scrollTop=0;
- }
+ private discovery(a:Assignment,c:Companion,mandate=this.mandate,strategy=this.policy.value):Discovery{return {companion:c,assignment:a,mandate,strategy,catalogVersion:this.version,seedPolicy,discoveredAt:new Date().toISOString()};}
+ private inspect(a:Assignment,c:Companion,invoker:HTMLElement){this.following=false;companionDialog().open(this.discovery(a,c),invoker);}
 }

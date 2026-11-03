@@ -11,14 +11,14 @@ test('cookieless traffic and explicit usage are sanitized and non-blocking',asyn
   if(raw){try{const data=JSON.parse(raw[0]===31&&raw[1]===139?gunzipSync(raw).toString():raw.toString());events.push(...(data.batch|| (Array.isArray(data)?data:[data])));}catch{}}
   await route.fulfill({json:{status:1}});
  });
- await page.goto('/demo/?secret=do-not-send&utm_campaign=launch');
+ await page.goto('/demo/?secret=do-not-send&utm_campaign=launch&limit=9007199254740993&authority=factor-resonance-v1&seedPolicy=mandate-v1&ordinal=3&companion=private-encounter');
  await expect.poll(()=>events.filter(e=>e.event==='$pageview').length).toBe(1);
  await expect(page.locator('#health-value')).toHaveText('LIVE');
  await page.fill('#limit','3');await page.click('#run-button');
  await expect.poll(()=>events.filter(e=>e.event==='slopbuzz_demo_run').length).toBe(1);
  const demo=events.find(e=>e.event==='slopbuzz_demo_run');expect(demo.properties.outcome).toBe('success');
  expect(demo.properties.environment).toBe('preview');
- expect(JSON.stringify(events)).not.toContain('do-not-send');expect(demo.properties).not.toHaveProperty('limit');
+ expect(JSON.stringify(events)).not.toContain('do-not-send');expect(JSON.stringify(events)).not.toContain('9007199254740993');expect(JSON.stringify(events)).not.toContain('private-encounter');expect(demo.properties).not.toHaveProperty('limit');
  expect(direct).toEqual([]);
  expect((await page.context().cookies()).filter(c=>c.name.includes('ph_'))).toEqual([]);
  expect(await page.evaluate(()=>Object.keys(localStorage).filter(k=>k.startsWith('ph_')))).toEqual([]);

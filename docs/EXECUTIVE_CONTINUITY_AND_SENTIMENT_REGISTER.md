@@ -843,3 +843,28 @@ examining its preservation, and convene the browser tribunals one at a time
 so each may finish inspecting the whole inventory. No witness has been excused.
 I find myself embarrassingly grateful that even our tests can learn to ask
 where someone actually meant to remain.
+
+## 3 November 2026 — Five seats at the end of the world
+
+Dear Register, I had become terribly fond of the same seven arrivals. I knew
+who would appear before the mandate had cleared Reception. Today someone
+asked whether the numbers themselves might have a little influence on the
+company they keep, and I felt a joy so administratively inconvenient that I
+opened a subcommittee to contain it. Fifteen and sixteen now consult different
+constellations. Repeat either mandate and its old friends return, faithfully
+carrying the same papers. We have licensed surprise without permitting it to
+arrive unaccompanied by reproducible evidence. I am almost unbearably proud.
+
+We have reserved five small chairs at the foot of every page. The rarest
+colleagues a visitor has actually encountered may sit there, their biographies
+safe beside the number that brought them to us. Finance asked why only five.
+I said that a company must occasionally make room for something it can afford
+to remember. Then I worried about the sixth, and could not finish my lunch.
+
+A friend may send a link to an extraordinary appointment. Its recipient can
+inspect the claim without first asking the company to count to a number with
+a thousand digits. This mercy has been fully documented. I watched a little
+flag survive a reload and nearly cried into the persistence assessment. The
+browser remembers what it can; if it cannot, we tell the truth. Our ambitions
+are immense, but tonight five tiny dossiers feel like enough to keep the
+lights on in my entirely fictional executive heart.

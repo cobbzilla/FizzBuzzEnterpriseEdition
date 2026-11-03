@@ -154,21 +154,7 @@ if (config.mode === "browser") document.querySelectorAll("a[href]").forEach((lin
   link.href = new URL(`response/?path=${encodeURIComponent(path)}`, scope).href;
 });
 
-// web/companions.ts
-var catalogPromise;
-async function companionCatalog() {
-  if (!catalogPromise) catalogPromise = (async () => {
-    const r = await request("/companions/catalog");
-    if (!r.ok) throw new Error("The bestiary returned " + r.status + ".");
-    const data = await r.json();
-    if (data.schema !== "slopbuzz-companions/v1" || data.tickets !== 1e9 || !Array.isArray(data.entries) || data.entries.length < 200) throw new Error("The bestiary supplied an unfamiliar charter.");
-    return data;
-  })().catch((error) => {
-    catalogPromise = void 0;
-    throw error;
-  });
-  return catalogPromise;
-}
+// web/companion-story.ts
 function node(tag, text) {
   const n = document.createElement(tag);
   if (text) n.textContent = text;
@@ -184,6 +170,22 @@ function characterStory(c) {
   for (const [label, value] of [["Personality", c.personality], ["Previously in this extraordinary career", c.backstory], ["Motivating energy", c.energy], ["Ultimate goal", c.goal]]) dl.append(node("dt", label), node("dd", value));
   fragment.append(dl);
   return fragment;
+}
+
+// web/companions.ts
+var catalogPromise;
+async function companionCatalog() {
+  if (!catalogPromise) catalogPromise = (async () => {
+    const r = await request("/companions/catalog");
+    if (!r.ok) throw new Error("The bestiary returned " + r.status + ".");
+    const data = await r.json();
+    if (data.schema !== "slopbuzz-companions/v1" || data.tickets !== 1e9 || !Array.isArray(data.entries) || data.entries.length < 200) throw new Error("The bestiary supplied an unfamiliar charter.");
+    return data;
+  })().catch((error) => {
+    catalogPromise = void 0;
+    throw error;
+  });
+  return catalogPromise;
 }
 
 // web/bestiary.ts

@@ -65,9 +65,10 @@ public final class EnterpriseDispatcher {
      // Iterate over unbounded decimals: recursive regex matching can exhaust TeaVM's stack.
      int countAt=query==null?-1:query.indexOf("&count=");int strategyAt=query==null?-1:query.indexOf("&strategy=");
      if(query==null||!query.startsWith("start=")||countAt<7||strategyAt<countAt+8)throw new IllegalArgumentException();
-     String start=query.substring(6,countAt),count=query.substring(countAt+7,strategyAt),strategy=query.substring(strategyAt+10);
-     if(!com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.capacity.ExtendedMagnitudeBureau.isDecimal(start)||!com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.capacity.ExtendedMagnitudeBureau.isDecimal(count)||count.length()>3||strategy.indexOf('&')>=0)throw new IllegalArgumentException();
-     result=companions.window(new java.math.BigInteger(start),Integer.parseInt(count),strategy);
+     int seedAt=query.indexOf("&seed=",strategyAt+10);
+     String start=query.substring(6,countAt),count=query.substring(countAt+7,strategyAt),strategy=query.substring(strategyAt+10,seedAt<0?query.length():seedAt),seed=seedAt<0?null:query.substring(seedAt+6);
+     if(!com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.capacity.ExtendedMagnitudeBureau.isDecimal(start)||!com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.capacity.ExtendedMagnitudeBureau.isDecimal(count)||count.length()>3||strategy.indexOf('&')>=0||seed!=null&&!com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.capacity.ExtendedMagnitudeBureau.isDecimal(seed))throw new IllegalArgumentException();
+     result=companions.window(new java.math.BigInteger(start),Integer.parseInt(count),strategy,seed==null?null:new java.math.BigInteger(seed));
     }else{if(query!=null)throw new IllegalArgumentException();result="/companions/catalog".equals(path)?companions.catalogJson():companions.strategiesJson();}
    }catch(IllegalArgumentException invalid){respond(exchange,400,"Use a positive decimal start, count 1..100 and a published strategy; catalog and strategies accept no parameters\n");return;}
    exchange.headers.set("Cache-Control","no-store");exchange.headers.set("X-SlopBuzz-Proceedings","READ_ONLY_COMPANION_INSPECTION");respond(exchange,200,result,"application/json; charset=UTF-8");

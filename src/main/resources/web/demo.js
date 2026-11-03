@@ -155,6 +155,168 @@ if (config.mode === "browser") document.querySelectorAll("a[href]").forEach((lin
   link.href = new URL(`response/?path=${encodeURIComponent(path)}`, scope).href;
 });
 
+// web/companion-story.ts
+function node(tag, text2) {
+  const n = document.createElement(tag);
+  if (text2) n.textContent = text2;
+  return n;
+}
+function characterStory(c) {
+  const fragment = document.createDocumentFragment();
+  const glyph = node("span", c.emoji);
+  glyph.className = "companion-glyph";
+  glyph.setAttribute("aria-hidden", "true");
+  fragment.append(glyph, node("p", (c.kind === "pair" ? "Themed emoji pair" : "Single emoji") + " \xB7 " + c.category + " \xB7 " + c.rarity + " \xB7 target frequency: " + c.weight.toLocaleString() + " of 1,000,000,000 tickets."));
+  const dl = node("dl");
+  for (const [label, value] of [["Personality", c.personality], ["Previously in this extraordinary career", c.backstory], ["Motivating energy", c.energy], ["Ultimate goal", c.goal]]) dl.append(node("dt", label), node("dd", value));
+  fragment.append(dl);
+  return fragment;
+}
+
+// web/discovery-model.ts
+var seedPolicy = "mandate-v1";
+var discoveryStorageKey = "slopbuzz:extraordinary-appointments:v1";
+var decimal = (x) => typeof x === "string" && /^(0|[1-9][0-9]*)$/.test(x);
+var text = (x) => typeof x === "string" && x.length > 0;
+function validDiscovery(x) {
+  if (!x || !decimal(x.mandate) || !text(x.strategy) || !text(x.catalogVersion) || x.seedPolicy !== seedPolicy || typeof x.discoveredAt !== "string" || !Number.isFinite(Date.parse(x.discoveredAt))) return false;
+  const c = x.companion, a = x.assignment, f = a?.factors;
+  if (!c || !["single", "pair"].includes(c.kind) || !Array.isArray(c.components) || !c.components.every(text) || !["Common", "Uncommon", "Rare", "Legendary", "Mythic"].includes(c.rarity) || !Number.isSafeInteger(c.weight) || c.weight < 1 || c.weight > 1e9) return false;
+  if (!["id", "emoji", "name", "category", "personality", "backstory", "energy", "goal"].every((key) => text(c[key]))) return false;
+  if (!a || !decimal(a.ordinal) || a.ordinal === "0" || BigInt(a.ordinal) > BigInt(x.mandate) || !["Fizz", "Buzz", "FizzBuzz"].includes(a.flavor) || a.companionId !== c.id || !Number.isSafeInteger(a.ticket) || a.ticket < 0 || a.ticket >= 1e9) return false;
+  const n = BigInt(a.ordinal), flavor = n % 15n === 0n ? "FizzBuzz" : n % 3n === 0n ? "Fizz" : n % 5n === 0n ? "Buzz" : "";
+  return flavor === a.flavor && !!f && text(f.factors) && decimal(f.cofactor) && typeof f.complete === "boolean" && Number.isInteger(f.divisions) && f.divisions >= 0 && Number.isInteger(f.divisionBudget) && f.divisionBudget >= f.divisions && Number.isInteger(f.trialPrimeCeiling);
+}
+function discoveryIdentity(d) {
+  return d.catalogVersion + "|" + d.companion.id;
+}
+var provenance = (d) => JSON.stringify([d.discoveredAt, d.mandate, d.assignment.ordinal, d.strategy, d.assignment.ticket]);
+function rarestDiscoveries(...collections) {
+  const distinct = /* @__PURE__ */ new Map();
+  for (const collection of collections) for (const d of collection) {
+    if (!validDiscovery(d)) continue;
+    const id = discoveryIdentity(d), previous = distinct.get(id);
+    if (!previous || provenance(d) < provenance(previous)) distinct.set(id, d);
+  }
+  return [...distinct.values()].sort((a, b) => a.companion.weight - b.companion.weight || discoveryIdentity(a).localeCompare(discoveryIdentity(b), "en")).slice(0, 5);
+}
+function decodeDiscoveries(value) {
+  try {
+    const x = JSON.parse(value || "null");
+    return x?.schema === "slopbuzz-discoveries/v1" && Array.isArray(x.finds) ? rarestDiscoveries(x.finds) : [];
+  } catch {
+    return [];
+  }
+}
+var encodeDiscoveries = (finds) => JSON.stringify({ schema: "slopbuzz-discoveries/v1", finds });
+function discoveryLink(d, scope2) {
+  const url = new URL("demo/", scope2);
+  url.search = new URLSearchParams({ limit: d.mandate, authority: d.strategy, catalog: d.catalogVersion, seedPolicy: d.seedPolicy, ordinal: d.assignment.ordinal, companion: d.companion.id }).toString();
+  return url.href;
+}
+
+// web/companion-dialog.ts
+var controllerSymbol = /* @__PURE__ */ Symbol.for("slopbuzz.companion-dialog.v1");
+function companionDialog() {
+  const dialog = document.querySelector("#companion-dialog");
+  if (dialog[controllerSymbol]) return dialog[controllerSymbol];
+  let invoker, beganOnBackdrop = false;
+  dialog.querySelector("[data-companion-close]").addEventListener("click", () => dialog.close());
+  const outside = (e) => {
+    const b = dialog.getBoundingClientRect();
+    return e.clientX < b.left || e.clientX > b.right || e.clientY < b.top || e.clientY > b.bottom;
+  };
+  dialog.addEventListener("pointerdown", (e) => {
+    beganOnBackdrop = e.target === dialog && outside(e);
+  });
+  dialog.addEventListener("pointercancel", () => {
+    beganOnBackdrop = false;
+  });
+  dialog.addEventListener("click", (e) => {
+    const dismiss = dialog.open && beganOnBackdrop && e.target === dialog && outside(e);
+    beganOnBackdrop = false;
+    if (dismiss) dialog.close();
+  });
+  dialog.addEventListener("close", () => {
+    beganOnBackdrop = false;
+    if (invoker?.isConnected) invoker.focus();
+    dialog.dispatchEvent(new Event("companion-closed"));
+  });
+  const controller = { open(d, opener) {
+    invoker = opener;
+    const a = d.assignment, c = d.companion;
+    dialog.querySelector("h2").textContent = c.name + " \xB7 " + a.ordinal + " " + a.flavor;
+    const body = dialog.querySelector("[data-companion-story]");
+    body.replaceChildren(characterStory(c));
+    body.append(node("h3", "Allocation evidence"), node("p", "Mandate: " + d.mandate + ". Strategy: " + d.strategy + ". Seed policy: " + d.seedPolicy + ". Catalog: " + d.catalogVersion + ". Ticket: " + a.ticket + "."), node("p", "Extracted exact factors: " + a.factors.factors + ". " + (a.factors.complete ? "Complete factorization." : "Unresolved exact cofactor: " + a.factors.cofactor + ". This cofactor is not certified prime.") + " Division checks: " + a.factors.divisions + " of " + a.factors.divisionBudget + "."));
+    const label = node("label", "Reproducible encounter link");
+    label.htmlFor = "companion-share-link";
+    const link = node("input");
+    link.id = "companion-share-link";
+    link.type = "url";
+    link.readOnly = true;
+    link.value = discoveryLink(d, scope);
+    const copy = node("button", "Copy encounter link");
+    copy.type = "button";
+    const status = node("p");
+    status.setAttribute("role", "status");
+    copy.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(link.value);
+        status.textContent = "Encounter link copied. The recipient can inspect this appointment without running the full mandate.";
+      } catch {
+        link.focus();
+        link.select();
+        status.textContent = "Copy the selected link using your browser\u2019s copy command.";
+      }
+    });
+    body.append(label, link, copy, status);
+    if (!dialog.open) dialog.showModal();
+    dialog.querySelector(".companion-dialog-body").scrollTop = 0;
+  } };
+  dialog[controllerSymbol] = controller;
+  return controller;
+}
+
+// web/discovery-store.ts
+var storeSymbol = /* @__PURE__ */ Symbol.for("slopbuzz.discovery-store.v1");
+function discoveryStore() {
+  const host = window;
+  if (host[storeSymbol]) return host[storeSymbol];
+  let finds = [], persistent = true;
+  const listeners = /* @__PURE__ */ new Set();
+  const read = () => {
+    try {
+      return decodeDiscoveries(localStorage.getItem(discoveryStorageKey));
+    } catch {
+      persistent = false;
+      return [];
+    }
+  };
+  finds = read();
+  const merge = (incoming) => {
+    const before = encodeDiscoveries(finds), wasPersistent = persistent;
+    finds = rarestDiscoveries(finds, incoming, read());
+    const after = encodeDiscoveries(finds);
+    try {
+      if (localStorage.getItem(discoveryStorageKey) !== after) localStorage.setItem(discoveryStorageKey, after);
+      persistent = true;
+    } catch {
+      persistent = false;
+    }
+    if (before !== after || wasPersistent !== persistent) listeners.forEach((fn) => fn());
+  };
+  const store = { snapshot: () => finds, persistent: () => persistent, remember: merge, subscribe(fn) {
+    listeners.add(fn);
+    return () => listeners.delete(fn);
+  } };
+  window.addEventListener("storage", (event) => {
+    if (event.key === discoveryStorageKey) merge(decodeDiscoveries(event.newValue));
+  });
+  host[storeSymbol] = store;
+  return store;
+}
+
 // web/companions.ts
 var catalogPromise;
 async function companionCatalog() {
@@ -177,22 +339,6 @@ async function companionPolicies() {
   if (!Array.isArray(data.strategies) || !data.strategies.length) throw new Error("No assignment strategy was supplied.");
   return data.strategies;
 }
-function node(tag, text) {
-  const n = document.createElement(tag);
-  if (text) n.textContent = text;
-  return n;
-}
-function characterStory(c) {
-  const fragment = document.createDocumentFragment();
-  const glyph = node("span", c.emoji);
-  glyph.className = "companion-glyph";
-  glyph.setAttribute("aria-hidden", "true");
-  fragment.append(glyph, node("p", (c.kind === "pair" ? "Themed emoji pair" : "Single emoji") + " \xB7 " + c.category + " \xB7 " + c.rarity + " \xB7 target frequency: " + c.weight.toLocaleString() + " of 1,000,000,000 tickets."));
-  const dl = node("dl");
-  for (const [label, value] of [["Personality", c.personality], ["Previously in this extraordinary career", c.backstory], ["Motivating energy", c.energy], ["Ultimate goal", c.goal]]) dl.append(node("dt", label), node("dd", value));
-  fragment.append(dl);
-  return fragment;
-}
 var CompanionDesk = class {
   enabled = document.querySelector("#emoji-companions");
   policy = document.querySelector("#companion-strategy");
@@ -209,7 +355,7 @@ var CompanionDesk = class {
   version = "";
   generation = 0;
   following = true;
-  invoker;
+  mandate = "15";
   constructor() {
     this.enabled.addEventListener("change", () => {
       this.generation++;
@@ -243,29 +389,8 @@ var CompanionDesk = class {
       this.render();
       this.scroller.scrollTop = this.scroller.scrollHeight;
     });
-    this.dialog.querySelector("[data-companion-close]").addEventListener("click", () => this.dialog.close());
-    const outside = (event) => {
-      const box = this.dialog.getBoundingClientRect();
-      return event.clientX < box.left || event.clientX > box.right || event.clientY < box.top || event.clientY > box.bottom;
-    };
-    let beganOnBackdrop = false;
-    this.dialog.addEventListener("pointerdown", (event) => {
-      beganOnBackdrop = event.target === this.dialog && outside(event);
-    });
-    this.dialog.addEventListener("pointercancel", () => {
-      beganOnBackdrop = false;
-    });
-    this.dialog.addEventListener("click", (event) => {
-      const dismiss = this.dialog.open && beganOnBackdrop && event.target === this.dialog && outside(event);
-      beganOnBackdrop = false;
-      if (dismiss) this.dialog.close();
-    });
-    this.dialog.addEventListener("close", () => {
-      beganOnBackdrop = false;
-      if (this.invoker?.isConnected) this.invoker.focus();
-    });
     void companionPolicies().then((policies) => {
-      const selected = this.policy.value;
+      const selected = new URL(location.href).searchParams.get("authority") || this.policy.value;
       this.policy.replaceChildren(...policies.map((p) => {
         const option = node("option", p.name);
         option.value = p.id;
@@ -277,7 +402,8 @@ var CompanionDesk = class {
       this.status.textContent = "Companion policy registry unavailable: " + error.message;
     });
   }
-  reset() {
+  reset(mandate) {
+    this.mandate = mandate;
     this.generation++;
     this.visible.clear();
     this.assigned.clear();
@@ -298,7 +424,7 @@ var CompanionDesk = class {
   async refresh() {
     const generation = this.generation;
     if (!this.enabled.checked) return;
-    const policy = this.policy.value || "factor-resonance-v1";
+    const policy = this.policy.value || "factor-resonance-v1", mandate = this.mandate;
     try {
       const catalog = await companionCatalog();
       if (generation !== this.generation) return;
@@ -307,16 +433,16 @@ var CompanionDesk = class {
         this.version = catalog.version;
       }
       const starts = /* @__PURE__ */ new Set();
-      for (const [ordinal, text] of this.visible) if (/^(Fizz|Buzz|FizzBuzz)$/.test(text)) starts.add(((BigInt(ordinal) - 1n) / 100n * 100n + 1n).toString());
+      for (const [ordinal, text2] of this.visible) if (/^(Fizz|Buzz|FizzBuzz)$/.test(text2)) starts.add(((BigInt(ordinal) - 1n) / 100n * 100n + 1n).toString());
       for (const start of starts) {
-        const key = policy + "|" + start;
+        const key = mandate + "|" + policy + "|" + start;
         let batch = this.batches.get(key);
         if (!batch) {
           batch = (async () => {
-            const reply = await request("/companions/window?start=" + start + "&count=100&strategy=" + policy);
+            const reply = await request("/companions/window?start=" + start + "&count=100&strategy=" + policy + "&seed=" + mandate);
             if (!reply.ok) throw new Error("Assignment desk returned " + reply.status + ".");
             const data = await reply.json();
-            if (data.catalogVersion !== this.version || data.strategy !== policy || data.start !== start || data.count !== 100 || !Array.isArray(data.assignments)) throw new Error("Assignment evidence belongs to a different charter.");
+            if (data.schema !== "slopbuzz-companion-window/v2" || data.seedPolicy !== seedPolicy || data.mandateSeed !== mandate || data.catalogVersion !== this.version || data.strategy !== policy || data.start !== start || data.count !== 100 || !Array.isArray(data.assignments)) throw new Error("Assignment evidence belongs to a different charter.");
             return data.assignments;
           })();
           this.batches.set(key, batch);
@@ -326,7 +452,12 @@ var CompanionDesk = class {
         }
         const assignments = await batch;
         if (generation !== this.generation || !this.enabled.checked) return;
-        for (const a of assignments) if (this.visible.get(a.ordinal) === a.flavor && this.entries.has(a.companionId)) this.assigned.set(a.ordinal, a);
+        const finds = [];
+        for (const a of assignments) if (this.visible.get(a.ordinal) === a.flavor && this.entries.has(a.companionId)) {
+          this.assigned.set(a.ordinal, a);
+          finds.push(this.discovery(a, this.entries.get(a.companionId), mandate, policy));
+        }
+        if (finds.length) discoveryStore().remember(finds);
       }
       for (const ordinal of this.assigned.keys()) if (!this.visible.has(ordinal)) this.assigned.delete(ordinal);
       while (this.batches.size > 12) this.batches.delete(this.batches.keys().next().value);
@@ -366,24 +497,21 @@ var CompanionDesk = class {
     const c = last ? this.entries.get(last.companionId) : void 0;
     this.status.textContent = c ? last.ordinal + " has welcomed " + c.name + ". " + c.rarity + " companion; latest " + rows.length + " encounters shown." : this.visible.size ? "No companion-bearing proclamation disclosed yet." : "Awaiting the first disclosed Fizz, Buzz or FizzBuzz.";
   }
+  discovery(a, c, mandate = this.mandate, strategy = this.policy.value) {
+    return { companion: c, assignment: a, mandate, strategy, catalogVersion: this.version, seedPolicy, discoveredAt: (/* @__PURE__ */ new Date()).toISOString() };
+  }
   inspect(a, c, invoker) {
     this.following = false;
-    this.invoker = invoker;
-    this.dialog.querySelector("h2").textContent = c.name + " \xB7 " + a.ordinal + " " + a.flavor;
-    const body = this.dialog.querySelector("[data-companion-story]");
-    body.replaceChildren(characterStory(c));
-    body.append(node("h3", "Allocation evidence"), node("p", "Strategy: " + this.policy.value + ". Catalog: " + this.version + ". Ticket: " + a.ticket + "."), node("p", "Extracted exact factors: " + a.factors.factors + ". " + (a.factors.complete ? "Complete factorization." : "Unresolved exact cofactor: " + a.factors.cofactor + ". This cofactor is not certified prime.") + " Division checks: " + a.factors.divisions + " of " + a.factors.divisionBudget + "."));
-    this.dialog.showModal();
-    this.dialog.querySelector(".companion-dialog-body").scrollTop = 0;
+    companionDialog().open(this.discovery(a, c), invoker);
   }
 };
 
 // web/mandate-input.ts
 function parseMandate(raw) {
-  const text = raw.trim();
-  if (!/^[0-9]+$/.test(text)) return null;
-  const ordinary = Number(text);
-  return Number.isSafeInteger(ordinary) ? ordinary : BigInt(text);
+  const text2 = raw.trim();
+  if (!/^[0-9]+$/.test(text2)) return null;
+  const ordinary = Number(text2);
+  return Number.isSafeInteger(ordinary) ? ordinary : BigInt(text2);
 }
 var autocorrectMandate = (raw) => raw.replace(/[^0-9]/g, "");
 var addOrdinals = (value, count) => typeof value === "bigint" ? value + BigInt(count) : value + count;
@@ -418,6 +546,60 @@ function chooseMagnitudeWarning(previous = -1, random = Math.random) {
   let index = Math.min(width - 1, Math.floor(random() * width));
   if (previous >= 0 && index >= previous) index++;
   return { index, text: magnitudeWarnings[index] };
+}
+
+// web/shared-encounter.ts
+function prepareSharedEncounter(input) {
+  const query = new URL(location.href).searchParams, limit = query.get("limit");
+  if (limit === null) return;
+  let mandate;
+  try {
+    mandate = String(parseMandate(limit));
+  } catch {
+    return;
+  }
+  input.value = mandate;
+  input.dispatchEvent(new Event("input"));
+  const ordinal = query.get("ordinal"), strategy = query.get("authority"), catalogVersion = query.get("catalog"), expected = query.get("companion");
+  const panel = node("section");
+  panel.className = "shared-encounter";
+  panel.setAttribute("aria-labelledby", "shared-encounter-title");
+  const title2 = node("h3", "Interdepartmental encounter referral");
+  title2.id = "shared-encounter-title";
+  const status = node("p", "The referred mandate is ready. Run it to reproduce the sequence. No numerical mandate has been submitted.");
+  status.setAttribute("role", "status");
+  panel.append(title2, status);
+  document.querySelector("#companion-help").after(panel);
+  if (!ordinal || !/^[1-9][0-9]*$/.test(ordinal) || BigInt(ordinal) > BigInt(mandate) || !strategy || !catalogVersion || !expected || query.get("seedPolicy") !== seedPolicy) {
+    status.textContent = "The mandate was prefilled. This referral has incomplete or unsupported encounter evidence; select an authority and run to explore.";
+    return;
+  }
+  const button = node("button", "Inspect shared appointment");
+  button.type = "button";
+  button.setAttribute("aria-haspopup", "dialog");
+  button.setAttribute("aria-controls", "companion-dialog");
+  panel.append(button);
+  button.addEventListener("click", async () => {
+    if (button.getAttribute("aria-disabled") === "true") return;
+    button.setAttribute("aria-disabled", "true");
+    status.textContent = "Verifying the referred appointment with the Java allocation authority\u2026";
+    try {
+      const catalog = await companionCatalog();
+      if (catalog.version !== catalogVersion) throw new Error("This referral uses a different catalog version.");
+      const response = await request("/companions/window?start=" + ordinal + "&count=1&strategy=" + encodeURIComponent(strategy) + "&seed=" + mandate);
+      if (!response.ok) throw new Error("The referred authority could not approve this appointment.");
+      const data = await response.json(), a = data.assignments?.[0], c = catalog.entries.find((c2) => c2.id === expected);
+      if (data.schema !== "slopbuzz-companion-window/v2" || data.seedPolicy !== seedPolicy || data.mandateSeed !== mandate || data.catalogVersion !== catalogVersion || data.strategy !== strategy || data.start !== ordinal || data.count !== 1 || data.assignments?.length !== 1 || a?.ordinal !== ordinal || a.companionId !== expected || !c) throw new Error("This referral does not reproduce the claimed appointment.");
+      const discovery = { companion: c, assignment: a, mandate, strategy, catalogVersion, seedPolicy, discoveredAt: (/* @__PURE__ */ new Date()).toISOString() };
+      if (!validDiscovery(discovery)) throw new Error("The referral supplied invalid evidence.");
+      status.textContent = "Appointment verified. This inspection did not print numbers or add a discovery to your register.";
+      companionDialog().open(discovery, button);
+    } catch (error) {
+      status.textContent = "Referral could not be verified: " + error.message + " Run the mandate to explore current appointments.";
+    } finally {
+      button.setAttribute("aria-disabled", "false");
+    }
+  });
 }
 
 // web/telemetry.ts
@@ -569,10 +751,10 @@ var PersonnelProceedings = class {
       summary.append(number, office, badge);
       details.append(summary);
       const facts = document.createElement("dl");
-      for (const [label, text] of [["Rule", step.rule], ["Received", step.received], ["Recorded decision", step.state === "APPROVED" ? "Approved" : step.state === "REJECTED" ? "Rejected" : "Not reached"], ["Finding", step.finding], ["Issued document", step.document]]) {
+      for (const [label, text2] of [["Rule", step.rule], ["Received", step.received], ["Recorded decision", step.state === "APPROVED" ? "Approved" : step.state === "REJECTED" ? "Rejected" : "Not reached"], ["Finding", step.finding], ["Issued document", step.document]]) {
         const row = document.createElement("div"), term = document.createElement("dt"), value = document.createElement("dd");
         term.textContent = label;
-        value.textContent = text;
+        value.textContent = text2;
         row.append(term, value);
         facts.append(row);
       }
@@ -634,9 +816,9 @@ function parsePrecedent(value) {
   if (d.status === "APPROVED" ? d.certifiedLines !== d.limit || d.steps.some((s) => s.state !== "APPROVED") : d.certifiedLines !== null || rejected < 0 || d.steps.some((s, i) => s.state !== (i < rejected ? "APPROVED" : i === rejected ? "REJECTED" : "NOT_REACHED"))) throw new Error("The court returned inconsistent decisions.");
   return d;
 }
-function element(tag, text) {
+function element(tag, text2) {
   const n = document.createElement(tag);
-  if (text !== void 0) n.textContent = text;
+  if (text2 !== void 0) n.textContent = text2;
   return n;
 }
 var PrecedentView = class {
@@ -716,9 +898,9 @@ var PrecedentView = class {
       summary.append(order, office, state);
       details.append(summary);
       const facts = element("dl");
-      for (const [label, text] of [["Published rule", step.rule], ["Received", step.received], ["Finding", step.finding], ["Issued document", step.document]]) {
+      for (const [label, text2] of [["Published rule", step.rule], ["Received", step.received], ["Finding", step.finding], ["Issued document", step.document]]) {
         const row = element("div");
-        row.append(element("dt", label), element("dd", text));
+        row.append(element("dt", label), element("dd", text2));
         facts.append(row);
       }
       details.append(facts);
@@ -1375,9 +1557,9 @@ function parsePremises(value) {
 }
 
 // web/premises.ts
-function element2(tag, text, className) {
+function element2(tag, text2, className) {
   const n = document.createElement(tag);
-  if (text !== void 0) n.textContent = text;
+  if (text2 !== void 0) n.textContent = text2;
   if (className) n.className = className;
   return n;
 }
@@ -1390,9 +1572,9 @@ function premisesCard(d, details = false) {
   card.append(element2("p", verdict, "premises-verdict"));
   const plan = element2("dl", void 0, "premises-floorplan");
   const before = d.initialLength === null ? "No valid initial survey received" : d.tenants.length ? `${d.initialLength} UTF-16 unit${d.initialLength === 1 ? "" : "s"} occupied` : "Empty: 0 characters";
-  for (const [label, text] of [["Initial survey", before], ["Before numerical occupancy", d.vacancyCertified ? "Reinspection confirmed 0 characters" : "Vacancy authorization withheld"], ["Lease", d.status === "APPROVED" ? "Issued to this request and this premises" : "No usable lease issued"]]) {
+  for (const [label, text2] of [["Initial survey", before], ["Before numerical occupancy", d.vacancyCertified ? "Reinspection confirmed 0 characters" : "Vacancy authorization withheld"], ["Lease", d.status === "APPROVED" ? "Issued to this request and this premises" : "No usable lease issued"]]) {
     const row = element2("div");
-    row.append(element2("dt", label), element2("dd", text));
+    row.append(element2("dt", label), element2("dd", text2));
     plan.append(row);
   }
   card.append(plan);
@@ -1493,9 +1675,9 @@ async function readProclamation(response) {
   if (data?.schema !== "slopbuzz-execution/v1" || typeof data.text !== "string" || !Array.isArray(data.trace?.events) || data.trace.events.length > 5e4 || !Number.isSafeInteger(data.trace.omitted) || data.trace.omitted < 0 || data.trace.events.some((e) => !e || e.ordinal !== null && (typeof e.ordinal !== "string" || !/^\d+$/.test(e.ordinal)) || ["kind", "office", "finding"].some((k) => typeof e[k] !== "string") || e.document !== null && typeof e.document !== "string")) throw new Error("The execution dossier could not be read. No second mandate was submitted.");
   return { ...packet, text: data.text, events: data.trace.events, omitted: data.trace.omitted, recorded: true };
 }
-function node2(tag, text, className) {
+function node2(tag, text2, className) {
   const result = document.createElement(tag);
-  if (text !== void 0) result.textContent = text;
+  if (text2 !== void 0) result.textContent = text2;
   if (className) result.className = className;
   return result;
 }
@@ -1621,7 +1803,7 @@ var ExecutiveChronicle = class {
         this.followBottom();
       }
       const panel = byId("mandate-output");
-      panel.dataset.viewportFit = String(innerHeight > 600 && panel.getBoundingClientRect().height <= innerHeight - 24);
+      panel.dataset.viewportFit = String(innerHeight > 600 && panel.getBoundingClientRect().height <= innerHeight - 24 - (document.querySelector("#discovery-register")?.getBoundingClientRect().height || 0));
     };
     let frame = 0;
     const schedule = () => {
@@ -1631,6 +1813,8 @@ var ExecutiveChronicle = class {
       });
     };
     const resize = new ResizeObserver(schedule);
+    const discoveries = document.querySelector("#discovery-register");
+    if (discoveries) resize.observe(discoveries);
     resize.observe(this.body);
     resize.observe(this.entries);
     resize.observe(byId("mandate-output"));
@@ -1686,10 +1870,10 @@ var ExecutiveChronicle = class {
   }
   disclose(start, lines2) {
     let ordinal = BigInt(start);
-    const folios = lines2.map((text) => {
+    const folios = lines2.map((text2) => {
       const value = ordinal.toString();
       ordinal++;
-      return { ordinal: value, text, events: this.groups.get(value) || [], cache: this.packet?.cache || "UNKNOWN", recorded: this.packet?.recorded || false, runtime: this.packet?.runtime || {} };
+      return { ordinal: value, text: text2, events: this.groups.get(value) || [], cache: this.packet?.cache || "UNKNOWN", recorded: this.packet?.recorded || false, runtime: this.packet?.runtime || {} };
     });
     this.discloseFolios(folios);
     return folios;
@@ -1779,16 +1963,16 @@ var ExecutiveChronicle = class {
       notice.textContent = `Earlier narration has been condensed for a finite browser. Inspect any of the latest ${this.snapshots.size} disclosed ordinals using the selector.`;
     }
   }
-  note(text, heading = "Corporate minutes") {
+  note(text2, heading = "Corporate minutes") {
     this.pauseIfReading();
     if (!this.isFollowing()) {
       this.pending = true;
-      this.pendingNotes.push({ text, heading });
+      this.pendingNotes.push({ text: text2, heading });
       if (this.pendingNotes.length > 16) this.pendingNotes.shift();
       return;
     }
     const article = node2("article", void 0, "chronicle-note");
-    article.append(node2("h4", heading), node2("p", text));
+    article.append(node2("h4", heading), node2("p", text2));
     this.entries.append(article);
     const notes = this.entries.querySelectorAll(".chronicle-note");
     if (notes.length > 16) notes[0].remove();
@@ -2010,9 +2194,9 @@ function waitForPace(milliseconds) {
     if (milliseconds !== void 0) timer = setTimeout(finish, milliseconds);
   });
 }
-async function revealOutput(text, sequence, serviceMillis) {
+async function revealOutput(text2, sequence, serviceMillis) {
   readingControls();
-  const lines2 = text ? text.trimEnd().split(/\r?\n/) : [];
+  const lines2 = text2 ? text2.trimEnd().split(/\r?\n/) : [];
   const output = byId("output");
   output.textContent = lines2.length ? "" : "The zero-number mandate produces no lines.";
   setText("output-count", `0 of ${lines2.length} lines`);
@@ -2078,8 +2262,8 @@ async function streamMandate(limit, sequence, started) {
     const count = windowCount(next, limit);
     const answer = await proclamation(`/fizzbuzz/window?start=${next}&count=${count}`);
     const packet = await readProclamation(answer);
-    const text = packet.text;
-    const lines2 = answer.ok ? text.trimEnd().split("\n") : [];
+    const text2 = packet.text;
+    const lines2 = answer.ok ? text2.trimEnd().split("\n") : [];
     if (answer.ok && lines2.length !== count) throw new Error("The response did not contain the authorized number of lines.");
     if (sequence !== mandateSequence) return;
     chronicle.receive(packet);
@@ -2130,7 +2314,7 @@ async function runMandate(event) {
   const limit = validateLimit();
   if (limit === null) return;
   const sequence = ++mandateSequence;
-  companions.reset();
+  companions.reset(String(limit));
   wakeReading?.();
   reading = false;
   streaming = false;
@@ -2166,7 +2350,7 @@ async function runMandate(event) {
     const answer = await proclamation(`/fizzbuzz?limit=${limit}`);
     const elapsed = performance.now() - started;
     const packet = await readProclamation(answer);
-    const text = packet.text;
+    const text2 = packet.text;
     if (answer.ok) trackUsage({ event: "slopbuzz_demo_run", outcome: "success", runtime_mode: config.mode, duration_ms: elapsed, cache_outcome: answer.headers.get("X-SlopBuzz-Cache") || "UNKNOWN" });
     if (sequence !== mandateSequence) return;
     chronicle.receive(packet);
@@ -2189,7 +2373,7 @@ async function runMandate(event) {
     personnel.setPlaybackAvailable(true);
     if (sequence !== mandateSequence) return;
     if (!answer.ok) throw new Error(`Proclamation desk returned ${answer.status}.`);
-    await revealOutput(text, sequence, Math.round(elapsed));
+    await revealOutput(text2, sequence, Math.round(elapsed));
   } catch (error) {
     trackUsage({ event: "slopbuzz_demo_run", outcome: "failure", runtime_mode: config.mode, duration_ms: performance.now() - started });
     if (sequence === mandateSequence) {
@@ -2274,7 +2458,7 @@ async function replayPersonnel() {
     }
     return;
   }
-  companions.reset();
+  companions.reset(saved.limit);
   chronicle.begin(saved.limit, "replay");
   setText("run-status", "Replaying the retained numerical output and its corporate minutes. No mandate was submitted.");
   const output = byId("output");
@@ -2331,3 +2515,4 @@ document.querySelectorAll("[data-limit]").forEach((button) => {
 });
 void loadForecast(15).catch(() => setText("forecast-units", "Unavailable"));
 void request("/healthz").then((reply) => setText("health-value", reply.ok ? "LIVE" : "UNAVAILABLE")).catch(() => setText("health-value", "UNAVAILABLE"));
+prepareSharedEncounter(limitInput);

@@ -89,7 +89,7 @@ final class StaticSiteHandler implements HttpHandler {
             loaded.put("/" + page[0], document);
             loaded.put("/" + page[0] + "/", document);
         }
-        for (final String script : new String[] {"demo", "validation", "response", "bestiary", "rarity-register"}) {
+        for (final String script : new String[] {"demo", "validation", "response", "bestiary", "rarity-register", "rare-finds"}) {
             loaded.put("/assets/" + script + ".js", asset("/web/" + script + ".js", "text/javascript; charset=UTF-8", false));
         }
         loaded.put("/validation/report.json", new Asset("{\"status\":\"NOT_RUN\",\"note\":\"Consult the static release tribunal for cross-runtime evidence.\"}".getBytes(StandardCharsets.UTF_8), "application/json; charset=UTF-8", false));
