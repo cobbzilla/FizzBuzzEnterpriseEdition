@@ -7,7 +7,7 @@
   <meta name="description" content="Issue numerical mandates through the live SlopFizzBuzz demo.">
   <title>Live demo | SlopFizzBuzz | The Serious Business Company, Inc.</title>
   <link rel="icon" type="image/svg+xml" href="/assets/mark.svg">
-  <link rel="stylesheet" href="/assets/site.css">
+  <link rel="stylesheet" href="/assets/site.css"><link rel="stylesheet" href="/assets/office.css">
   <script type="module" src="/assets/demo.js"></script>
 </head>
 <body>
@@ -132,6 +132,43 @@
             <p class="fine-print">Workload units are fictional internal planning measures. They are not prices or observed compute costs.</p>
             <a class="text-link" href="/capacity/forecast?limit=15">View the forecast API <span aria-hidden="true">↗</span></a>
           </aside>
+          <section class="panel office-panel" id="office-tour" aria-labelledby="office-title">
+            <div class="office-invitation"><div><p class="eyebrow">An entirely unnecessary place to do necessary paperwork</p><h2 id="office-title">The Serious Business Office</h2><p>Eight departments. Thirty-two questionable arrangements. Follow a disclosed number through its recorded proceedings, or explore the furniture that made those proceedings inevitable.</p></div><button class="button button-primary" id="office-enter" type="button" aria-controls="office-experience">Enter the office</button></div>
+            <p id="office-status" class="inline-status" role="status" aria-live="polite">Reception has approved your right to look around.</p>
+            <div id="office-home-slot">
+            <div id="office-experience" hidden>
+              <div class="office-toolbar" role="group" aria-label="Office visit controls">
+                <button type="button" id="office-close" class="button button-secondary">Close office</button>
+                <button type="button" id="office-enlarge" class="button button-secondary" aria-controls="office-modal">Enlarge office</button>
+                <button type="button" id="office-overview" class="button button-secondary">Whole estate</button>
+                <button type="button" id="office-walk" class="button button-secondary" aria-pressed="false">Walk in this room</button>
+                <button type="button" id="office-zoom-in" class="button button-secondary" aria-label="Zoom into the office">+</button><button type="button" id="office-zoom-out" class="button button-secondary" aria-label="Zoom out of the office">−</button>
+              </div>
+              <div class="office-layout">
+                <div class="office-world-column">
+                  <div class="office-stage" id="office-stage"><canvas id="office-canvas" tabindex="0" role="img" aria-label="Interactive three-dimensional office. The room directory provides the same inspections." aria-describedby="office-camera-help"></canvas><div class="office-loading" id="office-loading"><p>Facilities is locating the building…</p></div></div>
+                  <p class="field-help" id="office-camera-help">Drag to rotate the cutaway; use the zoom buttons or pinch. Choose a room below to inspect it. Walking supports W, A, S, D while this view has focus, or the movement buttons. Escape leaves the enlarged view or releases the walking camera.</p>
+                  <div id="office-walking-controls" class="office-toolbar" role="group" aria-label="Walking movement" hidden><button type="button" data-office-move="forward">Move forward</button><button type="button" data-office-move="back">Move back</button><button type="button" data-office-move="left">Move left</button><button type="button" data-office-move="right">Move right</button></div>
+                  <div class="office-playback" role="group" aria-label="Recorded file route playback"><button type="button" id="office-choose-mandate">Choose a mandate</button><button type="button" id="office-pause" aria-pressed="false">Pause route</button><button type="button" id="office-replay">Replay route</button><button type="button" id="office-next">Next recorded stop</button><label><input type="checkbox" id="office-follow"> Follow new files</label><label><input type="checkbox" id="office-follow-route"> Follow the route camera</label></div>
+                  <p class="office-route-caption" id="office-route-status">Run a mandate to supply a recorded file. Every room is already open for fictional inspection.</p>
+                  <ol id="office-route" class="office-route" aria-label="Recorded route stops"></ol>
+                  <details class="office-options"><summary>Facilities preferences</summary><div class="office-options-grid"><label><input type="checkbox" id="office-motion"> Animate the office</label><label><input type="checkbox" id="office-sound"> Office sounds</label><label>Estate detail <select id="office-quality"><option value="standard">Full facilities budget</option><option value="economy">Strategic electricity conservation</option></select></label><button type="button" id="office-offline">Save the 3D office for offline visits</button></div><p class="field-help" id="office-offline-status">The room directory and stories are part of the site. The 3D building loads when entered.</p></details>
+                  <p class="fine-print">The moving file is a playback of disclosed evidence, not a measurement of execution time. Office conversations and props are fictional. <a href="/assets/office-licenses.txt">Engine license and original scenery credits</a>.</p>
+                </div>
+                <div class="office-inspection">
+                  <nav aria-label="Office room directory"><h3>Department directory</h3><div id="office-directory" class="office-directory"></div></nav>
+                  <label for="office-file">Inspect a disclosed file <select id="office-file"><option value="latest">Latest disclosed file</option></select></label>
+                  <div class="office-room-heading"><p class="eyebrow" id="office-room-label">Room 01</p><h3 id="office-room-title">Reception &amp; Queue Formation</h3><p id="office-room-subtitle">Please take a number. Numbers must first take a number.</p></div>
+                  <div class="office-props" id="office-props" role="group" aria-label="Room curiosities"></div>
+                  <article class="office-story" aria-labelledby="office-story-title"><p class="eyebrow">Fictional office inspection</p><h4 id="office-story-title">Welcome to the estate</h4><p id="office-story-text">Select an object in the room or its named button to inspect the company’s arrangements.</p><div id="office-story-actions" class="office-story-actions"></div><p id="office-story-answer" role="status" aria-live="polite"></p></article>
+                  <p class="office-curiosities" id="office-curiosities">0 of 32 curiosities discovered.</p>
+                  <details class="office-evidence" open><summary>Recorded business evidence</summary><p id="office-evidence-source">No mandate has supplied a file. The tour’s office stories are available independently.</p><ol id="office-evidence" tabindex="0" aria-label="Recorded decisions for this department"></ol><p id="office-companion"></p><button type="button" id="office-companion-story" aria-haspopup="dialog" aria-controls="companion-dialog" hidden>Open appointed companion’s biography</button></details>
+                  <div class="office-share"><label for="office-share-link">Share this office visit</label><input id="office-share-link" type="url" readonly><button type="button" id="office-share-copy">Copy visit link</button><p id="office-share-status" role="status"></p></div>
+                </div>
+              </div>
+            </div>
+            </div>
+          </section>
           <section class="panel precedent-panel" aria-labelledby="precedent-title">
             <p class="eyebrow">Prior Work Ratification / Institutional Memory Court</p>
             <h2 id="precedent-title">Permission to do no new work</h2>
@@ -196,6 +233,7 @@
               </section>
 
   </dialog>
+  <dialog id="office-modal" class="office-modal" aria-labelledby="office-modal-title"><div class="office-modal-tools"><strong id="office-modal-title">The Serious Business Office · Visitor access</strong><button type="button" id="office-modal-close" aria-label="Close enlarged office"><span aria-hidden="true">×</span></button></div><div id="office-modal-slot"></div></dialog>
   <!--SITE_FOOTER-->
 </body>
 </html>

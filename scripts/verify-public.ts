@@ -114,8 +114,12 @@ export async function verifyPublic(origin: string, revision: string) {
     if (route === 'api') await expect(page.locator('#api-total')).toContainText('ratified operations');
     if ((route === 'about'||route === 'company-history')) await expect(page.getByRole('heading',{name:'Confounding the courage to convene'})).toBeVisible();
    }
+   await page.goto(origin+'/demo/#office-tour');await expect(page.locator('#health-value')).toHaveText('LIVE');await page.click('#office-enter');await expect(page.locator('#office-canvas')).toHaveAttribute('data-renderer','babylon');await expect(page.locator('#office-canvas')).toHaveAttribute('data-rendered','true');
+   await page.locator('#office-directory').getByRole('button',{name:/Executive$/}).click();await page.locator('#office-props').getByRole('button',{name:'The Exit Strategy',exact:true}).click();await page.locator('#office-story-actions').getByRole('button',{name:'Inspect the strategy'}).click();await expect(page.locator('#office-story-answer')).toContainText('cupboard');
+   await page.locator('.office-options summary').click();await page.click('#office-offline');await expect(page.locator('#office-offline-status')).toContainText('saved for offline');await page.click('#office-close');
    await context.setOffline(true);
    await page.goto(origin + '/demo/');
+   await expect(page.locator('#health-value')).toHaveText('LIVE');await page.click('#office-enter');await expect(page.locator('#office-canvas')).toHaveAttribute('data-rendered','true');await page.click('#office-close');
    await expect(page.locator('#health-value')).toHaveText('LIVE');
    await page.selectOption('#display-speed', '0');
    await page.fill('#limit', '16');

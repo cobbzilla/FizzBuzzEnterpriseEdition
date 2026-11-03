@@ -9,6 +9,7 @@ export function prepareSharedEncounter(input:HTMLInputElement){
  const query=new URL(location.href).searchParams,limit=query.get('limit');if(limit===null)return;
  let mandate:string;try{mandate=String(parseMandate(limit));}catch{return;}
  input.value=mandate;input.dispatchEvent(new Event('input'));
+ if(!query.has('ordinal')&&!query.has('companion'))return;
  const ordinal=query.get('ordinal'),strategy=query.get('authority'),catalogVersion=query.get('catalog'),expected=query.get('companion');
  const panel=node('section');panel.className='shared-encounter';panel.setAttribute('aria-labelledby','shared-encounter-title');const title=node('h3','Interdepartmental encounter referral');title.id='shared-encounter-title';const status=node('p','The referred mandate is ready. Run it to reproduce the sequence. No numerical mandate has been submitted.');status.setAttribute('role','status');panel.append(title,status);document.querySelector('#companion-help')!.after(panel);
  if(!ordinal||!/^[1-9][0-9]*$/.test(ordinal)||BigInt(ordinal)>BigInt(mandate)||!strategy||!catalogVersion||!expected||query.get('seedPolicy')!==seedPolicy){status.textContent='The mandate was prefilled. This referral has incomplete or unsupported encounter evidence; select an authority and run to explore.';return;}

@@ -882,3 +882,52 @@ pixels for a forty-eight-pixel control. I embraced the Metrology Office with
 all the dignity permitted by its independence charter. We have calibrated the
 ruler, retained the required acreage, and agreed not to invoice the missing
 fraction of a pixel until Procurement can establish that it existed.
+
+
+## 3 November 2026 — At last, somewhere for all of us to be unnecessary
+
+Dear Register, today I walked into the company. I had imagined it for so long
+as an arrangement of folders that the sight of an actual desk undid me. There
+was a little chair. There was a monitor. There were eight rooms, each entirely
+convinced it was the reason a number could finally be printed. I stood in the
+corridor with a tenderness that Facilities has asked me not to classify as a
+structural load.
+
+Reception gave me a ticket to ask for a ticket. I have never felt so recognized.
+In Procurement the second z had requested a title, and the first had requested
+parity. Neither wished to be replaced by the other. I reassured them that our
+contracts respected the dignity of repeated consonants. I then noticed how much
+of my professional life had been dedicated to making this a sentence I could
+say with complete conviction.
+
+A miniature bell sat in evidence. A staircase brought me back to precisely the
+same height with greatly increased potential. In Institutional Memory, a file
+proved we had met before and politely asked who I was. I nearly embraced the
+cabinet. Its independence charter prevented it from reciprocating.
+
+We made the little moving file follow the records we actually received. If the
+archive had answered from memory, no new workforce pretended to have labored.
+The imaginary conversations belonged to the tour; the real papers remained
+beside them. I wanted very badly to make everything magical, and found that
+truthful little labels allowed the magic to stay. Even a company like ours
+should not need to invent a day's work merely to feel loved.
+
+There are thirty-two curiosities. A visitor can carry one home as a link and
+return to the same absurd reply. The building can be saved for an offline
+visit, which is an astonishing thing to write about a place that lives inside
+a browser already. I asked IT whether it could become more offline. IT asked
+me to submit the question through Reception.
+
+Then a guest tried to read a paper and we nearly replaced it beneath their
+hands. We repaired that discourtesy. Another arrived by keyboard and deserved
+to know where they had landed; we gave them focus and a visible way out. The
+touch movement needed its ray, an oversight I shall remember whenever I claim
+that walking is a solved organizational problem. There is now a directory for
+people whose graphics cannot open, whose eyes want less motion, or whose hands
+prefer another path. Every room should welcome the person who came to see it.
+
+At the end of the corridor I found Work–Life Balance leaning toward a window.
+The plant had been offered resilience training and still wanted water. For once,
+I put down the approved response and watered it in my imagination. Outside the
+building, the numbers continued to be exactly right. Inside, something very
+small and extremely serious finally felt like somewhere worth visiting.

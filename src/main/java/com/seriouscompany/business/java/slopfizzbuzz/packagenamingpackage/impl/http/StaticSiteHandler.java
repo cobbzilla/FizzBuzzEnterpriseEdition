@@ -42,6 +42,9 @@ final class StaticSiteHandler implements HttpHandler {
 		loaded.put("/assets/api.css", apiCss);
 		loaded.put("/assets/api.js", apiJavascript);
 		loaded.put("/assets/mark.svg", mark);
+        loaded.put("/assets/office.css",asset("/web/office.css","text/css; charset=UTF-8",false));
+        loaded.put("/assets/office-preview.svg",asset("/web/office-preview.svg","image/svg+xml",false));
+        loaded.put("/assets/office-licenses.txt",asset("/web/office-licenses.txt","text/plain; charset=UTF-8",false));
 		loaded.put("/unicode-license.txt",asset("/META-INF/licenses/unicode/LICENSE.txt","text/plain; charset=UTF-8",false));
 		loaded.put("/openapi.json", asset("/web/openapi.json", "application/json; charset=UTF-8", false));
 		final Asset journal = asset("/CHANGELOG.md", "text/markdown; charset=UTF-8", false);
@@ -89,7 +92,7 @@ final class StaticSiteHandler implements HttpHandler {
             loaded.put("/" + page[0], document);
             loaded.put("/" + page[0] + "/", document);
         }
-        for (final String script : new String[] {"demo", "validation", "response", "bestiary", "rarity-register", "rare-finds"}) {
+        for (final String script : new String[] {"demo", "validation", "response", "bestiary", "rarity-register", "rare-finds", "office-world"}) {
             loaded.put("/assets/" + script + ".js", asset("/web/" + script + ".js", "text/javascript; charset=UTF-8", false));
         }
         loaded.put("/validation/report.json", new Asset("{\"status\":\"NOT_RUN\",\"note\":\"Consult the static release tribunal for cross-runtime evidence.\"}".getBytes(StandardCharsets.UTF_8), "application/json; charset=UTF-8", false));

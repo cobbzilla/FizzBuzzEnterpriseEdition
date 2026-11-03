@@ -25,9 +25,11 @@
     "test:mandate": "node --test scripts/mandate-input.test.ts",
     "test:chronicle-language": "node --test scripts/chronicle-language.test.ts",
     "test:companions": "node --test scripts/companions.test.ts",
-    "test:premises": "node --test scripts/premises.test.ts"
+    "test:premises": "node --test scripts/premises.test.ts",
+    "test:office": "node --test scripts/office-tour.test.ts"
   },
   "dependencies": {
+    "@babylonjs/core": "9.33.2",
     "posthog-js": "^1.442.1"
   }
 }
