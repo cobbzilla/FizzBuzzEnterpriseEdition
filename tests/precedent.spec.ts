@@ -57,8 +57,10 @@ test('offline court proceedings inspect specimens and leave the retained mandate
 test('court controls, documents and states remain accessible under enlarged text',async({page},info)=>{
  test.skip(info.project.metadata.engine==='js','Shared DOM audited once per browser; both compilers exercise the court.');
  await page.goto('/demo/');await page.selectOption('#precedent-scenario','missing-line');await page.click('#precedent-submit');await expect(page.locator('#precedent-status')).toContainText('Reuse rejected');await page.click('#precedent-expand');
- expect((await page.locator('#precedent-scenario').boundingBox())!.height).toBeGreaterThanOrEqual(48);
+ // Firefox may subtract fractional page coordinates as 47.999984px for a 48px box.
+ // Compare at millipixel precision while retaining both target-size minimums.
+ expect(Math.round((await page.locator('#precedent-scenario').boundingBox())!.height*1000)/1000).toBeGreaterThanOrEqual(48);
  await expect(page.locator('#precedent-expand')).toHaveAttribute('aria-expanded','true');await page.locator('#precedent-steps summary').first().click();await expect(page.locator('#precedent-expand')).toHaveAttribute('aria-expanded','false');
  const audit=await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21a','wcag21aa','wcag22aa','best-practice']).analyze();expect(audit.violations.map(v=>({id:v.id,targets:v.nodes.map(n=>n.target)}))).toEqual([]);
- await page.setViewportSize({width:320,height:800});await page.evaluate(()=>{for(const css of ['html {font-size:200% !important}','* {line-height:1.5 !important;letter-spacing:.12em !important;word-spacing:.16em !important}'])document.styleSheets[0].insertRule(css);});expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);expect((await page.locator('#precedent-scenario').boundingBox())!.height).toBeGreaterThanOrEqual(96);
+ await page.setViewportSize({width:320,height:800});await page.evaluate(()=>{for(const css of ['html {font-size:200% !important}','* {line-height:1.5 !important;letter-spacing:.12em !important;word-spacing:.16em !important}'])document.styleSheets[0].insertRule(css);});expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);expect(Math.round((await page.locator('#precedent-scenario').boundingBox())!.height*1000)/1000).toBeGreaterThanOrEqual(96);
 });

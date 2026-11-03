@@ -126,3 +126,10 @@ test('fixed register reserves page space and its biographies remain accessible a
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);const geometry=await page.evaluate(()=>({padding:parseFloat(getComputedStyle(document.body).paddingBottom),height:document.querySelector('#discovery-register')!.getBoundingClientRect().height}));expect(geometry.padding).toBeGreaterThanOrEqual(geometry.height-1);
  expect((await new AxeBuilder({page}).include('#discovery-register').withTags(['wcag2a','wcag2aa','wcag21a','wcag21aa','wcag22aa','best-practice']).analyze()).violations).toEqual([]);await page.locator('#discovery-list button').last().focus();const chip=(await page.locator('#discovery-list button').last().boundingBox())!,rail=(await page.locator('#discovery-list').boundingBox())!;expect(chip.width).toBeLessThanOrEqual(rail.width+1);expect(chip.x).toBeGreaterThanOrEqual(rail.x-1);expect(chip.x+chip.width).toBeLessThanOrEqual(rail.x+rail.width+1);await page.locator('#discovery-list button').last().click();await expect(page.locator('#companion-dialog')).toBeVisible();await expect(page.getByRole('button',{name:'Close companion file'})).toBeInViewport();await page.keyboard.press('Escape');await expect(page.locator('#discovery-list button').last()).toBeFocused();
 });
+
+test.describe('the reading estate before its JavaScript clerk arrives',()=>{
+ test.use({javaScriptEnabled:false});
+ test('the fixed register leaves footer navigation reachable with scripts disabled',async({page},info)=>{
+  test.skip(info.project.metadata.engine==='js','Shared static DOM covered once per browser.');await page.setViewportSize({width:390,height:667});await page.goto('/about/');const link=page.locator('.site-footer a[href="#main"]');await link.scrollIntoViewIfNeeded();const target=(await link.boundingBox())!,register=(await page.locator('#discovery-register').boundingBox())!;expect(target.y+target.height).toBeLessThanOrEqual(register.y+1);await link.click();await expect(page).toHaveURL(/#main$/);
+ });
+});
