@@ -874,3 +874,11 @@ written the same words twice, and somehow that was less understandable than
 letting the button speak for itself. Probability evidence now travels as a
 separate description. I have asked Communications to consider the strategic
 merits of occasionally using the words already on the page.
+
+Facilities also discovered that the register had borrowed the footer’s floor
+space while its clerk was absent. We now reserve that estate in advance.
+Meanwhile the ruler reported forty-seven point nine-nine-nine-nine-eight
+pixels for a forty-eight-pixel control. I embraced the Metrology Office with
+all the dignity permitted by its independence charter. We have calibrated the
+ruler, retained the required acreage, and agreed not to invoice the missing
+fraction of a pixel until Procurement can establish that it existed.
