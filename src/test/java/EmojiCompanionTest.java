@@ -62,4 +62,17 @@ public class EmojiCompanionTest {
  @Test public void concurrentAppointmentsHaveNoMutableCrossCaseMemory()throws Exception{
   final CompanionDirectorate d=CompanionDirectorate.standard();final String expected=d.window(new BigInteger("9007199254740993"),100,"factor-resonance-v1");ExecutorService pool=Executors.newFixedThreadPool(6);try{List<Future<String>> results=new ArrayList<Future<String>>();for(int i=0;i<60;i++)results.add(pool.submit(new Callable<String>(){public String call(){return d.window(new BigInteger("9007199254740993"),100,"factor-resonance-v1");}}));for(Future<String> result:results)assertEquals(expected,result.get());}finally{pool.shutdownNow();}
  }
+
+ @Test public void mandateSeedsChangeTheSequenceAndKeepVersionedGoldenReceipts(){
+  CompanionDirectorate d=CompanionDirectorate.standard();String a=d.window(BigInteger.ONE,15,"factor-resonance-v1",BigInteger.valueOf(15));assertEquals(a,d.window(BigInteger.ONE,15,"factor-resonance-v1",new BigInteger("00015")));
+  assertTrue(a.contains("\"schema\":\"slopbuzz-companion-window/v2\""));assertTrue(a.contains("\"seedPolicy\":\"mandate-v1\""));assertTrue(a.contains("\"mandateSeed\":\"15\""));assertTrue(a.contains("\"ticket\":300212540"));assertTrue(a.contains("\"ticket\":675921722"));assertTrue(a.contains("\"ticket\":364994368"));
+  String b=d.window(BigInteger.ONE,15,"ordinal-constellation-v1",BigInteger.valueOf(15));assertTrue(b.contains("\"ticket\":763985958"));assertTrue(b.contains("\"ticket\":329537903"));assertTrue(b.contains("\"ticket\":555141378"));
+  assertNotEquals(a,d.window(BigInteger.ONE,15,"factor-resonance-v1",BigInteger.valueOf(16)));assertNotEquals(a,b);
+  BigInteger huge=BigInteger.TEN.pow(1000);assertNotEquals(d.window(BigInteger.ONE,15,"factor-resonance-v1",huge),d.window(BigInteger.ONE,15,"factor-resonance-v1",huge.add(BigInteger.ONE)));
+  assertTrue(d.window(BigInteger.ONE,15,"factor-resonance-v1").contains("\"schema\":\"slopbuzz-companion-window/v1\""));
+  try{d.window(BigInteger.ONE,1,"factor-resonance-v1",BigInteger.ONE.negate());fail();}catch(IllegalArgumentException expected){}
+ }
+ @Test public void changingOnlyTheMandateExploresTheWholeWeightedDistribution(){
+  CompanionDirectorate d=CompanionDirectorate.standard();Set<String> appointments=new HashSet<String>();for(int seed=15;seed<515;seed++){String body=d.window(BigInteger.valueOf(15),1,"factor-resonance-v1",BigInteger.valueOf(seed));appointments.add(body.substring(body.indexOf("\"companionId\""),body.indexOf("\"ticket\"")));}assertTrue(appointments.size()>150);
+ }
 }

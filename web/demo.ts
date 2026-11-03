@@ -1,3 +1,4 @@
+import {prepareSharedEncounter} from './shared-encounter';
 import {CompanionDesk} from './companions';
 import {parseMandate,autocorrectMandate,addOrdinals,windowCount,chooseMagnitudeWarning,type MandateInteger} from './mandate-input';
 import {trackUsage} from './telemetry';
@@ -214,7 +215,7 @@ async function runMandate(event: Event) {
   const limit = validateLimit();
   if (limit === null) return;
   const sequence = ++mandateSequence;
-  companions.reset();
+  companions.reset(String(limit));
   wakeReading?.(); reading = false; streaming=false;activityMode='mandate';manualStep=false;inspection=undefined;lastPlayback=undefined;currentLimit=String(limit);readingControls();personnel.setPlaybackAvailable(false);personnel.loading();chronicle.begin(currentLimit);
   runButton.setAttribute('aria-disabled', 'true');
   precedent.waiting(typeof limit==='bigint'||limit>1000);
@@ -300,7 +301,7 @@ async function replayPersonnel(){
   await personnel.read(saved.data,personnelClock(sequence),'Replay of read-only rehearsal');
   if(sequence===mandateSequence){reading=false;readingControls();setText('run-status','Personnel replay complete. The recorded business operation was not executed again.');}return;
  }
- companions.reset();chronicle.begin(saved.limit,'replay');setText('run-status','Replaying the retained numerical output and its corporate minutes. No mandate was submitted.');
+ companions.reset(saved.limit);chronicle.begin(saved.limit,'replay');setText('run-status','Replaying the retained numerical output and its corporate minutes. No mandate was submitted.');
  const output=byId('output');output.textContent='';
  for(let i=0;i<saved.folios.length;){
   while(paused&&sequence===mandateSequence)await waitForPace();if(sequence!==mandateSequence)return;
@@ -335,3 +336,5 @@ void loadForecast(15).catch(()=>setText('forecast-units','Unavailable'));
 void request('/healthz').then(reply=>setText('health-value',reply.ok?'LIVE':'UNAVAILABLE')).catch(()=>setText('health-value','UNAVAILABLE'));
 
 interface Forecast {numeralLines: number|string;fizzLines: number|string;buzzLines: number|string;fizzBuzzLines: number|string;workloadUnits: number|string}
+
+prepareSharedEncounter(limitInput);

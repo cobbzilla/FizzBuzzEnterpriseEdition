@@ -68,11 +68,12 @@ export async function verifyPublic(origin: string, revision: string) {
    const expected = Array.from({length: 15}, (_, i) => (i + 1) % 15 === 0 ? 'FizzBuzz' : (i + 1) % 3 === 0 ? 'Fizz' : (i + 1) % 5 === 0 ? 'Buzz' : String(i + 1));
    assert.deepEqual((await page.locator('#output').textContent())?.trim().split('\n'), expected);
    await expect(page.locator('#companion-list li')).toHaveCount(7);
+   await expect(page.locator('#discovery-list li')).toHaveCount(5);
    const bioOpener=page.locator('#companion-list button').first(),bio=page.locator('#companion-dialog');
-   await bioOpener.click();await expect(bio.getByRole('button',{name:'Close companion file'})).toBeVisible();await bio.getByRole('button',{name:'Close companion file'}).click();await expect(bio).not.toBeVisible();await expect(bioOpener).toBeFocused();
+   await bioOpener.click();await expect(bio.getByRole('button',{name:'Close companion file'})).toBeVisible();assert.equal(new URL(await page.locator('#companion-share-link').inputValue()).searchParams.get('limit'),'15');await bio.getByRole('button',{name:'Close companion file'}).click();await expect(bio).not.toBeVisible();await expect(bioOpener).toBeFocused();
    await bioOpener.click();await page.mouse.click(4,4);await expect(bio).not.toBeVisible();await expect(bioOpener).toBeFocused();
    await page.selectOption('#companion-strategy','ordinal-constellation-v1');
-   await expect(page.locator('#companion-list')).toContainText('3 · Fizz · pickle — Keeper of Annotated Recipes');
+   await expect(page.locator('#companion-list')).toContainText('3 · Fizz · orange square — Gardener of Better Definitions');
    await page.uncheck('#emoji-companions');await expect(page.locator('#companion-list li')).toHaveCount(0);
    assert.deepEqual((await page.locator('#output').textContent())?.trim().split('\n'),expected);
    await page.check('#emoji-companions');await expect(page.locator('#companion-list li')).toHaveCount(7);
@@ -107,6 +108,7 @@ export async function verifyPublic(origin: string, revision: string) {
     await page.goto(`${origin}/${route}/`);
     await expect(page.locator('main h1')).toHaveCount(1);
     await expect(page.getByRole('navigation',{name:'Primary navigation',exact:true}).getByRole('link',{name:'Companion bestiary',exact:true})).toHaveCount(0);
+    if(route==='about'){await expect(page.locator('#discovery-list li')).toHaveCount(5);await page.locator('#discovery-list button').first().click();await expect(page.locator('#companion-dialog')).toContainText('Mandate: 15.');await page.keyboard.press('Escape');await expect(page.locator('#discovery-list button').first()).toBeFocused();}
     if (route === 'bestiary') await expect(page.locator('#bestiary-status')).toContainText('3200 companions');
     if (route === 'department-of-improbable-appointments') await expect(page.locator('#rarity-rows tr')).toHaveCount(3200);
     if (route === 'api') await expect(page.locator('#api-total')).toContainText('ratified operations');

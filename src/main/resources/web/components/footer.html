@@ -5,4 +5,16 @@
   </div>
 </footer>
 
+<aside id="discovery-register" class="discovery-register" aria-labelledby="discovery-title">
+  <div class="shell">
+    <div class="discovery-heading"><strong id="discovery-title">Extraordinary Appointments Register</strong><button id="discovery-latest" type="button" hidden>Show latest finds</button></div>
+    <p id="discovery-status">Your five rarest companions will be filed here.</p>
+    <ol id="discovery-list" aria-label="Five rarest companion discoveries" role="list"></ol>
+  </div>
+</aside>
+  <dialog id="companion-dialog" class="companion-dialog" aria-labelledby="companion-dialog-title">
+    <div class="companion-dialog-tools"><span class="eyebrow">Companion personnel file</span><button class="companion-dialog-close" data-companion-close type="button" aria-label="Close companion file" autofocus><span aria-hidden="true">×</span></button></div>
+    <div class="companion-dialog-body" tabindex="0" role="region" aria-label="Companion biography"><h2 id="companion-dialog-title">Companion personnel file</h2><div data-companion-story></div></div>
+  </dialog>
+<script type="module" src="/assets/rare-finds.js"></script>
 <script type="module" src="/assets/analytics.js"></script>

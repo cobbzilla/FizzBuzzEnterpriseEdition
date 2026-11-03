@@ -9,7 +9,7 @@ import {sourceIdentity} from './source-identity.ts';
 await generateCompanions();
 const analytics = await analyticsConfig();
 const run = (command: string, args: string[]) => execFileSync(command, args, {stdio:'inherit'});
-await build({entryPoints:['web/analytics.ts','web/site.ts','web/demo.ts','web/api.ts','web/response.ts','web/validation.ts','web/bestiary.ts','web/rarity-register.ts'],outdir:'src/main/resources/web',bundle:true,format:'esm',target:'es2022',banner:{js:'// Generated from web/*.ts by scripts/build.ts. Do not edit.'}});
+await build({entryPoints:['web/analytics.ts','web/site.ts','web/demo.ts','web/api.ts','web/response.ts','web/validation.ts','web/bestiary.ts','web/rarity-register.ts','web/rare-finds.ts'],outdir:'src/main/resources/web',bundle:true,format:'esm',target:'es2022',banner:{js:'// Generated from web/*.ts by scripts/build.ts. Do not edit.'}});
 if (!process.argv.includes('--assets-only')) {
   run('mvn', ['-q', 'install']);
   run('mvn', ['-q', '-f', 'browser/pom.xml', 'package']);
@@ -23,7 +23,7 @@ await mkdir('dist/assets', {recursive:true});
 const assets = `assets/${identity}/`;
 await cp('browser/target/gate/wasm', `dist/${assets}wasm`, {recursive:true});
 await cp('browser/target/gate/js', `dist/${assets}js`, {recursive:true});
-const entryScripts=['analytics','site','demo','api','response','validation','bestiary','rarity-register','tribunal'];
+const entryScripts=['analytics','site','demo','api','response','validation','bestiary','rarity-register','rare-finds','tribunal'];
 await build({entryPoints:entryScripts.map(name=>`web/${name}.ts`),outdir:'dist/assets',bundle:true,format:'esm',target:'es2022',define:{RELEASE_ASSET_DIRECTORY:JSON.stringify(assets)}});
 for(const name of entryScripts) await cp(`dist/assets/${name}.js`,`dist/assets/${name}.${identity}.js`);
 await build({entryPoints:['web/runtime-worker.ts'],outfile:`dist/${assets}runtime-worker.js`,bundle:true,format:'iife',target:'es2022'});

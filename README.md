@@ -210,3 +210,8 @@ Non-Performance, or try the isolated management petitions beneath the advisory
 inventory. The same read-only cases are available through GET
 /precedent/rehearsal?scenario=approved and the human API charter. Neither reuse
 inspection nor a specimen rehearsal creates new numerical audit entries.
+
+Companion sequences now include the exact mandate as a deterministic seed. Try
+different limits, retain your five rarest disclosed friends in the shared footer,
+and open a saved biography to copy its reproducible encounter link. Referrals
+can be inspected without running the entire mandate. See [ADR 0029](docs/ADR-0029-mandate-seeded-discoveries.md).
