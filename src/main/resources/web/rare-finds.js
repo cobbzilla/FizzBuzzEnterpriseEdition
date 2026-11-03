@@ -180,19 +180,22 @@ function render(force = false) {
     return;
   }
   const finds = store.snapshot();
-  list.replaceChildren(...finds.map((d) => {
+  list.replaceChildren(...finds.map((d, index) => {
     const li = node("li"), button = node("button");
     button.type = "button";
     button.setAttribute("aria-haspopup", "dialog");
     button.setAttribute("aria-controls", "companion-dialog");
     button.title = d.companion.name;
-    button.setAttribute("aria-label", d.companion.rarity + " \xB7 " + d.companion.name + " \xB7 " + d.companion.weight + " of one billion tickets. Open saved biography.");
+    const description = node("span", d.companion.weight + " of one billion tickets. Open saved biography.");
+    description.hidden = true;
+    description.id = "discovery-evidence-" + index;
+    button.setAttribute("aria-describedby", description.id);
     const glyph = node("span", d.companion.emoji);
     glyph.setAttribute("aria-hidden", "true");
     const label = node("span", d.companion.rarity + " \xB7 " + d.companion.name);
     button.append(glyph, label);
     button.addEventListener("click", () => companionDialog().open(d, button));
-    li.append(button);
+    li.append(button, description);
     return li;
   }));
   status.textContent = (finds.length ? finds.length + " distinct finds \xB7 rarest first." : "No appointments filed. Run a mandate with companions enabled.") + (store.persistent() ? " Saved in this browser." : " Storage is unavailable; finds last for this page session.");

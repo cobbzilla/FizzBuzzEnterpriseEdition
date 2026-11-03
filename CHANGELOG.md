@@ -16,7 +16,9 @@ register for the rarest disclosed colleagues, complete with career histories,
 allocation receipts and shareable referrals. Referred appointments can be
 independently inspected without first convening an astronomical counting
 exercise. Leadership forecasts exceptional growth in repeat numerical tourism
-and a measurable reduction in friendships lost to a page reload.
+and a measurable reduction in friendships lost to a page reload. Native button
+labels preserve multilingual introductions; probability receipts receive their
+own accessible description rather than rewriting a colleague’s name.
 
 ## 2026-11-02 — `slopbuzz-companion-bio-dismissal`
 

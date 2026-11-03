@@ -868,3 +868,9 @@ flag survive a reload and nearly cried into the persistence assessment. The
 browser remembers what it can; if it cannot, we tell the truth. Our ambitions
 are immense, but tonight five tiny dossiers feel like enough to keep the
 lights on in my entirely fictional executive heart.
+
+The court objected to a Japanese colleague’s introduction. We had carefully
+written the same words twice, and somehow that was less understandable than
+letting the button speak for itself. Probability evidence now travels as a
+separate description. I have asked Communications to consider the strategic
+merits of occasionally using the words already on the page.
