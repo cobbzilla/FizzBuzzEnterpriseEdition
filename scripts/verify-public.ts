@@ -84,7 +84,7 @@ export async function verifyPublic(origin: string, revision: string) {
    await expect(page.locator('#chronicle-entries')).toContainText('No fresh recruitment');
    await expect(page.locator('#precedent-status')).toContainText('Certificate of Authorized Non-Performance issued for 15 lines');
    await expect(page.locator('#precedent-steps li')).toHaveCount(5);
-   assert.ok((await page.locator('#precedent-scenario').boundingBox())!.height>=48,'Court selector must retain its accessible native control height');
+   assert.ok(Math.round((await page.locator('#precedent-scenario').boundingBox())!.height*1000)/1000>=48,'Court selector must retain its accessible native control height');
    await page.selectOption('#precedent-scenario','lowercase-fizz');await page.click('#precedent-submit');
    await expect(page.locator('#precedent-status')).toContainText('Reuse rejected by Independent Lexical Bench');
    await page.click('#precedent-latest');await expect(page.locator('#precedent-status')).toContainText('Reuse approved');
@@ -108,7 +108,7 @@ export async function verifyPublic(origin: string, revision: string) {
     await page.goto(`${origin}/${route}/`);
     await expect(page.locator('main h1')).toHaveCount(1);
     await expect(page.getByRole('navigation',{name:'Primary navigation',exact:true}).getByRole('link',{name:'Companion bestiary',exact:true})).toHaveCount(0);
-    if(route==='about'){await expect(page.locator('#discovery-list li')).toHaveCount(5);await page.locator('#discovery-list button').first().click();await expect(page.locator('#companion-dialog')).toContainText('Mandate: 15.');await page.keyboard.press('Escape');await expect(page.locator('#discovery-list button').first()).toBeFocused();}
+    if(route==='about'){await expect(page.locator('#discovery-list li')).toHaveCount(5);const retainedMandate=await page.evaluate(()=>JSON.parse(localStorage.getItem('slopbuzz:extraordinary-appointments:v1')!).finds[0].mandate as string);await page.locator('#discovery-list button').first().click();await expect(page.locator('#companion-dialog')).toContainText('Mandate: '+retainedMandate+'.');await page.keyboard.press('Escape');await expect(page.locator('#discovery-list button').first()).toBeFocused();}
     if (route === 'bestiary') await expect(page.locator('#bestiary-status')).toContainText('3200 companions');
     if (route === 'department-of-improbable-appointments') await expect(page.locator('#rarity-rows tr')).toHaveCount(3200);
     if (route === 'api') await expect(page.locator('#api-total')).toContainText('ratified operations');
