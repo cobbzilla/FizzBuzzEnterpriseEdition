@@ -75,7 +75,7 @@ export class DemoWorkspace {
   new MutationObserver(()=>{byId('personnel-record-summary').textContent=byId('personnel-origin').textContent;}).observe(byId('personnel-origin'),{childList:true,characterData:true,subtree:true});
   new MutationObserver(()=>{if(document.querySelector('dialog[open]'))this.run.pause();}).observe(document.body,{subtree:true,attributes:true,attributeFilter:['open']});
   document.addEventListener('visibilitychange',()=>{if(document.hidden)this.run.pause();});
-  addEventListener('popstate',()=>this.show(readDesk(new URL(location.href)),false));
+  addEventListener('popstate',()=>{const desk=readDesk(new URL(location.href));if(desk!==this.desk)this.show(desk,false);});
   const resize=new ResizeObserver(()=>this.fit());resize.observe(document.querySelector('.site-header')!);resize.observe(byId('discovery-register'));
   resize.observe(document.querySelector('.authorization-actions')!);
   addEventListener('resize',()=>{if(!this.manualView&&this.committed){this.watch.value=initialWatchView(matchMedia('(max-width: 700px), (max-height: 500px)').matches,this.live().hovering);this.layout();}else this.fit();});
