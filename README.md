@@ -227,3 +227,18 @@ to reopen a particular authored reply without automatically running its mandate.
 See [ADR 0030](docs/ADR-0030-serious-business-office.md). `pnpm test:office` runs
 its pure presentation/route/cache contract checks; browser tests cover the actual
 rendered office and offline installation.
+
+The Chronicle's **Require Companion Roll Call** preference controls the attendance
+transcript independently of companion appointments. **Executive Hovering: Trust
+Has Been Suspended** brings a choreographed view directly beneath Official Output.
+The office owns disclosure cadence until Autonomy is restored; the preceding
+ordinary cadence is then recovered. Pause or observe one decision at a time.
+Each supplied Java event gets its own shot, and a line appears when its pictured
+publication finishes. Audit, queue, commit, cleanup and succession continue
+afterward. A fresh fifteen-number specimen has 436 events; observation takes
+several minutes and stops advancing while the view is hidden or obscured.
+Reduced motion supplies stationary views, and a graphics refusal retains readable
+papers and controls. Java has already completed the underlying operation.
+See [ADR 0031](docs/ADR-0031-executive-hovering.md). `pnpm test:supervision` checks
+the evidence, exact ordinals, scene planning and observation clock; browser tests
+cover actual 3D presentation, lifecycle, mobile co-visibility and disclosure.

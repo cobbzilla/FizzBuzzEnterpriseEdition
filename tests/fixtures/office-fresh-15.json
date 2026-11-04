@@ -1,0 +1,3059 @@
+{
+  "description": "Historical fresh Java browser dossier for 15, captured in an isolated browser context from revision b59f3d8. Used to test faithful presentation, not to derive the mathematical oracle.",
+  "text": "1\n2\nFizz\n4\nBuzz\nFizz\n7\n8\nFizz\nBuzz\n11\nFizz\n13\n14\nFizzBuzz\n",
+  "events": [
+    {
+      "ordinal": null,
+      "kind": "REQUEST",
+      "office": "Mandate Reception",
+      "finding": "A narrated request was accepted for /fizzbuzz. The business will execute once.",
+      "document": null
+    },
+    {
+      "ordinal": null,
+      "kind": "CACHE_MISS",
+      "office": "Institutional Memory",
+      "finding": "The output repository returned MISS for upper limit 15.",
+      "document": null
+    },
+    {
+      "ordinal": "1",
+      "kind": "HR_APPROVED",
+      "office": "Headcount Planning",
+      "finding": "One initial ordinal position funded.",
+      "document": "Headcount requisition: role Initial ordinal; positions 1."
+    },
+    {
+      "ordinal": "1",
+      "kind": "HR_APPROVED",
+      "office": "Recruitment",
+      "finding": "Candidate 1 nominated.",
+      "document": "Application: candidate 1; vacancy bound to this case."
+    },
+    {
+      "ordinal": "1",
+      "kind": "HR_APPROVED",
+      "office": "Identity Office",
+      "finding": "Candidate is exactly one.",
+      "document": "Identity finding: application verified for the first ordinal position."
+    },
+    {
+      "ordinal": "1",
+      "kind": "HR_APPROVED",
+      "office": "Offer Authority",
+      "finding": "Offer issued to this vacancy's candidate.",
+      "document": "Offer letter: Initial ordinal; assigned starting position 1."
+    },
+    {
+      "ordinal": "1",
+      "kind": "HR_APPROVED",
+      "office": "Induction",
+      "finding": "Policy evidence recorded for probation review.",
+      "document": "Handbook: INITIAL-ORDINAL-HANDBOOK/v1. Acknowledgments: ONE_MEANS_ONE, START_BEFORE_SUCCESSION, DO_NOT_IMPERSONATE_ZERO."
+    },
+    {
+      "ordinal": "1",
+      "kind": "HR_APPROVED",
+      "office": "Probation Review",
+      "finding": "Induction prerequisites satisfied.",
+      "document": "Commencement certificate: requested ordinal 1."
+    },
+    {
+      "ordinal": "1",
+      "kind": "HR_APPROVED",
+      "office": "Independent Audit",
+      "finding": "Approved to start at 1.",
+      "document": "Independent audit: matching case custody, complete induction, starting ordinal 1."
+    },
+    {
+      "ordinal": "1",
+      "kind": "CONTINUATION",
+      "office": "Inclusive Boundary Quorum",
+      "finding": "Current ordinal 1; authorized upper boundary 15. Pre-boundary vote: PERMIT; at-boundary vote: WITHHOLD.",
+      "document": null
+    },
+    {
+      "ordinal": "1",
+      "kind": "ASSEMBLY",
+      "office": "Factories and Strategy Registry",
+      "finding": "Factory-appointed Fizz, Buzz and numeral contexts and their shared visitor convened for this ordinal.",
+      "document": null
+    },
+    {
+      "ordinal": "1",
+      "kind": "PREMISES_APPROVED",
+      "office": "Premises Allocation Office",
+      "finding": "Allocated request-bound premises for ordinal 1. No occupancy permission has yet been issued.",
+      "document": "Allocation record: this request owns this buffer."
+    },
+    {
+      "ordinal": "1",
+      "kind": "PREMISES_APPROVED",
+      "office": "Character-by-Character Vacancy Inspector",
+      "finding": "No characters occupied the premises at this inspection.",
+      "document": "Initial occupancy: 0 UTF-16 units. Names and code points are displayed instead of raw controls."
+    },
+    {
+      "ordinal": "1",
+      "kind": "PREMISES_NOT_REQUIRED",
+      "office": "Hidden Occupant Eviction Authority",
+      "finding": "No eviction was required because the initial survey found no occupants.",
+      "document": "No eviction order issued."
+    },
+    {
+      "ordinal": "1",
+      "kind": "PREMISES_APPROVED",
+      "office": "Vacancy Reinspection Office",
+      "finding": "Reinspection verified exactly zero characters before occupancy.",
+      "document": "Vacancy certificate: character count 0. Memory capacity has not been measured or claimed to be zero."
+    },
+    {
+      "ordinal": "1",
+      "kind": "PREMISES_APPROVED",
+      "office": "Single-Use Occupancy Lease Authority",
+      "finding": "Issued a single-use, request-bound lease for ordinal 1.",
+      "document": "Lease binds this request, this premises and this vacant survey."
+    },
+    {
+      "ordinal": "1",
+      "kind": "PREMISES_APPROVED",
+      "office": "Independent Premises Auditor",
+      "finding": "Independent audit admitted the vacant premises for numerical habitation.",
+      "document": "The actual text may now move in. The vacancy finding describes the pre-occupancy inspection only."
+    },
+    {
+      "ordinal": "1",
+      "kind": "PREMISES_CERTIFICATE",
+      "office": "Vacant String Real Estate and Occupancy Directorate",
+      "finding": "Vacancy certified; the ordinal may now occupy its leased output buffer.",
+      "document": "{\"schema\":\"slopbuzz-premises/v1\",\"ordinal\":\"1\",\"purpose\":\"MANDATE\",\"status\":\"APPROVED\",\"initialLength\":0,\"vacancyCertified\":true,\"tenants\":[],\"steps\":[{\"office\":\"Premises Allocation Office\",\"state\":\"APPROVED\",\"finding\":\"Allocated request-bound premises for ordinal 1. No occupancy permission has yet been issued.\",\"document\":\"Allocation record: this request owns this buffer.\"},{\"office\":\"Character-by-Character Vacancy Inspector\",\"state\":\"APPROVED\",\"finding\":\"No characters occupied the premises at this inspection.\",\"document\":\"Initial occupancy: 0 UTF-16 units. Names and code points are displayed instead of raw controls.\"},{\"office\":\"Hidden Occupant Eviction Authority\",\"state\":\"NOT_REQUIRED\",\"finding\":\"No eviction was required because the initial survey found no occupants.\",\"document\":\"No eviction order issued.\"},{\"office\":\"Vacancy Reinspection Office\",\"state\":\"APPROVED\",\"finding\":\"Reinspection verified exactly zero characters before occupancy.\",\"document\":\"Vacancy certificate: character count 0. Memory capacity has not been measured or claimed to be zero.\"},{\"office\":\"Single-Use Occupancy Lease Authority\",\"state\":\"APPROVED\",\"finding\":\"Issued a single-use, request-bound lease for ordinal 1.\",\"document\":\"Lease binds this request, this premises and this vacant survey.\"},{\"office\":\"Independent Premises Auditor\",\"state\":\"APPROVED\",\"finding\":\"Independent audit admitted the vacant premises for numerical habitation.\",\"document\":\"The actual text may now move in. The vacancy finding describes the pre-occupancy inspection only.\"}]}"
+    },
+    {
+      "ordinal": "1",
+      "kind": "TRANSACTION_BEGIN",
+      "office": "Output Transaction Coordinator",
+      "finding": "Opened an isolated staging buffer for ordinal 1. Fragments cannot publish a partial line.",
+      "document": null
+    },
+    {
+      "ordinal": "1",
+      "kind": "CLASSIFICATION",
+      "office": "Three-seat Classification Council",
+      "finding": "Fizz permission: false; Buzz permission: false; numeral permission: true. The independent arithmetic witness verified all votes.",
+      "document": null
+    },
+    {
+      "ordinal": "1",
+      "kind": "VISITOR",
+      "office": "Output Generation Context Visitor",
+      "finding": "The certified strategy declined printer FizzStringPrinter for this ordinal.",
+      "document": null
+    },
+    {
+      "ordinal": "1",
+      "kind": "VISITOR",
+      "office": "Output Generation Context Visitor",
+      "finding": "The certified strategy declined printer BuzzStringPrinter for this ordinal.",
+      "document": null
+    },
+    {
+      "ordinal": "1",
+      "kind": "VISITOR",
+      "office": "Output Generation Context Visitor",
+      "finding": "The certified strategy authorized printer IntegerIntegerPrinter for this ordinal.",
+      "document": null
+    },
+    {
+      "ordinal": "1",
+      "kind": "NUMERAL",
+      "office": "Integer-to-String Conversion Directorate",
+      "finding": "The ordinal was boxed as Integer, converted to decimal, copied through StringBuilder and returned as a fresh String: 1.",
+      "document": null
+    },
+    {
+      "ordinal": "1",
+      "kind": "FRAGMENT",
+      "office": "Output Staging Office",
+      "finding": "Staged 1 UTF-16 units; line separators remain part of the authorized payload.",
+      "document": "1"
+    },
+    {
+      "ordinal": "1",
+      "kind": "FRAGMENT",
+      "office": "Output Staging Office",
+      "finding": "Staged 1 UTF-16 units; line separators remain part of the authorized payload.",
+      "document": "\n"
+    },
+    {
+      "ordinal": "1",
+      "kind": "NOTARY",
+      "office": "Independent Proclamation Notary",
+      "finding": "An independent arithmetic and lexical check authorized this complete payload.",
+      "document": "1\n"
+    },
+    {
+      "ordinal": "1",
+      "kind": "PUBLICATION",
+      "office": "Output Publication Office",
+      "finding": "Published the complete UTF-8 line to the request audience.",
+      "document": "1\n"
+    },
+    {
+      "ordinal": "1",
+      "kind": "AUDIT_APPEND",
+      "office": "Audit Repository of Record",
+      "finding": "Appended sequence 1 with disposition COMMITTED. Its predecessor and SHA-256 digest bind the payload to the existing chain.",
+      "document": "Sequence 1; previous GENESIS; digest cb896cd22a02195e9b5c53595f43585e2c310d559dbc4db3040765b207a05788"
+    },
+    {
+      "ordinal": "1",
+      "kind": "QUEUE_ENQUEUED",
+      "office": "Audit Message Broker",
+      "finding": "Queued audit sequence 1 for the idempotent status projection. Publication to the mailbox is not delivery acknowledgment.",
+      "document": null
+    },
+    {
+      "ordinal": "1",
+      "kind": "TRANSACTION_COMMIT",
+      "office": "Output Transaction Coordinator",
+      "finding": "The numerical line and its committed audit entry completed their transaction.",
+      "document": null
+    },
+    {
+      "ordinal": "1",
+      "kind": "PREMISES_RELEASE",
+      "office": "Occupancy Custody Office",
+      "finding": "Released ordinal 1's premises after housing 2 UTF-16 units. The pre-occupancy vacancy certificate remains a historical finding.",
+      "document": null
+    },
+    {
+      "ordinal": "1",
+      "kind": "TRANSACTION_CLEANUP",
+      "office": "Output Transaction Coordinator",
+      "finding": "Released this ordinal's staging buffer.",
+      "document": null
+    },
+    {
+      "ordinal": "1",
+      "kind": "SUCCESSION",
+      "office": "Ordinal Succession Authority",
+      "finding": "Incumbent 1 petitioned for advancement 1. The independent auditor certified successor 2.",
+      "document": null
+    },
+    {
+      "ordinal": "2",
+      "kind": "CONTINUATION",
+      "office": "Inclusive Boundary Quorum",
+      "finding": "Current ordinal 2; authorized upper boundary 15. Pre-boundary vote: PERMIT; at-boundary vote: WITHHOLD.",
+      "document": null
+    },
+    {
+      "ordinal": "2",
+      "kind": "ASSEMBLY",
+      "office": "Factories and Strategy Registry",
+      "finding": "Factory-appointed Fizz, Buzz and numeral contexts and their shared visitor convened for this ordinal.",
+      "document": null
+    },
+    {
+      "ordinal": "2",
+      "kind": "PREMISES_APPROVED",
+      "office": "Premises Allocation Office",
+      "finding": "Allocated request-bound premises for ordinal 2. No occupancy permission has yet been issued.",
+      "document": "Allocation record: this request owns this buffer."
+    },
+    {
+      "ordinal": "2",
+      "kind": "PREMISES_APPROVED",
+      "office": "Character-by-Character Vacancy Inspector",
+      "finding": "No characters occupied the premises at this inspection.",
+      "document": "Initial occupancy: 0 UTF-16 units. Names and code points are displayed instead of raw controls."
+    },
+    {
+      "ordinal": "2",
+      "kind": "PREMISES_NOT_REQUIRED",
+      "office": "Hidden Occupant Eviction Authority",
+      "finding": "No eviction was required because the initial survey found no occupants.",
+      "document": "No eviction order issued."
+    },
+    {
+      "ordinal": "2",
+      "kind": "PREMISES_APPROVED",
+      "office": "Vacancy Reinspection Office",
+      "finding": "Reinspection verified exactly zero characters before occupancy.",
+      "document": "Vacancy certificate: character count 0. Memory capacity has not been measured or claimed to be zero."
+    },
+    {
+      "ordinal": "2",
+      "kind": "PREMISES_APPROVED",
+      "office": "Single-Use Occupancy Lease Authority",
+      "finding": "Issued a single-use, request-bound lease for ordinal 2.",
+      "document": "Lease binds this request, this premises and this vacant survey."
+    },
+    {
+      "ordinal": "2",
+      "kind": "PREMISES_APPROVED",
+      "office": "Independent Premises Auditor",
+      "finding": "Independent audit admitted the vacant premises for numerical habitation.",
+      "document": "The actual text may now move in. The vacancy finding describes the pre-occupancy inspection only."
+    },
+    {
+      "ordinal": "2",
+      "kind": "PREMISES_CERTIFICATE",
+      "office": "Vacant String Real Estate and Occupancy Directorate",
+      "finding": "Vacancy certified; the ordinal may now occupy its leased output buffer.",
+      "document": "{\"schema\":\"slopbuzz-premises/v1\",\"ordinal\":\"2\",\"purpose\":\"MANDATE\",\"status\":\"APPROVED\",\"initialLength\":0,\"vacancyCertified\":true,\"tenants\":[],\"steps\":[{\"office\":\"Premises Allocation Office\",\"state\":\"APPROVED\",\"finding\":\"Allocated request-bound premises for ordinal 2. No occupancy permission has yet been issued.\",\"document\":\"Allocation record: this request owns this buffer.\"},{\"office\":\"Character-by-Character Vacancy Inspector\",\"state\":\"APPROVED\",\"finding\":\"No characters occupied the premises at this inspection.\",\"document\":\"Initial occupancy: 0 UTF-16 units. Names and code points are displayed instead of raw controls.\"},{\"office\":\"Hidden Occupant Eviction Authority\",\"state\":\"NOT_REQUIRED\",\"finding\":\"No eviction was required because the initial survey found no occupants.\",\"document\":\"No eviction order issued.\"},{\"office\":\"Vacancy Reinspection Office\",\"state\":\"APPROVED\",\"finding\":\"Reinspection verified exactly zero characters before occupancy.\",\"document\":\"Vacancy certificate: character count 0. Memory capacity has not been measured or claimed to be zero.\"},{\"office\":\"Single-Use Occupancy Lease Authority\",\"state\":\"APPROVED\",\"finding\":\"Issued a single-use, request-bound lease for ordinal 2.\",\"document\":\"Lease binds this request, this premises and this vacant survey.\"},{\"office\":\"Independent Premises Auditor\",\"state\":\"APPROVED\",\"finding\":\"Independent audit admitted the vacant premises for numerical habitation.\",\"document\":\"The actual text may now move in. The vacancy finding describes the pre-occupancy inspection only.\"}]}"
+    },
+    {
+      "ordinal": "2",
+      "kind": "TRANSACTION_BEGIN",
+      "office": "Output Transaction Coordinator",
+      "finding": "Opened an isolated staging buffer for ordinal 2. Fragments cannot publish a partial line.",
+      "document": null
+    },
+    {
+      "ordinal": "2",
+      "kind": "CLASSIFICATION",
+      "office": "Three-seat Classification Council",
+      "finding": "Fizz permission: false; Buzz permission: false; numeral permission: true. The independent arithmetic witness verified all votes.",
+      "document": null
+    },
+    {
+      "ordinal": "2",
+      "kind": "VISITOR",
+      "office": "Output Generation Context Visitor",
+      "finding": "The certified strategy declined printer FizzStringPrinter for this ordinal.",
+      "document": null
+    },
+    {
+      "ordinal": "2",
+      "kind": "VISITOR",
+      "office": "Output Generation Context Visitor",
+      "finding": "The certified strategy declined printer BuzzStringPrinter for this ordinal.",
+      "document": null
+    },
+    {
+      "ordinal": "2",
+      "kind": "VISITOR",
+      "office": "Output Generation Context Visitor",
+      "finding": "The certified strategy authorized printer IntegerIntegerPrinter for this ordinal.",
+      "document": null
+    },
+    {
+      "ordinal": "2",
+      "kind": "NUMERAL",
+      "office": "Integer-to-String Conversion Directorate",
+      "finding": "The ordinal was boxed as Integer, converted to decimal, copied through StringBuilder and returned as a fresh String: 2.",
+      "document": null
+    },
+    {
+      "ordinal": "2",
+      "kind": "FRAGMENT",
+      "office": "Output Staging Office",
+      "finding": "Staged 1 UTF-16 units; line separators remain part of the authorized payload.",
+      "document": "2"
+    },
+    {
+      "ordinal": "2",
+      "kind": "FRAGMENT",
+      "office": "Output Staging Office",
+      "finding": "Staged 1 UTF-16 units; line separators remain part of the authorized payload.",
+      "document": "\n"
+    },
+    {
+      "ordinal": "2",
+      "kind": "NOTARY",
+      "office": "Independent Proclamation Notary",
+      "finding": "An independent arithmetic and lexical check authorized this complete payload.",
+      "document": "2\n"
+    },
+    {
+      "ordinal": "2",
+      "kind": "PUBLICATION",
+      "office": "Output Publication Office",
+      "finding": "Published the complete UTF-8 line to the request audience.",
+      "document": "2\n"
+    },
+    {
+      "ordinal": "2",
+      "kind": "AUDIT_APPEND",
+      "office": "Audit Repository of Record",
+      "finding": "Appended sequence 2 with disposition COMMITTED. Its predecessor and SHA-256 digest bind the payload to the existing chain.",
+      "document": "Sequence 2; previous cb896cd22a02195e9b5c53595f43585e2c310d559dbc4db3040765b207a05788; digest a5501670c801057a90b99ae2c877915097918eb8954f95140e97ed5bb8a7d842"
+    },
+    {
+      "ordinal": "2",
+      "kind": "QUEUE_ENQUEUED",
+      "office": "Audit Message Broker",
+      "finding": "Queued audit sequence 2 for the idempotent status projection. Publication to the mailbox is not delivery acknowledgment.",
+      "document": null
+    },
+    {
+      "ordinal": "2",
+      "kind": "TRANSACTION_COMMIT",
+      "office": "Output Transaction Coordinator",
+      "finding": "The numerical line and its committed audit entry completed their transaction.",
+      "document": null
+    },
+    {
+      "ordinal": "2",
+      "kind": "PREMISES_RELEASE",
+      "office": "Occupancy Custody Office",
+      "finding": "Released ordinal 2's premises after housing 2 UTF-16 units. The pre-occupancy vacancy certificate remains a historical finding.",
+      "document": null
+    },
+    {
+      "ordinal": "2",
+      "kind": "TRANSACTION_CLEANUP",
+      "office": "Output Transaction Coordinator",
+      "finding": "Released this ordinal's staging buffer.",
+      "document": null
+    },
+    {
+      "ordinal": "2",
+      "kind": "SUCCESSION",
+      "office": "Ordinal Succession Authority",
+      "finding": "Incumbent 2 petitioned for advancement 1. The independent auditor certified successor 3.",
+      "document": null
+    },
+    {
+      "ordinal": "3",
+      "kind": "CONTINUATION",
+      "office": "Inclusive Boundary Quorum",
+      "finding": "Current ordinal 3; authorized upper boundary 15. Pre-boundary vote: PERMIT; at-boundary vote: WITHHOLD.",
+      "document": null
+    },
+    {
+      "ordinal": "3",
+      "kind": "ASSEMBLY",
+      "office": "Factories and Strategy Registry",
+      "finding": "Factory-appointed Fizz, Buzz and numeral contexts and their shared visitor convened for this ordinal.",
+      "document": null
+    },
+    {
+      "ordinal": "3",
+      "kind": "PREMISES_APPROVED",
+      "office": "Premises Allocation Office",
+      "finding": "Allocated request-bound premises for ordinal 3. No occupancy permission has yet been issued.",
+      "document": "Allocation record: this request owns this buffer."
+    },
+    {
+      "ordinal": "3",
+      "kind": "PREMISES_APPROVED",
+      "office": "Character-by-Character Vacancy Inspector",
+      "finding": "No characters occupied the premises at this inspection.",
+      "document": "Initial occupancy: 0 UTF-16 units. Names and code points are displayed instead of raw controls."
+    },
+    {
+      "ordinal": "3",
+      "kind": "PREMISES_NOT_REQUIRED",
+      "office": "Hidden Occupant Eviction Authority",
+      "finding": "No eviction was required because the initial survey found no occupants.",
+      "document": "No eviction order issued."
+    },
+    {
+      "ordinal": "3",
+      "kind": "PREMISES_APPROVED",
+      "office": "Vacancy Reinspection Office",
+      "finding": "Reinspection verified exactly zero characters before occupancy.",
+      "document": "Vacancy certificate: character count 0. Memory capacity has not been measured or claimed to be zero."
+    },
+    {
+      "ordinal": "3",
+      "kind": "PREMISES_APPROVED",
+      "office": "Single-Use Occupancy Lease Authority",
+      "finding": "Issued a single-use, request-bound lease for ordinal 3.",
+      "document": "Lease binds this request, this premises and this vacant survey."
+    },
+    {
+      "ordinal": "3",
+      "kind": "PREMISES_APPROVED",
+      "office": "Independent Premises Auditor",
+      "finding": "Independent audit admitted the vacant premises for numerical habitation.",
+      "document": "The actual text may now move in. The vacancy finding describes the pre-occupancy inspection only."
+    },
+    {
+      "ordinal": "3",
+      "kind": "PREMISES_CERTIFICATE",
+      "office": "Vacant String Real Estate and Occupancy Directorate",
+      "finding": "Vacancy certified; the ordinal may now occupy its leased output buffer.",
+      "document": "{\"schema\":\"slopbuzz-premises/v1\",\"ordinal\":\"3\",\"purpose\":\"MANDATE\",\"status\":\"APPROVED\",\"initialLength\":0,\"vacancyCertified\":true,\"tenants\":[],\"steps\":[{\"office\":\"Premises Allocation Office\",\"state\":\"APPROVED\",\"finding\":\"Allocated request-bound premises for ordinal 3. No occupancy permission has yet been issued.\",\"document\":\"Allocation record: this request owns this buffer.\"},{\"office\":\"Character-by-Character Vacancy Inspector\",\"state\":\"APPROVED\",\"finding\":\"No characters occupied the premises at this inspection.\",\"document\":\"Initial occupancy: 0 UTF-16 units. Names and code points are displayed instead of raw controls.\"},{\"office\":\"Hidden Occupant Eviction Authority\",\"state\":\"NOT_REQUIRED\",\"finding\":\"No eviction was required because the initial survey found no occupants.\",\"document\":\"No eviction order issued.\"},{\"office\":\"Vacancy Reinspection Office\",\"state\":\"APPROVED\",\"finding\":\"Reinspection verified exactly zero characters before occupancy.\",\"document\":\"Vacancy certificate: character count 0. Memory capacity has not been measured or claimed to be zero.\"},{\"office\":\"Single-Use Occupancy Lease Authority\",\"state\":\"APPROVED\",\"finding\":\"Issued a single-use, request-bound lease for ordinal 3.\",\"document\":\"Lease binds this request, this premises and this vacant survey.\"},{\"office\":\"Independent Premises Auditor\",\"state\":\"APPROVED\",\"finding\":\"Independent audit admitted the vacant premises for numerical habitation.\",\"document\":\"The actual text may now move in. The vacancy finding describes the pre-occupancy inspection only.\"}]}"
+    },
+    {
+      "ordinal": "3",
+      "kind": "TRANSACTION_BEGIN",
+      "office": "Output Transaction Coordinator",
+      "finding": "Opened an isolated staging buffer for ordinal 3. Fragments cannot publish a partial line.",
+      "document": null
+    },
+    {
+      "ordinal": "3",
+      "kind": "CLASSIFICATION",
+      "office": "Three-seat Classification Council",
+      "finding": "Fizz permission: true; Buzz permission: false; numeral permission: false. The independent arithmetic witness verified all votes.",
+      "document": null
+    },
+    {
+      "ordinal": "3",
+      "kind": "VISITOR",
+      "office": "Output Generation Context Visitor",
+      "finding": "The certified strategy authorized printer FizzStringPrinter for this ordinal.",
+      "document": null
+    },
+    {
+      "ordinal": "3",
+      "kind": "REQUISITION",
+      "office": "Glyph Procurement Authority",
+      "finding": "Authorized product Fizz with 4 position-specific allocations.",
+      "document": null
+    },
+    {
+      "ordinal": "3",
+      "kind": "DELIVERY",
+      "office": "Approved Glyph Supplier",
+      "finding": "Delivered 4 allocations for Fizz. Inventory is fictional and inexhaustible.",
+      "document": null
+    },
+    {
+      "ordinal": "3",
+      "kind": "GLYPH_ACCEPTED",
+      "office": "Independent Receiving Inspector",
+      "finding": "Accepted Fizz position 1: character F, SKU GLY-0046, quantity 1. Its certificate belongs to this requisition and this position.",
+      "document": null
+    },
+    {
+      "ordinal": "3",
+      "kind": "GLYPH_ACCEPTED",
+      "office": "Independent Receiving Inspector",
+      "finding": "Accepted Fizz position 2: character i, SKU GLY-0069, quantity 1. Its certificate belongs to this requisition and this position.",
+      "document": null
+    },
+    {
+      "ordinal": "3",
+      "kind": "GLYPH_ACCEPTED",
+      "office": "Independent Receiving Inspector",
+      "finding": "Accepted Fizz position 3: character z, SKU GLY-007A, quantity 1. Its certificate belongs to this requisition and this position.",
+      "document": null
+    },
+    {
+      "ordinal": "3",
+      "kind": "GLYPH_ACCEPTED",
+      "office": "Independent Receiving Inspector",
+      "finding": "Accepted Fizz position 4: character z, SKU GLY-007A, quantity 1. Its certificate belongs to this requisition and this position.",
+      "document": null
+    },
+    {
+      "ordinal": "3",
+      "kind": "GLYPH_ASSEMBLED",
+      "office": "Certified Glyph Assembler",
+      "finding": "Verified every position-specific certificate and assembled Fizz in the approved order.",
+      "document": null
+    },
+    {
+      "ordinal": "3",
+      "kind": "FRAGMENT",
+      "office": "Output Staging Office",
+      "finding": "Staged 4 UTF-16 units; line separators remain part of the authorized payload.",
+      "document": "Fizz"
+    },
+    {
+      "ordinal": "3",
+      "kind": "VISITOR",
+      "office": "Output Generation Context Visitor",
+      "finding": "The certified strategy declined printer BuzzStringPrinter for this ordinal.",
+      "document": null
+    },
+    {
+      "ordinal": "3",
+      "kind": "VISITOR",
+      "office": "Output Generation Context Visitor",
+      "finding": "The certified strategy declined printer IntegerIntegerPrinter for this ordinal.",
+      "document": null
+    },
+    {
+      "ordinal": "3",
+      "kind": "FRAGMENT",
+      "office": "Output Staging Office",
+      "finding": "Staged 1 UTF-16 units; line separators remain part of the authorized payload.",
+      "document": "\n"
+    },
+    {
+      "ordinal": "3",
+      "kind": "NOTARY",
+      "office": "Independent Proclamation Notary",
+      "finding": "An independent arithmetic and lexical check authorized this complete payload.",
+      "document": "Fizz\n"
+    },
+    {
+      "ordinal": "3",
+      "kind": "PUBLICATION",
+      "office": "Output Publication Office",
+      "finding": "Published the complete UTF-8 line to the request audience.",
+      "document": "Fizz\n"
+    },
+    {
+      "ordinal": "3",
+      "kind": "AUDIT_APPEND",
+      "office": "Audit Repository of Record",
+      "finding": "Appended sequence 3 with disposition COMMITTED. Its predecessor and SHA-256 digest bind the payload to the existing chain.",
+      "document": "Sequence 3; previous a5501670c801057a90b99ae2c877915097918eb8954f95140e97ed5bb8a7d842; digest 09fb98e45663e0c3b9f394d8630e6e5535db4f473fbd0ec20f7dd8a787552211"
+    },
+    {
+      "ordinal": "3",
+      "kind": "QUEUE_ENQUEUED",
+      "office": "Audit Message Broker",
+      "finding": "Queued audit sequence 3 for the idempotent status projection. Publication to the mailbox is not delivery acknowledgment.",
+      "document": null
+    },
+    {
+      "ordinal": "3",
+      "kind": "TRANSACTION_COMMIT",
+      "office": "Output Transaction Coordinator",
+      "finding": "The numerical line and its committed audit entry completed their transaction.",
+      "document": null
+    },
+    {
+      "ordinal": "3",
+      "kind": "PREMISES_RELEASE",
+      "office": "Occupancy Custody Office",
+      "finding": "Released ordinal 3's premises after housing 5 UTF-16 units. The pre-occupancy vacancy certificate remains a historical finding.",
+      "document": null
+    },
+    {
+      "ordinal": "3",
+      "kind": "TRANSACTION_CLEANUP",
+      "office": "Output Transaction Coordinator",
+      "finding": "Released this ordinal's staging buffer.",
+      "document": null
+    },
+    {
+      "ordinal": "3",
+      "kind": "SUCCESSION",
+      "office": "Ordinal Succession Authority",
+      "finding": "Incumbent 3 petitioned for advancement 1. The independent auditor certified successor 4.",
+      "document": null
+    },
+    {
+      "ordinal": "4",
+      "kind": "CONTINUATION",
+      "office": "Inclusive Boundary Quorum",
+      "finding": "Current ordinal 4; authorized upper boundary 15. Pre-boundary vote: PERMIT; at-boundary vote: WITHHOLD.",
+      "document": null
+    },
+    {
+      "ordinal": "4",
+      "kind": "ASSEMBLY",
+      "office": "Factories and Strategy Registry",
+      "finding": "Factory-appointed Fizz, Buzz and numeral contexts and their shared visitor convened for this ordinal.",
+      "document": null
+    },
+    {
+      "ordinal": "4",
+      "kind": "PREMISES_APPROVED",
+      "office": "Premises Allocation Office",
+      "finding": "Allocated request-bound premises for ordinal 4. No occupancy permission has yet been issued.",
+      "document": "Allocation record: this request owns this buffer."
+    },
+    {
+      "ordinal": "4",
+      "kind": "PREMISES_APPROVED",
+      "office": "Character-by-Character Vacancy Inspector",
+      "finding": "No characters occupied the premises at this inspection.",
+      "document": "Initial occupancy: 0 UTF-16 units. Names and code points are displayed instead of raw controls."
+    },
+    {
+      "ordinal": "4",
+      "kind": "PREMISES_NOT_REQUIRED",
+      "office": "Hidden Occupant Eviction Authority",
+      "finding": "No eviction was required because the initial survey found no occupants.",
+      "document": "No eviction order issued."
+    },
+    {
+      "ordinal": "4",
+      "kind": "PREMISES_APPROVED",
+      "office": "Vacancy Reinspection Office",
+      "finding": "Reinspection verified exactly zero characters before occupancy.",
+      "document": "Vacancy certificate: character count 0. Memory capacity has not been measured or claimed to be zero."
+    },
+    {
+      "ordinal": "4",
+      "kind": "PREMISES_APPROVED",
+      "office": "Single-Use Occupancy Lease Authority",
+      "finding": "Issued a single-use, request-bound lease for ordinal 4.",
+      "document": "Lease binds this request, this premises and this vacant survey."
+    },
+    {
+      "ordinal": "4",
+      "kind": "PREMISES_APPROVED",
+      "office": "Independent Premises Auditor",
+      "finding": "Independent audit admitted the vacant premises for numerical habitation.",
+      "document": "The actual text may now move in. The vacancy finding describes the pre-occupancy inspection only."
+    },
+    {
+      "ordinal": "4",
+      "kind": "PREMISES_CERTIFICATE",
+      "office": "Vacant String Real Estate and Occupancy Directorate",
+      "finding": "Vacancy certified; the ordinal may now occupy its leased output buffer.",
+      "document": "{\"schema\":\"slopbuzz-premises/v1\",\"ordinal\":\"4\",\"purpose\":\"MANDATE\",\"status\":\"APPROVED\",\"initialLength\":0,\"vacancyCertified\":true,\"tenants\":[],\"steps\":[{\"office\":\"Premises Allocation Office\",\"state\":\"APPROVED\",\"finding\":\"Allocated request-bound premises for ordinal 4. No occupancy permission has yet been issued.\",\"document\":\"Allocation record: this request owns this buffer.\"},{\"office\":\"Character-by-Character Vacancy Inspector\",\"state\":\"APPROVED\",\"finding\":\"No characters occupied the premises at this inspection.\",\"document\":\"Initial occupancy: 0 UTF-16 units. Names and code points are displayed instead of raw controls.\"},{\"office\":\"Hidden Occupant Eviction Authority\",\"state\":\"NOT_REQUIRED\",\"finding\":\"No eviction was required because the initial survey found no occupants.\",\"document\":\"No eviction order issued.\"},{\"office\":\"Vacancy Reinspection Office\",\"state\":\"APPROVED\",\"finding\":\"Reinspection verified exactly zero characters before occupancy.\",\"document\":\"Vacancy certificate: character count 0. Memory capacity has not been measured or claimed to be zero.\"},{\"office\":\"Single-Use Occupancy Lease Authority\",\"state\":\"APPROVED\",\"finding\":\"Issued a single-use, request-bound lease for ordinal 4.\",\"document\":\"Lease binds this request, this premises and this vacant survey.\"},{\"office\":\"Independent Premises Auditor\",\"state\":\"APPROVED\",\"finding\":\"Independent audit admitted the vacant premises for numerical habitation.\",\"document\":\"The actual text may now move in. The vacancy finding describes the pre-occupancy inspection only.\"}]}"
+    },
+    {
+      "ordinal": "4",
+      "kind": "TRANSACTION_BEGIN",
+      "office": "Output Transaction Coordinator",
+      "finding": "Opened an isolated staging buffer for ordinal 4. Fragments cannot publish a partial line.",
+      "document": null
+    },
+    {
+      "ordinal": "4",
+      "kind": "CLASSIFICATION",
+      "office": "Three-seat Classification Council",
+      "finding": "Fizz permission: false; Buzz permission: false; numeral permission: true. The independent arithmetic witness verified all votes.",
+      "document": null
+    },
+    {
+      "ordinal": "4",
+      "kind": "VISITOR",
+      "office": "Output Generation Context Visitor",
+      "finding": "The certified strategy declined printer FizzStringPrinter for this ordinal.",
+      "document": null
+    },
+    {
+      "ordinal": "4",
+      "kind": "VISITOR",
+      "office": "Output Generation Context Visitor",
+      "finding": "The certified strategy declined printer BuzzStringPrinter for this ordinal.",
+      "document": null
+    },
+    {
+      "ordinal": "4",
+      "kind": "VISITOR",
+      "office": "Output Generation Context Visitor",
+      "finding": "The certified strategy authorized printer IntegerIntegerPrinter for this ordinal.",
+      "document": null
+    },
+    {
+      "ordinal": "4",
+      "kind": "NUMERAL",
+      "office": "Integer-to-String Conversion Directorate",
+      "finding": "The ordinal was boxed as Integer, converted to decimal, copied through StringBuilder and returned as a fresh String: 4.",
+      "document": null
+    },
+    {
+      "ordinal": "4",
+      "kind": "FRAGMENT",
+      "office": "Output Staging Office",
+      "finding": "Staged 1 UTF-16 units; line separators remain part of the authorized payload.",
+      "document": "4"
+    },
+    {
+      "ordinal": "4",
+      "kind": "FRAGMENT",
+      "office": "Output Staging Office",
+      "finding": "Staged 1 UTF-16 units; line separators remain part of the authorized payload.",
+      "document": "\n"
+    },
+    {
+      "ordinal": "4",
+      "kind": "NOTARY",
+      "office": "Independent Proclamation Notary",
+      "finding": "An independent arithmetic and lexical check authorized this complete payload.",
+      "document": "4\n"
+    },
+    {
+      "ordinal": "4",
+      "kind": "PUBLICATION",
+      "office": "Output Publication Office",
+      "finding": "Published the complete UTF-8 line to the request audience.",
+      "document": "4\n"
+    },
+    {
+      "ordinal": "4",
+      "kind": "AUDIT_APPEND",
+      "office": "Audit Repository of Record",
+      "finding": "Appended sequence 4 with disposition COMMITTED. Its predecessor and SHA-256 digest bind the payload to the existing chain.",
+      "document": "Sequence 4; previous 09fb98e45663e0c3b9f394d8630e6e5535db4f473fbd0ec20f7dd8a787552211; digest 8732d659c83c50cd64cfe141a18963fcd064f611743179001775f5fb1f432f22"
+    },
+    {
+      "ordinal": "4",
+      "kind": "QUEUE_ENQUEUED",
+      "office": "Audit Message Broker",
+      "finding": "Queued audit sequence 4 for the idempotent status projection. Publication to the mailbox is not delivery acknowledgment.",
+      "document": null
+    },
+    {
+      "ordinal": "4",
+      "kind": "TRANSACTION_COMMIT",
+      "office": "Output Transaction Coordinator",
+      "finding": "The numerical line and its committed audit entry completed their transaction.",
+      "document": null
+    },
+    {
+      "ordinal": "4",
+      "kind": "PREMISES_RELEASE",
+      "office": "Occupancy Custody Office",
+      "finding": "Released ordinal 4's premises after housing 2 UTF-16 units. The pre-occupancy vacancy certificate remains a historical finding.",
+      "document": null
+    },
+    {
+      "ordinal": "4",
+      "kind": "TRANSACTION_CLEANUP",
+      "office": "Output Transaction Coordinator",
+      "finding": "Released this ordinal's staging buffer.",
+      "document": null
+    },
+    {
+      "ordinal": "4",
+      "kind": "SUCCESSION",
+      "office": "Ordinal Succession Authority",
+      "finding": "Incumbent 4 petitioned for advancement 1. The independent auditor certified successor 5.",
+      "document": null
+    },
+    {
+      "ordinal": "5",
+      "kind": "CONTINUATION",
+      "office": "Inclusive Boundary Quorum",
+      "finding": "Current ordinal 5; authorized upper boundary 15. Pre-boundary vote: PERMIT; at-boundary vote: WITHHOLD.",
+      "document": null
+    },
+    {
+      "ordinal": "5",
+      "kind": "ASSEMBLY",
+      "office": "Factories and Strategy Registry",
+      "finding": "Factory-appointed Fizz, Buzz and numeral contexts and their shared visitor convened for this ordinal.",
+      "document": null
+    },
+    {
+      "ordinal": "5",
+      "kind": "PREMISES_APPROVED",
+      "office": "Premises Allocation Office",
+      "finding": "Allocated request-bound premises for ordinal 5. No occupancy permission has yet been issued.",
+      "document": "Allocation record: this request owns this buffer."
+    },
+    {
+      "ordinal": "5",
+      "kind": "PREMISES_APPROVED",
+      "office": "Character-by-Character Vacancy Inspector",
+      "finding": "No characters occupied the premises at this inspection.",
+      "document": "Initial occupancy: 0 UTF-16 units. Names and code points are displayed instead of raw controls."
+    },
+    {
+      "ordinal": "5",
+      "kind": "PREMISES_NOT_REQUIRED",
+      "office": "Hidden Occupant Eviction Authority",
+      "finding": "No eviction was required because the initial survey found no occupants.",
+      "document": "No eviction order issued."
+    },
+    {
+      "ordinal": "5",
+      "kind": "PREMISES_APPROVED",
+      "office": "Vacancy Reinspection Office",
+      "finding": "Reinspection verified exactly zero characters before occupancy.",
+      "document": "Vacancy certificate: character count 0. Memory capacity has not been measured or claimed to be zero."
+    },
+    {
+      "ordinal": "5",
+      "kind": "PREMISES_APPROVED",
+      "office": "Single-Use Occupancy Lease Authority",
+      "finding": "Issued a single-use, request-bound lease for ordinal 5.",
+      "document": "Lease binds this request, this premises and this vacant survey."
+    },
+    {
+      "ordinal": "5",
+      "kind": "PREMISES_APPROVED",
+      "office": "Independent Premises Auditor",
+      "finding": "Independent audit admitted the vacant premises for numerical habitation.",
+      "document": "The actual text may now move in. The vacancy finding describes the pre-occupancy inspection only."
+    },
+    {
+      "ordinal": "5",
+      "kind": "PREMISES_CERTIFICATE",
+      "office": "Vacant String Real Estate and Occupancy Directorate",
+      "finding": "Vacancy certified; the ordinal may now occupy its leased output buffer.",
+      "document": "{\"schema\":\"slopbuzz-premises/v1\",\"ordinal\":\"5\",\"purpose\":\"MANDATE\",\"status\":\"APPROVED\",\"initialLength\":0,\"vacancyCertified\":true,\"tenants\":[],\"steps\":[{\"office\":\"Premises Allocation Office\",\"state\":\"APPROVED\",\"finding\":\"Allocated request-bound premises for ordinal 5. No occupancy permission has yet been issued.\",\"document\":\"Allocation record: this request owns this buffer.\"},{\"office\":\"Character-by-Character Vacancy Inspector\",\"state\":\"APPROVED\",\"finding\":\"No characters occupied the premises at this inspection.\",\"document\":\"Initial occupancy: 0 UTF-16 units. Names and code points are displayed instead of raw controls.\"},{\"office\":\"Hidden Occupant Eviction Authority\",\"state\":\"NOT_REQUIRED\",\"finding\":\"No eviction was required because the initial survey found no occupants.\",\"document\":\"No eviction order issued.\"},{\"office\":\"Vacancy Reinspection Office\",\"state\":\"APPROVED\",\"finding\":\"Reinspection verified exactly zero characters before occupancy.\",\"document\":\"Vacancy certificate: character count 0. Memory capacity has not been measured or claimed to be zero.\"},{\"office\":\"Single-Use Occupancy Lease Authority\",\"state\":\"APPROVED\",\"finding\":\"Issued a single-use, request-bound lease for ordinal 5.\",\"document\":\"Lease binds this request, this premises and this vacant survey.\"},{\"office\":\"Independent Premises Auditor\",\"state\":\"APPROVED\",\"finding\":\"Independent audit admitted the vacant premises for numerical habitation.\",\"document\":\"The actual text may now move in. The vacancy finding describes the pre-occupancy inspection only.\"}]}"
+    },
+    {
+      "ordinal": "5",
+      "kind": "TRANSACTION_BEGIN",
+      "office": "Output Transaction Coordinator",
+      "finding": "Opened an isolated staging buffer for ordinal 5. Fragments cannot publish a partial line.",
+      "document": null
+    },
+    {
+      "ordinal": "5",
+      "kind": "CLASSIFICATION",
+      "office": "Three-seat Classification Council",
+      "finding": "Fizz permission: false; Buzz permission: true; numeral permission: false. The independent arithmetic witness verified all votes.",
+      "document": null
+    },
+    {
+      "ordinal": "5",
+      "kind": "VISITOR",
+      "office": "Output Generation Context Visitor",
+      "finding": "The certified strategy declined printer FizzStringPrinter for this ordinal.",
+      "document": null
+    },
+    {
+      "ordinal": "5",
+      "kind": "VISITOR",
+      "office": "Output Generation Context Visitor",
+      "finding": "The certified strategy authorized printer BuzzStringPrinter for this ordinal.",
+      "document": null
+    },
+    {
+      "ordinal": "5",
+      "kind": "REQUISITION",
+      "office": "Glyph Procurement Authority",
+      "finding": "Authorized product Buzz with 4 position-specific allocations.",
+      "document": null
+    },
+    {
+      "ordinal": "5",
+      "kind": "DELIVERY",
+      "office": "Approved Glyph Supplier",
+      "finding": "Delivered 4 allocations for Buzz. Inventory is fictional and inexhaustible.",
+      "document": null
+    },
+    {
+      "ordinal": "5",
+      "kind": "GLYPH_ACCEPTED",
+      "office": "Independent Receiving Inspector",
+      "finding": "Accepted Buzz position 1: character B, SKU GLY-0042, quantity 1. Its certificate belongs to this requisition and this position.",
+      "document": null
+    },
+    {
+      "ordinal": "5",
+      "kind": "GLYPH_ACCEPTED",
+      "office": "Independent Receiving Inspector",
+      "finding": "Accepted Buzz position 2: character u, SKU GLY-0075, quantity 1. Its certificate belongs to this requisition and this position.",
+      "document": null
+    },
+    {
+      "ordinal": "5",
+      "kind": "GLYPH_ACCEPTED",
+      "office": "Independent Receiving Inspector",
+      "finding": "Accepted Buzz position 3: character z, SKU GLY-007A, quantity 1. Its certificate belongs to this requisition and this position.",
+      "document": null
+    },
+    {
+      "ordinal": "5",
+      "kind": "GLYPH_ACCEPTED",
+      "office": "Independent Receiving Inspector",
+      "finding": "Accepted Buzz position 4: character z, SKU GLY-007A, quantity 1. Its certificate belongs to this requisition and this position.",
+      "document": null
+    },
+    {
+      "ordinal": "5",
+      "kind": "GLYPH_ASSEMBLED",
+      "office": "Certified Glyph Assembler",
+      "finding": "Verified every position-specific certificate and assembled Buzz in the approved order.",
+      "document": null
+    },
+    {
+      "ordinal": "5",
+      "kind": "FRAGMENT",
+      "office": "Output Staging Office",
+      "finding": "Staged 4 UTF-16 units; line separators remain part of the authorized payload.",
+      "document": "Buzz"
+    },
+    {
+      "ordinal": "5",
+      "kind": "VISITOR",
+      "office": "Output Generation Context Visitor",
+      "finding": "The certified strategy declined printer IntegerIntegerPrinter for this ordinal.",
+      "document": null
+    },
+    {
+      "ordinal": "5",
+      "kind": "FRAGMENT",
+      "office": "Output Staging Office",
+      "finding": "Staged 1 UTF-16 units; line separators remain part of the authorized payload.",
+      "document": "\n"
+    },
+    {
+      "ordinal": "5",
+      "kind": "NOTARY",
+      "office": "Independent Proclamation Notary",
+      "finding": "An independent arithmetic and lexical check authorized this complete payload.",
+      "document": "Buzz\n"
+    },
+    {
+      "ordinal": "5",
+      "kind": "PUBLICATION",
+      "office": "Output Publication Office",
+      "finding": "Published the complete UTF-8 line to the request audience.",
+      "document": "Buzz\n"
+    },
+    {
+      "ordinal": "5",
+      "kind": "AUDIT_APPEND",
+      "office": "Audit Repository of Record",
+      "finding": "Appended sequence 5 with disposition COMMITTED. Its predecessor and SHA-256 digest bind the payload to the existing chain.",
+      "document": "Sequence 5; previous 8732d659c83c50cd64cfe141a18963fcd064f611743179001775f5fb1f432f22; digest 99c3826bdeffd69c4b194a70d38d775719a92704f14a22f86f25ad5c3ef23b12"
+    },
+    {
+      "ordinal": "5",
+      "kind": "QUEUE_ENQUEUED",
+      "office": "Audit Message Broker",
+      "finding": "Queued audit sequence 5 for the idempotent status projection. Publication to the mailbox is not delivery acknowledgment.",
+      "document": null
+    },
+    {
+      "ordinal": "5",
+      "kind": "TRANSACTION_COMMIT",
+      "office": "Output Transaction Coordinator",
+      "finding": "The numerical line and its committed audit entry completed their transaction.",
+      "document": null
+    },
+    {
+      "ordinal": "5",
+      "kind": "PREMISES_RELEASE",
+      "office": "Occupancy Custody Office",
+      "finding": "Released ordinal 5's premises after housing 5 UTF-16 units. The pre-occupancy vacancy certificate remains a historical finding.",
+      "document": null
+    },
+    {
+      "ordinal": "5",
+      "kind": "TRANSACTION_CLEANUP",
+      "office": "Output Transaction Coordinator",
+      "finding": "Released this ordinal's staging buffer.",
+      "document": null
+    },
+    {
+      "ordinal": "5",
+      "kind": "SUCCESSION",
+      "office": "Ordinal Succession Authority",
+      "finding": "Incumbent 5 petitioned for advancement 1. The independent auditor certified successor 6.",
+      "document": null
+    },
+    {
+      "ordinal": "6",
+      "kind": "CONTINUATION",
+      "office": "Inclusive Boundary Quorum",
+      "finding": "Current ordinal 6; authorized upper boundary 15. Pre-boundary vote: PERMIT; at-boundary vote: WITHHOLD.",
+      "document": null
+    },
+    {
+      "ordinal": "6",
+      "kind": "ASSEMBLY",
+      "office": "Factories and Strategy Registry",
+      "finding": "Factory-appointed Fizz, Buzz and numeral contexts and their shared visitor convened for this ordinal.",
+      "document": null
+    },
+    {
+      "ordinal": "6",
+      "kind": "PREMISES_APPROVED",
+      "office": "Premises Allocation Office",
+      "finding": "Allocated request-bound premises for ordinal 6. No occupancy permission has yet been issued.",
+      "document": "Allocation record: this request owns this buffer."
+    },
+    {
+      "ordinal": "6",
+      "kind": "PREMISES_APPROVED",
+      "office": "Character-by-Character Vacancy Inspector",
+      "finding": "No characters occupied the premises at this inspection.",
+      "document": "Initial occupancy: 0 UTF-16 units. Names and code points are displayed instead of raw controls."
+    },
+    {
+      "ordinal": "6",
+      "kind": "PREMISES_NOT_REQUIRED",
+      "office": "Hidden Occupant Eviction Authority",
+      "finding": "No eviction was required because the initial survey found no occupants.",
+      "document": "No eviction order issued."
+    },
+    {
+      "ordinal": "6",
+      "kind": "PREMISES_APPROVED",
+      "office": "Vacancy Reinspection Office",
+      "finding": "Reinspection verified exactly zero characters before occupancy.",
+      "document": "Vacancy certificate: character count 0. Memory capacity has not been measured or claimed to be zero."
+    },
+    {
+      "ordinal": "6",
+      "kind": "PREMISES_APPROVED",
+      "office": "Single-Use Occupancy Lease Authority",
+      "finding": "Issued a single-use, request-bound lease for ordinal 6.",
+      "document": "Lease binds this request, this premises and this vacant survey."
+    },
+    {
+      "ordinal": "6",
+      "kind": "PREMISES_APPROVED",
+      "office": "Independent Premises Auditor",
+      "finding": "Independent audit admitted the vacant premises for numerical habitation.",
+      "document": "The actual text may now move in. The vacancy finding describes the pre-occupancy inspection only."
+    },
+    {
+      "ordinal": "6",
+      "kind": "PREMISES_CERTIFICATE",
+      "office": "Vacant String Real Estate and Occupancy Directorate",
+      "finding": "Vacancy certified; the ordinal may now occupy its leased output buffer.",
+      "document": "{\"schema\":\"slopbuzz-premises/v1\",\"ordinal\":\"6\",\"purpose\":\"MANDATE\",\"status\":\"APPROVED\",\"initialLength\":0,\"vacancyCertified\":true,\"tenants\":[],\"steps\":[{\"office\":\"Premises Allocation Office\",\"state\":\"APPROVED\",\"finding\":\"Allocated request-bound premises for ordinal 6. No occupancy permission has yet been issued.\",\"document\":\"Allocation record: this request owns this buffer.\"},{\"office\":\"Character-by-Character Vacancy Inspector\",\"state\":\"APPROVED\",\"finding\":\"No characters occupied the premises at this inspection.\",\"document\":\"Initial occupancy: 0 UTF-16 units. Names and code points are displayed instead of raw controls.\"},{\"office\":\"Hidden Occupant Eviction Authority\",\"state\":\"NOT_REQUIRED\",\"finding\":\"No eviction was required because the initial survey found no occupants.\",\"document\":\"No eviction order issued.\"},{\"office\":\"Vacancy Reinspection Office\",\"state\":\"APPROVED\",\"finding\":\"Reinspection verified exactly zero characters before occupancy.\",\"document\":\"Vacancy certificate: character count 0. Memory capacity has not been measured or claimed to be zero.\"},{\"office\":\"Single-Use Occupancy Lease Authority\",\"state\":\"APPROVED\",\"finding\":\"Issued a single-use, request-bound lease for ordinal 6.\",\"document\":\"Lease binds this request, this premises and this vacant survey.\"},{\"office\":\"Independent Premises Auditor\",\"state\":\"APPROVED\",\"finding\":\"Independent audit admitted the vacant premises for numerical habitation.\",\"document\":\"The actual text may now move in. The vacancy finding describes the pre-occupancy inspection only.\"}]}"
+    },
+    {
+      "ordinal": "6",
+      "kind": "TRANSACTION_BEGIN",
+      "office": "Output Transaction Coordinator",
+      "finding": "Opened an isolated staging buffer for ordinal 6. Fragments cannot publish a partial line.",
+      "document": null
+    },
+    {
+      "ordinal": "6",
+      "kind": "CLASSIFICATION",
+      "office": "Three-seat Classification Council",
+      "finding": "Fizz permission: true; Buzz permission: false; numeral permission: false. The independent arithmetic witness verified all votes.",
+      "document": null
+    },
+    {
+      "ordinal": "6",
+      "kind": "VISITOR",
+      "office": "Output Generation Context Visitor",
+      "finding": "The certified strategy authorized printer FizzStringPrinter for this ordinal.",
+      "document": null
+    },
+    {
+      "ordinal": "6",
+      "kind": "REQUISITION",
+      "office": "Glyph Procurement Authority",
+      "finding": "Authorized product Fizz with 4 position-specific allocations.",
+      "document": null
+    },
+    {
+      "ordinal": "6",
+      "kind": "DELIVERY",
+      "office": "Approved Glyph Supplier",
+      "finding": "Delivered 4 allocations for Fizz. Inventory is fictional and inexhaustible.",
+      "document": null
+    },
+    {
+      "ordinal": "6",
+      "kind": "GLYPH_ACCEPTED",
+      "office": "Independent Receiving Inspector",
+      "finding": "Accepted Fizz position 1: character F, SKU GLY-0046, quantity 1. Its certificate belongs to this requisition and this position.",
+      "document": null
+    },
+    {
+      "ordinal": "6",
+      "kind": "GLYPH_ACCEPTED",
+      "office": "Independent Receiving Inspector",
+      "finding": "Accepted Fizz position 2: character i, SKU GLY-0069, quantity 1. Its certificate belongs to this requisition and this position.",
+      "document": null
+    },
+    {
+      "ordinal": "6",
+      "kind": "GLYPH_ACCEPTED",
+      "office": "Independent Receiving Inspector",
+      "finding": "Accepted Fizz position 3: character z, SKU GLY-007A, quantity 1. Its certificate belongs to this requisition and this position.",
+      "document": null
+    },
+    {
+      "ordinal": "6",
+      "kind": "GLYPH_ACCEPTED",
+      "office": "Independent Receiving Inspector",
+      "finding": "Accepted Fizz position 4: character z, SKU GLY-007A, quantity 1. Its certificate belongs to this requisition and this position.",
+      "document": null
+    },
+    {
+      "ordinal": "6",
+      "kind": "GLYPH_ASSEMBLED",
+      "office": "Certified Glyph Assembler",
+      "finding": "Verified every position-specific certificate and assembled Fizz in the approved order.",
+      "document": null
+    },
+    {
+      "ordinal": "6",
+      "kind": "FRAGMENT",
+      "office": "Output Staging Office",
+      "finding": "Staged 4 UTF-16 units; line separators remain part of the authorized payload.",
+      "document": "Fizz"
+    },
+    {
+      "ordinal": "6",
+      "kind": "VISITOR",
+      "office": "Output Generation Context Visitor",
+      "finding": "The certified strategy declined printer BuzzStringPrinter for this ordinal.",
+      "document": null
+    },
+    {
+      "ordinal": "6",
+      "kind": "VISITOR",
+      "office": "Output Generation Context Visitor",
+      "finding": "The certified strategy declined printer IntegerIntegerPrinter for this ordinal.",
+      "document": null
+    },
+    {
+      "ordinal": "6",
+      "kind": "FRAGMENT",
+      "office": "Output Staging Office",
+      "finding": "Staged 1 UTF-16 units; line separators remain part of the authorized payload.",
+      "document": "\n"
+    },
+    {
+      "ordinal": "6",
+      "kind": "NOTARY",
+      "office": "Independent Proclamation Notary",
+      "finding": "An independent arithmetic and lexical check authorized this complete payload.",
+      "document": "Fizz\n"
+    },
+    {
+      "ordinal": "6",
+      "kind": "PUBLICATION",
+      "office": "Output Publication Office",
+      "finding": "Published the complete UTF-8 line to the request audience.",
+      "document": "Fizz\n"
+    },
+    {
+      "ordinal": "6",
+      "kind": "AUDIT_APPEND",
+      "office": "Audit Repository of Record",
+      "finding": "Appended sequence 6 with disposition COMMITTED. Its predecessor and SHA-256 digest bind the payload to the existing chain.",
+      "document": "Sequence 6; previous 99c3826bdeffd69c4b194a70d38d775719a92704f14a22f86f25ad5c3ef23b12; digest 8d080daa12cea2cf4faae1cc2e4efc7348c12480f1393a27bd4c1069014fac0d"
+    },
+    {
+      "ordinal": "6",
+      "kind": "QUEUE_ENQUEUED",
+      "office": "Audit Message Broker",
+      "finding": "Queued audit sequence 6 for the idempotent status projection. Publication to the mailbox is not delivery acknowledgment.",
+      "document": null
+    },
+    {
+      "ordinal": "6",
+      "kind": "TRANSACTION_COMMIT",
+      "office": "Output Transaction Coordinator",
+      "finding": "The numerical line and its committed audit entry completed their transaction.",
+      "document": null
+    },
+    {
+      "ordinal": "6",
+      "kind": "PREMISES_RELEASE",
+      "office": "Occupancy Custody Office",
+      "finding": "Released ordinal 6's premises after housing 5 UTF-16 units. The pre-occupancy vacancy certificate remains a historical finding.",
+      "document": null
+    },
+    {
+      "ordinal": "6",
+      "kind": "TRANSACTION_CLEANUP",
+      "office": "Output Transaction Coordinator",
+      "finding": "Released this ordinal's staging buffer.",
+      "document": null
+    },
+    {
+      "ordinal": "6",
+      "kind": "SUCCESSION",
+      "office": "Ordinal Succession Authority",
+      "finding": "Incumbent 6 petitioned for advancement 1. The independent auditor certified successor 7.",
+      "document": null
+    },
+    {
+      "ordinal": "7",
+      "kind": "CONTINUATION",
+      "office": "Inclusive Boundary Quorum",
+      "finding": "Current ordinal 7; authorized upper boundary 15. Pre-boundary vote: PERMIT; at-boundary vote: WITHHOLD.",
+      "document": null
+    },
+    {
+      "ordinal": "7",
+      "kind": "ASSEMBLY",
+      "office": "Factories and Strategy Registry",
+      "finding": "Factory-appointed Fizz, Buzz and numeral contexts and their shared visitor convened for this ordinal.",
+      "document": null
+    },
+    {
+      "ordinal": "7",
+      "kind": "PREMISES_APPROVED",
+      "office": "Premises Allocation Office",
+      "finding": "Allocated request-bound premises for ordinal 7. No occupancy permission has yet been issued.",
+      "document": "Allocation record: this request owns this buffer."
+    },
+    {
+      "ordinal": "7",
+      "kind": "PREMISES_DISCOVERY",
+      "office": "Character-by-Character Vacancy Inspector",
+      "finding": "Identified NO-BREAK SPACE (non-breaking space) (U+00A0) at UTF-16 position 0. It insisted that breaking up the room would violate its tenancy agreement.",
+      "document": "Initial occupancy: 1 UTF-16 units. Names and code points are displayed instead of raw controls."
+    },
+    {
+      "ordinal": "7",
+      "kind": "PREMISES_APPROVED",
+      "office": "Hidden Occupant Eviction Authority",
+      "finding": "Removed 1 identified hidden occupant(s) under the registered removal procedure.",
+      "document": "Eviction completed before numerical assembly; no discovered character enters Official output."
+    },
+    {
+      "ordinal": "7",
+      "kind": "PREMISES_APPROVED",
+      "office": "Vacancy Reinspection Office",
+      "finding": "Reinspection verified exactly zero characters before occupancy.",
+      "document": "Vacancy certificate: character count 0. Memory capacity has not been measured or claimed to be zero."
+    },
+    {
+      "ordinal": "7",
+      "kind": "PREMISES_APPROVED",
+      "office": "Single-Use Occupancy Lease Authority",
+      "finding": "Issued a single-use, request-bound lease for ordinal 7.",
+      "document": "Lease binds this request, this premises and this vacant survey."
+    },
+    {
+      "ordinal": "7",
+      "kind": "PREMISES_APPROVED",
+      "office": "Independent Premises Auditor",
+      "finding": "Independent audit admitted the vacant premises for numerical habitation.",
+      "document": "The actual text may now move in. The vacancy finding describes the pre-occupancy inspection only."
+    },
+    {
+      "ordinal": "7",
+      "kind": "PREMISES_CERTIFICATE",
+      "office": "Vacant String Real Estate and Occupancy Directorate",
+      "finding": "Vacancy certified; the ordinal may now occupy its leased output buffer.",
+      "document": "{\"schema\":\"slopbuzz-premises/v1\",\"ordinal\":\"7\",\"purpose\":\"MANDATE\",\"status\":\"APPROVED\",\"initialLength\":1,\"vacancyCertified\":true,\"tenants\":[{\"position\":0,\"codePoint\":\"U+00A0\",\"name\":\"NO-BREAK SPACE (non-breaking space)\",\"excuse\":\"It insisted that breaking up the room would violate its tenancy agreement.\",\"recognized\":true}],\"steps\":[{\"office\":\"Premises Allocation Office\",\"state\":\"APPROVED\",\"finding\":\"Allocated request-bound premises for ordinal 7. No occupancy permission has yet been issued.\",\"document\":\"Allocation record: this request owns this buffer.\"},{\"office\":\"Character-by-Character Vacancy Inspector\",\"state\":\"DISCOVERED\",\"finding\":\"Identified NO-BREAK SPACE (non-breaking space) (U+00A0) at UTF-16 position 0. It insisted that breaking up the room would violate its tenancy agreement.\",\"document\":\"Initial occupancy: 1 UTF-16 units. Names and code points are displayed instead of raw controls.\"},{\"office\":\"Hidden Occupant Eviction Authority\",\"state\":\"APPROVED\",\"finding\":\"Removed 1 identified hidden occupant(s) under the registered removal procedure.\",\"document\":\"Eviction completed before numerical assembly; no discovered character enters Official output.\"},{\"office\":\"Vacancy Reinspection Office\",\"state\":\"APPROVED\",\"finding\":\"Reinspection verified exactly zero characters before occupancy.\",\"document\":\"Vacancy certificate: character count 0. Memory capacity has not been measured or claimed to be zero.\"},{\"office\":\"Single-Use Occupancy Lease Authority\",\"state\":\"APPROVED\",\"finding\":\"Issued a single-use, request-bound lease for ordinal 7.\",\"document\":\"Lease binds this request, this premises and this vacant survey.\"},{\"office\":\"Independent Premises Auditor\",\"state\":\"APPROVED\",\"finding\":\"Independent audit admitted the vacant premises for numerical habitation.\",\"document\":\"The actual text may now move in. The vacancy finding describes the pre-occupancy inspection only.\"}]}"
+    },
+    {
+      "ordinal": "7",
+      "kind": "TRANSACTION_BEGIN",
+      "office": "Output Transaction Coordinator",
+      "finding": "Opened an isolated staging buffer for ordinal 7. Fragments cannot publish a partial line.",
+      "document": null
+    },
+    {
+      "ordinal": "7",
+      "kind": "CLASSIFICATION",
+      "office": "Three-seat Classification Council",
+      "finding": "Fizz permission: false; Buzz permission: false; numeral permission: true. The independent arithmetic witness verified all votes.",
+      "document": null
+    },
+    {
+      "ordinal": "7",
+      "kind": "VISITOR",
+      "office": "Output Generation Context Visitor",
+      "finding": "The certified strategy declined printer FizzStringPrinter for this ordinal.",
+      "document": null
+    },
+    {
+      "ordinal": "7",
+      "kind": "VISITOR",
+      "office": "Output Generation Context Visitor",
+      "finding": "The certified strategy declined printer BuzzStringPrinter for this ordinal.",
+      "document": null
+    },
+    {
+      "ordinal": "7",
+      "kind": "VISITOR",
+      "office": "Output Generation Context Visitor",
+      "finding": "The certified strategy authorized printer IntegerIntegerPrinter for this ordinal.",
+      "document": null
+    },
+    {
+      "ordinal": "7",
+      "kind": "NUMERAL",
+      "office": "Integer-to-String Conversion Directorate",
+      "finding": "The ordinal was boxed as Integer, converted to decimal, copied through StringBuilder and returned as a fresh String: 7.",
+      "document": null
+    },
+    {
+      "ordinal": "7",
+      "kind": "FRAGMENT",
+      "office": "Output Staging Office",
+      "finding": "Staged 1 UTF-16 units; line separators remain part of the authorized payload.",
+      "document": "7"
+    },
+    {
+      "ordinal": "7",
+      "kind": "FRAGMENT",
+      "office": "Output Staging Office",
+      "finding": "Staged 1 UTF-16 units; line separators remain part of the authorized payload.",
+      "document": "\n"
+    },
+    {
+      "ordinal": "7",
+      "kind": "NOTARY",
+      "office": "Independent Proclamation Notary",
+      "finding": "An independent arithmetic and lexical check authorized this complete payload.",
+      "document": "7\n"
+    },
+    {
+      "ordinal": "7",
+      "kind": "PUBLICATION",
+      "office": "Output Publication Office",
+      "finding": "Published the complete UTF-8 line to the request audience.",
+      "document": "7\n"
+    },
+    {
+      "ordinal": "7",
+      "kind": "AUDIT_APPEND",
+      "office": "Audit Repository of Record",
+      "finding": "Appended sequence 7 with disposition COMMITTED. Its predecessor and SHA-256 digest bind the payload to the existing chain.",
+      "document": "Sequence 7; previous 8d080daa12cea2cf4faae1cc2e4efc7348c12480f1393a27bd4c1069014fac0d; digest 0a14b27691841581152b720d9a6783e186bab893f3128207f05c3592906e312a"
+    },
+    {
+      "ordinal": "7",
+      "kind": "QUEUE_ENQUEUED",
+      "office": "Audit Message Broker",
+      "finding": "Queued audit sequence 7 for the idempotent status projection. Publication to the mailbox is not delivery acknowledgment.",
+      "document": null
+    },
+    {
+      "ordinal": "7",
+      "kind": "TRANSACTION_COMMIT",
+      "office": "Output Transaction Coordinator",
+      "finding": "The numerical line and its committed audit entry completed their transaction.",
+      "document": null
+    },
+    {
+      "ordinal": "7",
+      "kind": "PREMISES_RELEASE",
+      "office": "Occupancy Custody Office",
+      "finding": "Released ordinal 7's premises after housing 2 UTF-16 units. The pre-occupancy vacancy certificate remains a historical finding.",
+      "document": null
+    },
+    {
+      "ordinal": "7",
+      "kind": "TRANSACTION_CLEANUP",
+      "office": "Output Transaction Coordinator",
+      "finding": "Released this ordinal's staging buffer.",
+      "document": null
+    },
+    {
+      "ordinal": "7",
+      "kind": "SUCCESSION",
+      "office": "Ordinal Succession Authority",
+      "finding": "Incumbent 7 petitioned for advancement 1. The independent auditor certified successor 8.",
+      "document": null
+    },
+    {
+      "ordinal": "8",
+      "kind": "CONTINUATION",
+      "office": "Inclusive Boundary Quorum",
+      "finding": "Current ordinal 8; authorized upper boundary 15. Pre-boundary vote: PERMIT; at-boundary vote: WITHHOLD.",
+      "document": null
+    },
+    {
+      "ordinal": "8",
+      "kind": "ASSEMBLY",
+      "office": "Factories and Strategy Registry",
+      "finding": "Factory-appointed Fizz, Buzz and numeral contexts and their shared visitor convened for this ordinal.",
+      "document": null
+    },
+    {
+      "ordinal": "8",
+      "kind": "PREMISES_APPROVED",
+      "office": "Premises Allocation Office",
+      "finding": "Allocated request-bound premises for ordinal 8. No occupancy permission has yet been issued.",
+      "document": "Allocation record: this request owns this buffer."
+    },
+    {
+      "ordinal": "8",
+      "kind": "PREMISES_APPROVED",
+      "office": "Character-by-Character Vacancy Inspector",
+      "finding": "No characters occupied the premises at this inspection.",
+      "document": "Initial occupancy: 0 UTF-16 units. Names and code points are displayed instead of raw controls."
+    },
+    {
+      "ordinal": "8",
+      "kind": "PREMISES_NOT_REQUIRED",
+      "office": "Hidden Occupant Eviction Authority",
+      "finding": "No eviction was required because the initial survey found no occupants.",
+      "document": "No eviction order issued."
+    },
+    {
+      "ordinal": "8",
+      "kind": "PREMISES_APPROVED",
+      "office": "Vacancy Reinspection Office",
+      "finding": "Reinspection verified exactly zero characters before occupancy.",
+      "document": "Vacancy certificate: character count 0. Memory capacity has not been measured or claimed to be zero."
+    },
+    {
+      "ordinal": "8",
+      "kind": "PREMISES_APPROVED",
+      "office": "Single-Use Occupancy Lease Authority",
+      "finding": "Issued a single-use, request-bound lease for ordinal 8.",
+      "document": "Lease binds this request, this premises and this vacant survey."
+    },
+    {
+      "ordinal": "8",
+      "kind": "PREMISES_APPROVED",
+      "office": "Independent Premises Auditor",
+      "finding": "Independent audit admitted the vacant premises for numerical habitation.",
+      "document": "The actual text may now move in. The vacancy finding describes the pre-occupancy inspection only."
+    },
+    {
+      "ordinal": "8",
+      "kind": "PREMISES_CERTIFICATE",
+      "office": "Vacant String Real Estate and Occupancy Directorate",
+      "finding": "Vacancy certified; the ordinal may now occupy its leased output buffer.",
+      "document": "{\"schema\":\"slopbuzz-premises/v1\",\"ordinal\":\"8\",\"purpose\":\"MANDATE\",\"status\":\"APPROVED\",\"initialLength\":0,\"vacancyCertified\":true,\"tenants\":[],\"steps\":[{\"office\":\"Premises Allocation Office\",\"state\":\"APPROVED\",\"finding\":\"Allocated request-bound premises for ordinal 8. No occupancy permission has yet been issued.\",\"document\":\"Allocation record: this request owns this buffer.\"},{\"office\":\"Character-by-Character Vacancy Inspector\",\"state\":\"APPROVED\",\"finding\":\"No characters occupied the premises at this inspection.\",\"document\":\"Initial occupancy: 0 UTF-16 units. Names and code points are displayed instead of raw controls.\"},{\"office\":\"Hidden Occupant Eviction Authority\",\"state\":\"NOT_REQUIRED\",\"finding\":\"No eviction was required because the initial survey found no occupants.\",\"document\":\"No eviction order issued.\"},{\"office\":\"Vacancy Reinspection Office\",\"state\":\"APPROVED\",\"finding\":\"Reinspection verified exactly zero characters before occupancy.\",\"document\":\"Vacancy certificate: character count 0. Memory capacity has not been measured or claimed to be zero.\"},{\"office\":\"Single-Use Occupancy Lease Authority\",\"state\":\"APPROVED\",\"finding\":\"Issued a single-use, request-bound lease for ordinal 8.\",\"document\":\"Lease binds this request, this premises and this vacant survey.\"},{\"office\":\"Independent Premises Auditor\",\"state\":\"APPROVED\",\"finding\":\"Independent audit admitted the vacant premises for numerical habitation.\",\"document\":\"The actual text may now move in. The vacancy finding describes the pre-occupancy inspection only.\"}]}"
+    },
+    {
+      "ordinal": "8",
+      "kind": "TRANSACTION_BEGIN",
+      "office": "Output Transaction Coordinator",
+      "finding": "Opened an isolated staging buffer for ordinal 8. Fragments cannot publish a partial line.",
+      "document": null
+    },
+    {
+      "ordinal": "8",
+      "kind": "CLASSIFICATION",
+      "office": "Three-seat Classification Council",
+      "finding": "Fizz permission: false; Buzz permission: false; numeral permission: true. The independent arithmetic witness verified all votes.",
+      "document": null
+    },
+    {
+      "ordinal": "8",
+      "kind": "VISITOR",
+      "office": "Output Generation Context Visitor",
+      "finding": "The certified strategy declined printer FizzStringPrinter for this ordinal.",
+      "document": null
+    },
+    {
+      "ordinal": "8",
+      "kind": "VISITOR",
+      "office": "Output Generation Context Visitor",
+      "finding": "The certified strategy declined printer BuzzStringPrinter for this ordinal.",
+      "document": null
+    },
+    {
+      "ordinal": "8",
+      "kind": "VISITOR",
+      "office": "Output Generation Context Visitor",
+      "finding": "The certified strategy authorized printer IntegerIntegerPrinter for this ordinal.",
+      "document": null
+    },
+    {
+      "ordinal": "8",
+      "kind": "NUMERAL",
+      "office": "Integer-to-String Conversion Directorate",
+      "finding": "The ordinal was boxed as Integer, converted to decimal, copied through StringBuilder and returned as a fresh String: 8.",
+      "document": null
+    },
+    {
+      "ordinal": "8",
+      "kind": "FRAGMENT",
+      "office": "Output Staging Office",
+      "finding": "Staged 1 UTF-16 units; line separators remain part of the authorized payload.",
+      "document": "8"
+    },
+    {
+      "ordinal": "8",
+      "kind": "FRAGMENT",
+      "office": "Output Staging Office",
+      "finding": "Staged 1 UTF-16 units; line separators remain part of the authorized payload.",
+      "document": "\n"
+    },
+    {
+      "ordinal": "8",
+      "kind": "NOTARY",
+      "office": "Independent Proclamation Notary",
+      "finding": "An independent arithmetic and lexical check authorized this complete payload.",
+      "document": "8\n"
+    },
+    {
+      "ordinal": "8",
+      "kind": "PUBLICATION",
+      "office": "Output Publication Office",
+      "finding": "Published the complete UTF-8 line to the request audience.",
+      "document": "8\n"
+    },
+    {
+      "ordinal": "8",
+      "kind": "AUDIT_APPEND",
+      "office": "Audit Repository of Record",
+      "finding": "Appended sequence 8 with disposition COMMITTED. Its predecessor and SHA-256 digest bind the payload to the existing chain.",
+      "document": "Sequence 8; previous 0a14b27691841581152b720d9a6783e186bab893f3128207f05c3592906e312a; digest 012aac0037fd0b25fb4994aed3ec30dd54074a6ca530fcbd42d67d89eb56c217"
+    },
+    {
+      "ordinal": "8",
+      "kind": "QUEUE_ENQUEUED",
+      "office": "Audit Message Broker",
+      "finding": "Queued audit sequence 8 for the idempotent status projection. Publication to the mailbox is not delivery acknowledgment.",
+      "document": null
+    },
+    {
+      "ordinal": "8",
+      "kind": "TRANSACTION_COMMIT",
+      "office": "Output Transaction Coordinator",
+      "finding": "The numerical line and its committed audit entry completed their transaction.",
+      "document": null
+    },
+    {
+      "ordinal": "8",
+      "kind": "PREMISES_RELEASE",
+      "office": "Occupancy Custody Office",
+      "finding": "Released ordinal 8's premises after housing 2 UTF-16 units. The pre-occupancy vacancy certificate remains a historical finding.",
+      "document": null
+    },
+    {
+      "ordinal": "8",
+      "kind": "TRANSACTION_CLEANUP",
+      "office": "Output Transaction Coordinator",
+      "finding": "Released this ordinal's staging buffer.",
+      "document": null
+    },
+    {
+      "ordinal": "8",
+      "kind": "SUCCESSION",
+      "office": "Ordinal Succession Authority",
+      "finding": "Incumbent 8 petitioned for advancement 1. The independent auditor certified successor 9.",
+      "document": null
+    },
+    {
+      "ordinal": "9",
+      "kind": "CONTINUATION",
+      "office": "Inclusive Boundary Quorum",
+      "finding": "Current ordinal 9; authorized upper boundary 15. Pre-boundary vote: PERMIT; at-boundary vote: WITHHOLD.",
+      "document": null
+    },
+    {
+      "ordinal": "9",
+      "kind": "ASSEMBLY",
+      "office": "Factories and Strategy Registry",
+      "finding": "Factory-appointed Fizz, Buzz and numeral contexts and their shared visitor convened for this ordinal.",
+      "document": null
+    },
+    {
+      "ordinal": "9",
+      "kind": "PREMISES_APPROVED",
+      "office": "Premises Allocation Office",
+      "finding": "Allocated request-bound premises for ordinal 9. No occupancy permission has yet been issued.",
+      "document": "Allocation record: this request owns this buffer."
+    },
+    {
+      "ordinal": "9",
+      "kind": "PREMISES_APPROVED",
+      "office": "Character-by-Character Vacancy Inspector",
+      "finding": "No characters occupied the premises at this inspection.",
+      "document": "Initial occupancy: 0 UTF-16 units. Names and code points are displayed instead of raw controls."
+    },
+    {
+      "ordinal": "9",
+      "kind": "PREMISES_NOT_REQUIRED",
+      "office": "Hidden Occupant Eviction Authority",
+      "finding": "No eviction was required because the initial survey found no occupants.",
+      "document": "No eviction order issued."
+    },
+    {
+      "ordinal": "9",
+      "kind": "PREMISES_APPROVED",
+      "office": "Vacancy Reinspection Office",
+      "finding": "Reinspection verified exactly zero characters before occupancy.",
+      "document": "Vacancy certificate: character count 0. Memory capacity has not been measured or claimed to be zero."
+    },
+    {
+      "ordinal": "9",
+      "kind": "PREMISES_APPROVED",
+      "office": "Single-Use Occupancy Lease Authority",
+      "finding": "Issued a single-use, request-bound lease for ordinal 9.",
+      "document": "Lease binds this request, this premises and this vacant survey."
+    },
+    {
+      "ordinal": "9",
+      "kind": "PREMISES_APPROVED",
+      "office": "Independent Premises Auditor",
+      "finding": "Independent audit admitted the vacant premises for numerical habitation.",
+      "document": "The actual text may now move in. The vacancy finding describes the pre-occupancy inspection only."
+    },
+    {
+      "ordinal": "9",
+      "kind": "PREMISES_CERTIFICATE",
+      "office": "Vacant String Real Estate and Occupancy Directorate",
+      "finding": "Vacancy certified; the ordinal may now occupy its leased output buffer.",
+      "document": "{\"schema\":\"slopbuzz-premises/v1\",\"ordinal\":\"9\",\"purpose\":\"MANDATE\",\"status\":\"APPROVED\",\"initialLength\":0,\"vacancyCertified\":true,\"tenants\":[],\"steps\":[{\"office\":\"Premises Allocation Office\",\"state\":\"APPROVED\",\"finding\":\"Allocated request-bound premises for ordinal 9. No occupancy permission has yet been issued.\",\"document\":\"Allocation record: this request owns this buffer.\"},{\"office\":\"Character-by-Character Vacancy Inspector\",\"state\":\"APPROVED\",\"finding\":\"No characters occupied the premises at this inspection.\",\"document\":\"Initial occupancy: 0 UTF-16 units. Names and code points are displayed instead of raw controls.\"},{\"office\":\"Hidden Occupant Eviction Authority\",\"state\":\"NOT_REQUIRED\",\"finding\":\"No eviction was required because the initial survey found no occupants.\",\"document\":\"No eviction order issued.\"},{\"office\":\"Vacancy Reinspection Office\",\"state\":\"APPROVED\",\"finding\":\"Reinspection verified exactly zero characters before occupancy.\",\"document\":\"Vacancy certificate: character count 0. Memory capacity has not been measured or claimed to be zero.\"},{\"office\":\"Single-Use Occupancy Lease Authority\",\"state\":\"APPROVED\",\"finding\":\"Issued a single-use, request-bound lease for ordinal 9.\",\"document\":\"Lease binds this request, this premises and this vacant survey.\"},{\"office\":\"Independent Premises Auditor\",\"state\":\"APPROVED\",\"finding\":\"Independent audit admitted the vacant premises for numerical habitation.\",\"document\":\"The actual text may now move in. The vacancy finding describes the pre-occupancy inspection only.\"}]}"
+    },
+    {
+      "ordinal": "9",
+      "kind": "TRANSACTION_BEGIN",
+      "office": "Output Transaction Coordinator",
+      "finding": "Opened an isolated staging buffer for ordinal 9. Fragments cannot publish a partial line.",
+      "document": null
+    },
+    {
+      "ordinal": "9",
+      "kind": "CLASSIFICATION",
+      "office": "Three-seat Classification Council",
+      "finding": "Fizz permission: true; Buzz permission: false; numeral permission: false. The independent arithmetic witness verified all votes.",
+      "document": null
+    },
+    {
+      "ordinal": "9",
+      "kind": "VISITOR",
+      "office": "Output Generation Context Visitor",
+      "finding": "The certified strategy authorized printer FizzStringPrinter for this ordinal.",
+      "document": null
+    },
+    {
+      "ordinal": "9",
+      "kind": "REQUISITION",
+      "office": "Glyph Procurement Authority",
+      "finding": "Authorized product Fizz with 4 position-specific allocations.",
+      "document": null
+    },
+    {
+      "ordinal": "9",
+      "kind": "DELIVERY",
+      "office": "Approved Glyph Supplier",
+      "finding": "Delivered 4 allocations for Fizz. Inventory is fictional and inexhaustible.",
+      "document": null
+    },
+    {
+      "ordinal": "9",
+      "kind": "GLYPH_ACCEPTED",
+      "office": "Independent Receiving Inspector",
+      "finding": "Accepted Fizz position 1: character F, SKU GLY-0046, quantity 1. Its certificate belongs to this requisition and this position.",
+      "document": null
+    },
+    {
+      "ordinal": "9",
+      "kind": "GLYPH_ACCEPTED",
+      "office": "Independent Receiving Inspector",
+      "finding": "Accepted Fizz position 2: character i, SKU GLY-0069, quantity 1. Its certificate belongs to this requisition and this position.",
+      "document": null
+    },
+    {
+      "ordinal": "9",
+      "kind": "GLYPH_ACCEPTED",
+      "office": "Independent Receiving Inspector",
+      "finding": "Accepted Fizz position 3: character z, SKU GLY-007A, quantity 1. Its certificate belongs to this requisition and this position.",
+      "document": null
+    },
+    {
+      "ordinal": "9",
+      "kind": "GLYPH_ACCEPTED",
+      "office": "Independent Receiving Inspector",
+      "finding": "Accepted Fizz position 4: character z, SKU GLY-007A, quantity 1. Its certificate belongs to this requisition and this position.",
+      "document": null
+    },
+    {
+      "ordinal": "9",
+      "kind": "GLYPH_ASSEMBLED",
+      "office": "Certified Glyph Assembler",
+      "finding": "Verified every position-specific certificate and assembled Fizz in the approved order.",
+      "document": null
+    },
+    {
+      "ordinal": "9",
+      "kind": "FRAGMENT",
+      "office": "Output Staging Office",
+      "finding": "Staged 4 UTF-16 units; line separators remain part of the authorized payload.",
+      "document": "Fizz"
+    },
+    {
+      "ordinal": "9",
+      "kind": "VISITOR",
+      "office": "Output Generation Context Visitor",
+      "finding": "The certified strategy declined printer BuzzStringPrinter for this ordinal.",
+      "document": null
+    },
+    {
+      "ordinal": "9",
+      "kind": "VISITOR",
+      "office": "Output Generation Context Visitor",
+      "finding": "The certified strategy declined printer IntegerIntegerPrinter for this ordinal.",
+      "document": null
+    },
+    {
+      "ordinal": "9",
+      "kind": "FRAGMENT",
+      "office": "Output Staging Office",
+      "finding": "Staged 1 UTF-16 units; line separators remain part of the authorized payload.",
+      "document": "\n"
+    },
+    {
+      "ordinal": "9",
+      "kind": "NOTARY",
+      "office": "Independent Proclamation Notary",
+      "finding": "An independent arithmetic and lexical check authorized this complete payload.",
+      "document": "Fizz\n"
+    },
+    {
+      "ordinal": "9",
+      "kind": "PUBLICATION",
+      "office": "Output Publication Office",
+      "finding": "Published the complete UTF-8 line to the request audience.",
+      "document": "Fizz\n"
+    },
+    {
+      "ordinal": "9",
+      "kind": "AUDIT_APPEND",
+      "office": "Audit Repository of Record",
+      "finding": "Appended sequence 9 with disposition COMMITTED. Its predecessor and SHA-256 digest bind the payload to the existing chain.",
+      "document": "Sequence 9; previous 012aac0037fd0b25fb4994aed3ec30dd54074a6ca530fcbd42d67d89eb56c217; digest 0cbb03011f59da1f85d940eeeff181b9aac2eb21d9688f2ee7f1ed379c9ba775"
+    },
+    {
+      "ordinal": "9",
+      "kind": "QUEUE_ENQUEUED",
+      "office": "Audit Message Broker",
+      "finding": "Queued audit sequence 9 for the idempotent status projection. Publication to the mailbox is not delivery acknowledgment.",
+      "document": null
+    },
+    {
+      "ordinal": "9",
+      "kind": "TRANSACTION_COMMIT",
+      "office": "Output Transaction Coordinator",
+      "finding": "The numerical line and its committed audit entry completed their transaction.",
+      "document": null
+    },
+    {
+      "ordinal": "9",
+      "kind": "PREMISES_RELEASE",
+      "office": "Occupancy Custody Office",
+      "finding": "Released ordinal 9's premises after housing 5 UTF-16 units. The pre-occupancy vacancy certificate remains a historical finding.",
+      "document": null
+    },
+    {
+      "ordinal": "9",
+      "kind": "TRANSACTION_CLEANUP",
+      "office": "Output Transaction Coordinator",
+      "finding": "Released this ordinal's staging buffer.",
+      "document": null
+    },
+    {
+      "ordinal": "9",
+      "kind": "SUCCESSION",
+      "office": "Ordinal Succession Authority",
+      "finding": "Incumbent 9 petitioned for advancement 1. The independent auditor certified successor 10.",
+      "document": null
+    },
+    {
+      "ordinal": "10",
+      "kind": "CONTINUATION",
+      "office": "Inclusive Boundary Quorum",
+      "finding": "Current ordinal 10; authorized upper boundary 15. Pre-boundary vote: PERMIT; at-boundary vote: WITHHOLD.",
+      "document": null
+    },
+    {
+      "ordinal": "10",
+      "kind": "ASSEMBLY",
+      "office": "Factories and Strategy Registry",
+      "finding": "Factory-appointed Fizz, Buzz and numeral contexts and their shared visitor convened for this ordinal.",
+      "document": null
+    },
+    {
+      "ordinal": "10",
+      "kind": "PREMISES_APPROVED",
+      "office": "Premises Allocation Office",
+      "finding": "Allocated request-bound premises for ordinal 10. No occupancy permission has yet been issued.",
+      "document": "Allocation record: this request owns this buffer."
+    },
+    {
+      "ordinal": "10",
+      "kind": "PREMISES_APPROVED",
+      "office": "Character-by-Character Vacancy Inspector",
+      "finding": "No characters occupied the premises at this inspection.",
+      "document": "Initial occupancy: 0 UTF-16 units. Names and code points are displayed instead of raw controls."
+    },
+    {
+      "ordinal": "10",
+      "kind": "PREMISES_NOT_REQUIRED",
+      "office": "Hidden Occupant Eviction Authority",
+      "finding": "No eviction was required because the initial survey found no occupants.",
+      "document": "No eviction order issued."
+    },
+    {
+      "ordinal": "10",
+      "kind": "PREMISES_APPROVED",
+      "office": "Vacancy Reinspection Office",
+      "finding": "Reinspection verified exactly zero characters before occupancy.",
+      "document": "Vacancy certificate: character count 0. Memory capacity has not been measured or claimed to be zero."
+    },
+    {
+      "ordinal": "10",
+      "kind": "PREMISES_APPROVED",
+      "office": "Single-Use Occupancy Lease Authority",
+      "finding": "Issued a single-use, request-bound lease for ordinal 10.",
+      "document": "Lease binds this request, this premises and this vacant survey."
+    },
+    {
+      "ordinal": "10",
+      "kind": "PREMISES_APPROVED",
+      "office": "Independent Premises Auditor",
+      "finding": "Independent audit admitted the vacant premises for numerical habitation.",
+      "document": "The actual text may now move in. The vacancy finding describes the pre-occupancy inspection only."
+    },
+    {
+      "ordinal": "10",
+      "kind": "PREMISES_CERTIFICATE",
+      "office": "Vacant String Real Estate and Occupancy Directorate",
+      "finding": "Vacancy certified; the ordinal may now occupy its leased output buffer.",
+      "document": "{\"schema\":\"slopbuzz-premises/v1\",\"ordinal\":\"10\",\"purpose\":\"MANDATE\",\"status\":\"APPROVED\",\"initialLength\":0,\"vacancyCertified\":true,\"tenants\":[],\"steps\":[{\"office\":\"Premises Allocation Office\",\"state\":\"APPROVED\",\"finding\":\"Allocated request-bound premises for ordinal 10. No occupancy permission has yet been issued.\",\"document\":\"Allocation record: this request owns this buffer.\"},{\"office\":\"Character-by-Character Vacancy Inspector\",\"state\":\"APPROVED\",\"finding\":\"No characters occupied the premises at this inspection.\",\"document\":\"Initial occupancy: 0 UTF-16 units. Names and code points are displayed instead of raw controls.\"},{\"office\":\"Hidden Occupant Eviction Authority\",\"state\":\"NOT_REQUIRED\",\"finding\":\"No eviction was required because the initial survey found no occupants.\",\"document\":\"No eviction order issued.\"},{\"office\":\"Vacancy Reinspection Office\",\"state\":\"APPROVED\",\"finding\":\"Reinspection verified exactly zero characters before occupancy.\",\"document\":\"Vacancy certificate: character count 0. Memory capacity has not been measured or claimed to be zero.\"},{\"office\":\"Single-Use Occupancy Lease Authority\",\"state\":\"APPROVED\",\"finding\":\"Issued a single-use, request-bound lease for ordinal 10.\",\"document\":\"Lease binds this request, this premises and this vacant survey.\"},{\"office\":\"Independent Premises Auditor\",\"state\":\"APPROVED\",\"finding\":\"Independent audit admitted the vacant premises for numerical habitation.\",\"document\":\"The actual text may now move in. The vacancy finding describes the pre-occupancy inspection only.\"}]}"
+    },
+    {
+      "ordinal": "10",
+      "kind": "TRANSACTION_BEGIN",
+      "office": "Output Transaction Coordinator",
+      "finding": "Opened an isolated staging buffer for ordinal 10. Fragments cannot publish a partial line.",
+      "document": null
+    },
+    {
+      "ordinal": "10",
+      "kind": "CLASSIFICATION",
+      "office": "Three-seat Classification Council",
+      "finding": "Fizz permission: false; Buzz permission: true; numeral permission: false. The independent arithmetic witness verified all votes.",
+      "document": null
+    },
+    {
+      "ordinal": "10",
+      "kind": "VISITOR",
+      "office": "Output Generation Context Visitor",
+      "finding": "The certified strategy declined printer FizzStringPrinter for this ordinal.",
+      "document": null
+    },
+    {
+      "ordinal": "10",
+      "kind": "VISITOR",
+      "office": "Output Generation Context Visitor",
+      "finding": "The certified strategy authorized printer BuzzStringPrinter for this ordinal.",
+      "document": null
+    },
+    {
+      "ordinal": "10",
+      "kind": "REQUISITION",
+      "office": "Glyph Procurement Authority",
+      "finding": "Authorized product Buzz with 4 position-specific allocations.",
+      "document": null
+    },
+    {
+      "ordinal": "10",
+      "kind": "DELIVERY",
+      "office": "Approved Glyph Supplier",
+      "finding": "Delivered 4 allocations for Buzz. Inventory is fictional and inexhaustible.",
+      "document": null
+    },
+    {
+      "ordinal": "10",
+      "kind": "GLYPH_ACCEPTED",
+      "office": "Independent Receiving Inspector",
+      "finding": "Accepted Buzz position 1: character B, SKU GLY-0042, quantity 1. Its certificate belongs to this requisition and this position.",
+      "document": null
+    },
+    {
+      "ordinal": "10",
+      "kind": "GLYPH_ACCEPTED",
+      "office": "Independent Receiving Inspector",
+      "finding": "Accepted Buzz position 2: character u, SKU GLY-0075, quantity 1. Its certificate belongs to this requisition and this position.",
+      "document": null
+    },
+    {
+      "ordinal": "10",
+      "kind": "GLYPH_ACCEPTED",
+      "office": "Independent Receiving Inspector",
+      "finding": "Accepted Buzz position 3: character z, SKU GLY-007A, quantity 1. Its certificate belongs to this requisition and this position.",
+      "document": null
+    },
+    {
+      "ordinal": "10",
+      "kind": "GLYPH_ACCEPTED",
+      "office": "Independent Receiving Inspector",
+      "finding": "Accepted Buzz position 4: character z, SKU GLY-007A, quantity 1. Its certificate belongs to this requisition and this position.",
+      "document": null
+    },
+    {
+      "ordinal": "10",
+      "kind": "GLYPH_ASSEMBLED",
+      "office": "Certified Glyph Assembler",
+      "finding": "Verified every position-specific certificate and assembled Buzz in the approved order.",
+      "document": null
+    },
+    {
+      "ordinal": "10",
+      "kind": "FRAGMENT",
+      "office": "Output Staging Office",
+      "finding": "Staged 4 UTF-16 units; line separators remain part of the authorized payload.",
+      "document": "Buzz"
+    },
+    {
+      "ordinal": "10",
+      "kind": "VISITOR",
+      "office": "Output Generation Context Visitor",
+      "finding": "The certified strategy declined printer IntegerIntegerPrinter for this ordinal.",
+      "document": null
+    },
+    {
+      "ordinal": "10",
+      "kind": "FRAGMENT",
+      "office": "Output Staging Office",
+      "finding": "Staged 1 UTF-16 units; line separators remain part of the authorized payload.",
+      "document": "\n"
+    },
+    {
+      "ordinal": "10",
+      "kind": "NOTARY",
+      "office": "Independent Proclamation Notary",
+      "finding": "An independent arithmetic and lexical check authorized this complete payload.",
+      "document": "Buzz\n"
+    },
+    {
+      "ordinal": "10",
+      "kind": "PUBLICATION",
+      "office": "Output Publication Office",
+      "finding": "Published the complete UTF-8 line to the request audience.",
+      "document": "Buzz\n"
+    },
+    {
+      "ordinal": "10",
+      "kind": "AUDIT_APPEND",
+      "office": "Audit Repository of Record",
+      "finding": "Appended sequence 10 with disposition COMMITTED. Its predecessor and SHA-256 digest bind the payload to the existing chain.",
+      "document": "Sequence 10; previous 0cbb03011f59da1f85d940eeeff181b9aac2eb21d9688f2ee7f1ed379c9ba775; digest 851e6a6671b164fe09b5b72830bf03d5b454fc33b5fe9777264072283e5f9dc8"
+    },
+    {
+      "ordinal": "10",
+      "kind": "QUEUE_ENQUEUED",
+      "office": "Audit Message Broker",
+      "finding": "Queued audit sequence 10 for the idempotent status projection. Publication to the mailbox is not delivery acknowledgment.",
+      "document": null
+    },
+    {
+      "ordinal": "10",
+      "kind": "TRANSACTION_COMMIT",
+      "office": "Output Transaction Coordinator",
+      "finding": "The numerical line and its committed audit entry completed their transaction.",
+      "document": null
+    },
+    {
+      "ordinal": "10",
+      "kind": "PREMISES_RELEASE",
+      "office": "Occupancy Custody Office",
+      "finding": "Released ordinal 10's premises after housing 5 UTF-16 units. The pre-occupancy vacancy certificate remains a historical finding.",
+      "document": null
+    },
+    {
+      "ordinal": "10",
+      "kind": "TRANSACTION_CLEANUP",
+      "office": "Output Transaction Coordinator",
+      "finding": "Released this ordinal's staging buffer.",
+      "document": null
+    },
+    {
+      "ordinal": "10",
+      "kind": "SUCCESSION",
+      "office": "Ordinal Succession Authority",
+      "finding": "Incumbent 10 petitioned for advancement 1. The independent auditor certified successor 11.",
+      "document": null
+    },
+    {
+      "ordinal": "11",
+      "kind": "CONTINUATION",
+      "office": "Inclusive Boundary Quorum",
+      "finding": "Current ordinal 11; authorized upper boundary 15. Pre-boundary vote: PERMIT; at-boundary vote: WITHHOLD.",
+      "document": null
+    },
+    {
+      "ordinal": "11",
+      "kind": "ASSEMBLY",
+      "office": "Factories and Strategy Registry",
+      "finding": "Factory-appointed Fizz, Buzz and numeral contexts and their shared visitor convened for this ordinal.",
+      "document": null
+    },
+    {
+      "ordinal": "11",
+      "kind": "PREMISES_APPROVED",
+      "office": "Premises Allocation Office",
+      "finding": "Allocated request-bound premises for ordinal 11. No occupancy permission has yet been issued.",
+      "document": "Allocation record: this request owns this buffer."
+    },
+    {
+      "ordinal": "11",
+      "kind": "PREMISES_APPROVED",
+      "office": "Character-by-Character Vacancy Inspector",
+      "finding": "No characters occupied the premises at this inspection.",
+      "document": "Initial occupancy: 0 UTF-16 units. Names and code points are displayed instead of raw controls."
+    },
+    {
+      "ordinal": "11",
+      "kind": "PREMISES_NOT_REQUIRED",
+      "office": "Hidden Occupant Eviction Authority",
+      "finding": "No eviction was required because the initial survey found no occupants.",
+      "document": "No eviction order issued."
+    },
+    {
+      "ordinal": "11",
+      "kind": "PREMISES_APPROVED",
+      "office": "Vacancy Reinspection Office",
+      "finding": "Reinspection verified exactly zero characters before occupancy.",
+      "document": "Vacancy certificate: character count 0. Memory capacity has not been measured or claimed to be zero."
+    },
+    {
+      "ordinal": "11",
+      "kind": "PREMISES_APPROVED",
+      "office": "Single-Use Occupancy Lease Authority",
+      "finding": "Issued a single-use, request-bound lease for ordinal 11.",
+      "document": "Lease binds this request, this premises and this vacant survey."
+    },
+    {
+      "ordinal": "11",
+      "kind": "PREMISES_APPROVED",
+      "office": "Independent Premises Auditor",
+      "finding": "Independent audit admitted the vacant premises for numerical habitation.",
+      "document": "The actual text may now move in. The vacancy finding describes the pre-occupancy inspection only."
+    },
+    {
+      "ordinal": "11",
+      "kind": "PREMISES_CERTIFICATE",
+      "office": "Vacant String Real Estate and Occupancy Directorate",
+      "finding": "Vacancy certified; the ordinal may now occupy its leased output buffer.",
+      "document": "{\"schema\":\"slopbuzz-premises/v1\",\"ordinal\":\"11\",\"purpose\":\"MANDATE\",\"status\":\"APPROVED\",\"initialLength\":0,\"vacancyCertified\":true,\"tenants\":[],\"steps\":[{\"office\":\"Premises Allocation Office\",\"state\":\"APPROVED\",\"finding\":\"Allocated request-bound premises for ordinal 11. No occupancy permission has yet been issued.\",\"document\":\"Allocation record: this request owns this buffer.\"},{\"office\":\"Character-by-Character Vacancy Inspector\",\"state\":\"APPROVED\",\"finding\":\"No characters occupied the premises at this inspection.\",\"document\":\"Initial occupancy: 0 UTF-16 units. Names and code points are displayed instead of raw controls.\"},{\"office\":\"Hidden Occupant Eviction Authority\",\"state\":\"NOT_REQUIRED\",\"finding\":\"No eviction was required because the initial survey found no occupants.\",\"document\":\"No eviction order issued.\"},{\"office\":\"Vacancy Reinspection Office\",\"state\":\"APPROVED\",\"finding\":\"Reinspection verified exactly zero characters before occupancy.\",\"document\":\"Vacancy certificate: character count 0. Memory capacity has not been measured or claimed to be zero.\"},{\"office\":\"Single-Use Occupancy Lease Authority\",\"state\":\"APPROVED\",\"finding\":\"Issued a single-use, request-bound lease for ordinal 11.\",\"document\":\"Lease binds this request, this premises and this vacant survey.\"},{\"office\":\"Independent Premises Auditor\",\"state\":\"APPROVED\",\"finding\":\"Independent audit admitted the vacant premises for numerical habitation.\",\"document\":\"The actual text may now move in. The vacancy finding describes the pre-occupancy inspection only.\"}]}"
+    },
+    {
+      "ordinal": "11",
+      "kind": "TRANSACTION_BEGIN",
+      "office": "Output Transaction Coordinator",
+      "finding": "Opened an isolated staging buffer for ordinal 11. Fragments cannot publish a partial line.",
+      "document": null
+    },
+    {
+      "ordinal": "11",
+      "kind": "CLASSIFICATION",
+      "office": "Three-seat Classification Council",
+      "finding": "Fizz permission: false; Buzz permission: false; numeral permission: true. The independent arithmetic witness verified all votes.",
+      "document": null
+    },
+    {
+      "ordinal": "11",
+      "kind": "VISITOR",
+      "office": "Output Generation Context Visitor",
+      "finding": "The certified strategy declined printer FizzStringPrinter for this ordinal.",
+      "document": null
+    },
+    {
+      "ordinal": "11",
+      "kind": "VISITOR",
+      "office": "Output Generation Context Visitor",
+      "finding": "The certified strategy declined printer BuzzStringPrinter for this ordinal.",
+      "document": null
+    },
+    {
+      "ordinal": "11",
+      "kind": "VISITOR",
+      "office": "Output Generation Context Visitor",
+      "finding": "The certified strategy authorized printer IntegerIntegerPrinter for this ordinal.",
+      "document": null
+    },
+    {
+      "ordinal": "11",
+      "kind": "NUMERAL",
+      "office": "Integer-to-String Conversion Directorate",
+      "finding": "The ordinal was boxed as Integer, converted to decimal, copied through StringBuilder and returned as a fresh String: 11.",
+      "document": null
+    },
+    {
+      "ordinal": "11",
+      "kind": "FRAGMENT",
+      "office": "Output Staging Office",
+      "finding": "Staged 2 UTF-16 units; line separators remain part of the authorized payload.",
+      "document": "11"
+    },
+    {
+      "ordinal": "11",
+      "kind": "FRAGMENT",
+      "office": "Output Staging Office",
+      "finding": "Staged 1 UTF-16 units; line separators remain part of the authorized payload.",
+      "document": "\n"
+    },
+    {
+      "ordinal": "11",
+      "kind": "NOTARY",
+      "office": "Independent Proclamation Notary",
+      "finding": "An independent arithmetic and lexical check authorized this complete payload.",
+      "document": "11\n"
+    },
+    {
+      "ordinal": "11",
+      "kind": "PUBLICATION",
+      "office": "Output Publication Office",
+      "finding": "Published the complete UTF-8 line to the request audience.",
+      "document": "11\n"
+    },
+    {
+      "ordinal": "11",
+      "kind": "AUDIT_APPEND",
+      "office": "Audit Repository of Record",
+      "finding": "Appended sequence 11 with disposition COMMITTED. Its predecessor and SHA-256 digest bind the payload to the existing chain.",
+      "document": "Sequence 11; previous 851e6a6671b164fe09b5b72830bf03d5b454fc33b5fe9777264072283e5f9dc8; digest 0b0299b2640636166514186807d772eca505b569d30cde637c08c0e9cd85b051"
+    },
+    {
+      "ordinal": "11",
+      "kind": "QUEUE_ENQUEUED",
+      "office": "Audit Message Broker",
+      "finding": "Queued audit sequence 11 for the idempotent status projection. Publication to the mailbox is not delivery acknowledgment.",
+      "document": null
+    },
+    {
+      "ordinal": "11",
+      "kind": "TRANSACTION_COMMIT",
+      "office": "Output Transaction Coordinator",
+      "finding": "The numerical line and its committed audit entry completed their transaction.",
+      "document": null
+    },
+    {
+      "ordinal": "11",
+      "kind": "PREMISES_RELEASE",
+      "office": "Occupancy Custody Office",
+      "finding": "Released ordinal 11's premises after housing 3 UTF-16 units. The pre-occupancy vacancy certificate remains a historical finding.",
+      "document": null
+    },
+    {
+      "ordinal": "11",
+      "kind": "TRANSACTION_CLEANUP",
+      "office": "Output Transaction Coordinator",
+      "finding": "Released this ordinal's staging buffer.",
+      "document": null
+    },
+    {
+      "ordinal": "11",
+      "kind": "SUCCESSION",
+      "office": "Ordinal Succession Authority",
+      "finding": "Incumbent 11 petitioned for advancement 1. The independent auditor certified successor 12.",
+      "document": null
+    },
+    {
+      "ordinal": "12",
+      "kind": "CONTINUATION",
+      "office": "Inclusive Boundary Quorum",
+      "finding": "Current ordinal 12; authorized upper boundary 15. Pre-boundary vote: PERMIT; at-boundary vote: WITHHOLD.",
+      "document": null
+    },
+    {
+      "ordinal": "12",
+      "kind": "ASSEMBLY",
+      "office": "Factories and Strategy Registry",
+      "finding": "Factory-appointed Fizz, Buzz and numeral contexts and their shared visitor convened for this ordinal.",
+      "document": null
+    },
+    {
+      "ordinal": "12",
+      "kind": "PREMISES_APPROVED",
+      "office": "Premises Allocation Office",
+      "finding": "Allocated request-bound premises for ordinal 12. No occupancy permission has yet been issued.",
+      "document": "Allocation record: this request owns this buffer."
+    },
+    {
+      "ordinal": "12",
+      "kind": "PREMISES_APPROVED",
+      "office": "Character-by-Character Vacancy Inspector",
+      "finding": "No characters occupied the premises at this inspection.",
+      "document": "Initial occupancy: 0 UTF-16 units. Names and code points are displayed instead of raw controls."
+    },
+    {
+      "ordinal": "12",
+      "kind": "PREMISES_NOT_REQUIRED",
+      "office": "Hidden Occupant Eviction Authority",
+      "finding": "No eviction was required because the initial survey found no occupants.",
+      "document": "No eviction order issued."
+    },
+    {
+      "ordinal": "12",
+      "kind": "PREMISES_APPROVED",
+      "office": "Vacancy Reinspection Office",
+      "finding": "Reinspection verified exactly zero characters before occupancy.",
+      "document": "Vacancy certificate: character count 0. Memory capacity has not been measured or claimed to be zero."
+    },
+    {
+      "ordinal": "12",
+      "kind": "PREMISES_APPROVED",
+      "office": "Single-Use Occupancy Lease Authority",
+      "finding": "Issued a single-use, request-bound lease for ordinal 12.",
+      "document": "Lease binds this request, this premises and this vacant survey."
+    },
+    {
+      "ordinal": "12",
+      "kind": "PREMISES_APPROVED",
+      "office": "Independent Premises Auditor",
+      "finding": "Independent audit admitted the vacant premises for numerical habitation.",
+      "document": "The actual text may now move in. The vacancy finding describes the pre-occupancy inspection only."
+    },
+    {
+      "ordinal": "12",
+      "kind": "PREMISES_CERTIFICATE",
+      "office": "Vacant String Real Estate and Occupancy Directorate",
+      "finding": "Vacancy certified; the ordinal may now occupy its leased output buffer.",
+      "document": "{\"schema\":\"slopbuzz-premises/v1\",\"ordinal\":\"12\",\"purpose\":\"MANDATE\",\"status\":\"APPROVED\",\"initialLength\":0,\"vacancyCertified\":true,\"tenants\":[],\"steps\":[{\"office\":\"Premises Allocation Office\",\"state\":\"APPROVED\",\"finding\":\"Allocated request-bound premises for ordinal 12. No occupancy permission has yet been issued.\",\"document\":\"Allocation record: this request owns this buffer.\"},{\"office\":\"Character-by-Character Vacancy Inspector\",\"state\":\"APPROVED\",\"finding\":\"No characters occupied the premises at this inspection.\",\"document\":\"Initial occupancy: 0 UTF-16 units. Names and code points are displayed instead of raw controls.\"},{\"office\":\"Hidden Occupant Eviction Authority\",\"state\":\"NOT_REQUIRED\",\"finding\":\"No eviction was required because the initial survey found no occupants.\",\"document\":\"No eviction order issued.\"},{\"office\":\"Vacancy Reinspection Office\",\"state\":\"APPROVED\",\"finding\":\"Reinspection verified exactly zero characters before occupancy.\",\"document\":\"Vacancy certificate: character count 0. Memory capacity has not been measured or claimed to be zero.\"},{\"office\":\"Single-Use Occupancy Lease Authority\",\"state\":\"APPROVED\",\"finding\":\"Issued a single-use, request-bound lease for ordinal 12.\",\"document\":\"Lease binds this request, this premises and this vacant survey.\"},{\"office\":\"Independent Premises Auditor\",\"state\":\"APPROVED\",\"finding\":\"Independent audit admitted the vacant premises for numerical habitation.\",\"document\":\"The actual text may now move in. The vacancy finding describes the pre-occupancy inspection only.\"}]}"
+    },
+    {
+      "ordinal": "12",
+      "kind": "TRANSACTION_BEGIN",
+      "office": "Output Transaction Coordinator",
+      "finding": "Opened an isolated staging buffer for ordinal 12. Fragments cannot publish a partial line.",
+      "document": null
+    },
+    {
+      "ordinal": "12",
+      "kind": "CLASSIFICATION",
+      "office": "Three-seat Classification Council",
+      "finding": "Fizz permission: true; Buzz permission: false; numeral permission: false. The independent arithmetic witness verified all votes.",
+      "document": null
+    },
+    {
+      "ordinal": "12",
+      "kind": "VISITOR",
+      "office": "Output Generation Context Visitor",
+      "finding": "The certified strategy authorized printer FizzStringPrinter for this ordinal.",
+      "document": null
+    },
+    {
+      "ordinal": "12",
+      "kind": "REQUISITION",
+      "office": "Glyph Procurement Authority",
+      "finding": "Authorized product Fizz with 4 position-specific allocations.",
+      "document": null
+    },
+    {
+      "ordinal": "12",
+      "kind": "DELIVERY",
+      "office": "Approved Glyph Supplier",
+      "finding": "Delivered 4 allocations for Fizz. Inventory is fictional and inexhaustible.",
+      "document": null
+    },
+    {
+      "ordinal": "12",
+      "kind": "GLYPH_ACCEPTED",
+      "office": "Independent Receiving Inspector",
+      "finding": "Accepted Fizz position 1: character F, SKU GLY-0046, quantity 1. Its certificate belongs to this requisition and this position.",
+      "document": null
+    },
+    {
+      "ordinal": "12",
+      "kind": "GLYPH_ACCEPTED",
+      "office": "Independent Receiving Inspector",
+      "finding": "Accepted Fizz position 2: character i, SKU GLY-0069, quantity 1. Its certificate belongs to this requisition and this position.",
+      "document": null
+    },
+    {
+      "ordinal": "12",
+      "kind": "GLYPH_ACCEPTED",
+      "office": "Independent Receiving Inspector",
+      "finding": "Accepted Fizz position 3: character z, SKU GLY-007A, quantity 1. Its certificate belongs to this requisition and this position.",
+      "document": null
+    },
+    {
+      "ordinal": "12",
+      "kind": "GLYPH_ACCEPTED",
+      "office": "Independent Receiving Inspector",
+      "finding": "Accepted Fizz position 4: character z, SKU GLY-007A, quantity 1. Its certificate belongs to this requisition and this position.",
+      "document": null
+    },
+    {
+      "ordinal": "12",
+      "kind": "GLYPH_ASSEMBLED",
+      "office": "Certified Glyph Assembler",
+      "finding": "Verified every position-specific certificate and assembled Fizz in the approved order.",
+      "document": null
+    },
+    {
+      "ordinal": "12",
+      "kind": "FRAGMENT",
+      "office": "Output Staging Office",
+      "finding": "Staged 4 UTF-16 units; line separators remain part of the authorized payload.",
+      "document": "Fizz"
+    },
+    {
+      "ordinal": "12",
+      "kind": "VISITOR",
+      "office": "Output Generation Context Visitor",
+      "finding": "The certified strategy declined printer BuzzStringPrinter for this ordinal.",
+      "document": null
+    },
+    {
+      "ordinal": "12",
+      "kind": "VISITOR",
+      "office": "Output Generation Context Visitor",
+      "finding": "The certified strategy declined printer IntegerIntegerPrinter for this ordinal.",
+      "document": null
+    },
+    {
+      "ordinal": "12",
+      "kind": "FRAGMENT",
+      "office": "Output Staging Office",
+      "finding": "Staged 1 UTF-16 units; line separators remain part of the authorized payload.",
+      "document": "\n"
+    },
+    {
+      "ordinal": "12",
+      "kind": "NOTARY",
+      "office": "Independent Proclamation Notary",
+      "finding": "An independent arithmetic and lexical check authorized this complete payload.",
+      "document": "Fizz\n"
+    },
+    {
+      "ordinal": "12",
+      "kind": "PUBLICATION",
+      "office": "Output Publication Office",
+      "finding": "Published the complete UTF-8 line to the request audience.",
+      "document": "Fizz\n"
+    },
+    {
+      "ordinal": "12",
+      "kind": "AUDIT_APPEND",
+      "office": "Audit Repository of Record",
+      "finding": "Appended sequence 12 with disposition COMMITTED. Its predecessor and SHA-256 digest bind the payload to the existing chain.",
+      "document": "Sequence 12; previous 0b0299b2640636166514186807d772eca505b569d30cde637c08c0e9cd85b051; digest 3e51b22fd284ea3f6e88968a18f59bd3c1647fec463d69b7570acb2ed3bab939"
+    },
+    {
+      "ordinal": "12",
+      "kind": "QUEUE_ENQUEUED",
+      "office": "Audit Message Broker",
+      "finding": "Queued audit sequence 12 for the idempotent status projection. Publication to the mailbox is not delivery acknowledgment.",
+      "document": null
+    },
+    {
+      "ordinal": "12",
+      "kind": "TRANSACTION_COMMIT",
+      "office": "Output Transaction Coordinator",
+      "finding": "The numerical line and its committed audit entry completed their transaction.",
+      "document": null
+    },
+    {
+      "ordinal": "12",
+      "kind": "PREMISES_RELEASE",
+      "office": "Occupancy Custody Office",
+      "finding": "Released ordinal 12's premises after housing 5 UTF-16 units. The pre-occupancy vacancy certificate remains a historical finding.",
+      "document": null
+    },
+    {
+      "ordinal": "12",
+      "kind": "TRANSACTION_CLEANUP",
+      "office": "Output Transaction Coordinator",
+      "finding": "Released this ordinal's staging buffer.",
+      "document": null
+    },
+    {
+      "ordinal": "12",
+      "kind": "SUCCESSION",
+      "office": "Ordinal Succession Authority",
+      "finding": "Incumbent 12 petitioned for advancement 1. The independent auditor certified successor 13.",
+      "document": null
+    },
+    {
+      "ordinal": "13",
+      "kind": "CONTINUATION",
+      "office": "Inclusive Boundary Quorum",
+      "finding": "Current ordinal 13; authorized upper boundary 15. Pre-boundary vote: PERMIT; at-boundary vote: WITHHOLD.",
+      "document": null
+    },
+    {
+      "ordinal": "13",
+      "kind": "ASSEMBLY",
+      "office": "Factories and Strategy Registry",
+      "finding": "Factory-appointed Fizz, Buzz and numeral contexts and their shared visitor convened for this ordinal.",
+      "document": null
+    },
+    {
+      "ordinal": "13",
+      "kind": "PREMISES_APPROVED",
+      "office": "Premises Allocation Office",
+      "finding": "Allocated request-bound premises for ordinal 13. No occupancy permission has yet been issued.",
+      "document": "Allocation record: this request owns this buffer."
+    },
+    {
+      "ordinal": "13",
+      "kind": "PREMISES_APPROVED",
+      "office": "Character-by-Character Vacancy Inspector",
+      "finding": "No characters occupied the premises at this inspection.",
+      "document": "Initial occupancy: 0 UTF-16 units. Names and code points are displayed instead of raw controls."
+    },
+    {
+      "ordinal": "13",
+      "kind": "PREMISES_NOT_REQUIRED",
+      "office": "Hidden Occupant Eviction Authority",
+      "finding": "No eviction was required because the initial survey found no occupants.",
+      "document": "No eviction order issued."
+    },
+    {
+      "ordinal": "13",
+      "kind": "PREMISES_APPROVED",
+      "office": "Vacancy Reinspection Office",
+      "finding": "Reinspection verified exactly zero characters before occupancy.",
+      "document": "Vacancy certificate: character count 0. Memory capacity has not been measured or claimed to be zero."
+    },
+    {
+      "ordinal": "13",
+      "kind": "PREMISES_APPROVED",
+      "office": "Single-Use Occupancy Lease Authority",
+      "finding": "Issued a single-use, request-bound lease for ordinal 13.",
+      "document": "Lease binds this request, this premises and this vacant survey."
+    },
+    {
+      "ordinal": "13",
+      "kind": "PREMISES_APPROVED",
+      "office": "Independent Premises Auditor",
+      "finding": "Independent audit admitted the vacant premises for numerical habitation.",
+      "document": "The actual text may now move in. The vacancy finding describes the pre-occupancy inspection only."
+    },
+    {
+      "ordinal": "13",
+      "kind": "PREMISES_CERTIFICATE",
+      "office": "Vacant String Real Estate and Occupancy Directorate",
+      "finding": "Vacancy certified; the ordinal may now occupy its leased output buffer.",
+      "document": "{\"schema\":\"slopbuzz-premises/v1\",\"ordinal\":\"13\",\"purpose\":\"MANDATE\",\"status\":\"APPROVED\",\"initialLength\":0,\"vacancyCertified\":true,\"tenants\":[],\"steps\":[{\"office\":\"Premises Allocation Office\",\"state\":\"APPROVED\",\"finding\":\"Allocated request-bound premises for ordinal 13. No occupancy permission has yet been issued.\",\"document\":\"Allocation record: this request owns this buffer.\"},{\"office\":\"Character-by-Character Vacancy Inspector\",\"state\":\"APPROVED\",\"finding\":\"No characters occupied the premises at this inspection.\",\"document\":\"Initial occupancy: 0 UTF-16 units. Names and code points are displayed instead of raw controls.\"},{\"office\":\"Hidden Occupant Eviction Authority\",\"state\":\"NOT_REQUIRED\",\"finding\":\"No eviction was required because the initial survey found no occupants.\",\"document\":\"No eviction order issued.\"},{\"office\":\"Vacancy Reinspection Office\",\"state\":\"APPROVED\",\"finding\":\"Reinspection verified exactly zero characters before occupancy.\",\"document\":\"Vacancy certificate: character count 0. Memory capacity has not been measured or claimed to be zero.\"},{\"office\":\"Single-Use Occupancy Lease Authority\",\"state\":\"APPROVED\",\"finding\":\"Issued a single-use, request-bound lease for ordinal 13.\",\"document\":\"Lease binds this request, this premises and this vacant survey.\"},{\"office\":\"Independent Premises Auditor\",\"state\":\"APPROVED\",\"finding\":\"Independent audit admitted the vacant premises for numerical habitation.\",\"document\":\"The actual text may now move in. The vacancy finding describes the pre-occupancy inspection only.\"}]}"
+    },
+    {
+      "ordinal": "13",
+      "kind": "TRANSACTION_BEGIN",
+      "office": "Output Transaction Coordinator",
+      "finding": "Opened an isolated staging buffer for ordinal 13. Fragments cannot publish a partial line.",
+      "document": null
+    },
+    {
+      "ordinal": "13",
+      "kind": "CLASSIFICATION",
+      "office": "Three-seat Classification Council",
+      "finding": "Fizz permission: false; Buzz permission: false; numeral permission: true. The independent arithmetic witness verified all votes.",
+      "document": null
+    },
+    {
+      "ordinal": "13",
+      "kind": "VISITOR",
+      "office": "Output Generation Context Visitor",
+      "finding": "The certified strategy declined printer FizzStringPrinter for this ordinal.",
+      "document": null
+    },
+    {
+      "ordinal": "13",
+      "kind": "VISITOR",
+      "office": "Output Generation Context Visitor",
+      "finding": "The certified strategy declined printer BuzzStringPrinter for this ordinal.",
+      "document": null
+    },
+    {
+      "ordinal": "13",
+      "kind": "VISITOR",
+      "office": "Output Generation Context Visitor",
+      "finding": "The certified strategy authorized printer IntegerIntegerPrinter for this ordinal.",
+      "document": null
+    },
+    {
+      "ordinal": "13",
+      "kind": "NUMERAL",
+      "office": "Integer-to-String Conversion Directorate",
+      "finding": "The ordinal was boxed as Integer, converted to decimal, copied through StringBuilder and returned as a fresh String: 13.",
+      "document": null
+    },
+    {
+      "ordinal": "13",
+      "kind": "FRAGMENT",
+      "office": "Output Staging Office",
+      "finding": "Staged 2 UTF-16 units; line separators remain part of the authorized payload.",
+      "document": "13"
+    },
+    {
+      "ordinal": "13",
+      "kind": "FRAGMENT",
+      "office": "Output Staging Office",
+      "finding": "Staged 1 UTF-16 units; line separators remain part of the authorized payload.",
+      "document": "\n"
+    },
+    {
+      "ordinal": "13",
+      "kind": "NOTARY",
+      "office": "Independent Proclamation Notary",
+      "finding": "An independent arithmetic and lexical check authorized this complete payload.",
+      "document": "13\n"
+    },
+    {
+      "ordinal": "13",
+      "kind": "PUBLICATION",
+      "office": "Output Publication Office",
+      "finding": "Published the complete UTF-8 line to the request audience.",
+      "document": "13\n"
+    },
+    {
+      "ordinal": "13",
+      "kind": "AUDIT_APPEND",
+      "office": "Audit Repository of Record",
+      "finding": "Appended sequence 13 with disposition COMMITTED. Its predecessor and SHA-256 digest bind the payload to the existing chain.",
+      "document": "Sequence 13; previous 3e51b22fd284ea3f6e88968a18f59bd3c1647fec463d69b7570acb2ed3bab939; digest faa49bfd22e9629b5ac67939fd1831beb32e379c5ec2d430ba84d8316e7b384b"
+    },
+    {
+      "ordinal": "13",
+      "kind": "QUEUE_ENQUEUED",
+      "office": "Audit Message Broker",
+      "finding": "Queued audit sequence 13 for the idempotent status projection. Publication to the mailbox is not delivery acknowledgment.",
+      "document": null
+    },
+    {
+      "ordinal": "13",
+      "kind": "TRANSACTION_COMMIT",
+      "office": "Output Transaction Coordinator",
+      "finding": "The numerical line and its committed audit entry completed their transaction.",
+      "document": null
+    },
+    {
+      "ordinal": "13",
+      "kind": "PREMISES_RELEASE",
+      "office": "Occupancy Custody Office",
+      "finding": "Released ordinal 13's premises after housing 3 UTF-16 units. The pre-occupancy vacancy certificate remains a historical finding.",
+      "document": null
+    },
+    {
+      "ordinal": "13",
+      "kind": "TRANSACTION_CLEANUP",
+      "office": "Output Transaction Coordinator",
+      "finding": "Released this ordinal's staging buffer.",
+      "document": null
+    },
+    {
+      "ordinal": "13",
+      "kind": "SUCCESSION",
+      "office": "Ordinal Succession Authority",
+      "finding": "Incumbent 13 petitioned for advancement 1. The independent auditor certified successor 14.",
+      "document": null
+    },
+    {
+      "ordinal": "14",
+      "kind": "CONTINUATION",
+      "office": "Inclusive Boundary Quorum",
+      "finding": "Current ordinal 14; authorized upper boundary 15. Pre-boundary vote: PERMIT; at-boundary vote: WITHHOLD.",
+      "document": null
+    },
+    {
+      "ordinal": "14",
+      "kind": "ASSEMBLY",
+      "office": "Factories and Strategy Registry",
+      "finding": "Factory-appointed Fizz, Buzz and numeral contexts and their shared visitor convened for this ordinal.",
+      "document": null
+    },
+    {
+      "ordinal": "14",
+      "kind": "PREMISES_APPROVED",
+      "office": "Premises Allocation Office",
+      "finding": "Allocated request-bound premises for ordinal 14. No occupancy permission has yet been issued.",
+      "document": "Allocation record: this request owns this buffer."
+    },
+    {
+      "ordinal": "14",
+      "kind": "PREMISES_DISCOVERY",
+      "office": "Character-by-Character Vacancy Inspector",
+      "finding": "Identified LINE FEED (newline, LF) (U+000A) at UTF-16 position 0. It had already started a second floor without planning permission.",
+      "document": "Initial occupancy: 1 UTF-16 units. Names and code points are displayed instead of raw controls."
+    },
+    {
+      "ordinal": "14",
+      "kind": "PREMISES_APPROVED",
+      "office": "Hidden Occupant Eviction Authority",
+      "finding": "Removed 1 identified hidden occupant(s) under the registered removal procedure.",
+      "document": "Eviction completed before numerical assembly; no discovered character enters Official output."
+    },
+    {
+      "ordinal": "14",
+      "kind": "PREMISES_APPROVED",
+      "office": "Vacancy Reinspection Office",
+      "finding": "Reinspection verified exactly zero characters before occupancy.",
+      "document": "Vacancy certificate: character count 0. Memory capacity has not been measured or claimed to be zero."
+    },
+    {
+      "ordinal": "14",
+      "kind": "PREMISES_APPROVED",
+      "office": "Single-Use Occupancy Lease Authority",
+      "finding": "Issued a single-use, request-bound lease for ordinal 14.",
+      "document": "Lease binds this request, this premises and this vacant survey."
+    },
+    {
+      "ordinal": "14",
+      "kind": "PREMISES_APPROVED",
+      "office": "Independent Premises Auditor",
+      "finding": "Independent audit admitted the vacant premises for numerical habitation.",
+      "document": "The actual text may now move in. The vacancy finding describes the pre-occupancy inspection only."
+    },
+    {
+      "ordinal": "14",
+      "kind": "PREMISES_CERTIFICATE",
+      "office": "Vacant String Real Estate and Occupancy Directorate",
+      "finding": "Vacancy certified; the ordinal may now occupy its leased output buffer.",
+      "document": "{\"schema\":\"slopbuzz-premises/v1\",\"ordinal\":\"14\",\"purpose\":\"MANDATE\",\"status\":\"APPROVED\",\"initialLength\":1,\"vacancyCertified\":true,\"tenants\":[{\"position\":0,\"codePoint\":\"U+000A\",\"name\":\"LINE FEED (newline, LF)\",\"excuse\":\"It had already started a second floor without planning permission.\",\"recognized\":true}],\"steps\":[{\"office\":\"Premises Allocation Office\",\"state\":\"APPROVED\",\"finding\":\"Allocated request-bound premises for ordinal 14. No occupancy permission has yet been issued.\",\"document\":\"Allocation record: this request owns this buffer.\"},{\"office\":\"Character-by-Character Vacancy Inspector\",\"state\":\"DISCOVERED\",\"finding\":\"Identified LINE FEED (newline, LF) (U+000A) at UTF-16 position 0. It had already started a second floor without planning permission.\",\"document\":\"Initial occupancy: 1 UTF-16 units. Names and code points are displayed instead of raw controls.\"},{\"office\":\"Hidden Occupant Eviction Authority\",\"state\":\"APPROVED\",\"finding\":\"Removed 1 identified hidden occupant(s) under the registered removal procedure.\",\"document\":\"Eviction completed before numerical assembly; no discovered character enters Official output.\"},{\"office\":\"Vacancy Reinspection Office\",\"state\":\"APPROVED\",\"finding\":\"Reinspection verified exactly zero characters before occupancy.\",\"document\":\"Vacancy certificate: character count 0. Memory capacity has not been measured or claimed to be zero.\"},{\"office\":\"Single-Use Occupancy Lease Authority\",\"state\":\"APPROVED\",\"finding\":\"Issued a single-use, request-bound lease for ordinal 14.\",\"document\":\"Lease binds this request, this premises and this vacant survey.\"},{\"office\":\"Independent Premises Auditor\",\"state\":\"APPROVED\",\"finding\":\"Independent audit admitted the vacant premises for numerical habitation.\",\"document\":\"The actual text may now move in. The vacancy finding describes the pre-occupancy inspection only.\"}]}"
+    },
+    {
+      "ordinal": "14",
+      "kind": "TRANSACTION_BEGIN",
+      "office": "Output Transaction Coordinator",
+      "finding": "Opened an isolated staging buffer for ordinal 14. Fragments cannot publish a partial line.",
+      "document": null
+    },
+    {
+      "ordinal": "14",
+      "kind": "CLASSIFICATION",
+      "office": "Three-seat Classification Council",
+      "finding": "Fizz permission: false; Buzz permission: false; numeral permission: true. The independent arithmetic witness verified all votes.",
+      "document": null
+    },
+    {
+      "ordinal": "14",
+      "kind": "VISITOR",
+      "office": "Output Generation Context Visitor",
+      "finding": "The certified strategy declined printer FizzStringPrinter for this ordinal.",
+      "document": null
+    },
+    {
+      "ordinal": "14",
+      "kind": "VISITOR",
+      "office": "Output Generation Context Visitor",
+      "finding": "The certified strategy declined printer BuzzStringPrinter for this ordinal.",
+      "document": null
+    },
+    {
+      "ordinal": "14",
+      "kind": "VISITOR",
+      "office": "Output Generation Context Visitor",
+      "finding": "The certified strategy authorized printer IntegerIntegerPrinter for this ordinal.",
+      "document": null
+    },
+    {
+      "ordinal": "14",
+      "kind": "NUMERAL",
+      "office": "Integer-to-String Conversion Directorate",
+      "finding": "The ordinal was boxed as Integer, converted to decimal, copied through StringBuilder and returned as a fresh String: 14.",
+      "document": null
+    },
+    {
+      "ordinal": "14",
+      "kind": "FRAGMENT",
+      "office": "Output Staging Office",
+      "finding": "Staged 2 UTF-16 units; line separators remain part of the authorized payload.",
+      "document": "14"
+    },
+    {
+      "ordinal": "14",
+      "kind": "FRAGMENT",
+      "office": "Output Staging Office",
+      "finding": "Staged 1 UTF-16 units; line separators remain part of the authorized payload.",
+      "document": "\n"
+    },
+    {
+      "ordinal": "14",
+      "kind": "NOTARY",
+      "office": "Independent Proclamation Notary",
+      "finding": "An independent arithmetic and lexical check authorized this complete payload.",
+      "document": "14\n"
+    },
+    {
+      "ordinal": "14",
+      "kind": "PUBLICATION",
+      "office": "Output Publication Office",
+      "finding": "Published the complete UTF-8 line to the request audience.",
+      "document": "14\n"
+    },
+    {
+      "ordinal": "14",
+      "kind": "AUDIT_APPEND",
+      "office": "Audit Repository of Record",
+      "finding": "Appended sequence 14 with disposition COMMITTED. Its predecessor and SHA-256 digest bind the payload to the existing chain.",
+      "document": "Sequence 14; previous faa49bfd22e9629b5ac67939fd1831beb32e379c5ec2d430ba84d8316e7b384b; digest 48f1f71e4404d6762d9de260f10eb17f544b1954fcb45df02190f1783801a9de"
+    },
+    {
+      "ordinal": "14",
+      "kind": "QUEUE_ENQUEUED",
+      "office": "Audit Message Broker",
+      "finding": "Queued audit sequence 14 for the idempotent status projection. Publication to the mailbox is not delivery acknowledgment.",
+      "document": null
+    },
+    {
+      "ordinal": "14",
+      "kind": "TRANSACTION_COMMIT",
+      "office": "Output Transaction Coordinator",
+      "finding": "The numerical line and its committed audit entry completed their transaction.",
+      "document": null
+    },
+    {
+      "ordinal": "14",
+      "kind": "PREMISES_RELEASE",
+      "office": "Occupancy Custody Office",
+      "finding": "Released ordinal 14's premises after housing 3 UTF-16 units. The pre-occupancy vacancy certificate remains a historical finding.",
+      "document": null
+    },
+    {
+      "ordinal": "14",
+      "kind": "TRANSACTION_CLEANUP",
+      "office": "Output Transaction Coordinator",
+      "finding": "Released this ordinal's staging buffer.",
+      "document": null
+    },
+    {
+      "ordinal": "14",
+      "kind": "SUCCESSION",
+      "office": "Ordinal Succession Authority",
+      "finding": "Incumbent 14 petitioned for advancement 1. The independent auditor certified successor 15.",
+      "document": null
+    },
+    {
+      "ordinal": "15",
+      "kind": "CONTINUATION",
+      "office": "Inclusive Boundary Quorum",
+      "finding": "Current ordinal 15; authorized upper boundary 15. Pre-boundary vote: WITHHOLD; at-boundary vote: PERMIT.",
+      "document": null
+    },
+    {
+      "ordinal": "15",
+      "kind": "ASSEMBLY",
+      "office": "Factories and Strategy Registry",
+      "finding": "Factory-appointed Fizz, Buzz and numeral contexts and their shared visitor convened for this ordinal.",
+      "document": null
+    },
+    {
+      "ordinal": "15",
+      "kind": "PREMISES_APPROVED",
+      "office": "Premises Allocation Office",
+      "finding": "Allocated request-bound premises for ordinal 15. No occupancy permission has yet been issued.",
+      "document": "Allocation record: this request owns this buffer."
+    },
+    {
+      "ordinal": "15",
+      "kind": "PREMISES_APPROVED",
+      "office": "Character-by-Character Vacancy Inspector",
+      "finding": "No characters occupied the premises at this inspection.",
+      "document": "Initial occupancy: 0 UTF-16 units. Names and code points are displayed instead of raw controls."
+    },
+    {
+      "ordinal": "15",
+      "kind": "PREMISES_NOT_REQUIRED",
+      "office": "Hidden Occupant Eviction Authority",
+      "finding": "No eviction was required because the initial survey found no occupants.",
+      "document": "No eviction order issued."
+    },
+    {
+      "ordinal": "15",
+      "kind": "PREMISES_APPROVED",
+      "office": "Vacancy Reinspection Office",
+      "finding": "Reinspection verified exactly zero characters before occupancy.",
+      "document": "Vacancy certificate: character count 0. Memory capacity has not been measured or claimed to be zero."
+    },
+    {
+      "ordinal": "15",
+      "kind": "PREMISES_APPROVED",
+      "office": "Single-Use Occupancy Lease Authority",
+      "finding": "Issued a single-use, request-bound lease for ordinal 15.",
+      "document": "Lease binds this request, this premises and this vacant survey."
+    },
+    {
+      "ordinal": "15",
+      "kind": "PREMISES_APPROVED",
+      "office": "Independent Premises Auditor",
+      "finding": "Independent audit admitted the vacant premises for numerical habitation.",
+      "document": "The actual text may now move in. The vacancy finding describes the pre-occupancy inspection only."
+    },
+    {
+      "ordinal": "15",
+      "kind": "PREMISES_CERTIFICATE",
+      "office": "Vacant String Real Estate and Occupancy Directorate",
+      "finding": "Vacancy certified; the ordinal may now occupy its leased output buffer.",
+      "document": "{\"schema\":\"slopbuzz-premises/v1\",\"ordinal\":\"15\",\"purpose\":\"MANDATE\",\"status\":\"APPROVED\",\"initialLength\":0,\"vacancyCertified\":true,\"tenants\":[],\"steps\":[{\"office\":\"Premises Allocation Office\",\"state\":\"APPROVED\",\"finding\":\"Allocated request-bound premises for ordinal 15. No occupancy permission has yet been issued.\",\"document\":\"Allocation record: this request owns this buffer.\"},{\"office\":\"Character-by-Character Vacancy Inspector\",\"state\":\"APPROVED\",\"finding\":\"No characters occupied the premises at this inspection.\",\"document\":\"Initial occupancy: 0 UTF-16 units. Names and code points are displayed instead of raw controls.\"},{\"office\":\"Hidden Occupant Eviction Authority\",\"state\":\"NOT_REQUIRED\",\"finding\":\"No eviction was required because the initial survey found no occupants.\",\"document\":\"No eviction order issued.\"},{\"office\":\"Vacancy Reinspection Office\",\"state\":\"APPROVED\",\"finding\":\"Reinspection verified exactly zero characters before occupancy.\",\"document\":\"Vacancy certificate: character count 0. Memory capacity has not been measured or claimed to be zero.\"},{\"office\":\"Single-Use Occupancy Lease Authority\",\"state\":\"APPROVED\",\"finding\":\"Issued a single-use, request-bound lease for ordinal 15.\",\"document\":\"Lease binds this request, this premises and this vacant survey.\"},{\"office\":\"Independent Premises Auditor\",\"state\":\"APPROVED\",\"finding\":\"Independent audit admitted the vacant premises for numerical habitation.\",\"document\":\"The actual text may now move in. The vacancy finding describes the pre-occupancy inspection only.\"}]}"
+    },
+    {
+      "ordinal": "15",
+      "kind": "TRANSACTION_BEGIN",
+      "office": "Output Transaction Coordinator",
+      "finding": "Opened an isolated staging buffer for ordinal 15. Fragments cannot publish a partial line.",
+      "document": null
+    },
+    {
+      "ordinal": "15",
+      "kind": "CLASSIFICATION",
+      "office": "Three-seat Classification Council",
+      "finding": "Fizz permission: true; Buzz permission: true; numeral permission: false. The independent arithmetic witness verified all votes.",
+      "document": null
+    },
+    {
+      "ordinal": "15",
+      "kind": "VISITOR",
+      "office": "Output Generation Context Visitor",
+      "finding": "The certified strategy authorized printer FizzStringPrinter for this ordinal.",
+      "document": null
+    },
+    {
+      "ordinal": "15",
+      "kind": "REQUISITION",
+      "office": "Glyph Procurement Authority",
+      "finding": "Authorized product Fizz with 4 position-specific allocations.",
+      "document": null
+    },
+    {
+      "ordinal": "15",
+      "kind": "DELIVERY",
+      "office": "Approved Glyph Supplier",
+      "finding": "Delivered 4 allocations for Fizz. Inventory is fictional and inexhaustible.",
+      "document": null
+    },
+    {
+      "ordinal": "15",
+      "kind": "GLYPH_ACCEPTED",
+      "office": "Independent Receiving Inspector",
+      "finding": "Accepted Fizz position 1: character F, SKU GLY-0046, quantity 1. Its certificate belongs to this requisition and this position.",
+      "document": null
+    },
+    {
+      "ordinal": "15",
+      "kind": "GLYPH_ACCEPTED",
+      "office": "Independent Receiving Inspector",
+      "finding": "Accepted Fizz position 2: character i, SKU GLY-0069, quantity 1. Its certificate belongs to this requisition and this position.",
+      "document": null
+    },
+    {
+      "ordinal": "15",
+      "kind": "GLYPH_ACCEPTED",
+      "office": "Independent Receiving Inspector",
+      "finding": "Accepted Fizz position 3: character z, SKU GLY-007A, quantity 1. Its certificate belongs to this requisition and this position.",
+      "document": null
+    },
+    {
+      "ordinal": "15",
+      "kind": "GLYPH_ACCEPTED",
+      "office": "Independent Receiving Inspector",
+      "finding": "Accepted Fizz position 4: character z, SKU GLY-007A, quantity 1. Its certificate belongs to this requisition and this position.",
+      "document": null
+    },
+    {
+      "ordinal": "15",
+      "kind": "GLYPH_ASSEMBLED",
+      "office": "Certified Glyph Assembler",
+      "finding": "Verified every position-specific certificate and assembled Fizz in the approved order.",
+      "document": null
+    },
+    {
+      "ordinal": "15",
+      "kind": "FRAGMENT",
+      "office": "Output Staging Office",
+      "finding": "Staged 4 UTF-16 units; line separators remain part of the authorized payload.",
+      "document": "Fizz"
+    },
+    {
+      "ordinal": "15",
+      "kind": "VISITOR",
+      "office": "Output Generation Context Visitor",
+      "finding": "The certified strategy authorized printer BuzzStringPrinter for this ordinal.",
+      "document": null
+    },
+    {
+      "ordinal": "15",
+      "kind": "REQUISITION",
+      "office": "Glyph Procurement Authority",
+      "finding": "Authorized product Buzz with 4 position-specific allocations.",
+      "document": null
+    },
+    {
+      "ordinal": "15",
+      "kind": "DELIVERY",
+      "office": "Approved Glyph Supplier",
+      "finding": "Delivered 4 allocations for Buzz. Inventory is fictional and inexhaustible.",
+      "document": null
+    },
+    {
+      "ordinal": "15",
+      "kind": "GLYPH_ACCEPTED",
+      "office": "Independent Receiving Inspector",
+      "finding": "Accepted Buzz position 1: character B, SKU GLY-0042, quantity 1. Its certificate belongs to this requisition and this position.",
+      "document": null
+    },
+    {
+      "ordinal": "15",
+      "kind": "GLYPH_ACCEPTED",
+      "office": "Independent Receiving Inspector",
+      "finding": "Accepted Buzz position 2: character u, SKU GLY-0075, quantity 1. Its certificate belongs to this requisition and this position.",
+      "document": null
+    },
+    {
+      "ordinal": "15",
+      "kind": "GLYPH_ACCEPTED",
+      "office": "Independent Receiving Inspector",
+      "finding": "Accepted Buzz position 3: character z, SKU GLY-007A, quantity 1. Its certificate belongs to this requisition and this position.",
+      "document": null
+    },
+    {
+      "ordinal": "15",
+      "kind": "GLYPH_ACCEPTED",
+      "office": "Independent Receiving Inspector",
+      "finding": "Accepted Buzz position 4: character z, SKU GLY-007A, quantity 1. Its certificate belongs to this requisition and this position.",
+      "document": null
+    },
+    {
+      "ordinal": "15",
+      "kind": "GLYPH_ASSEMBLED",
+      "office": "Certified Glyph Assembler",
+      "finding": "Verified every position-specific certificate and assembled Buzz in the approved order.",
+      "document": null
+    },
+    {
+      "ordinal": "15",
+      "kind": "FRAGMENT",
+      "office": "Output Staging Office",
+      "finding": "Staged 4 UTF-16 units; line separators remain part of the authorized payload.",
+      "document": "Buzz"
+    },
+    {
+      "ordinal": "15",
+      "kind": "VISITOR",
+      "office": "Output Generation Context Visitor",
+      "finding": "The certified strategy declined printer IntegerIntegerPrinter for this ordinal.",
+      "document": null
+    },
+    {
+      "ordinal": "15",
+      "kind": "FRAGMENT",
+      "office": "Output Staging Office",
+      "finding": "Staged 1 UTF-16 units; line separators remain part of the authorized payload.",
+      "document": "\n"
+    },
+    {
+      "ordinal": "15",
+      "kind": "NOTARY",
+      "office": "Independent Proclamation Notary",
+      "finding": "An independent arithmetic and lexical check authorized this complete payload.",
+      "document": "FizzBuzz\n"
+    },
+    {
+      "ordinal": "15",
+      "kind": "PUBLICATION",
+      "office": "Output Publication Office",
+      "finding": "Published the complete UTF-8 line to the request audience.",
+      "document": "FizzBuzz\n"
+    },
+    {
+      "ordinal": "15",
+      "kind": "AUDIT_APPEND",
+      "office": "Audit Repository of Record",
+      "finding": "Appended sequence 15 with disposition COMMITTED. Its predecessor and SHA-256 digest bind the payload to the existing chain.",
+      "document": "Sequence 15; previous 48f1f71e4404d6762d9de260f10eb17f544b1954fcb45df02190f1783801a9de; digest 4966a4613f28585ce7bcb7da8792626801bca61e6651a25dbe8ebe34ffa67f55"
+    },
+    {
+      "ordinal": "15",
+      "kind": "QUEUE_ENQUEUED",
+      "office": "Audit Message Broker",
+      "finding": "Queued audit sequence 15 for the idempotent status projection. Publication to the mailbox is not delivery acknowledgment.",
+      "document": null
+    },
+    {
+      "ordinal": "15",
+      "kind": "TRANSACTION_COMMIT",
+      "office": "Output Transaction Coordinator",
+      "finding": "The numerical line and its committed audit entry completed their transaction.",
+      "document": null
+    },
+    {
+      "ordinal": "15",
+      "kind": "PREMISES_RELEASE",
+      "office": "Occupancy Custody Office",
+      "finding": "Released ordinal 15's premises after housing 9 UTF-16 units. The pre-occupancy vacancy certificate remains a historical finding.",
+      "document": null
+    },
+    {
+      "ordinal": "15",
+      "kind": "TRANSACTION_CLEANUP",
+      "office": "Output Transaction Coordinator",
+      "finding": "Released this ordinal's staging buffer.",
+      "document": null
+    },
+    {
+      "ordinal": "15",
+      "kind": "SUCCESSION",
+      "office": "Ordinal Succession Authority",
+      "finding": "Incumbent 15 petitioned for advancement 1. The independent auditor certified successor 16.",
+      "document": null
+    },
+    {
+      "ordinal": "16",
+      "kind": "CONTINUATION",
+      "office": "Inclusive Boundary Quorum",
+      "finding": "Current ordinal 16; authorized upper boundary 15. Pre-boundary vote: WITHHOLD; at-boundary vote: WITHHOLD.",
+      "document": null
+    },
+    {
+      "ordinal": null,
+      "kind": "COMPLETE",
+      "office": "Mandate Reception",
+      "finding": "The operation concluded with HTTP 200.",
+      "document": null
+    }
+  ],
+  "omitted": 0
+}

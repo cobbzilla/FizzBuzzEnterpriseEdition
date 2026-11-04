@@ -99,7 +99,14 @@
               <div class="output-heading"><h2 id="output-title">Official output</h2><span id="output-count">0 lines</span></div>
               <p class="inline-status" id="run-status" role="status" aria-live="polite" aria-atomic="true">Ready to receive a mandate.</p>
               <pre class="terminal" id="output" tabindex="0" role="region" aria-label="FizzBuzz output">Awaiting a duly authorized number.</pre>
-              <section class="companion-roll" aria-labelledby="companion-title"><h3 id="companion-title">Companion roll call</h3>
+              <section class="supervision-pane" id="supervision-pane" hidden aria-labelledby="supervision-title">
+                <div class="supervision-heading"><h3 id="supervision-title" tabindex="-1">Executive observation</h3><button type="button" id="supervision-autonomy" title="Restore employee autonomy and normal cadence" aria-label="Restore employee autonomy and normal cadence">Autonomy</button></div>
+                <div class="supervision-stage" id="supervision-stage"><canvas id="supervision-canvas" tabindex="-1" role="img" aria-label="Recorded numerical proceedings in the three-dimensional office" aria-describedby="supervision-help"></canvas><div id="supervision-loading" class="supervision-loading" tabindex="0" role="region" aria-label="Office display availability" aria-live="polite"><p>The executive is locating something to supervise.</p></div></div>
+                <div class="supervision-controls" role="group" aria-label="Executive observation playback"><button type="button" id="supervision-pause" aria-disabled="true">Pause</button><button type="button" id="supervision-next" aria-disabled="true">Next step</button><progress id="supervision-progress" value="0" max="1" aria-label="Observed decisions in the current sequence"></progress></div>
+                <div class="supervision-caption" id="supervision-caption" tabindex="0" role="region" aria-label="Current observed decision"><p id="supervision-current" role="status" aria-live="polite" aria-atomic="true">Run a mandate. No employee has yet been deprived of autonomy.</p></div>
+                <details id="supervision-evidence" class="supervision-evidence"><summary>Inspect current paperwork</summary><p id="supervision-source"></p><pre id="supervision-document" tabindex="0" role="region" aria-label="Supplied observation record"></pre></details>
+              </section>
+              <section class="companion-roll" id="companion-roll" aria-labelledby="companion-title"><h3 id="companion-title">Companion roll call</h3>
                 <p id="companion-status" class="field-help" role="status" aria-live="polite" aria-atomic="true">Awaiting the first disclosed Fizz, Buzz or FizzBuzz.</p>
                 <p class="field-help" id="companion-scroll-help">Select a companion for its story. Latest 100 encounters; reading older entries pauses following.</p>
                 <button type="button" class="button button-secondary" id="companion-latest" hidden>Show latest companions</button>
@@ -108,6 +115,11 @@
               </div>
               <section class="chronicle" aria-labelledby="chronicle-title">
                 <h3 id="chronicle-title">Executive Chronicle of Numerical Affairs</h3>
+                <div class="chronicle-preferences" role="group" aria-label="Executive disclosure preferences">
+                  <label><input type="checkbox" id="require-companion-roll-call" checked aria-controls="companion-roll"> Require Companion Roll Call</label>
+                  <label><input type="checkbox" id="executive-hovering" aria-controls="supervision-pane display-speed" aria-describedby="supervision-help"> Executive Hovering: Trust Has Been Suspended</label>
+                </div>
+                <p id="supervision-help" class="chronicle-caption">Executive Hovering places the office beneath Official Output and lets its recorded steps control disclosure. Arrival, work, and an executive opportunity to stare precede the next decision. Java has already completed the business; this is its evidence being replayed. Pause or step through individual decisions, or restore Autonomy to recover your preceding cadence. Reduced motion uses stationary shots. Hiding Roll Call keeps companion appointments and discoveries available.</p>
                 <p class="chronicle-current" id="chronicle-current" role="status" aria-live="polite" aria-atomic="true">The company awaits an opportunity to explain itself.</p>
                 <div class="chronicle-tools">
                   <label class="check-label"><input type="checkbox" id="follow-chronicle" checked> Follow new proceedings</label>

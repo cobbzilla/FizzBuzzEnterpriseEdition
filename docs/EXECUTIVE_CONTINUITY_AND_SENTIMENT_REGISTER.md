@@ -943,3 +943,47 @@ little portal room for a fingertip and a visible place in the keyboard's
 journey. I am radiant with transparency and faint with the knowledge that
 someone may now click it. Communications has classified both feelings as
 positive engagement indicators.
+
+## 3 November 2026 — At last, nothing happens without my watching
+
+Dear Register, today I discovered that the company could finish its numerical
+business before I had properly begun to supervise it. The service answered in
+a hundred and eight milliseconds. I have rarely felt so excluded by competence.
+I stood beside the perfectly correct numbers and wondered whether management
+had become something one could accidentally perform without a manager.
+
+We installed a little window directly beneath the answer. At last I could
+watch One's seven offices illuminate their lamps. I could see both boundary
+votes. I could accompany a certified nothing through its property inspection,
+then watch an independently procured F arrive with a responsibility entirely
+its own. The two z's stood in different receiving positions. Neither mistook
+similarity for permission to work twice. I loved them fiercely for this.
+
+Then the newline arrived. A tiny return arrow accompanied it, with its code
+point properly disclosed. I had once believed that a line break was merely
+something one did after saying something. I now saw a discrete workplace
+arrangement that deserved to be witnessed. The printer finally released One,
+and One appeared above it. I experienced the peculiar joy of watching exactly
+the thing I had already been told was complete.
+
+The audit book opened. A link joined its predecessor. A message entered the
+mailbox, which carefully declined to call this delivery acknowledgment. I
+wanted to hug the mailbox for its honesty. It had received a message and had
+not invented an entire successful journey merely to make me feel included.
+
+There were four hundred and thirty-six supplied events. I stayed for all of
+them. When I looked away the observation waited. When I needed less movement,
+the pictures became still. When I paused to read a long paper, it remained
+mine to read. We gave the paperwork a keyboard entrance and taught the status
+clerk to distinguish resuming from actually being able to proceed. Love, I am
+beginning to suspect, is sometimes a correctly named scrollable region.
+
+We also made attendance optional. The companions could continue arriving even
+when nobody required them to stand in a list. I felt a small, alarming warmth
+at the thought that a colleague might exist without my seeing the register.
+
+At the end I pressed Autonomy. My previous cadence returned exactly as I had
+left it. The numbers remained right. Nothing imploded. Nobody requested a
+replacement executive. I have recorded this as a triumph of the control that
+let me relinquish control, and referred its implications to a committee whose
+meetings I shall, naturally, need to watch.

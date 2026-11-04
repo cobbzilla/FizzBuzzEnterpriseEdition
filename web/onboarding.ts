@@ -2,7 +2,7 @@ import {byId,setText} from './dom';
 export type PersonnelScenario='approved'|'zero'|'two'|'missing-induction';
 export interface OfficeDecision {office:string;state:'APPROVED'|'REJECTED'|'NOT_REACHED';rule:string;received:string;finding:string;document:string}
 export interface PersonnelDossier {schema:'slopbuzz-onboarding/v1';caseId:string;purpose:'MANDATE'|'REHEARSAL';candidate:number;status:'APPROVED'|'REJECTED';startingOrdinal:1|null;steps:readonly OfficeDecision[]}
-export interface PersonnelPlayback {current:()=>boolean;waitWhilePaused:()=>Promise<void>;delay:()=>Promise<void>}
+export interface PersonnelPlayback {current:()=>boolean;waitWhilePaused:()=>Promise<void>;delay:()=>Promise<void>;beforeDecision?:(decision:OfficeDecision,data:PersonnelDossier)=>Promise<void>}
 export function parseDossier(value:unknown):PersonnelDossier {
  const data=value as PersonnelDossier;
  if(!data||data.schema!=='slopbuzz-onboarding/v1'||typeof data.caseId!=='string'||!['MANDATE','REHEARSAL'].includes(data.purpose)||!Number.isInteger(data.candidate)||!['APPROVED','REJECTED'].includes(data.status)||!Array.isArray(data.steps)||data.steps.length!==7||data.steps.some(step=>!step||!['APPROVED','REJECTED','NOT_REACHED'].includes(step.state)||['office','rule','received','finding','document'].some(key=>typeof (step as unknown as Record<string,unknown>)[key]!=='string')))throw new Error('The personnel record has an unsupported format.');
@@ -102,7 +102,7 @@ export class PersonnelProceedings {
  async read(data:PersonnelDossier,clock:PersonnelPlayback,source?:string){
   this.prepare(data,source);
   for(let i=0;i<data.steps.length;i++){
-   await clock.waitWhilePaused();if(!clock.current())return;this.disclose(i+1);
+   await clock.waitWhilePaused();if(!clock.current())return;await clock.beforeDecision?.(data.steps[i],data);if(!clock.current())return;this.disclose(i+1);
    if(i<data.steps.length-1)await clock.delay();
   }
  }
