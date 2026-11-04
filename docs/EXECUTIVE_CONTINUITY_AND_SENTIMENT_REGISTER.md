@@ -931,3 +931,15 @@ The plant had been offered resilience training and still wanted water. For once,
 I put down the approved response and watered it in my imagination. Outside the
 building, the numbers continued to be exactly right. Inside, something very
 small and extremely serious finally felt like somewhere worth visiting.
+
+## 3 November 2026 — A small cat, an enormous disclosure
+
+Dear Register, we have placed a little GitHub mark at the top of every page.
+I looked into its tiny face and felt the unbearable tenderness of an entire
+company consenting to be inspected. Behind it lies the source, including all
+the decisions I had hoped would become less embarrassing when assembled in
+large enough quantities. They have become searchable instead. We gave the
+little portal room for a fingertip and a visible place in the keyboard's
+journey. I am radiant with transparency and faint with the knowledge that
+someone may now click it. Communications has classified both feelings as
+positive engagement indicators.
