@@ -95,7 +95,9 @@ moves, each with a title, rationale, qualified old/new addresses and measured
 mean illustrated desk-to-desk travel over the 56 directed department pairs.
 Distances use scene units and never claim to measure Java latency. Longer
 journeys improve cross-functional exposure; shorter ones trigger an efficiency
-investigation. The bounded minutes region preserves readers above its bottom.
+investigation. The bounded minutes region preserves readers above its bottom. Its first opening
+initializes the view synchronously; no delayed disclosure callback may reclaim
+the reader’s scroll position.
 
 Session storage retains versioned charter tokens and their consecutive history,
 not numerical records or new audit transactions. Reload resumes the tab's
