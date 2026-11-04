@@ -1,6 +1,6 @@
 import type {ExecutionEvent,ExecutionPacket,Folio} from './chronicle.ts';
 import type {RoomId} from './office-content.ts';
-import {addresses,foundingEstate,type EstateLayout} from './office-layout.ts';
+import {addresses,foundingEstate,type EstateLayout,type OfficeAddress} from './office-layout.ts';
 
 export const hoveringLabel='Executive Hovering: Trust Has Been Suspended';
 export const hoveringCadence='executive-hovering';
@@ -14,6 +14,7 @@ export interface ObservedOfficeStep {
  id:string;event:ExecutionEvent;source:'recorded'|'disclosure'|'rehearsal';ordinal:string;
  text:string;action:OfficeAction;shot:OfficeShot;hasFile:boolean;publication:boolean;
  arriveMs:number;workMs:number;holdMs:number;glyphs:readonly GlyphReceipt[];hrIndex:number;hrStates:readonly PersonnelLamp[];tenantCode?:string;
+ origin?:OfficeAddress&{hrIndex:number};
 }
 export interface OfficeCue {step:ObservedOfficeStep;travel:number;work:number;hold:number;phase:'arrival'|'work'|'hold';complete:boolean}
 export interface ObservationEnvelope {prefix:ExecutionEvent[];groups:Map<string,ExecutionEvent[]>;suffix:ExecutionEvent[];omitted:number;cache:string;recorded:boolean}
@@ -93,6 +94,7 @@ export function planOfficeSteps(events:readonly ExecutionEvent[],context:{id:str
   const arriveMs=same?0:previous?.shot.room===room?620:1350+Math.round(distance*15);
   const [workMs,holdMs]=duration(action,event.kind);
   const step:ObservedOfficeStep={id:context.id+':'+index,event,source:context.source||'recorded',ordinal:context.ordinal||event.ordinal||'',text:context.text||'',action,shot,hasFile:context.hasFile??!!context.ordinal,publication:event.kind==='PUBLICATION'||event.kind==='DISCLOSE_OBSERVED',arriveMs,workMs,holdMs,glyphs:[...glyphs],hrIndex,hrStates:[...hrStates],tenantCode};
+  if(previous)step.origin={room:previous.shot.room,station:previous.shot.anchor,hrIndex:previous.hrIndex};
   result.push(step);previous=step;
  }
  if(ensureDisclosure&&!result.some(s=>s.publication)){

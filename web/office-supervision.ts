@@ -1,4 +1,6 @@
 import {releaseAsset} from './release-assets';
+import {OfficeShotDirector,rebaseObservation} from './office-direction';
+import {layoutToken} from './office-layout';
 import {officeEstate} from './office-estate';
 import {node} from './companion-story';
 import {tourSeed} from './office-model';
@@ -28,11 +30,11 @@ export class OfficeSupervisionDesk {
  private folio?:Folio;private published=false;private companion?:Discovery;private mandate='15';private mode='mandate';private observed=0;private blocked='';
 
  constructor(private readonly authority:ReadingAuthority){
-  officeEstate.subscribe(()=>this.updateScene());
+  officeEstate.subscribe(event=>{this.updateScene();if(event.kind!=='progress'){this.syncControls();this.authority.wake();}});
   this.checkbox.addEventListener('change',()=>this.applyMode(true));
   element('supervision-autonomy').addEventListener('click',()=>{this.disable();this.checkbox.focus();});
   element('supervision-pause').addEventListener('click',()=>{if(this.authority.reading())this.authority.pause(!this.authority.paused());});
-  element('supervision-next').addEventListener('click',()=>{if(!this.authority.reading()||!this.authority.paused())return;element('mandate-output').scrollIntoView({block:'start',behavior:'instant'});this.credits=1;this.authority.wake();});
+  element('supervision-next').addEventListener('click',()=>{if(!this.authority.reading()||!this.authority.paused()||officeEstate.moving)return;element('mandate-output').scrollIntoView({block:'start',behavior:'instant'});this.credits=1;this.authority.wake();});
   element('supervision-evidence').addEventListener('toggle',()=>{if((element('supervision-evidence') as HTMLDetailsElement).open&&this.authority.reading())this.authority.pause(true);});
   element('supervision-caption').addEventListener('focusin',()=>{if(this.authority.reading())this.authority.pause(true);});
   element('supervision-caption').addEventListener('wheel',()=>{if(this.authority.reading())this.authority.pause(true);},{passive:true});
@@ -48,7 +50,7 @@ export class OfficeSupervisionDesk {
  get generation(){return this.epoch;}
  get hasStepCredit(){return this.credits>0;}
  get ordinaryCadence(){return Number(this.normalCadence);}
- disable(){if(!this.enabled)return;this.checkbox.checked=false;this.applyMode(false);this.authority.wake();}
+ disable(){officeEstate.finish();if(!this.enabled)return;this.checkbox.checked=false;this.applyMode(false);this.authority.wake();}
  private applyMode(user:boolean){
   if(this.enabled){
    if(this.cadence.value!==hoveringCadence)this.normalCadence=this.cadence.value;
@@ -69,14 +71,15 @@ export class OfficeSupervisionDesk {
  syncControls(){
   const reading=this.authority.reading(),paused=this.authority.paused();
   const button=element<HTMLButtonElement>('supervision-pause');button.textContent=paused?'Resume':'Pause';button.setAttribute('aria-disabled',String(!reading));button.setAttribute('aria-pressed',String(paused));
-  element('supervision-next').setAttribute('aria-disabled',String(!reading||!paused));
-  if(this.enabled&&reading&&!paused&&!this.visible())this.authority.notice('Executive observation is waiting for attention. Return to the office view to continue.');
+  element('supervision-next').setAttribute('aria-disabled',String(!reading||!paused||officeEstate.moving));
+  if(officeEstate.moving&&reading)this.authority.notice('Facilities has suspended disclosure while all eight departments reconsider their addresses. Your pause and current decision are retained.');
+  else if(this.enabled&&reading&&!paused&&!this.visible())this.authority.notice('Executive observation is waiting for attention. Return to the office view to continue.');
  }
  begin(mandate:string,mode='mandate'){
   this.interrupt();this.mandate=mandate;this.mode=mode;this.envelope=undefined;this.packet=undefined;this.prefixDone=false;this.suffixDone=false;this.lastStep=undefined;this.activeStep=undefined;this.folio=undefined;this.published=false;this.companion=undefined;this.observed=0;this.blocked='';
   this.pane.dataset.observedSteps='0';this.pane.dataset.state='waiting';this.current('Reception is accepting the mandate. The executive is withholding trust.');this.renderer?.direct(null);this.updateScene();this.syncControls();
  }
- interrupt(){this.epoch++;this.credits=0;this.cancelFrame?.();this.cancelFrame=undefined;cancelAnimationFrame(this.frame);this.frame=0;this.pane.dataset.state='stopped';}
+ interrupt(){officeEstate.finish();this.epoch++;this.credits=0;this.cancelFrame?.();this.cancelFrame=undefined;cancelAnimationFrame(this.frame);this.frame=0;this.pane.dataset.state='stopped';}
  receive(packet:ExecutionPacket,start:string,count:number){this.packet=packet;this.packetContexts.set(packet,{start,count});this.envelope=observationEnvelope(packet,start,count);this.prefixDone=false;this.suffixDone=false;this.serial++;}
  async prelude(current:()=>boolean){
   if(!this.enabled||this.prefixDone||!this.envelope)return;this.prefixDone=true;this.folio=undefined;this.companion=undefined;this.published=false;
@@ -103,7 +106,7 @@ export class OfficeSupervisionDesk {
  clearCompanions(){this.companion=undefined;this.updateScene();}
  complete(){if(this.enabled){this.pane.dataset.state='complete';this.current('Observation is complete. The company is still withholding trust.');}this.syncControls();}
  private current(text:string){element('supervision-current').textContent=text;}
- private sceneState(step=this.activeStep||this.lastStep):OfficeSceneState{return {room:step?.shot.room||'reception',route:[],ordinal:this.folio?.ordinal||'',text:this.published?this.folio?.text||'':'PENDING',emoji:this.companion?.companion.emoji,companionName:this.companion?.companion.name,paused:true,reducedMotion:this.media.matches,quality:'standard',seed:tourSeed(this.mandate),layout:officeEstate.current};}
+ private sceneState(step=this.activeStep||this.lastStep):OfficeSceneState{return {room:step?.shot.room||'reception',route:[],ordinal:this.folio?.ordinal||'',text:this.published?this.folio?.text||'':'PENDING',emoji:this.companion?.companion.emoji,companionName:this.companion?.companion.name,paused:true,reducedMotion:this.media.matches,quality:'standard',seed:tourSeed(this.mandate),layout:officeEstate.displayed,relocation:officeEstate.relocation};}
  private updateScene(step=this.activeStep||this.lastStep){this.renderer?.update(this.sceneState(step));}
  private visible(){
   if(!this.enabled||document.hidden||document.querySelector('dialog[open]'))return false;
@@ -149,26 +152,28 @@ export class OfficeSupervisionDesk {
  }
  private playOne(step:ObservedOfficeStep,index:number,total:number,epoch:number,current:()=>boolean,publish?:()=>void):Promise<boolean>{
   return new Promise(resolve=>{
+   const director=new OfficeShotDirector();step={...step,arriveMs:director.duration(step,officeEstate.current)};let layoutKey=layoutToken(officeEstate.current);
    const clock=new ObservationClock(step);let shown=false,published=false,manual=false,settled=false;
    const finish=(ok:boolean)=>{if(settled)return;settled=true;cancelAnimationFrame(this.frame);this.frame=0;if(this.cancelFrame===cancel)this.cancelFrame=undefined;resolve(ok);};
    const cancel=()=>finish(false);this.cancelFrame=cancel;
    const frame=(now:number)=>{
     if(epoch!==this.epoch||!this.enabled||!current()){finish(false);return;}
-    this.activity();const visible=this.visible(),paused=this.authority.paused();
-    const waiting=!visible?'attention':paused?'paused':'';
+    const key=layoutToken(officeEstate.current);if(key!==layoutKey){const arrival=director.duration(step,officeEstate.current);clock.elapsed=rebaseObservation(clock.elapsed,step.arriveMs,arrival);step.arriveMs=arrival;layoutKey=key;this.updateScene(step);}
+    this.activity();const moving=officeEstate.moving,visible=this.visible(),paused=this.authority.paused();
+    const waiting=moving?'facilities':!visible?'attention':paused?'paused':'';
     if(waiting!==this.blocked){const previous=this.blocked;this.blocked=waiting;if(this.authority.reading()){if(waiting==='attention')this.authority.notice('Executive observation is waiting for attention. Return to the office view to continue.');else if(previous==='attention'&&!waiting)this.authority.notice('Executive observation resumed. The office controls disclosure.');}}
     if(!shown){
-     if((this.ready||this.fallback)&&visible&&(!paused||this.credits>0)){shown=true;this.show(step,index,total);}
+     if(!moving&&(this.ready||this.fallback)&&visible&&(!paused||this.credits>0)){shown=true;this.show(step,index,total);}
      else{this.frame=requestAnimationFrame(frame);return;}
     }
-    if(paused&&this.credits>0&&visible){this.credits=0;manual=true;}
-    const allow=visible&&(this.ready||this.fallback)&&(!paused||manual);
+    if(!moving&&paused&&this.credits>0&&visible){this.credits=0;manual=true;}
+    const allow=!moving&&visible&&(this.ready||this.fallback)&&(!paused||manual);
     const cue:OfficeCue=clock.tick(now,allow,manual);this.renderer?.direct(cue);
     if(this.pane.dataset.phase!==cue.phase){this.pane.dataset.phase=cue.phase;element<HTMLProgressElement>('supervision-progress').title=cue.phase==='arrival'?'Arriving at the next office':cue.phase==='work'?'The supplied decision is being illustrated':'A mandatory opportunity for executive contemplation';}
     if(step.publication&&!published&&clock.elapsed>=step.arriveMs+step.workMs){published=true;publish?.();}
     if(cue.complete){
      // Preserve one rendered final frame before moving to the next recorded decision.
-     const acknowledge=()=>{if(epoch!==this.epoch||!current()){finish(false);return;}this.activity();if(!this.visible()){this.frame=requestAnimationFrame(acknowledge);return;}this.observed++;this.pane.dataset.observedSteps=String(this.observed);this.pane.dataset.state='held';element<HTMLProgressElement>('supervision-progress').value=index+1;finish(true);};
+     const acknowledge=()=>{if(epoch!==this.epoch||!current()){finish(false);return;}this.activity();if(officeEstate.moving||!this.visible()){this.frame=requestAnimationFrame(acknowledge);return;}this.observed++;this.pane.dataset.observedSteps=String(this.observed);this.pane.dataset.state='held';element<HTMLProgressElement>('supervision-progress').value=index+1;finish(true);};
      this.frame=requestAnimationFrame(acknowledge);
     }else this.frame=requestAnimationFrame(frame);
    };

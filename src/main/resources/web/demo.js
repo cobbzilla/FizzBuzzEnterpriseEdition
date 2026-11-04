@@ -128,6 +128,9 @@ function nextEstate(layout) {
   if (layout.edition >= 1e6) throw new Error("One million transformations require a new company.");
   return estate(layout.seed, layout.edition + 1);
 }
+function layoutToken(layout) {
+  return layout.version + "." + layout.seed + "." + layout.edition;
+}
 function parseLayoutToken(token) {
   const m = /^estate-v1\.([a-f0-9]{32})\.(0|[1-9][0-9]{0,6})$/.exec(token);
   if (!m) throw new Error("This relocation memo uses an unfamiliar estate charter.");
@@ -210,9 +213,34 @@ function routes(layout) {
     return compact([...exit(from), ...graphRoute(graph, book.outside(from.room), book.outside(to.room)), ...exit(to).reverse()]);
   } };
 }
+var routeLength = (points) => points.slice(1).reduce((sum, p, i) => sum + distance(points[i], p), 0);
+function pointAlong(points, fraction) {
+  if (!points.length) throw new Error("A journey requires an address.");
+  if (fraction >= 1) return points.at(-1);
+  if (fraction <= 0) return points[0];
+  let remaining = routeLength(points) * Math.max(0, Math.min(1, fraction));
+  for (let i = 1; i < points.length; i++) {
+    const length = distance(points[i - 1], points[i]);
+    if (remaining <= length && length > 0) {
+      const t = remaining / length;
+      return { x: points[i - 1].x + (points[i].x - points[i - 1].x) * t, y: points[i - 1].y + (points[i].y - points[i - 1].y) * t, z: points[i - 1].z + (points[i].z - points[i - 1].z) * t };
+    }
+    remaining -= length;
+  }
+  return points.at(-1);
+}
 function validateEstate(layout) {
+  if (layout.version !== layoutVersion || !Number.isSafeInteger(layout.edition) || layout.edition < 0 || layout.edition > 1e6 || !/^[a-f0-9]{32}$/.test(layout.seed) || layout.rows !== (layout.edition % 2 ? 3 : 2) || layout.columns !== (layout.edition % 2 ? 3 : 4)) throw new Error("The estate charter has an unsupported topology or edition.");
   if (layout.placements.length !== 8 || new Set(layout.placements.map((p) => p.room)).size !== 8 || new Set(layout.placements.map((p) => p.slot)).size !== 8) throw new Error("Every department requires one unique office.");
+  for (const p of layout.placements) {
+    if (!rooms.some((r) => r.id === p.room) || !Number.isInteger(p.slot) || p.slot < 0 || p.slot >= layout.rows * layout.columns || p.address !== slotAddress(p.slot, layout.columns) || ![p.position.x, p.position.y, p.position.z].every(Number.isFinite) || distance(p.position, slotPosition(p.slot, layout.rows, layout.columns)) > 1e-5 || ![0, Math.PI].includes(p.yaw) || p.partition !== "classic" && !partitionStyles.some((s) => s.id === p.partition)) throw new Error("A department has an unrecognized address or partition.");
+  }
   if (layout.rows === 3 !== !!layout.amenity || layout.amenity && layout.placements.some((p) => p.slot === layout.amenity.slot)) throw new Error("The amenity has occupied a department.");
+  if (!Object.values(layout.bounds).every(Number.isFinite) || layout.bounds.minX !== -layout.columns * width / 2 || layout.bounds.maxX !== layout.columns * width / 2 || layout.bounds.minZ !== -layout.rows * depth / 2 || layout.bounds.maxZ !== layout.rows * depth / 2) throw new Error("The estate bounds do not match its charter.");
+  if (layout.amenity) {
+    const a = layout.amenity;
+    if (!["atrium", "breakroom"].includes(a.kind) || !Number.isInteger(a.slot) || a.slot < 0 || a.slot >= 9 || a.address !== slotAddress(a.slot, layout.columns) || !Object.values(a.position).every(Number.isFinite) || distance(a.position, slotPosition(a.slot, layout.rows, layout.columns)) > 1e-5) throw new Error("The amenity has no valid address.");
+  }
   const planner = routes(layout);
   for (const from of rooms) for (const to of rooms) {
     const path = planner.route({ room: from.id, station: "entrance" }, { room: to.id, station: "entrance" });
@@ -221,26 +249,101 @@ function validateEstate(layout) {
   return layout;
 }
 
-// web/office-estate.ts
-var OfficeEstate = class {
+// web/office-relocation-model.ts
+var relocationDuration = 12500;
+var relocationPhase = (p) => p < 0.15 ? "packing" : p < 0.72 ? "moving" : p < 0.86 ? "unpacking" : "returning";
+var RelocationCoordinator = class {
   value;
+  authority;
   listeners = /* @__PURE__ */ new Set();
-  constructor(initial2 = foundingEstate) {
+  pending;
+  serial = 0;
+  last;
+  allowed = false;
+  constructor(initial2 = foundingEstate, authority = nextEstate) {
     this.value = validateEstate(initial2);
+    this.authority = authority;
   }
   get current() {
     return this.value;
+  }
+  get moving() {
+    return !!this.pending;
+  }
+  get relocation() {
+    const p = this.pending;
+    if (!p) return;
+    const progress = p.elapsed / relocationDuration;
+    return Object.freeze({ id: p.id, from: p.from, to: p.to, progress, phase: relocationPhase(progress) });
+  }
+  get displayed() {
+    const p = this.relocation;
+    return p && p.progress >= 0.72 ? p.to : this.value;
   }
   subscribe(listener) {
     this.listeners.add(listener);
     return () => this.listeners.delete(listener);
   }
-  reorganize() {
-    const candidate = validateEstate(nextEstate(this.value));
-    this.value = candidate;
-    for (const listener of this.listeners) listener();
+  notify(kind, relocation) {
+    for (const listener of this.listeners) listener({ kind, relocation });
+  }
+  request() {
+    if (this.pending) return this.pending.to;
+    const candidate = validateEstate(this.authority(this.value));
+    if (candidate.edition !== this.value.edition + 1 || candidate.rows === this.value.rows || candidate.seed !== this.value.seed) throw new Error("Facilities must alternate estates and advance exactly one edition.");
+    for (const room of this.value.placements) {
+      const moved = candidate.placements.find((p) => p.room === room.room);
+      if (distance(room.position, moved.position) < 0.5) throw new Error("Every department must experience an actual relocation.");
+    }
+    this.pending = { id: ++this.serial, from: this.value, to: candidate, elapsed: 0 };
+    this.last = void 0;
+    this.allowed = false;
+    this.notify("staged", this.relocation);
     return candidate;
   }
+  advance(now, allow, id = this.pending?.id) {
+    if (!this.pending || id !== this.pending.id) return;
+    if (!Number.isFinite(now)) throw new Error("A relocation requires a finite clock.");
+    const delta = this.last === void 0 || !this.allowed ? 0 : Math.max(0, Math.min(100, now - this.last));
+    this.last = now;
+    this.allowed = allow;
+    if (!allow) return;
+    this.pending.elapsed = Math.min(relocationDuration, this.pending.elapsed + delta);
+    if (this.pending.elapsed >= relocationDuration) {
+      this.finish();
+      return;
+    }
+    if (delta) this.notify("progress", this.relocation);
+  }
+  finish() {
+    const p = this.relocation;
+    if (!p) return false;
+    this.value = p.to;
+    this.pending = void 0;
+    this.last = void 0;
+    this.allowed = false;
+    this.notify("committed", Object.freeze({ ...p, progress: 1, phase: "returning" }));
+    return true;
+  }
+  cancel() {
+    const p = this.relocation;
+    if (!p) return false;
+    this.pending = void 0;
+    this.last = void 0;
+    this.allowed = false;
+    this.notify("cancelled", p);
+    return true;
+  }
+  /** Immediate application is useful to read a saved or reduced-motion charter. */
+  reorganize() {
+    const target = this.request();
+    this.finish();
+    return target;
+  }
+};
+
+// web/office-estate.ts
+var OfficeEstate = class extends RelocationCoordinator {
 };
 var initial = foundingEstate;
 try {
@@ -616,9 +719,12 @@ var OfficeTourDesk = class {
   media = matchMedia("(prefers-reduced-motion: reduce)");
   directory = /* @__PURE__ */ new Map();
   constructor() {
-    officeEstate.subscribe(() => {
+    officeEstate.subscribe((event) => {
       this.syncRenderer();
-      this.renderAddress();
+      if (event.kind === "committed") {
+        this.renderAddress();
+        this.shareLink();
+      }
     });
     try {
       const limit = new URL(location.href).searchParams.get("limit");
@@ -764,6 +870,7 @@ var OfficeTourDesk = class {
         const route = routeFor(this.archive.current());
         if (route[this.routeIndex]) this.select(route[this.routeIndex].room, false);
       }
+      this.syncRenderer();
     });
     this.motion.addEventListener("change", () => {
       this.syncRenderer();
@@ -962,6 +1069,7 @@ var OfficeTourDesk = class {
     else this.canvas.setAttribute("aria-hidden", "true");
   }
   close(target = this.enter) {
+    officeEstate.finish();
     this.exitFocus = target;
     this.opened = false;
     ++this.opening;
@@ -1150,7 +1258,7 @@ var OfficeTourDesk = class {
   }
   sceneState() {
     const file = this.archive.current(), d = file ? this.archive.companions.get(file.ordinal) : void 0;
-    return { room: this.room, route: routeFor(file), ordinal: file?.ordinal || "", text: file?.text || "", emoji: d?.companion.emoji, companionName: d?.companion.name, paused: this.paused, reducedMotion: !this.motion.checked, quality: byId("office-quality").value, seed: tourSeed(this.archive.mandate), layout: officeEstate.current };
+    return { room: this.room, route: routeFor(file), ordinal: file?.ordinal || "", text: file?.text || "", emoji: d?.companion.emoji, companionName: d?.companion.name, paused: this.paused, followRoute: byId("office-follow-route").checked, reducedMotion: !this.motion.checked, quality: byId("office-quality").value, seed: tourSeed(this.archive.mandate), layout: officeEstate.displayed, relocation: officeEstate.relocation };
   }
   syncRenderer() {
     this.renderer?.update(this.sceneState());
@@ -1281,6 +1389,7 @@ function planOfficeSteps(events, context, ensureDisclosure = false) {
     const arriveMs = same ? 0 : previous?.shot.room === room ? 620 : 1350 + Math.round(distance2 * 15);
     const [workMs, holdMs] = duration(action, event.kind);
     const step = { id: context.id + ":" + index, event, source: context.source || "recorded", ordinal: context.ordinal || event.ordinal || "", text: context.text || "", action, shot, hasFile: context.hasFile ?? !!context.ordinal, publication: event.kind === "PUBLICATION" || event.kind === "DISCLOSE_OBSERVED", arriveMs, workMs, holdMs, glyphs: [...glyphs], hrIndex, hrStates: [...hrStates], tenantCode };
+    if (previous) step.origin = { room: previous.shot.room, station: previous.shot.anchor, hrIndex: previous.hrIndex };
     result.push(step);
     previous = step;
   }
@@ -1324,12 +1433,50 @@ var ObservationClock = class {
   }
 };
 
+// web/office-direction.ts
+var lerp = (a, b, t) => a + (b - a) * t;
+var angle = (a, b, t) => a + Math.atan2(Math.sin(b - a), Math.cos(b - a)) * t;
+var OfficeShotDirector = class {
+  key = "";
+  path = [];
+  route(step, layout) {
+    const key = layoutToken(layout) + "|" + step.origin?.room + "|" + step.origin?.station + "|" + step.shot.room + "|" + step.shot.anchor;
+    if (key !== this.key) {
+      this.key = key;
+      this.path = step.origin ? routes(layout).route(step.origin, { room: step.shot.room, station: step.shot.anchor }) : [addresses(layout).resolve({ room: step.shot.room, station: step.shot.anchor })];
+    }
+    return this.path;
+  }
+  duration(step, layout) {
+    if (!step.origin) return step.arriveMs;
+    const same = step.origin.room === step.shot.room;
+    if (same && step.origin.station === step.shot.anchor) return step.origin.hrIndex === step.hrIndex ? 0 : 620;
+    return Math.round((same ? 650 : 1150) + routeLength(this.route(step, layout)) / 6 * 1e3);
+  }
+  pose(cue, layout) {
+    const step = cue.step, to = shotFor(step.shot.room, step.shot.anchor, step.hrIndex, layout), t = cue.travel;
+    const from = step.origin ? shotFor(step.origin.room, step.origin.station, step.origin.hrIndex, layout) : { ...to, target: { x: 0, y: 0.2, z: 0 }, alpha: -Math.PI / 2.6, beta: 0.88, radius: 33 };
+    const p = pointAlong(this.route(step, layout), t), cross = !!step.origin && step.origin.room !== step.shot.room;
+    const target = step.origin ? { x: p.x, y: lerp(from.target.y, to.target.y, t) + Math.sin(t * Math.PI) * 0.3, z: p.z } : { x: lerp(0, to.target.x, t), y: lerp(0.2, to.target.y, t), z: lerp(0, to.target.z, t) };
+    return { target, file: { x: p.x, y: 0, z: p.z }, alpha: angle(from.alpha, to.alpha, t), beta: lerp(from.beta, to.beta, t) - (cross ? Math.sin(t * Math.PI) * 0.12 : 0), radius: lerp(from.radius, to.radius, t) + (cross ? Math.sin(t * Math.PI) * 5 : 0) };
+  }
+};
+function rebaseObservation(elapsed, oldArrival, newArrival) {
+  return elapsed < oldArrival && oldArrival > 0 ? elapsed / oldArrival * newArrival : Math.max(0, elapsed - oldArrival) + newArrival;
+}
+
 // web/office-supervision.ts
 var element = (id) => document.getElementById(id);
 var OfficeSupervisionDesk = class {
   constructor(authority) {
     this.authority = authority;
-    officeEstate.subscribe(() => this.updateScene());
+    officeEstate.subscribe((event) => {
+      this.updateScene();
+      if (event.kind !== "progress") {
+        this.syncControls();
+        this.authority.wake();
+      }
+    });
     this.checkbox.addEventListener("change", () => this.applyMode(true));
     element("supervision-autonomy").addEventListener("click", () => {
       this.disable();
@@ -1339,7 +1486,7 @@ var OfficeSupervisionDesk = class {
       if (this.authority.reading()) this.authority.pause(!this.authority.paused());
     });
     element("supervision-next").addEventListener("click", () => {
-      if (!this.authority.reading() || !this.authority.paused()) return;
+      if (!this.authority.reading() || !this.authority.paused() || officeEstate.moving) return;
       element("mandate-output").scrollIntoView({ block: "start", behavior: "instant" });
       this.credits = 1;
       this.authority.wake();
@@ -1418,6 +1565,7 @@ var OfficeSupervisionDesk = class {
     return Number(this.normalCadence);
   }
   disable() {
+    officeEstate.finish();
     if (!this.enabled) return;
     this.checkbox.checked = false;
     this.applyMode(false);
@@ -1464,8 +1612,9 @@ var OfficeSupervisionDesk = class {
     button.textContent = paused2 ? "Resume" : "Pause";
     button.setAttribute("aria-disabled", String(!reading2));
     button.setAttribute("aria-pressed", String(paused2));
-    element("supervision-next").setAttribute("aria-disabled", String(!reading2 || !paused2));
-    if (this.enabled && reading2 && !paused2 && !this.visible()) this.authority.notice("Executive observation is waiting for attention. Return to the office view to continue.");
+    element("supervision-next").setAttribute("aria-disabled", String(!reading2 || !paused2 || officeEstate.moving));
+    if (officeEstate.moving && reading2) this.authority.notice("Facilities has suspended disclosure while all eight departments reconsider their addresses. Your pause and current decision are retained.");
+    else if (this.enabled && reading2 && !paused2 && !this.visible()) this.authority.notice("Executive observation is waiting for attention. Return to the office view to continue.");
   }
   begin(mandate, mode = "mandate") {
     this.interrupt();
@@ -1490,6 +1639,7 @@ var OfficeSupervisionDesk = class {
     this.syncControls();
   }
   interrupt() {
+    officeEstate.finish();
     this.epoch++;
     this.credits = 0;
     this.cancelFrame?.();
@@ -1572,7 +1722,7 @@ var OfficeSupervisionDesk = class {
     element("supervision-current").textContent = text2;
   }
   sceneState(step = this.activeStep || this.lastStep) {
-    return { room: step?.shot.room || "reception", route: [], ordinal: this.folio?.ordinal || "", text: this.published ? this.folio?.text || "" : "PENDING", emoji: this.companion?.companion.emoji, companionName: this.companion?.companion.name, paused: true, reducedMotion: this.media.matches, quality: "standard", seed: tourSeed(this.mandate), layout: officeEstate.current };
+    return { room: step?.shot.room || "reception", route: [], ordinal: this.folio?.ordinal || "", text: this.published ? this.folio?.text || "" : "PENDING", emoji: this.companion?.companion.emoji, companionName: this.companion?.companion.name, paused: true, reducedMotion: this.media.matches, quality: "standard", seed: tourSeed(this.mandate), layout: officeEstate.displayed, relocation: officeEstate.relocation };
   }
   updateScene(step = this.activeStep || this.lastStep) {
     this.renderer?.update(this.sceneState(step));
@@ -1692,6 +1842,9 @@ var OfficeSupervisionDesk = class {
   }
   playOne(step, index, total, epoch, current, publish) {
     return new Promise((resolve) => {
+      const director = new OfficeShotDirector();
+      step = { ...step, arriveMs: director.duration(step, officeEstate.current) };
+      let layoutKey = layoutToken(officeEstate.current);
       const clock = new ObservationClock(step);
       let shown = false, published = false, manual = false, settled = false;
       const finish = (ok) => {
@@ -1704,14 +1857,22 @@ var OfficeSupervisionDesk = class {
       };
       const cancel = () => finish(false);
       this.cancelFrame = cancel;
-      const frame = (now) => {
+      const frame2 = (now) => {
         if (epoch !== this.epoch || !this.enabled || !current()) {
           finish(false);
           return;
         }
+        const key = layoutToken(officeEstate.current);
+        if (key !== layoutKey) {
+          const arrival = director.duration(step, officeEstate.current);
+          clock.elapsed = rebaseObservation(clock.elapsed, step.arriveMs, arrival);
+          step.arriveMs = arrival;
+          layoutKey = key;
+          this.updateScene(step);
+        }
         this.activity();
-        const visible = this.visible(), paused2 = this.authority.paused();
-        const waiting = !visible ? "attention" : paused2 ? "paused" : "";
+        const moving = officeEstate.moving, visible2 = this.visible(), paused2 = this.authority.paused();
+        const waiting = moving ? "facilities" : !visible2 ? "attention" : paused2 ? "paused" : "";
         if (waiting !== this.blocked) {
           const previous = this.blocked;
           this.blocked = waiting;
@@ -1721,19 +1882,19 @@ var OfficeSupervisionDesk = class {
           }
         }
         if (!shown) {
-          if ((this.ready || this.fallback) && visible && (!paused2 || this.credits > 0)) {
+          if (!moving && (this.ready || this.fallback) && visible2 && (!paused2 || this.credits > 0)) {
             shown = true;
             this.show(step, index, total);
           } else {
-            this.frame = requestAnimationFrame(frame);
+            this.frame = requestAnimationFrame(frame2);
             return;
           }
         }
-        if (paused2 && this.credits > 0 && visible) {
+        if (!moving && paused2 && this.credits > 0 && visible2) {
           this.credits = 0;
           manual = true;
         }
-        const allow = visible && (this.ready || this.fallback) && (!paused2 || manual);
+        const allow = !moving && visible2 && (this.ready || this.fallback) && (!paused2 || manual);
         const cue = clock.tick(now, allow, manual);
         this.renderer?.direct(cue);
         if (this.pane.dataset.phase !== cue.phase) {
@@ -1751,7 +1912,7 @@ var OfficeSupervisionDesk = class {
               return;
             }
             this.activity();
-            if (!this.visible()) {
+            if (officeEstate.moving || !this.visible()) {
               this.frame = requestAnimationFrame(acknowledge);
               return;
             }
@@ -1762,12 +1923,51 @@ var OfficeSupervisionDesk = class {
             finish(true);
           };
           this.frame = requestAnimationFrame(acknowledge);
-        } else this.frame = requestAnimationFrame(frame);
+        } else this.frame = requestAnimationFrame(frame2);
       };
-      this.frame = requestAnimationFrame(frame);
+      this.frame = requestAnimationFrame(frame2);
     });
   }
 };
+
+// web/office-relocation.ts
+var reduced = matchMedia("(prefers-reduced-motion: reduce)");
+var frame = 0;
+function visible() {
+  if (document.hidden) return false;
+  const dialog = document.querySelector("dialog[open]");
+  if (dialog && dialog.id !== "office-modal") return false;
+  return ["office-stage", "supervision-stage"].some((id) => {
+    const el = document.getElementById(id);
+    if (!el || el.closest("[hidden]")) return false;
+    const r = el.getBoundingClientRect();
+    return r.width > 0 && Math.min(r.bottom, innerHeight) - Math.max(r.top, 0) > Math.min(60, r.height * 0.2);
+  });
+}
+function tick(now) {
+  frame = 0;
+  if (!officeEstate.moving) return;
+  if (reduced.matches) {
+    officeEstate.finish();
+    return;
+  }
+  officeEstate.advance(now, visible());
+  if (officeEstate.moving) frame = requestAnimationFrame(tick);
+}
+officeEstate.subscribe((event) => {
+  if (event.kind === "staged" && !frame) frame = requestAnimationFrame(tick);
+});
+reduced.addEventListener("change", () => {
+  if (reduced.matches) officeEstate.finish();
+});
+addEventListener("pagehide", () => {
+  cancelAnimationFrame(frame);
+  officeEstate.finish();
+}, { once: true });
+function requestReorganization() {
+  officeEstate.request();
+  if (reduced.matches) officeEstate.finish();
+}
 
 // web/office-reorganization.ts
 var ReorganizationPanel = class {
@@ -1775,15 +1975,17 @@ var ReorganizationPanel = class {
   status = node("p");
   details = node("details");
   table = node("table");
-  busy = false;
+  skip = node("button", "Waive the Moving Ceremony");
+  progress = node("progress");
+  phase = "";
   constructor(container) {
     container.classList.add("reorganization-panel");
     this.button.type = "button";
     this.button.className = "button button-secondary";
     this.button.addEventListener("click", () => {
-      if (this.busy) return;
+      if (officeEstate.moving) return;
       try {
-        officeEstate.reorganize();
+        requestReorganization();
       } catch (error) {
         this.status.textContent = error instanceof Error ? error.message : "Facilities has deferred certainty.";
       }
@@ -1794,17 +1996,44 @@ var ReorganizationPanel = class {
     this.details.append(node("summary", "Inspect the current workplace arrangement"));
     this.table.className = "estate-addresses";
     this.details.append(this.table);
-    container.append(this.button, this.status, this.details);
-    officeEstate.subscribe(() => this.render());
+    this.skip.type = "button";
+    this.skip.addEventListener("click", () => {
+      this.button.focus({ preventScroll: true });
+      officeEstate.finish();
+    });
+    this.progress.max = 1;
+    this.progress.setAttribute("aria-label", "Facilities relocation progress");
+    container.append(this.button, this.skip, this.progress, this.status, this.details);
+    officeEstate.subscribe((event) => {
+      this.transaction();
+      if (event.kind === "committed" || event.kind === "cancelled") this.render();
+    });
     this.render();
+    this.transaction();
   }
-  setReading(reading2) {
-    this.busy = reading2;
-    this.button.disabled = reading2;
-    this.button.title = reading2 ? "Complete or stop the reading before relocating the company." : "Authorize a new arrangement of the same responsibilities.";
+  setReading(_reading) {
+    this.button.title = "Authorize a new arrangement of the same responsibilities. Current proceedings wait for Facilities.";
+  }
+  transaction() {
+    const r = officeEstate.relocation;
+    this.button.setAttribute("aria-disabled", String(!!r));
+    if (!r && document.activeElement === this.skip) this.button.focus({ preventScroll: true });
+    this.skip.hidden = !r;
+    this.progress.hidden = !r;
+    if (!r) {
+      this.phase = "";
+      return;
+    }
+    this.progress.value = r.progress;
+    this.button.parentElement.dataset.relocationPhase = r.phase;
+    if (this.phase !== r.phase) {
+      this.phase = r.phase;
+      this.status.textContent = { packing: "Packing every department. Responsibilities are being carefully separated from accountability.", moving: "All eight offices are in transit. The moving boxes have been granted acting management authority.", unpacking: "Unpacking the approved future. These addresses remain provisional until Facilities declares victory.", returning: "Returning to the interrupted decision. No work has been repeated; no responsibility has been reduced." }[r.phase];
+    }
   }
   render() {
     const l = officeEstate.current;
+    delete this.button.parentElement.dataset.relocationPhase;
     this.status.textContent = "Estate edition " + l.edition + " \xB7 " + l.rows + " \xD7 " + l.columns + (l.amenity ? " \xB7 " + l.amenity.kind + " at " + l.amenity.address : " \xB7 all available space is committed to seriousness");
     this.status.parentElement.dataset.estateEdition = String(l.edition);
     const head = node("thead"), row = node("tr");
@@ -3499,10 +3728,10 @@ var ExecutiveChronicle = class {
       const panel = byId2("mandate-output");
       panel.dataset.viewportFit = String(innerHeight > 600 && panel.getBoundingClientRect().height <= innerHeight - 24 - (document.querySelector("#discovery-register")?.getBoundingClientRect().height || 0));
     };
-    let frame = 0;
+    let frame2 = 0;
     const schedule = () => {
-      if (!frame) frame = requestAnimationFrame(() => {
-        frame = 0;
+      if (!frame2) frame2 = requestAnimationFrame(() => {
+        frame2 = 0;
         layout();
       });
     };
@@ -3766,6 +3995,11 @@ var supervision = new OfficeSupervisionDesk({ reading: () => reading, paused: ()
   wakeReading?.();
   readingControls();
 }, notice: (text2) => setText("run-status", text2) });
+officeEstate.subscribe((event) => {
+  if (event.kind !== "progress") {
+    wakeReading?.();
+  }
+});
 var reorganizationPanels = [new ReorganizationPanel(byId2("supervision-reorganization")), new ReorganizationPanel(byId2("office-reorganization"))];
 var companions = new CompanionDesk({ remember: (discovery) => {
   office.remember(discovery);
@@ -3803,7 +4037,7 @@ async function observeLine(folio, sequence, publish) {
     if (generation === supervision.generation || !supervision.enabled) break;
   }
   if (sequence !== mandateSequence) return false;
-  while (paused && !supervision.enabled && sequence === mandateSequence) await waitForPace();
+  while ((officeEstate.moving || paused && !supervision.enabled) && sequence === mandateSequence) await waitForPace();
   if (sequence !== mandateSequence) return false;
   release();
   return true;
@@ -3892,7 +4126,7 @@ function validateLimit() {
 }
 stopButton.addEventListener("click", () => {
   if (!reading) return;
-  ++mandateSequence;
+  officeEstate.finish(), ++mandateSequence;
   reading = false;
   streaming = false;
   paused = false;
@@ -3941,7 +4175,7 @@ async function revealOutput(text2, sequence, serviceMillis) {
   if (supervision.enabled) await supervision.prelude(() => sequence === mandateSequence);
   for (let index = 0; index < lines2.length; index++) {
     if (sequence !== mandateSequence) return;
-    while (paused && !supervision.enabled && sequence === mandateSequence) await waitForPace();
+    while ((officeEstate.moving || paused && !supervision.enabled) && sequence === mandateSequence) await waitForPace();
     if (sequence !== mandateSequence) return;
     if (immediate()) {
       discloseLines(String(index + 1), lines2.slice(index));

@@ -90,12 +90,16 @@ export function estateOverviewRadius(layout:EstateLayout,aspect:number,alpha:num
  return Math.max(layout.edition===0?33:20,radius*1.08);
 }
 export function pointAlong(points:readonly Point[],fraction:number):Point {
- if(!points.length)throw new Error('A journey requires an address.');let remaining=routeLength(points)*Math.max(0,Math.min(1,fraction));
+ if(!points.length)throw new Error('A journey requires an address.');if(fraction>=1)return points.at(-1)!;if(fraction<=0)return points[0];let remaining=routeLength(points)*Math.max(0,Math.min(1,fraction));
  for(let i=1;i<points.length;i++){const length=distance(points[i-1],points[i]);if(remaining<=length&&length>0){const t=remaining/length;return {x:points[i-1].x+(points[i].x-points[i-1].x)*t,y:points[i-1].y+(points[i].y-points[i-1].y)*t,z:points[i-1].z+(points[i].z-points[i-1].z)*t};}remaining-=length;}return points.at(-1)!;
 }
 export function validateEstate(layout:EstateLayout){
+ if(layout.version!==layoutVersion||!Number.isSafeInteger(layout.edition)||layout.edition<0||layout.edition>1000000||!/^[a-f0-9]{32}$/.test(layout.seed)||layout.rows!==(layout.edition%2?3:2)||layout.columns!==(layout.edition%2?3:4))throw new Error('The estate charter has an unsupported topology or edition.');
  if(layout.placements.length!==8||new Set(layout.placements.map(p=>p.room)).size!==8||new Set(layout.placements.map(p=>p.slot)).size!==8)throw new Error('Every department requires one unique office.');
+ for(const p of layout.placements){if(!rooms.some(r=>r.id===p.room)||!Number.isInteger(p.slot)||p.slot<0||p.slot>=layout.rows*layout.columns||p.address!==slotAddress(p.slot,layout.columns)||![p.position.x,p.position.y,p.position.z].every(Number.isFinite)||distance(p.position,slotPosition(p.slot,layout.rows,layout.columns))>.00001||![0,Math.PI].includes(p.yaw)||p.partition!=='classic'&&!partitionStyles.some(s=>s.id===p.partition))throw new Error('A department has an unrecognized address or partition.');}
  if((layout.rows===3)!==!!layout.amenity||layout.amenity&&layout.placements.some(p=>p.slot===layout.amenity!.slot))throw new Error('The amenity has occupied a department.');
+ if(!Object.values(layout.bounds).every(Number.isFinite)||layout.bounds.minX!==-layout.columns*width/2||layout.bounds.maxX!==layout.columns*width/2||layout.bounds.minZ!==-layout.rows*depth/2||layout.bounds.maxZ!==layout.rows*depth/2)throw new Error('The estate bounds do not match its charter.');
+ if(layout.amenity){const a=layout.amenity;if(!['atrium','breakroom'].includes(a.kind)||!Number.isInteger(a.slot)||a.slot<0||a.slot>=9||a.address!==slotAddress(a.slot,layout.columns)||!Object.values(a.position).every(Number.isFinite)||distance(a.position,slotPosition(a.slot,layout.rows,layout.columns))>.00001)throw new Error('The amenity has no valid address.');}
  const planner=routes(layout);for(const from of rooms)for(const to of rooms){const path=planner.route({room:from.id,station:'entrance'},{room:to.id,station:'entrance'});if(!path.every(p=>Number.isFinite(p.x)&&Number.isFinite(p.y)&&Number.isFinite(p.z)))throw new Error('A department has escaped geometry.');}
  return layout;
 }
