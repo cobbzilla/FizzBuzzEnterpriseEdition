@@ -17,8 +17,10 @@ import '@babylonjs/core/Collisions/collisionCoordinator';
 import '@babylonjs/core/Culling/ray';
 import {rooms,roomById,type RoomId} from './office-content.ts';
 import type {OfficeRenderer,OfficeRendererOptions,OfficeSceneState} from './office-renderer.ts';
+import type {OfficeCue} from './office-supervision-model';
+import {createProductionStage} from './office-production';
 
-export interface OfficeDiagnostics {rooms:number;meshes:number;fileActors:number;view:string;camera:{x:number;y:number;z:number};props:{id:string;room:RoomId;x:number;y:number}[]}
+export interface OfficeDiagnostics {rooms:number;meshes:number;fileActors:number;view:string;camera:{x:number;y:number;z:number};directed?:{id:string;action:string;room:RoomId;phase:string;work:number;file:{x:number;y:number;z:number};radius:number};props:{id:string;room:RoomId;x:number;y:number}[]}
 const inspections=new WeakMap<HTMLCanvasElement,()=>OfficeDiagnostics>();
 export const inspectOffice=(canvas:HTMLCanvasElement)=>inspections.get(canvas)?.();
 
@@ -89,6 +91,36 @@ export function createOffice(options:OfficeRendererOptions):OfficeRenderer {
  const file=new TransformNode('selected recorded file',scene);const sheet=box('recorded sheet',.68,.9,.07,0,.9,0,paper,false);sheet.parent=file;sheet.isPickable=true;const halo=MeshBuilder.CreateDisc('recorded file halo',{radius:.55,tessellation:32,sideOrientation:Mesh.DOUBLESIDE},scene);halo.material=green;halo.rotation.x=Math.PI/2;halo.position.y=.1;halo.parent=file;halo.isPickable=false;
  const fileText=plaque('recorded file text',[],0,.95,-.041,.59,.65);fileText.parent=file;
  const buddy=plaque('appointed companion',[],0,1.4,0,.6,.6);buddy.parent=file;buddy.billboardMode=Mesh.BILLBOARDMODE_ALL;
+ const interactive=options.interactive!==false;
+ if(!interactive){
+  overview.detachControl();
+  // All shadow casters in this presentation are static scenery. The animated
+  // paperwork is added later and does not require the estate to be redrawn into
+  // a 1024px shadow map on every observation frame.
+  const map=shadow.getShadowMap();if(map)map.refreshRate=0;
+  for(const mesh of scene.meshes)if(!mesh.isDescendantOf(file))mesh.freezeWorldMatrix();
+ }
+ let directed:OfficeCue|undefined,production:ReturnType<typeof createProductionStage>|undefined;
+ let directedId='',directFrom:{target:Vector3;file:Vector3;alpha:number;beta:number;radius:number;room?:RoomId}|undefined,lastDirectedRoom:RoomId|undefined;
+ const direct=(cue:OfficeCue|null)=>{
+  if(!cue){directed=undefined;directedId='';production?.hide();return;}
+  if(cue.step.id!==directedId){
+   directedId=cue.step.id;cameraTarget=undefined;wholeView=false;view='overview';scene.activeCamera=overview;walkCamera.detachControl();overview.detachControl();
+   directFrom={target:overview.target.clone(),file:file.position.clone(),alpha:overview.alpha,beta:overview.beta,radius:overview.radius,room:lastDirectedRoom};lastDirectedRoom=cue.step.shot.room;
+  }
+  directed=cue;
+ };
+ const renderDirected=()=>{
+  const cue=directed!,from=directFrom!,shot=cue.step.shot,t=state.reducedMotion?1:cue.travel;
+  const destination=new Vector3(shot.target.x,shot.target.y,shot.target.z);
+  const cross=from.room!==shot.room;
+  const target=Vector3.Lerp(from.target,destination,t);if(cross)target.y+=Math.sin(t*Math.PI)*.6;
+  overview.setTarget(target);const delta=Math.atan2(Math.sin(shot.alpha-from.alpha),Math.cos(shot.alpha-from.alpha));
+  overview.alpha=from.alpha+delta*t;overview.beta=from.beta+(shot.beta-from.beta)*t-(cross?Math.sin(t*Math.PI)*.16:0);
+  overview.radius=from.radius+(shot.radius-from.radius)*t+(cross?Math.sin(t*Math.PI)*Math.max(0,10-Math.min(from.radius,shot.radius)):0);
+  file.setEnabled(cue.step.hasFile);file.position=Vector3.Lerp(from.file,new Vector3(shot.target.x,0,shot.target.z),t);file.position.y+=state.reducedMotion?0:Math.sin(t*Math.PI)*(cross?2:.35);file.rotation.y=overview.alpha+Math.PI/2;
+  sheet.metadata={room:shot.room};production||=createProductionStage(scene);production.update(state.reducedMotion?{...cue,travel:1,work:1,hold:1,phase:'hold',complete:true}:cue);
+ };
  let state=options.state,running=true,disposed=false,lastTime=performance.now(),elapsed=0,lastStep=-1,view:'overview'|'walk'='overview',signature='',textureIdentity='',lastQuality='';let cameraTarget:Vector3|undefined;let cameraRadius=33,wholeView=true;const estateRadius=()=>Math.max(33,33*Math.sqrt(1.65/(engine.getRenderWidth()/Math.max(1,engine.getRenderHeight()))));let down:{x:number;y:number}|undefined;const held=new Set<'forward'|'back'|'left'|'right'>();
  const resize=()=>{if(disposed)return;engine.setHardwareScalingLevel(state.quality==='economy'?1.25:1/Math.min(devicePixelRatio,1.5));engine.resize();if(wholeView&&view==='overview'){cameraRadius=estateRadius();overview.radius=cameraRadius;}};
  const positionFor=(index:number)=>{const step=state.route[Math.min(index,state.route.length-1)],r=roomById(step?.room||state.room)!;return new Vector3(r.x,0,r.z-.8);};
@@ -101,20 +133,22 @@ export function createOffice(options:OfficeRendererOptions):OfficeRenderer {
  const keyDirection=(key:string)=>({w:'forward',s:'back',a:'left',d:'right'} as const)[key.toLowerCase() as 'w'|'a'|'s'|'d'];
  const keyDown=(e:KeyboardEvent)=>{const direction=keyDirection(e.key);if(!direction||view!=='walk'||document.activeElement!==canvas||e.ctrlKey||e.metaKey||e.altKey)return;e.preventDefault();if(!held.has(direction))advance(direction,.25);held.add(direction);};const keyUp=(e:KeyboardEvent)=>{const direction=keyDirection(e.key);if(direction)held.delete(direction);};const cancelPointer=()=>{down=undefined;held.clear();};
  const pointerDown=(e:PointerEvent)=>{down={x:e.clientX,y:e.clientY};};const pointerUp=(e:PointerEvent)=>{if(!down||Math.hypot(e.clientX-down.x,e.clientY-down.y)>9){down=undefined;return;}down=undefined;const hit=scene.pick(scene.pointerX,scene.pointerY);const info=hit?.pickedMesh?.metadata;if(info?.room){options.onRoom(info.room);if(info.prop)options.onProp(info.room,info.prop);}};
- canvas.addEventListener('pointerdown',pointerDown);canvas.addEventListener('pointerup',pointerUp);canvas.addEventListener('pointercancel',cancelPointer);canvas.addEventListener('keydown',keyDown);canvas.addEventListener('keyup',keyUp);canvas.addEventListener('blur',cancelPointer);
+ if(interactive){canvas.addEventListener('pointerdown',pointerDown);canvas.addEventListener('pointerup',pointerUp);canvas.addEventListener('pointercancel',cancelPointer);canvas.addEventListener('keydown',keyDown);canvas.addEventListener('keyup',keyUp);canvas.addEventListener('blur',cancelPointer);}
  const render=()=>{
   if(disposed||!running||document.hidden)return;const now=performance.now(),dt=Math.min((now-lastTime)/1000,.08);lastTime=now;
   if(cameraTarget){const t=state.reducedMotion?1:Math.min(1,dt*5);overview.setTarget(Vector3.Lerp(overview.target,cameraTarget,t));overview.radius+=(cameraRadius-overview.radius)*t;if(Vector3.Distance(overview.target,cameraTarget)<.015&&Math.abs(overview.radius-cameraRadius)<.02)cameraTarget=undefined;}
+  if(directed){try{renderDirected();}catch{engine.stopRenderLoop(render);options.onProblem('The production display became unavailable.');return;}}else{
   if(!state.paused&&!state.reducedMotion&&state.route.length&&canvas.dataset.rendered==='true')elapsed=Math.min(elapsed+dt,state.route.length*1.9-.001);
   const step=state.route.length?Math.min(Math.floor(elapsed/1.9),state.route.length-1):-1;if(step!==lastStep){lastStep=step;sheet.metadata=step>=0?{room:state.route[step].room}:undefined;options.onStep(step);}
   file.setEnabled(!!state.ordinal&&state.route.length>0);if(step>=0){const start=positionFor(step),next=positionFor(step+1);const t=state.reducedMotion?0:Math.max(0,Math.min(1,(elapsed/1.9-step-.35)/.65));file.position=corridorPath(start,next,t);file.position.y=(!state.paused&&!state.reducedMotion)? .06*Math.sin(elapsed*4):0;file.rotation.y=view==='walk'?walkCamera.rotation.y:overview.alpha+Math.PI/2;}
+  }
   if(view==='walk'){for(const direction of held)advance(direction,dt*1.1);walkCamera.position.x=Math.max(-14.1,Math.min(14.1,walkCamera.position.x));walkCamera.position.z=Math.max(-6.4,Math.min(6.4,walkCamera.position.z));walkCamera.position.y=1.35;}
   for(const [id,r]of reactions){if(r.time<0)continue;if(!state.paused&&!state.reducedMotion)r.time=Math.min(1.4,r.time+dt);const t=state.reducedMotion?1:Math.min(1,r.time/1.4);r.mesh.position.copyFrom(r.origin);if(r.kind==='confetti'){r.mesh.position.x+=.2*t;r.mesh.position.y+=.15*Math.sin(t*Math.PI);}else if(r.kind==='ticket'){r.mesh.position.y-=.15*t;r.mesh.scaling.y=1+.45*t;}else if(r.kind==='phone'){r.mesh.position.y+=.3*Math.sin(t*Math.PI);r.mesh.rotation.z=.15*Math.sin(t*Math.PI*3);}else r.mesh.position.y+=.18*Math.sin(t*Math.PI*4);}
   for(let i=0;i<accents.length;i++)floorMaterials[i].emissiveColor=Color3.FromHexString(rooms[i].color).scale(rooms[i].id===state.room ? .04:0);
-  try{scene.render();if(canvas.dataset.rendered!=='true'&&scene.isReady()){canvas.dataset.rendered='true';engine.canvasTabIndex=0;canvas.tabIndex=0;options.onReady();}}catch{engine.stopRenderLoop(render);options.onProblem('The graphics display became unavailable.');}
+  try{scene.render();if(canvas.dataset.rendered!=='true'&&scene.isReady()){canvas.dataset.rendered='true';engine.canvasTabIndex=interactive?0:-1;canvas.tabIndex=interactive?0:-1;options.onReady();}}catch{engine.stopRenderLoop(render);options.onProblem('The graphics display became unavailable.');}
  };
- const renderer:OfficeRenderer={update(next){state=next;const key=state.ordinal+'|'+state.route.map(s=>s.room+':'+s.source).join(',');if(key!==signature){signature=key;elapsed=0;lastStep=-1;}setTextures();sun.intensity=.74+(state.seed%5)*.03;if(lastQuality!==state.quality){lastQuality=state.quality;sun.shadowEnabled=state.quality==='standard';resize();}},selectRoom,overview:toOverview,walk(id){overview.detachControl();view='walk';scene.activeCamera=walkCamera;walkCamera.attachControl(canvas,true);selectRoom(id);options.onView(view);},move(direction){advance(direction,.35);},zoom(direction){if(view==='overview'){wholeView=false;overview.radius=Math.max(4,Math.min(48,overview.radius+direction*2));cameraRadius=overview.radius;}},react(id,action){const r=reactions.get(id);if(r){r.time=state.reducedMotion?1.4:0;}},seek,active(value){running=value;lastTime=performance.now();if(!value){held.clear();engine.stopRenderLoop(render);overview.detachControl();walkCamera.detachControl();}else{engine.runRenderLoop(render);(scene.activeCamera as ArcRotateCamera|UniversalCamera).attachControl(canvas,true);}},resize,dispose(){disposed=true;inspections.delete(canvas);canvas.removeEventListener('pointerdown',pointerDown);canvas.removeEventListener('pointerup',pointerUp);canvas.removeEventListener('pointercancel',cancelPointer);canvas.removeEventListener('keydown',keyDown);canvas.removeEventListener('keyup',keyUp);canvas.removeEventListener('blur',cancelPointer);engine.stopRenderLoop();scene.dispose();engine.dispose();}};
- inspections.set(canvas,()=>{scene.updateTransformMatrix(true);const camera=scene.activeCamera!;const viewport=camera.viewport.toGlobal(engine.getRenderWidth(),engine.getRenderHeight());return {rooms:new Set(scene.meshes.filter(m=>m.metadata?.room&&!m.metadata?.prop&&m!==sheet).map(m=>m.metadata.room)).size,meshes:scene.meshes.length,fileActors:file.isEnabled()?1:0,view,camera:{x:camera.position.x,y:camera.position.y,z:camera.position.z},props:scene.meshes.filter(m=>m.metadata?.prop).map(m=>{m.computeWorldMatrix(true);const p=Vector3.Project(m.getBoundingInfo().boundingSphere.centerWorld,Matrix.Identity(),scene.getTransformMatrix(),viewport);return {id:m.metadata.prop,room:m.metadata.room,x:p.x/engine.getRenderWidth()*canvas.clientWidth,y:p.y/engine.getRenderHeight()*canvas.clientHeight};})};});
+ const renderer:OfficeRenderer={direct,update(next){state=next;const key=state.ordinal+'|'+state.route.map(s=>s.room+':'+s.source).join(',');if(key!==signature){signature=key;elapsed=0;lastStep=-1;}setTextures();sun.intensity=.74+(state.seed%5)*.03;if(lastQuality!==state.quality){lastQuality=state.quality;sun.shadowEnabled=state.quality==='standard';resize();}},selectRoom,overview:toOverview,walk(id){overview.detachControl();view='walk';scene.activeCamera=walkCamera;walkCamera.attachControl(canvas,true);selectRoom(id);options.onView(view);},move(direction){advance(direction,.35);},zoom(direction){if(view==='overview'){wholeView=false;overview.radius=Math.max(4,Math.min(48,overview.radius+direction*2));cameraRadius=overview.radius;}},react(id,action){const r=reactions.get(id);if(r){r.time=state.reducedMotion?1.4:0;}},seek,active(value){running=value;lastTime=performance.now();if(!value){held.clear();engine.stopRenderLoop(render);overview.detachControl();walkCamera.detachControl();}else{engine.runRenderLoop(render);if(interactive&&!directed)(scene.activeCamera as ArcRotateCamera|UniversalCamera).attachControl(canvas,true);}},resize,dispose(){disposed=true;inspections.delete(canvas);canvas.removeEventListener('pointerdown',pointerDown);canvas.removeEventListener('pointerup',pointerUp);canvas.removeEventListener('pointercancel',cancelPointer);canvas.removeEventListener('keydown',keyDown);canvas.removeEventListener('keyup',keyUp);canvas.removeEventListener('blur',cancelPointer);engine.stopRenderLoop();scene.dispose();engine.dispose();}};
+ inspections.set(canvas,()=>{scene.updateTransformMatrix(true);const camera=scene.activeCamera!;const viewport=camera.viewport.toGlobal(engine.getRenderWidth(),engine.getRenderHeight());return {rooms:new Set(scene.meshes.filter(m=>m.metadata?.room&&!m.metadata?.prop&&m!==sheet).map(m=>m.metadata.room)).size,meshes:scene.meshes.length,fileActors:file.isEnabled()?1:0,view,...(directed?{directed:{id:directed.step.id,action:directed.step.action,room:directed.step.shot.room,phase:directed.phase,work:directed.work,file:{x:file.position.x,y:file.position.y,z:file.position.z},radius:overview.radius}}:{}),camera:{x:camera.position.x,y:camera.position.y,z:camera.position.z},props:scene.meshes.filter(m=>m.metadata?.prop).map(m=>{m.computeWorldMatrix(true);const p=Vector3.Project(m.getBoundingInfo().boundingSphere.centerWorld,Matrix.Identity(),scene.getTransformMatrix(),viewport);return {id:m.metadata.prop,room:m.metadata.room,x:p.x/engine.getRenderWidth()*canvas.clientWidth,y:p.y/engine.getRenderHeight()*canvas.clientHeight};})};});
  renderer.update(state);engine.runRenderLoop(render);return renderer;
  } catch(error) {scene.dispose();engine.dispose();throw error;}
 }

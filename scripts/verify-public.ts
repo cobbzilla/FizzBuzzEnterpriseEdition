@@ -47,6 +47,16 @@ export async function verifyPublic(origin: string, revision: string) {
    const spacing = await page.evaluate(() => ({padding:parseFloat(getComputedStyle(document.querySelector('#mandate-output')!).paddingLeft),gap:parseFloat(getComputedStyle(document.querySelector('.demo-workspace')!).rowGap)}));
    assert.ok(spacing.padding >= 22 && spacing.gap >= 32, 'Published demo must retain its output padding and advisory spacing');
    await page.selectOption('#display-speed', '0');
+   await expect(page.locator('#require-companion-roll-call')).toBeChecked();
+   await expect(page.locator('#executive-hovering')).not.toBeChecked();
+   await page.uncheck('#require-companion-roll-call');await expect(page.locator('#companion-roll')).toBeHidden();
+   await page.check('#require-companion-roll-call');await expect(page.locator('#companion-roll')).toBeVisible();
+   await page.check('#executive-hovering');await expect(page.locator('#display-speed')).toBeDisabled();
+   await expect(page.locator('#display-speed')).toHaveValue('executive-hovering');
+   await expect(page.locator('#supervision-canvas')).toHaveAttribute('data-rendered','true');
+   await page.click('#supervision-autonomy');await expect(page.locator('#display-speed')).toBeEnabled();
+   await expect(page.locator('#display-speed')).toHaveValue('0');
+   await expect(page.locator('#display-speed option[value="executive-hovering"]')).toHaveCount(0);
    const chronicleHeight=await page.locator('#chronicle-scroll').evaluate(element=>element.clientHeight);
    await page.click('#run-button');
    await expect(page.locator('#run-status')).toContainText('Mandate complete');

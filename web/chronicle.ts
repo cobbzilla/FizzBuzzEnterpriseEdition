@@ -5,7 +5,7 @@ import {ChronicleLanguage,type NarrativeSituation} from './chronicle-language';
 import {parsePremises,premisesCard} from './premises';
 export interface ExecutionEvent {ordinal:string|null;kind:string;office:string;finding:string;document:string|null}
 export interface ExecutionPacket {text:string;events:ExecutionEvent[];omitted:number;cache:string;runtime:Record<string,unknown>;recorded:boolean;precedent?:PrecedentDossier}
-export interface Folio {ordinal:string;text:string;events:readonly ExecutionEvent[];cache:string;recorded:boolean;runtime:Record<string,unknown>;narrative?:readonly string[]}
+export interface Folio {ordinal:string;text:string;events:readonly ExecutionEvent[];cache:string;recorded:boolean;runtime:Record<string,unknown>;narrative?:readonly string[];packet?:ExecutionPacket}
 export async function readProclamation(response:Response):Promise<ExecutionPacket>{
  const runtime=JSON.parse(response.headers.get('X-SlopBuzz-Execution-Runtime')||'{}');
  const packet:ExecutionPacket={text:'',events:[] as ExecutionEvent[],omitted:0,cache:response.headers.get('X-SlopBuzz-Cache')||'UNKNOWN',runtime,recorded:false};
@@ -112,8 +112,9 @@ export class ExecutiveChronicle {
   if(engine)this.note(this.language.write('runtime',`The appointed implementation is ${String(engine)}. Its declared repository is ${String(storage||'unspecified')} and its cache adapter is ${String(cache||'unspecified')}. ${packet.cache==='HIT'?'Institutional memory answered without convening a fresh production workforce.':'The following account distinguishes actual Java decisions from explanatory context.'}`),'Execution arrangements');
   if(packet.omitted)this.note(this.language.write('omitted',`${packet.omitted} observation entries exceeded the finite dossier allowance. Numerical output remains independently available.`),'Observation allowance');
  }
+ folio(ordinal:string,text:string):Folio{return {ordinal,text,events:this.groups.get(ordinal)||[],cache:this.packet?.cache||'UNKNOWN',recorded:this.packet?.recorded||false,runtime:this.packet?.runtime||{},packet:this.packet};}
  disclose(start:string,lines:readonly string[]){
-  let ordinal=BigInt(start);const folios=lines.map(text=>{const value=ordinal.toString();ordinal++;return {ordinal:value,text,events:this.groups.get(value)||[],cache:this.packet?.cache||'UNKNOWN',recorded:this.packet?.recorded||false,runtime:this.packet?.runtime||{}};});
+  let ordinal=BigInt(start);const folios=lines.map(text=>{const value=ordinal.toString();ordinal++;return this.folio(value,text);});
   this.discloseFolios(folios);return folios;
  }
  discloseFolios(folios:readonly Folio[]){
