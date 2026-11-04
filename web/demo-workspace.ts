@@ -81,7 +81,9 @@ export class DemoWorkspace {
   addEventListener('resize',()=>{if(!this.manualView&&this.committed){this.watch.value=initialWatchView(matchMedia('(max-width: 700px), (max-height: 500px)').matches,this.live().hovering);this.layout();}else this.fit();});
   const hash=location.hash;if(hash.startsWith('#precedent'))this.select('evidence-view').value='precedent';if(hash.startsWith('#personnel'))this.select('evidence-view').value='personnel';if(hash.startsWith('#premises'))this.select('experiment-view').value='premises';
   this.restoreDraft();this.draftSummary();this.sections('experiment');this.sections('evidence');
-  this.show(readDesk(new URL(location.href)),false,false);
+  const entry=new URL(location.href),desk=readDesk(entry);
+  if(desk!=='authorize'&&entry.searchParams.get('desk')!==desk){entry.searchParams.set('desk',desk);history.replaceState(history.state,'',entry);}
+  this.show(desk,false,false);
  }
  get observing(){return this.desk==='observe';}
  private input(id:string){return byId<HTMLInputElement>(id);}
