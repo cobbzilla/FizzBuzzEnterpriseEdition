@@ -13,6 +13,7 @@ import type {RoomId} from './office-content';
 export function createPartitionFactory(scene:Scene){
  const materials=new Map<string,StandardMaterial>();
  const mat=(key:string,hex:string,hidden=false)=>{let m=materials.get(key);if(!m){m=new StandardMaterial('partition '+key,scene);m.diffuseColor=Color3.FromHexString(hex);m.specularColor=new Color3(.08,.08,.08);if(hidden){m.alpha=0;m.disableColorWrite=true;m.disableDepthWrite=true;}materials.set(key,m);}return m;};
+ for(const [name,color]of Object.entries(partitionColors))mat(name,color);
  const invisible=mat('collision','#ffffff',true),classic=mat('founding','#fff7e4');
  return (room:RoomId,style:PartitionId,parent:TransformNode)=>{
   const root=new TransformNode('partition policy '+room,scene),visuals:Mesh[]=[],colliders:Mesh[]=[];
