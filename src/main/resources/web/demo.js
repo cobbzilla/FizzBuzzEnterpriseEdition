@@ -4,49 +4,49 @@
 var prop = (id, name, object, story, a, aa, b, bb) => ({ id, name, object, story, actions: [{ label: a, answer: aa }, { label: b, answer: bb }] });
 var officeVersion = "office-v1";
 var rooms = [
-  { id: "reception", name: "Reception & Queue Formation", short: "Reception", subtitle: "Please take a number. Numbers must first take a number.", color: "#d7bf83", x: -10.8, z: -3.4, props: [
+  { id: "reception", name: "Reception & Queue Formation", short: "Reception", subtitle: "Please take a number. Numbers must first take a number.", color: "#d7bf83", props: [
     prop("ticket-machine", "The ticket machine", "kiosk", "A brass plaque explains that the queue for tickets is ticketed. The machine is very proud of having eliminated uncertainty about where to wait.", "Request a ticket", "Your request has been placed in the queue for permission to join the queue. The estimated waiting time is one successful organizational transformation.", "Ask who is ahead of you", "The machine prints a blank ticket. Nobody is ahead of you. Nobody has seniority."),
     prop("authorized-shortcut", "Authorized shortcut", "door", "The arrow promises Reception in only one corridor. You are standing in Reception. The arrow is technically delivering exceptional value.", "Take the shortcut", "You arrive at Reception. A congratulatory notice welcomes you back from your successful cross-functional journey. Your departure and arrival have been recorded as two office visits.", "Suggest a shorter route", "The Committee for Reducing Corridors requests a longer corridor in which to discuss your suggestion."),
     prop("suggestion-shredder", "Your Voice Matters", "shredder", "The suggestion box sits directly on a shredder. A little green lamp indicates that stakeholder feedback is being processed in real time.", "Submit a suggestion", "The machine makes a thoughtful noise and produces twelve narrow action items. The company celebrates its most granular feedback to date.", "Ask for a receipt", "A receipt is printed, read aloud to the shredder, and processed. You are thanked for your commitment to a paperless feedback culture."),
     prop("visitor-badge", "Visitor identity desk", "badge", "A badge says VISITOR. Under it, in smaller type: A visitor is someone wearing a visitor badge. The definition has survived three independent audits.", "Request a permanent badge", "Your permanent badge says TEMPORARY PERMANENT VISITOR. It expires when permanence is redefined.", "Ask to leave", "Departure is available at any time through the visible Close office control. Reception is disappointed by this unusually humane policy.")
   ] },
-  { id: "personnel", name: "First Ordinal Recruitment", short: "Recruitment", subtitle: "One vacancy. One candidate. Seven offices. Tremendous competition.", color: "#b7d0ba", x: -3.6, z: -3.4, props: [
+  { id: "personnel", name: "First Ordinal Recruitment", short: "Recruitment", subtitle: "One vacancy. One candidate. Seven offices. Tremendous competition.", color: "#b7d0ba", props: [
     prop("portrait-of-one", "Employee of the Entire Sequence", "portrait", "A framed numeral 1 looks down upon an empty chair. Nobody can remember whether the portrait was taken before or after its induction.", "Congratulate One", "One thanks you for recognizing its individual contribution. It would also like to recognize itself as the team that made the contribution possible.", "Nominate Two", "Two has excellent potential but was not present at the beginning. The panel encourages it to apply for a later beginning."),
     prop("orientation-chair", "Orientation chair", "chair", "The chair has completed orientation six times. It understands the company better than anyone and is therefore ineligible for promotion.", "Offer the chair a promotion", "The chair declines a standing appointment. HR records a regrettable lack of flexibility.", "Ask where One sits", "One has been granted a flexible seating arrangement consisting of this one chair. The company calls this choice."),
     prop("welcome-cake", "The induction cake", "cake", "A cake reads WELCOME TO YOUR PROBATIONARY COMMENCEMENT. The slice marked 1 has its own probationary period.", "Request a slice", "Catering asks whether you intend to eat the slice or merely occupy it. Facilities has strong views about unauthorized occupancy.", "Read the ingredients", "Sugar, flour, and the unanimous confidence of seven independently appointed offices. May contain traces of ambition."),
     prop("headcount-chart", "Strategic headcount forecast", "chart", "A chart rises impressively from zero to one. The vertical axis begins at 0.999. The board has described the growth as unprecedented.", "Ask about recruitment costs", "The company recruited exactly one employee and established seven offices to support the appointment. HR describes the ratio as people-first.", "Set a stretch target", "The stretch target is 1.0. HR has already convened a working group to distinguish it from 1.")
   ] },
-  { id: "procurement", name: "Glyph Procurement & Receiving", short: "Procurement", subtitle: "The second z is a separate commercial obligation.", color: "#e0b19c", x: 3.6, z: -3.4, props: [
+  { id: "procurement", name: "Glyph Procurement & Receiving", short: "Procurement", subtitle: "The second z is a separate commercial obligation.", color: "#e0b19c", props: [
     prop("second-z", "The second z", "crate", "Two identical crates contain two different contractual obligations. The second z insists that similarity is not consent to unpaid overtime.", "Ask to reuse the first z", "Receiving refuses. The first z is already at work. Asking it to appear twice would constitute an undocumented secondment.", "Offer the second z a title", "The z accepts Senior Terminal Consonant. The other z immediately requests a parity review."),
     prop("approved-forklift", "The requisition forklift", "forklift", "A tiny forklift is licensed to carry one letter. It has been waiting all morning for written confirmation that F is not two letters standing on each other.", "Load a capital B", "The forklift requests a structural drawing showing whether the two bulges are independent business units.", "Ask about lowercase stock", "Lowercase inventory is competitively priced and entirely inadmissible. Procurement calls this a strong supplier relationship."),
     prop("purchase-order", "Eight positions, eight promises", "papers", "An enormous purchase order itemizes F, i, z, z, B, u, z, z. Each z has initialed its own row, creating an exciting new legibility problem.", "Consolidate the line items", "Four z requisitions are merged into one requisition to request four separate z requisitions. Procurement reports a 75% reduction in top-level complexity.", "Request expedited shipping", "Your letters arrive in alphabetical order. Assembly requests that they return through the approved entrance."),
     prop("supplier-phone", "The inexhaustible supplier", "phone", "A telephone connects to an inexhaustible fictional supplier. Its hold message says that your character is very important to us.", "Ask when z will arrive", "The supplier says z is last on its list, then clarifies that the list is alphabetical and delivery is immediate.", "Request a supplier review", "The supplier awards Procurement five stars for ordering the same five things forever. Both parties describe this as a diversified portfolio.")
   ] },
-  { id: "premises", name: "Vacant String Estate Agency", short: "Premises", subtitle: "Certified nothing. Ready for immediate numerical occupation.", color: "#b4c9d9", x: 10.8, z: -3.4, props: [
+  { id: "premises", name: "Vacant String Estate Agency", short: "Premises", subtitle: "Certified nothing. Ready for immediate numerical occupation.", color: "#b4c9d9", props: [
     prop("invisible-tenant", "The invisible tenant", "room", "An apparently empty miniature room contains a tiny sign reading SITTING TENANT. This is fictional tour scenery; an actual discovered character is identified in the evidence panel.", "Knock politely", "A non-breaking space says it cannot leave because it has made a binding commitment to remain attached to the premises.", "Request an inspection", "The sign produces a tenancy agreement whose signature is a blank space. Legal considers the execution flawless."),
     prop("bel-doorbell", "The confiscated BEL", "bell", "A brass bell is labeled BEL, NOT A PERSONALITY TRAIT. The inspector keeps it in a soundproof evidence cabinet.", "Ring the bell", "The cabinet displays DING. An internal memo apologizes for the unauthorized appearance of a word outside the numerical production system.", "Ask why it was evicted", "The bell was found occupying an empty string and repeatedly announcing that nobody was there."),
     prop("vertical-staircase", "The vertical tab staircase", "stairs", "A staircase goes up exactly one decorative step and immediately comes back down. The sign calls it an executive development pathway.", "Take the development pathway", "You return with exactly the same elevation and a certificate of increased potential.", "Ask for a horizontal tab", "The horizontal tab has requested a transfer to Workplace Spacing. Both departments have become considerably wider."),
     prop("vacancy-certificate", "Certificate of nothing", "frame", "A large frame contains no picture. It is the most comprehensively documented object in the room.", "Inspect the frame", "The frame is occupied by its vacancy certificate. Facilities has opened an incident concerning the certificate\u2019s effect on vacancy.", "Move in", "This is a tour display. Actual numerical occupants obtain real request-bound leases through the production offices. The miniature landlord nevertheless asks for three references.")
   ] },
-  { id: "notary", name: "Independent Proclamation Notary", short: "Notary", subtitle: "Trust, but convene a separate office to inspect the trust.", color: "#c3bad6", x: -10.8, z: 3.4, props: [
+  { id: "notary", name: "Independent Proclamation Notary", short: "Notary", subtitle: "Trust, but convene a separate office to inspect the trust.", color: "#c3bad6", props: [
     prop("rubber-stamp", "The approval stamp", "stamp", "The stamp reads APPROVED. A smaller stamp reads APPROVED FOR APPROVAL. The second stamp is waiting for the first to become available.", "Stamp the approval", "A third stamp appears: ACKNOWLEDGED. It declines to express an opinion on the first two stamps.", "Ask for a digital signature", "The stamp is photographed at extremely high resolution. Digital transformation is declared complete."),
     prop("magnifying-glass", "The independent lens", "lens", "A magnifying glass sits under a second magnifying glass. The second has been appointed to ensure that the first is not making things up.", "Look more closely", "The company becomes larger while its purpose remains exactly the same. Strategy considers this a successful growth intervention.", "Ask who inspects the second lens", "The inspector points to the perfectly visible lens directory. The tour mercifully declines to generate an infinite number of lenses."),
     prop("capitalization-court", "The capitalization bench", "papers", "A capital F and a lowercase f sit at opposite ends of a desk. The lowercase f has brought excellent references and the wrong identity.", "Hear the lowercase appeal", "The bench recognizes the applicant\u2019s potential while declining to recognize it as Fizz.", "Approve BuzzFizz", "Both words have arrived, but the independent witness notices that they are standing in the wrong order. Communications blames a matrix reporting structure."),
     prop("notary-plant", "Independent botanical witness", "plant", "A plant has been placed beside the desk to make scrutiny feel more welcoming. It has received no instructions and is therefore the most independent thing in the room.", "Ask for its opinion", "The plant offers a new leaf. The bench records this as constructive feedback.", "Request more transparency", "The pot is replaced by an identical pot containing a policy on transparency. The plant\u2019s roots remain undisclosed.")
   ] },
-  { id: "memory", name: "Institutional Memory Archives", short: "Memory", subtitle: "We remember everything except why.", color: "#c4c5a0", x: -3.6, z: 3.4, props: [
+  { id: "memory", name: "Institutional Memory Archives", short: "Memory", subtitle: "We remember everything except why.", color: "#c4c5a0", props: [
     prop("forgotten-shelf", "The forgotten shelf", "shelves", "Rows of files are impeccably indexed under THINGS WE WILL CERTAINLY REMEMBER. A sticky note asks whose files these are.", "Ask whether we met before", "The archive finds a perfect record of our previous meeting and asks you to introduce yourself for continuity purposes.", "Find the filing policy", "The policy is filed under FINDING THE FILING POLICY. Access requires familiarity with the filing policy."),
     prop("memory-ladder", "The career ladder", "stairs", "A ladder reaches a shelf labeled LOW-HANGING FRUIT. A second sign says the ladder is reserved for senior stakeholders.", "Climb the career ladder", "At the top is a memorandum congratulating you on the climb and inviting you to support someone else\u2019s ladder.", "Ask what is on the bottom shelf", "The bottom shelf contains strategic priorities. They have been placed there to ensure that everyone can step over them."),
     prop("reuse-court", "The Non-Performance Award", "trophy", "A trophy celebrates work that was correctly not done again. Its maker has produced an identical second trophy pending review.", "Congratulate the archive", "The archive recalls your congratulations from an earlier engagement and returns a certified copy of its thanks.", "Demand fresh work", "The archive asks why. It records your answer, in case someone asks the same question again."),
     prop("expiry-clock", "The relevance clock", "clock", "A clock has two hands: CURRENT and FORMERLY CURRENT. Their disagreement is described as a healthy succession pipeline.", "Ask what time it is", "It is the right time to revisit our assumptions. The clock declines to give a more operational answer.", "Request permanent relevance", "Your request will remain permanently relevant until the applicable expiry policy changes.")
   ] },
-  { id: "publication", name: "Official Publication & Distribution", short: "Publication", subtitle: "Please remain calm. A complete line is about to happen.", color: "#9fc9c2", x: 3.6, z: 3.4, props: [
+  { id: "publication", name: "Official Publication & Distribution", short: "Publication", subtitle: "Please remain calm. A complete line is about to happen.", color: "#9fc9c2", props: [
     prop("serious-printer", "The very serious printer", "printer", "A printer waits beneath a banner reading EVERY LINE A MILESTONE. It has never experienced a normal day.", "Print a test page", "The test page says TEST PAGE. A committee is astonished by the precision of the deliverable.", "Ask why it is so large", "The printer accommodates both the numerical output and the organization\u2019s expectations of itself."),
     prop("paper-airport", "The paper departure lounge", "papers", "A single sheet waits at a miniature departure gate. Its destination is THE USER. It has arrived three hours early.", "Announce boarding", "The sheet is asked to prove that it is the same sheet whose boarding was announced. Boarding pauses for document reconciliation.", "Request priority boarding", "Priority boarding gives the sheet permission to wait in a smaller, more exclusive queue."),
     prop("output-conveyor", "The complete-line conveyor", "conveyor", "A conveyor carries perfectly ordinary sheets with extraordinary confidence. A sign warns that fragments must travel together.", "Separate the fragments", "The belt refuses to stage a family separation. Fizz and its line ending continue under joint custody.", "Accelerate the conveyor", "The conveyor writes URGENT on the same delivery schedule. Operations calls this an escalation path."),
     prop("celebration-budget", "Strategic confetti reserve", "confetti", "A small jar contains a single paper triangle. The celebration budget has been optimized for shareholder confidence.", "Release the confetti", "The triangle moves ceremonially to the other side of the jar. Leadership thanks everyone for making the moment possible.", "Request a larger celebration", "The company authorizes a larger jar. The triangle is encouraged to grow into its expanded responsibilities.")
   ] },
-  { id: "executive", name: "Executive Alignment & Exemptions", short: "Executive", subtitle: "The organization has never been more organized around organizing.", color: "#c9b48c", x: 10.8, z: 3.4, props: [
+  { id: "executive", name: "Executive Alignment & Exemptions", short: "Executive", subtitle: "The organization has never been more organized around organizing.", color: "#c9b48c", props: [
     prop("open-door", "Open Door Policy", "door", "A closed door carries an OPEN DOOR POLICY poster. Behind it is another closed door, demonstrating depth of commitment.", "Open the door", "The second door welcomes you to a more senior level of openness. It has requested that you knock through the appropriate channels.", "Ask to speak directly", "Direct communication is available by scheduling a conversation with the office that schedules direct communication."),
     prop("work-life-plant", "Work\u2013Life Balance", "plant", "A plant labeled WORK\u2013LIFE BALANCE leans toward the exit. It has submitted a flexible growing request.", "Water the plant", "The plant receives a resilience webinar. It would still quite like water.", "Approve flexible growing", "The plant may lean toward any window, provided it remains facing its desk during core hours."),
     prop("strategy-whiteboard", "The strategy whiteboard", "chart", "The board contains one enormous circle labeled ALIGNMENT. Around it is a second circle labeled ALIGNMENT ON ALIGNMENT.", "Request a concrete action", "A third circle is drawn. It is labeled ACTION ORIENTATION. The meeting declares itself outcome-focused.", "Erase a circle", "The company forms a task force to understand the emerging alignment gap."),
@@ -235,9 +235,9 @@ var magnitudeWarnings = Object.freeze([
   "SUSPECTED SCALE VIOLATION: Your integer might be too substantial for the current stationery.",
   "POSSIBLE ENTERPRISE INCIDENT: This value may have activated a policy nobody has finished writing."
 ]);
-function chooseMagnitudeWarning(previous = -1, random = Math.random) {
-  const width = previous >= 0 ? magnitudeWarnings.length - 1 : magnitudeWarnings.length;
-  let index = Math.min(width - 1, Math.floor(random() * width));
+function chooseMagnitudeWarning(previous = -1, random2 = Math.random) {
+  const width2 = previous >= 0 ? magnitudeWarnings.length - 1 : magnitudeWarnings.length;
+  let index = Math.min(width2 - 1, Math.floor(random2() * width2));
   if (previous >= 0 && index >= previous) index++;
   return { index, text: magnitudeWarnings[index] };
 }
@@ -354,8 +354,8 @@ function parseOfficeManifest(x) {
   return m;
 }
 async function verifyOfficePackage(manifest, bytes) {
-  const hash = [...new Uint8Array(await crypto.subtle.digest("SHA-256", bytes))].map((x) => x.toString(16).padStart(2, "0")).join("");
-  if (bytes.byteLength !== manifest.bytes || hash !== manifest.sha256) throw new Error("The delivered building does not match its manifest.");
+  const hash2 = [...new Uint8Array(await crypto.subtle.digest("SHA-256", bytes))].map((x) => x.toString(16).padStart(2, "0")).join("");
+  if (bytes.byteLength !== manifest.bytes || hash2 !== manifest.sha256) throw new Error("The delivered building does not match its manifest.");
 }
 
 // web/office-pack-key.ts
@@ -994,6 +994,87 @@ var OfficeTourDesk = class {
   }
 };
 
+// web/office-layout.ts
+var layoutVersion = "estate-v1";
+var partitionStyles = [
+  { id: "hearts", name: "Giant pink hearts", claim: "Psychological Safety Infrastructure" },
+  { id: "bars", name: "Jail bars", claim: "Employee Autonomy Framework" },
+  { id: "picket", name: "White picket fences", claim: "Boundaryless Collaboration" },
+  { id: "cheese", name: "Giant cheese panels", claim: "A More Porous Organization" },
+  { id: "blinds", name: "Venetian blinds", claim: "Radical Transparency" },
+  { id: "tape", name: "Tangled red tape", claim: "Frictionless Delivery" },
+  { id: "hedges", name: "Tall hedges", claim: "Organic Growth" },
+  { id: "cardboard", name: "Cardboard fortifications", claim: "Permanent Interim Arrangements" },
+  { id: "cabinets", name: "Filing cabinets", claim: "Open Access to Information" },
+  { id: "bubbles", name: "Bubble-wrap panels", claim: "Organizational Resilience" },
+  { id: "dominoes", name: "Oversized dominoes", claim: "Independent Risk Containment" },
+  { id: "waffles", name: "Waffle grids", claim: "Matrix Management" }
+];
+var stationOffsets = { desk: { x: -0.3, y: 1.1, z: -0.9 }, personnel: { x: -0.3, y: 1.1, z: -0.9 }, boundary: { x: 0, y: 1.05, z: -1.65 }, property: { x: -2.35, y: 0.9, z: -1.6 }, glyph: { x: -0.25, y: 1.15, z: -0.65 }, notary: { x: -2.35, y: 1.1, z: -1.6 }, printer: { x: -2.35, y: 0.9, z: -1.6 }, ledger: { x: -0.3, y: 1.1, z: -0.65 }, queue: { x: 2.35, y: 1, z: -1.6 }, memory: { x: -2.35, y: 1.15, z: -1.6 }, entrance: { x: 0, y: 0, z: 2.35 } };
+var width = 7.2;
+var depth = 6.8;
+var hash = (value) => {
+  let n = 2166136261;
+  for (const c of value) n = Math.imul(n ^ c.charCodeAt(0), 16777619);
+  return n >>> 0;
+};
+function random(seed) {
+  let n = hash(seed);
+  return () => {
+    n += 1831565813;
+    let t = n;
+    t = Math.imul(t ^ t >>> 15, t | 1);
+    t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+function shuffle(values, rng) {
+  const out = [...values];
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [out[i], out[j]] = [out[j], out[i]];
+  }
+  return out;
+}
+var rounded = (n) => Math.round(n * 1e6) / 1e6;
+var slotPosition = (slot, rows, columns) => ({ x: rounded((slot % columns - (columns - 1) / 2) * width), y: 0, z: rounded((Math.floor(slot / columns) - (rows - 1) / 2) * depth) });
+var slotAddress = (slot, columns) => String.fromCharCode(65 + slot % columns) + (Math.floor(slot / columns) + 1);
+function generate(seed, edition, rows, columns) {
+  if (!/^[a-f0-9]{32}$/.test(seed) || !Number.isSafeInteger(edition) || edition < 0 || edition > 1e6) throw new Error("Facilities received an unfamiliar estate charter.");
+  const rng = random(seed + ":" + edition), slots = Array.from({ length: rows * columns }, (_, i) => i), amenitySlot = rows === 3 ? Math.floor(rng() * 9) : -1;
+  const available = slots.filter((i) => i !== amenitySlot), order = edition === 0 ? rooms.map((r) => r.id) : shuffle(rooms.map((r) => r.id), rng);
+  const palette = shuffle([...partitionStyles.map((s) => s.id)], rng);
+  if (edition === 1) {
+    palette.splice(palette.indexOf("hearts"), 1);
+    palette.splice(palette.indexOf("bars"), 1);
+    palette.unshift("hearts", "bars");
+  }
+  const placements = order.map((room, i) => {
+    const slot = available[i], row = Math.floor(slot / columns);
+    return Object.freeze({ room, slot, address: slotAddress(slot, columns), position: Object.freeze(slotPosition(slot, rows, columns)), yaw: edition === 0 ? 0 : row === rows - 1 ? Math.PI : 0, partition: edition === 0 ? "classic" : palette[i] });
+  });
+  const amenity = amenitySlot < 0 ? void 0 : Object.freeze({ slot: amenitySlot, address: slotAddress(amenitySlot, columns), kind: rng() < 0.5 ? "atrium" : "breakroom", position: Object.freeze(slotPosition(amenitySlot, rows, columns)) });
+  return Object.freeze({ version: layoutVersion, seed, edition, rows, columns, placements: Object.freeze(placements), amenity, bounds: Object.freeze({ minX: -columns * width / 2, maxX: columns * width / 2, minZ: -rows * depth / 2, maxZ: rows * depth / 2 }) });
+}
+var rowEstate = { create: (s, e) => generate(s, e, 2, 4) };
+var squareEstate = { create: (s, e) => generate(s, e, 3, 3) };
+function estate(seed, edition) {
+  return (edition % 2 ? squareEstate : rowEstate).create(seed, edition);
+}
+var foundingEstate = estate("00000000000000000000000000000000", 0);
+function addresses(layout) {
+  const placement = (room) => {
+    const p = layout.placements.find((p2) => p2.room === room);
+    if (!p) throw new Error("The estate has misplaced " + room + ".");
+    return p;
+  };
+  const local = (room, point) => {
+    const p = placement(room), c = Math.cos(p.yaw), s = Math.sin(p.yaw);
+    return { x: rounded(p.position.x + point.x * c + point.z * s), y: point.y, z: rounded(p.position.z - point.x * s + point.z * c) };
+  };
+  return { placement, local, resolve: (a) => local(a.room, stationOffsets[a.station]), door: (room) => local(room, { x: 0, y: 0, z: 2.75 }), outside: (room) => local(room, { x: 0, y: 0, z: depth / 2 }) };
+}
+
 // web/office-supervision-model.ts
 var hoveringLabel = "Executive Hovering: Trust Has Been Suspended";
 var hoveringCadence = "executive-hovering";
@@ -1042,13 +1123,11 @@ function identifyAction(event, previous) {
   if (kind === "FRAGMENT" || kind === "VISITOR") return { action: kind === "FRAGMENT" ? "fragment" : "classify", room: previous?.shot.room === "procurement" ? "procurement" : "reception", anchor: previous?.shot.room === "procurement" ? "glyph" : "desk" };
   return { action: kind === "NUMERAL" ? "fragment" : "paper", room: "reception", anchor: "desk" };
 }
-function shotFor(room, anchor, hrIndex = -1) {
-  const r = roomById(room);
-  const offsets = { desk: [-0.3, 1.1, -0.9], personnel: [-0.3, 1.1, -0.9], boundary: [0, 1.05, -1.65], property: [-2.35, 0.9, -1.6], glyph: [-0.25, 1.15, -0.65], notary: [-2.35, 1.1, -1.6], printer: [-2.35, 0.9, -1.6], ledger: [-0.3, 1.1, -0.65], queue: [2.35, 1, -1.6], memory: [-2.35, 1.15, -1.6] };
-  const offset = offsets[anchor];
-  const target = { x: r.x + offset[0], y: offset[1], z: r.z + offset[2] };
-  const alpha = (r.z > 0 ? Math.PI / 2 : -Math.PI / 2) + (anchor === "glyph" ? 0.22 : anchor === "notary" ? -0.22 : anchor === "queue" ? -0.14 : anchor === "personnel" ? hrIndex % 2 === 0 ? -0.12 : 0.12 : 0.1);
-  return { room, anchor, target, alpha, beta: r.z > 0 ? 0.7 : anchor === "property" ? 0.85 : 0.93, radius: anchor === "glyph" ? 3.8 : anchor === "printer" ? 3.7 : anchor === "ledger" ? 3.9 : anchor === "boundary" ? 5.5 : 4.6 };
+function shotFor(room, anchor, hrIndex = -1, layout = foundingEstate) {
+  const book = addresses(layout), placement = book.placement(room), target = book.resolve({ room, station: anchor });
+  const historicNorth = layout.edition === 0 && placement.position.z > 0;
+  const alpha = (historicNorth ? Math.PI / 2 : -Math.PI / 2 + placement.yaw) + (anchor === "glyph" ? 0.22 : anchor === "notary" ? -0.22 : anchor === "queue" ? -0.14 : anchor === "personnel" ? hrIndex % 2 === 0 ? -0.12 : 0.12 : 0.1);
+  return { room, anchor, target, alpha, beta: historicNorth ? 0.7 : anchor === "property" ? 0.85 : 0.93, radius: anchor === "glyph" ? 3.8 : anchor === "printer" ? 3.7 : anchor === "ledger" ? 3.9 : anchor === "boundary" ? 5.5 : 4.6 };
 }
 var substantial = /* @__PURE__ */ new Set(["recruit", "survey", "evict", "lease", "glyph", "assemble", "notarize", "print", "audit", "queue", "commit", "memory"]);
 function duration(action, kind) {
@@ -2915,8 +2994,8 @@ We thank the number for its patience with the organization built around it.
 var ChronicleLanguage = class {
   bags = /* @__PURE__ */ new Map();
   random;
-  constructor(random = Math.random) {
-    this.random = random;
+  constructor(random2 = Math.random) {
+    this.random = random2;
   }
   pick(key, options) {
     let bag = this.bags.get(key);

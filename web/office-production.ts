@@ -7,6 +7,7 @@ import {StandardMaterial} from '@babylonjs/core/Materials/standardMaterial';
 import {DynamicTexture} from '@babylonjs/core/Materials/Textures/dynamicTexture';
 import {Color3} from '@babylonjs/core/Maths/math.color';
 import type {OfficeCue} from './office-supervision-model';
+import {addresses,foundingEstate,layoutToken,type EstateLayout} from './office-layout.ts';
 
 export function createProductionStage(scene:Scene){
  const material=(name:string,hex:string)=>{const m=new StandardMaterial(name,scene);m.diffuseColor=Color3.FromHexString(hex);m.emissiveColor=m.diffuseColor.scale(.12);m.specularColor=Color3.Black();return m;};
@@ -89,10 +90,11 @@ export function createProductionStage(scene:Scene){
  const setGroups=(...names:string[])=>{for(const [name,g]of groups){const enabled=names.includes(name);if(g.isEnabled(false)!==enabled)g.setEnabled(enabled);}};
  const short=(value:string)=>value.length>20?value.slice(0,9)+'…'+value.slice(-6):value;
 
- function update(cue:OfficeCue){
+ function update(cue:OfficeCue,layout:EstateLayout=foundingEstate){
   const {step,work,travel}=cue,{action,event,shot}=step;
-  const key=step.id+'|'+work+'|'+travel;if(key===visualKey)return;visualKey=key;
-  root.position.set(shot.target.x,0,shot.target.z);
+  const key=step.id+'|'+work+'|'+travel+'|'+layoutToken(layout);if(key===visualKey)return;visualKey=key;
+  const book=addresses(layout),station=book.resolve({room:shot.room,station:shot.anchor});
+  root.position.set(station.x,0,station.z);root.rotation.y=book.placement(shot.room).yaw;
   if(currentOrdinal!==step.ordinal){currentOrdinal=step.ordinal;shownGlyphs=0;glyphSignatures.length=0;for(const g of glyphs)g.mesh.setEnabled(false);}
   if(currentId!==step.id){
    currentId=step.id;
