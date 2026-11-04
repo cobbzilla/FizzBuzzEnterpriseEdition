@@ -2101,7 +2101,14 @@ var ReorganizationPanel = class {
     });
     this.status.className = "field-help";
     this.notice.className = "field-help";
-    this.details.append(node("summary", "Inspect the current workplace arrangement"));
+    const summary = node("summary", "Inspect the current workplace arrangement");
+    summary.addEventListener("click", (event) => {
+      if (!this.details.open && this.firstOpen) {
+        event.preventDefault();
+        this.expand();
+      }
+    });
+    this.details.append(summary);
     this.map.className = "estate-map";
     this.map.setAttribute("role", "list");
     this.map.setAttribute("aria-label", "Current estate floorplan");
@@ -2111,12 +2118,6 @@ var ReorganizationPanel = class {
     this.scroll.setAttribute("role", "region");
     this.scroll.setAttribute("aria-label", "Minutes of Spatial Achievement");
     this.scroll.append(this.empty, this.minutes);
-    this.details.addEventListener("toggle", () => {
-      if (this.details.open && this.firstOpen) {
-        this.firstOpen = false;
-        this.scroll.scrollTop = this.scroll.scrollHeight;
-      }
-    });
     this.perk.hidden = true;
     this.perk.className = "estate-perk";
     const share = node("input");
@@ -2176,7 +2177,7 @@ var ReorganizationPanel = class {
     });
     document.addEventListener("office-amenity", (event) => {
       if (event.detail === this.view) {
-        this.details.open = true;
+        this.expand();
         this.inspectAmenity(this.details.querySelector("summary"));
       }
     });
@@ -2200,6 +2201,12 @@ var ReorganizationPanel = class {
   firstOpen = true;
   perk = node("section");
   perkTrigger;
+  expand() {
+    const first = this.firstOpen;
+    this.firstOpen = false;
+    this.details.open = true;
+    if (first) this.scroll.scrollTop = this.scroll.scrollHeight;
+  }
   get view() {
     return this.container.id.startsWith("supervision") ? "supervision" : "office";
   }
@@ -2324,7 +2331,7 @@ var ReorganizationPanel = class {
     for (const memo of estateRecords.history) if (!this.memoNodes.has(memo.to.edition)) this.appendMemo(memo);
     if (!estateRecords.history.length) this.minutes.setAttribute("aria-label", "No transformations have been recorded in this tab.");
     else this.minutes.removeAttribute("aria-label");
-    if (following) this.scroll.scrollTop = this.scroll.scrollHeight;
+    if (this.details.open && following) this.scroll.scrollTop = this.scroll.scrollHeight;
   }
 };
 
