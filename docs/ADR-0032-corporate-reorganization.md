@@ -83,7 +83,9 @@ HTML directory, floorplan, minutes, inspections and numerical controls usable.
 The separately bundled renderer receives immutable layout/transaction snapshots;
 it does not import a second mutable estate singleton. Temporary shadow handling
 and matrix unfreezing permit moving roots; normal rendering budgets return
-after settling. Walking returns to an approved interior position.
+after settling. Foundation, lip and corridor matrices are refreshed when the
+shape changes; camera-facing signs remain outside the static matrix cache.
+Walking returns to an approved interior position.
 
 ## Public records and continuity
 
