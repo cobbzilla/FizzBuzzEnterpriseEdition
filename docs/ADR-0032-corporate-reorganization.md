@@ -57,8 +57,8 @@ their physical forms. In particular, the bars implement Employee Autonomy and
 the hearts implement Psychological Safety Infrastructure. These are fictional
 Facilities claims, not assurances or external certifications.
 
-Geometry batches remain local to departments. Shared palettes and reusable
-crates bound GPU resources across repeated moves. The ninth-cell amenities are
+Geometry batches remain local to departments. The finite partition palette and all eight reusable moving crates are allocated
+once when the optional scene opens, bounding GPU resources before any move. The ninth-cell amenities are
 inspectable through both native picking and the semantic floorplan. Each has
 three additional authored responses; the original thirty-two curiosities and
 sixty-four responses keep their identities.
