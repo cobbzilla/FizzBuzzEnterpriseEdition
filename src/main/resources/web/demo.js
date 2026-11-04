@@ -252,6 +252,12 @@ function validateEstate(layout) {
 // web/office-relocation-model.ts
 var relocationDuration = 12500;
 var relocationPhase = (p) => p < 0.15 ? "packing" : p < 0.72 ? "moving" : p < 0.86 ? "unpacking" : "returning";
+function sealEstate(layout) {
+  validateEstate(layout);
+  const frozen = Object.isFrozen(layout) && Object.isFrozen(layout.bounds) && Object.isFrozen(layout.placements) && layout.placements.every((p) => Object.isFrozen(p) && Object.isFrozen(p.position)) && (!layout.amenity || Object.isFrozen(layout.amenity) && Object.isFrozen(layout.amenity.position));
+  if (frozen) return layout;
+  return Object.freeze({ ...layout, bounds: Object.freeze({ ...layout.bounds }), placements: Object.freeze(layout.placements.map((p) => Object.freeze({ ...p, position: Object.freeze({ ...p.position }) }))), amenity: layout.amenity ? Object.freeze({ ...layout.amenity, position: Object.freeze({ ...layout.amenity.position }) }) : void 0 });
+}
 var RelocationCoordinator = class {
   value;
   authority;
@@ -261,7 +267,7 @@ var RelocationCoordinator = class {
   last;
   allowed = false;
   constructor(initial2 = foundingEstate, authority = nextEstate) {
-    this.value = validateEstate(initial2);
+    this.value = sealEstate(initial2);
     this.authority = authority;
   }
   get current() {
@@ -289,7 +295,7 @@ var RelocationCoordinator = class {
   }
   request() {
     if (this.pending) return this.pending.to;
-    const candidate = validateEstate(this.authority(this.value));
+    const candidate = sealEstate(this.authority(this.value));
     if (candidate.edition !== this.value.edition + 1 || candidate.rows === this.value.rows || candidate.seed !== this.value.seed) throw new Error("Facilities must alternate estates and advance exactly one edition.");
     for (const room of this.value.placements) {
       const moved = candidate.placements.find((p) => p.room === room.room);
@@ -419,6 +425,7 @@ try {
 var officeEstate = new OfficeEstate(initial);
 officeEstate.subscribe((event) => {
   if (event.kind !== "committed") return;
+  estateRecords.notice = "";
   estateRecords.history.push(estateMemo(event.relocation.from, event.relocation.to));
   estateRecords.history = estateRecords.history.slice(-10);
   try {
@@ -2073,6 +2080,8 @@ announcement.setAttribute("aria-live", "polite");
 announcement.setAttribute("aria-atomic", "true");
 document.body.append(announcement);
 var announce = (text2) => {
+  const parent = document.querySelector("#office-modal[open]") || document.body;
+  if (announcement.parentElement !== parent) parent.append(announcement);
   if (announcement.textContent !== text2) announcement.textContent = text2;
 };
 var ReorganizationPanel = class {
@@ -2094,6 +2103,7 @@ var ReorganizationPanel = class {
     this.notice.className = "field-help";
     this.details.append(node("summary", "Inspect the current workplace arrangement"));
     this.map.className = "estate-map";
+    this.map.setAttribute("role", "list");
     this.map.setAttribute("aria-label", "Current estate floorplan");
     this.table.className = "estate-addresses";
     this.scroll.className = "estate-minutes";
@@ -2227,6 +2237,9 @@ var ReorganizationPanel = class {
     if (!l.amenity) return;
     this.perkTrigger = trigger;
     const specimen = amenities[l.amenity.kind], title2 = node(this.view === "office" ? "h3" : "h4", specimen.name + " \xB7 " + estateLabel(l) + " / " + l.amenity.address), answer = node("p");
+    answer.setAttribute("role", "status");
+    answer.setAttribute("aria-live", "polite");
+    answer.setAttribute("aria-atomic", "true");
     title2.tabIndex = -1;
     const actions = node("div");
     actions.className = "estate-controls";
@@ -2311,7 +2324,7 @@ var ReorganizationPanel = class {
     for (const memo of estateRecords.history) if (!this.memoNodes.has(memo.to.edition)) this.appendMemo(memo);
     if (!estateRecords.history.length) this.minutes.setAttribute("aria-label", "No transformations have been recorded in this tab.");
     else this.minutes.removeAttribute("aria-label");
-    if (following) requestAnimationFrame(() => this.scroll.scrollTop = this.scroll.scrollHeight);
+    if (following) this.scroll.scrollTop = this.scroll.scrollHeight;
   }
 };
 

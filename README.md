@@ -242,3 +242,28 @@ papers and controls. Java has already completed the underlying operation.
 See [ADR 0031](docs/ADR-0031-executive-hovering.md). `pnpm test:supervision` checks
 the evidence, exact ordinals, scene planning and observation clock; browser tests
 cover actual 3D presentation, lifecycle, mobile co-visibility and disclosure.
+
+**The Corporate Reorganization Machine** lets Facilities improve the same eight
+departments by moving them. Enter the office or use Executive Hovering, then
+choose **Announce Another Reorganization**. Every announcement alternates a 2×4
+and 3×3 estate, rearranges the departments and supplies new partition policies:
+pink hearts, jail bars, cheese with actual holes, and nine further approaches
+to productive enclosure. The ninth square houses a seeded atrium or breakroom,
+with six additional comic responses across the two perks.
+
+The current decision waits while labeled crates move. Its camera and paperwork
+resume through the new corridors without repeating the Java work or printing a
+line twice. **Waive the Moving Ceremony**, reduced motion and disabled tour
+animation apply the new arrangement immediately. The native floorplan, full
+address register, perk inspections and **Minutes of Spatial Achievement** remain
+available without graphics. Illustrated commute measurements describe scene
+travel, not backend response time.
+
+The latest ten relocations persist in this tab. **Copy This Approved Chaos**
+shares a versioned `estate=estate-v1.<128-bit-seed>.<edition>` charter along with
+the exact mandate, companion authority and selected visit. Links never autorun.
+Legacy room links retain the founding estate; malformed charters and refused
+storage receive a usable fallback and explanation. See [ADR 0032](docs/ADR-0032-corporate-reorganization.md).
+`pnpm test:layout` checks layouts, partitions, relocation/shot clocks, and
+session/record contracts. The standard publisher runs this family alongside the
+existing validation gates.
