@@ -4457,7 +4457,10 @@ var DemoWorkspace = class {
     document.addEventListener("visibilitychange", () => {
       if (document.hidden) this.run.pause();
     });
-    addEventListener("popstate", () => this.show(readDesk(new URL(location.href)), false));
+    addEventListener("popstate", () => {
+      const desk = readDesk(new URL(location.href));
+      if (desk !== this.desk) this.show(desk, false);
+    });
     const resize = new ResizeObserver(() => this.fit());
     resize.observe(document.querySelector(".site-header"));
     resize.observe(byId2("discovery-register"));
