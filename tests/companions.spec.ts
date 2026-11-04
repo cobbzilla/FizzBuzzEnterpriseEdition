@@ -30,7 +30,8 @@ test.describe('companion biography dismissal',()=>{
 });
 
 test('all 3200 stories are searchable and scarce companions disclose honest ticket weights',async({page})=>{
- await page.goto('/demo/');await page.locator('#companion-help a').click();await expect(page).toHaveURL(/\/bestiary\/$/);await expect(page.locator('#bestiary-status')).toContainText('3200 companions found. Page 1 of 134');await expect(page.locator('#bestiary-results article')).toHaveCount(24);
+ // The compiled-Java owner has a 60-second cold initialization contract.
+ await page.goto('/demo/');await page.locator('#companion-help a').click();await expect(page).toHaveURL(/\/bestiary\/$/);await expect(page.locator('#bestiary-status')).toContainText('3200 companions found. Page 1 of 134',{timeout:60000});await expect(page.locator('#bestiary-results article')).toHaveCount(24);
  await page.selectOption('#bestiary-kind','single');await page.fill('#bestiary-search','unicorn');await expect(page.locator('#bestiary-results article')).toHaveCount(1);await expect(page.locator('#bestiary-results')).toContainText('1 of 1,000,000,000 tickets');await expect(page.locator('#bestiary-results')).toContainText('Make one impossible promise responsibly possible.');
  await page.fill('#bestiary-search','');await page.selectOption('#bestiary-rarity','Mythic');await expect(page.locator('#bestiary-results article')).toHaveCount(11);await page.selectOption('#bestiary-rarity','');await page.selectOption('#bestiary-category','Animals & Nature');await expect(page.locator('#bestiary-status')).toContainText('161 companions found');
  await page.locator('#bestiary-next').focus();await page.keyboard.press('Enter');await expect(page.locator('#bestiary-status')).toContainText('Page 2 of 7');await expect(page.locator('#bestiary-next')).toBeFocused();await page.fill('#bestiary-search','unfindable corporate porcupine');await expect(page.locator('#bestiary-status')).toHaveText('0 companions found. Page 1 of 1.');await expect(page.locator('#bestiary-next')).toHaveAttribute('aria-disabled','true');
@@ -132,4 +133,10 @@ test.describe('the reading estate before its JavaScript clerk arrives',()=>{
  test('the fixed register leaves footer navigation reachable with scripts disabled',async({page},info)=>{
   test.skip(info.project.metadata.engine==='js','Shared static DOM covered once per browser.');await page.setViewportSize({width:390,height:667});await page.goto('/about/');const link=page.locator('.site-footer a[href="#main"]');await link.scrollIntoViewIfNeeded();const target=(await link.boundingBox())!,register=(await page.locator('#discovery-register').boundingBox())!;expect(target.y+target.height).toBeLessThanOrEqual(register.y+1);await link.click();await expect(page).toHaveURL(/#main$/);
  });
+});
+
+test('a slow Java worker keeps the archive readable until its supported cold-start budget completes',async({page},info)=>{
+ test.skip(info.project.metadata.engine==='js','Shared worker readiness contract covered once per browser.');
+ await page.addInitScript(()=>{const Native=Worker;window.Worker=class extends Native {constructor(url:string|URL,options?:WorkerOptions){super(url,options);const send=this.postMessage.bind(this) as (message:unknown,transfer?:Transferable[]|StructuredSerializeOptions)=>void;this.postMessage=(message:unknown,transfer?:Transferable[]|StructuredSerializeOptions)=>{if(message&&typeof message==='object'&&'config' in message)setTimeout(()=>send(message,transfer),18000);else send(message,transfer);};}};});
+ await page.goto('/bestiary/');await expect(page.locator('#bestiary-status')).toHaveText('Opening the nonhuman personnel archive…');await expect(page.locator('#bestiary-status')).toContainText('3200 companions found. Page 1 of 134',{timeout:60000});await expect(page.locator('#bestiary-results article')).toHaveCount(24);await page.selectOption('#bestiary-kind','single');await page.fill('#bestiary-search','unicorn');await expect(page.locator('#bestiary-results article')).toHaveCount(1);
 });

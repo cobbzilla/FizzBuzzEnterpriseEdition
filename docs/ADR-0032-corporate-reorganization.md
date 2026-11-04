@@ -122,3 +122,6 @@ publication custody, modal holds, Stop/new mandate, reduced motion, NoGL,
 keyboard access, reflow and reader ownership. The release retains all JVM/browser
 parity comparisons and all three browsers with both compiled engines. The
 publisher explicitly runs the complete estate test family before publication.
+Archive readiness uses the existing 60-second worker initialization budget; a
+deliberately delayed worker verifies loading, complete data and subsequent search
+without changing the warm business-response or output contracts.
