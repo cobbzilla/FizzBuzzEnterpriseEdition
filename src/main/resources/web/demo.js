@@ -55,6 +55,205 @@ var rooms = [
 ];
 var roomById = (id) => rooms.find((r) => r.id === id);
 
+// web/office-layout.ts
+var layoutVersion = "estate-v1";
+var partitionStyles = [
+  { id: "hearts", name: "Giant pink hearts", claim: "Psychological Safety Infrastructure", placard: "PSYCHOLOGICAL SAFETY" },
+  { id: "bars", name: "Jail bars", claim: "Employee Autonomy Framework", placard: "EMPLOYEE AUTONOMY" },
+  { id: "picket", name: "White picket fences", claim: "Boundaryless Collaboration", placard: "BOUNDARYLESS COLLABORATION" },
+  { id: "cheese", name: "Giant cheese panels", claim: "A More Porous Organization", placard: "POROUS ORGANIZATION" },
+  { id: "blinds", name: "Venetian blinds", claim: "Radical Transparency", placard: "RADICAL TRANSPARENCY" },
+  { id: "tape", name: "Tangled red tape", claim: "Frictionless Delivery", placard: "FRICTIONLESS DELIVERY" },
+  { id: "hedges", name: "Tall hedges", claim: "Organic Growth", placard: "ORGANIC GROWTH" },
+  { id: "cardboard", name: "Cardboard fortifications", claim: "Permanent Interim Arrangements", placard: "PERMANENT INTERIM" },
+  { id: "cabinets", name: "Filing cabinets", claim: "Open Access to Information", placard: "OPEN ACCESS" },
+  { id: "bubbles", name: "Bubble-wrap panels", claim: "Organizational Resilience", placard: "RESILIENCE" },
+  { id: "dominoes", name: "Oversized dominoes", claim: "Independent Risk Containment", placard: "RISK CONTAINMENT" },
+  { id: "waffles", name: "Waffle grids", claim: "Matrix Management", placard: "MATRIX MANAGEMENT" }
+];
+var stationOffsets = { desk: { x: -0.3, y: 1.1, z: -0.9 }, personnel: { x: -0.3, y: 1.1, z: -0.9 }, boundary: { x: 0, y: 1.05, z: -1.65 }, property: { x: -2.35, y: 0.9, z: -1.6 }, glyph: { x: -0.25, y: 1.15, z: -0.65 }, notary: { x: -2.35, y: 1.1, z: -1.6 }, printer: { x: -2.35, y: 0.9, z: -1.6 }, ledger: { x: -0.3, y: 1.1, z: -0.65 }, queue: { x: 2.35, y: 1, z: -1.6 }, memory: { x: -2.35, y: 1.15, z: -1.6 }, entrance: { x: 0, y: 0, z: 2.35 } };
+var width = 7.2;
+var depth = 6.8;
+var hash = (value) => {
+  let n = 2166136261;
+  for (const c of value) n = Math.imul(n ^ c.charCodeAt(0), 16777619);
+  return n >>> 0;
+};
+function random(seed) {
+  let n = hash(seed);
+  return () => {
+    n += 1831565813;
+    let t = n;
+    t = Math.imul(t ^ t >>> 15, t | 1);
+    t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+function shuffle(values, rng) {
+  const out = [...values];
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [out[i], out[j]] = [out[j], out[i]];
+  }
+  return out;
+}
+var rounded = (n) => Math.round(n * 1e6) / 1e6;
+var distance = (a, b) => Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z);
+var slotPosition = (slot, rows, columns) => ({ x: rounded((slot % columns - (columns - 1) / 2) * width), y: 0, z: rounded((Math.floor(slot / columns) - (rows - 1) / 2) * depth) });
+var slotAddress = (slot, columns) => String.fromCharCode(65 + slot % columns) + (Math.floor(slot / columns) + 1);
+function generate(seed, edition, rows, columns) {
+  if (!/^[a-f0-9]{32}$/.test(seed) || !Number.isSafeInteger(edition) || edition < 0 || edition > 1e6) throw new Error("Facilities received an unfamiliar estate charter.");
+  const rng = random(seed + ":" + edition), slots = Array.from({ length: rows * columns }, (_, i) => i), amenitySlot = rows === 3 ? Math.floor(rng() * 9) : -1;
+  const available = slots.filter((i) => i !== amenitySlot), order = edition === 0 ? rooms.map((r) => r.id) : shuffle(rooms.map((r) => r.id), rng);
+  const palette = shuffle([...partitionStyles.map((s) => s.id)], rng);
+  if (edition === 1) {
+    palette.splice(palette.indexOf("hearts"), 1);
+    palette.splice(palette.indexOf("bars"), 1);
+    palette.unshift("hearts", "bars");
+  }
+  const placements = order.map((room, i) => {
+    const slot = available[i], row = Math.floor(slot / columns);
+    return Object.freeze({ room, slot, address: slotAddress(slot, columns), position: Object.freeze(slotPosition(slot, rows, columns)), yaw: edition === 0 ? 0 : row === rows - 1 ? Math.PI : 0, partition: edition === 0 ? "classic" : palette[i] });
+  });
+  const amenity = amenitySlot < 0 ? void 0 : Object.freeze({ slot: amenitySlot, address: slotAddress(amenitySlot, columns), kind: rng() < 0.5 ? "atrium" : "breakroom", position: Object.freeze(slotPosition(amenitySlot, rows, columns)) });
+  return Object.freeze({ version: layoutVersion, seed, edition, rows, columns, placements: Object.freeze(placements), amenity, bounds: Object.freeze({ minX: -columns * width / 2, maxX: columns * width / 2, minZ: -rows * depth / 2, maxZ: rows * depth / 2 }) });
+}
+var rowEstate = { create: (s, e) => generate(s, e, 2, 4) };
+var squareEstate = { create: (s, e) => generate(s, e, 3, 3) };
+function estate(seed, edition) {
+  return (edition % 2 ? squareEstate : rowEstate).create(seed, edition);
+}
+var foundingEstate = estate("00000000000000000000000000000000", 0);
+function nextEstate(layout) {
+  if (layout.edition >= 1e6) throw new Error("One million transformations require a new company.");
+  return estate(layout.seed, layout.edition + 1);
+}
+function parseLayoutToken(token) {
+  const m = /^estate-v1\.([a-f0-9]{32})\.(0|[1-9][0-9]{0,6})$/.exec(token);
+  if (!m) throw new Error("This relocation memo uses an unfamiliar estate charter.");
+  return estate(m[1], Number(m[2]));
+}
+function addresses(layout) {
+  const placement = (room) => {
+    const p = layout.placements.find((p2) => p2.room === room);
+    if (!p) throw new Error("The estate has misplaced " + room + ".");
+    return p;
+  };
+  const local = (room, point) => {
+    const p = placement(room), c = Math.cos(p.yaw), s = Math.sin(p.yaw);
+    return { x: rounded(p.position.x + point.x * c + point.z * s), y: point.y, z: rounded(p.position.z - point.x * s + point.z * c) };
+  };
+  return { placement, local, resolve: (a) => local(a.room, stationOffsets[a.station]), door: (room) => local(room, { x: 0, y: 0, z: 2.75 }), outside: (room) => local(room, { x: 0, y: 0, z: depth / 2 }) };
+}
+var pointKey = (p) => rounded(p.x) + "," + rounded(p.z);
+function corridorGraph(layout) {
+  const points = /* @__PURE__ */ new Map(), links = /* @__PURE__ */ new Map(), book = addresses(layout);
+  const add = (p) => {
+    const k = pointKey(p);
+    points.set(k, p);
+    if (!links.has(k)) links.set(k, []);
+    return k;
+  };
+  const connect = (a, b) => {
+    const ka = add(a), kb = add(b);
+    if (ka === kb) return;
+    links.get(ka).push(kb);
+    links.get(kb).push(ka);
+  };
+  const xs = Array.from({ length: layout.columns + 1 }, (_, i) => rounded(layout.bounds.minX + i * width)), zs = Array.from({ length: layout.rows + 1 }, (_, i) => rounded(layout.bounds.minZ + i * depth));
+  for (const z of zs) {
+    const row = [...xs.map((x) => ({ x, y: 0, z })), ...layout.placements.map((p) => book.outside(p.room)).filter((p) => Math.abs(p.z - z) < 1e-3)].sort((a, b) => a.x - b.x);
+    for (let i = 1; i < row.length; i++) connect(row[i - 1], row[i]);
+  }
+  for (const x of xs) for (let i = 1; i < zs.length; i++) connect({ x, y: 0, z: zs[i - 1] }, { x, y: 0, z: zs[i] });
+  return { points, links };
+}
+function graphRoute(graph, from, to) {
+  const start = pointKey(from), end = pointKey(to), scores = /* @__PURE__ */ new Map([[start, 0]]), previous = /* @__PURE__ */ new Map(), remaining = new Set(graph.points.keys());
+  while (remaining.size) {
+    let current, best = Infinity;
+    for (const k of remaining) {
+      const d = scores.get(k) ?? Infinity;
+      if (d < best) {
+        best = d;
+        current = k;
+      }
+    }
+    if (!current) break;
+    remaining.delete(current);
+    if (current === end) {
+      const path = [end];
+      while (path.at(-1) !== start) path.push(previous.get(path.at(-1)));
+      return path.reverse().map((k) => graph.points.get(k));
+    }
+    for (const k of graph.links.get(current) || []) {
+      const d = best + distance(graph.points.get(current), graph.points.get(k));
+      if (d < (scores.get(k) ?? Infinity)) {
+        scores.set(k, d);
+        previous.set(k, current);
+      }
+    }
+  }
+  throw new Error("Facilities cannot approve an unreachable department.");
+}
+var compact = (points) => points.filter((p, i) => i === 0 || distance(p, points[i - 1]) > 1e-5);
+function routes(layout) {
+  const book = addresses(layout), graph = corridorGraph(layout);
+  const ground = (p) => ({ ...p, y: 0 });
+  const inside = (a) => {
+    const offset = stationOffsets[a.station], side = offset.x < -0.9 ? -1.25 : 1.25, hub = book.local(a.room, { x: 0, y: 0, z: 1.05 });
+    return a.station === "entrance" ? compact([ground(book.resolve(a)), hub]) : compact([ground(book.resolve(a)), book.local(a.room, { x: side, y: 0, z: offset.z }), book.local(a.room, { x: side, y: 0, z: 1.05 }), hub]);
+  };
+  const exit = (a) => compact([...inside(a), book.door(a.room), book.outside(a.room)]);
+  return { route: (from, to) => {
+    if (from.room === to.room) return from.station === to.station ? [ground(book.resolve(from))] : compact([...inside(from), ...inside(to).reverse()]);
+    return compact([...exit(from), ...graphRoute(graph, book.outside(from.room), book.outside(to.room)), ...exit(to).reverse()]);
+  } };
+}
+function validateEstate(layout) {
+  if (layout.placements.length !== 8 || new Set(layout.placements.map((p) => p.room)).size !== 8 || new Set(layout.placements.map((p) => p.slot)).size !== 8) throw new Error("Every department requires one unique office.");
+  if (layout.rows === 3 !== !!layout.amenity || layout.amenity && layout.placements.some((p) => p.slot === layout.amenity.slot)) throw new Error("The amenity has occupied a department.");
+  const planner = routes(layout);
+  for (const from of rooms) for (const to of rooms) {
+    const path = planner.route({ room: from.id, station: "entrance" }, { room: to.id, station: "entrance" });
+    if (!path.every((p) => Number.isFinite(p.x) && Number.isFinite(p.y) && Number.isFinite(p.z))) throw new Error("A department has escaped geometry.");
+  }
+  return layout;
+}
+
+// web/office-estate.ts
+var OfficeEstate = class {
+  value;
+  listeners = /* @__PURE__ */ new Set();
+  constructor(initial2 = foundingEstate) {
+    this.value = validateEstate(initial2);
+  }
+  get current() {
+    return this.value;
+  }
+  subscribe(listener) {
+    this.listeners.add(listener);
+    return () => this.listeners.delete(listener);
+  }
+  reorganize() {
+    const candidate = validateEstate(nextEstate(this.value));
+    this.value = candidate;
+    for (const listener of this.listeners) listener();
+    return candidate;
+  }
+};
+var initial = foundingEstate;
+try {
+  const token = new URL(location.href).searchParams.get("estate");
+  if (token) initial = parseLayoutToken(token);
+  else {
+    const bytes = crypto.getRandomValues(new Uint8Array(16));
+    initial = estate([...bytes].map((b) => b.toString(16).padStart(2, "0")).join(""), 0);
+  }
+} catch {
+}
+var officeEstate = new OfficeEstate(initial);
+
 // web/office-model.ts
 var roomForEvent = (e) => {
   const k = e.kind;
@@ -406,7 +605,6 @@ var OfficeTourDesk = class {
   visited = /* @__PURE__ */ new Set();
   persistence = true;
   audio;
-  intersecting = true;
   walking = false;
   root = byId("office-experience");
   canvas = byId("office-canvas");
@@ -418,6 +616,10 @@ var OfficeTourDesk = class {
   media = matchMedia("(prefers-reduced-motion: reduce)");
   directory = /* @__PURE__ */ new Map();
   constructor() {
+    officeEstate.subscribe(() => {
+      this.syncRenderer();
+      this.renderAddress();
+    });
     try {
       const limit = new URL(location.href).searchParams.get("limit");
       if (limit !== null) this.archive.mandate = String(parseMandate(limit));
@@ -488,11 +690,17 @@ var OfficeTourDesk = class {
       }
       this.retainFile();
       this.renderer.walk(this.room);
-      this.canvas.focus();
+      byId("office-stage").scrollIntoView({ block: "nearest", behavior: "instant" });
+      this.activity();
+      this.canvas.focus({ preventScroll: true });
     });
     byId("office-zoom-in").addEventListener("click", () => this.renderer?.zoom(-1));
     byId("office-zoom-out").addEventListener("click", () => this.renderer?.zoom(1));
-    document.querySelectorAll("[data-office-move]").forEach((b) => b.addEventListener("click", () => this.renderer?.move(b.dataset.officeMove)));
+    document.querySelectorAll("[data-office-move]").forEach((b) => b.addEventListener("click", () => {
+      byId("office-stage").scrollIntoView({ block: "nearest", behavior: "instant" });
+      this.activity();
+      this.renderer?.move(b.dataset.officeMove);
+    }));
     this.canvas.addEventListener("keydown", (e) => {
       if (e.key === "Escape" && !this.dialog.open) {
         this.renderer?.overview();
@@ -588,10 +796,7 @@ var OfficeTourDesk = class {
       const d = this.archive.companions.get(this.archive.current()?.ordinal || "");
       if (d) companionDialog().open(d, byId("office-companion-story"));
     });
-    const observer = new IntersectionObserver((entries) => {
-      this.intersecting = entries[0].isIntersecting;
-      this.activity();
-    }, { rootMargin: "100px" });
+    const observer = new IntersectionObserver(() => this.activity(), { rootMargin: "100px" });
     observer.observe(byId("office-stage"));
     new ResizeObserver(() => this.renderer?.resize()).observe(byId("office-stage"));
     document.addEventListener("visibilitychange", () => {
@@ -794,10 +999,13 @@ var OfficeTourDesk = class {
   routeCamera(value) {
     byId("office-follow-route").checked = value;
   }
+  renderAddress() {
+    byId("office-room-label").textContent = "Department " + String(rooms.findIndex((r) => r.id === this.room) + 1).padStart(2, "0") + " \xB7 Address " + officeEstate.current.placements.find((p) => p.room === this.room).address;
+  }
   renderRoom() {
     const room = roomById(this.room);
     for (const [id, b] of this.directory) b.setAttribute("aria-pressed", String(id === this.room));
-    byId("office-room-label").textContent = "Room " + String(rooms.indexOf(room) + 1).padStart(2, "0");
+    this.renderAddress();
     byId("office-room-title").textContent = room.name;
     byId("office-room-subtitle").textContent = room.subtitle;
     const selected = this.selectedProp;
@@ -942,13 +1150,14 @@ var OfficeTourDesk = class {
   }
   sceneState() {
     const file = this.archive.current(), d = file ? this.archive.companions.get(file.ordinal) : void 0;
-    return { room: this.room, route: routeFor(file), ordinal: file?.ordinal || "", text: file?.text || "", emoji: d?.companion.emoji, companionName: d?.companion.name, paused: this.paused, reducedMotion: !this.motion.checked, quality: byId("office-quality").value, seed: tourSeed(this.archive.mandate) };
+    return { room: this.room, route: routeFor(file), ordinal: file?.ordinal || "", text: file?.text || "", emoji: d?.companion.emoji, companionName: d?.companion.name, paused: this.paused, reducedMotion: !this.motion.checked, quality: byId("office-quality").value, seed: tourSeed(this.archive.mandate), layout: officeEstate.current };
   }
   syncRenderer() {
     this.renderer?.update(this.sceneState());
   }
   activity() {
-    this.renderer?.active(this.opened && this.intersecting && !document.hidden);
+    const rect = byId("office-stage").getBoundingClientRect();
+    this.renderer?.active(this.opened && rect.height > 0 && rect.bottom > -100 && rect.top < innerHeight + 100 && !document.hidden);
   }
   shareLink() {
     byId("office-share-link").value = officeShare(scope, this.archive.mandate, this.room, this.selectedProp?.id, byId("companion-strategy").value || "factor-resonance-v1", this.selectedAction);
@@ -993,87 +1202,6 @@ var OfficeTourDesk = class {
     }
   }
 };
-
-// web/office-layout.ts
-var layoutVersion = "estate-v1";
-var partitionStyles = [
-  { id: "hearts", name: "Giant pink hearts", claim: "Psychological Safety Infrastructure" },
-  { id: "bars", name: "Jail bars", claim: "Employee Autonomy Framework" },
-  { id: "picket", name: "White picket fences", claim: "Boundaryless Collaboration" },
-  { id: "cheese", name: "Giant cheese panels", claim: "A More Porous Organization" },
-  { id: "blinds", name: "Venetian blinds", claim: "Radical Transparency" },
-  { id: "tape", name: "Tangled red tape", claim: "Frictionless Delivery" },
-  { id: "hedges", name: "Tall hedges", claim: "Organic Growth" },
-  { id: "cardboard", name: "Cardboard fortifications", claim: "Permanent Interim Arrangements" },
-  { id: "cabinets", name: "Filing cabinets", claim: "Open Access to Information" },
-  { id: "bubbles", name: "Bubble-wrap panels", claim: "Organizational Resilience" },
-  { id: "dominoes", name: "Oversized dominoes", claim: "Independent Risk Containment" },
-  { id: "waffles", name: "Waffle grids", claim: "Matrix Management" }
-];
-var stationOffsets = { desk: { x: -0.3, y: 1.1, z: -0.9 }, personnel: { x: -0.3, y: 1.1, z: -0.9 }, boundary: { x: 0, y: 1.05, z: -1.65 }, property: { x: -2.35, y: 0.9, z: -1.6 }, glyph: { x: -0.25, y: 1.15, z: -0.65 }, notary: { x: -2.35, y: 1.1, z: -1.6 }, printer: { x: -2.35, y: 0.9, z: -1.6 }, ledger: { x: -0.3, y: 1.1, z: -0.65 }, queue: { x: 2.35, y: 1, z: -1.6 }, memory: { x: -2.35, y: 1.15, z: -1.6 }, entrance: { x: 0, y: 0, z: 2.35 } };
-var width = 7.2;
-var depth = 6.8;
-var hash = (value) => {
-  let n = 2166136261;
-  for (const c of value) n = Math.imul(n ^ c.charCodeAt(0), 16777619);
-  return n >>> 0;
-};
-function random(seed) {
-  let n = hash(seed);
-  return () => {
-    n += 1831565813;
-    let t = n;
-    t = Math.imul(t ^ t >>> 15, t | 1);
-    t ^= t + Math.imul(t ^ t >>> 7, t | 61);
-    return ((t ^ t >>> 14) >>> 0) / 4294967296;
-  };
-}
-function shuffle(values, rng) {
-  const out = [...values];
-  for (let i = out.length - 1; i > 0; i--) {
-    const j = Math.floor(rng() * (i + 1));
-    [out[i], out[j]] = [out[j], out[i]];
-  }
-  return out;
-}
-var rounded = (n) => Math.round(n * 1e6) / 1e6;
-var slotPosition = (slot, rows, columns) => ({ x: rounded((slot % columns - (columns - 1) / 2) * width), y: 0, z: rounded((Math.floor(slot / columns) - (rows - 1) / 2) * depth) });
-var slotAddress = (slot, columns) => String.fromCharCode(65 + slot % columns) + (Math.floor(slot / columns) + 1);
-function generate(seed, edition, rows, columns) {
-  if (!/^[a-f0-9]{32}$/.test(seed) || !Number.isSafeInteger(edition) || edition < 0 || edition > 1e6) throw new Error("Facilities received an unfamiliar estate charter.");
-  const rng = random(seed + ":" + edition), slots = Array.from({ length: rows * columns }, (_, i) => i), amenitySlot = rows === 3 ? Math.floor(rng() * 9) : -1;
-  const available = slots.filter((i) => i !== amenitySlot), order = edition === 0 ? rooms.map((r) => r.id) : shuffle(rooms.map((r) => r.id), rng);
-  const palette = shuffle([...partitionStyles.map((s) => s.id)], rng);
-  if (edition === 1) {
-    palette.splice(palette.indexOf("hearts"), 1);
-    palette.splice(palette.indexOf("bars"), 1);
-    palette.unshift("hearts", "bars");
-  }
-  const placements = order.map((room, i) => {
-    const slot = available[i], row = Math.floor(slot / columns);
-    return Object.freeze({ room, slot, address: slotAddress(slot, columns), position: Object.freeze(slotPosition(slot, rows, columns)), yaw: edition === 0 ? 0 : row === rows - 1 ? Math.PI : 0, partition: edition === 0 ? "classic" : palette[i] });
-  });
-  const amenity = amenitySlot < 0 ? void 0 : Object.freeze({ slot: amenitySlot, address: slotAddress(amenitySlot, columns), kind: rng() < 0.5 ? "atrium" : "breakroom", position: Object.freeze(slotPosition(amenitySlot, rows, columns)) });
-  return Object.freeze({ version: layoutVersion, seed, edition, rows, columns, placements: Object.freeze(placements), amenity, bounds: Object.freeze({ minX: -columns * width / 2, maxX: columns * width / 2, minZ: -rows * depth / 2, maxZ: rows * depth / 2 }) });
-}
-var rowEstate = { create: (s, e) => generate(s, e, 2, 4) };
-var squareEstate = { create: (s, e) => generate(s, e, 3, 3) };
-function estate(seed, edition) {
-  return (edition % 2 ? squareEstate : rowEstate).create(seed, edition);
-}
-var foundingEstate = estate("00000000000000000000000000000000", 0);
-function addresses(layout) {
-  const placement = (room) => {
-    const p = layout.placements.find((p2) => p2.room === room);
-    if (!p) throw new Error("The estate has misplaced " + room + ".");
-    return p;
-  };
-  const local = (room, point) => {
-    const p = placement(room), c = Math.cos(p.yaw), s = Math.sin(p.yaw);
-    return { x: rounded(p.position.x + point.x * c + point.z * s), y: point.y, z: rounded(p.position.z - point.x * s + point.z * c) };
-  };
-  return { placement, local, resolve: (a) => local(a.room, stationOffsets[a.station]), door: (room) => local(room, { x: 0, y: 0, z: 2.75 }), outside: (room) => local(room, { x: 0, y: 0, z: depth / 2 }) };
-}
 
 // web/office-supervision-model.ts
 var hoveringLabel = "Executive Hovering: Trust Has Been Suspended";
@@ -1127,7 +1255,7 @@ function shotFor(room, anchor, hrIndex = -1, layout = foundingEstate) {
   const book = addresses(layout), placement = book.placement(room), target = book.resolve({ room, station: anchor });
   const historicNorth = layout.edition === 0 && placement.position.z > 0;
   const alpha = (historicNorth ? Math.PI / 2 : -Math.PI / 2 + placement.yaw) + (anchor === "glyph" ? 0.22 : anchor === "notary" ? -0.22 : anchor === "queue" ? -0.14 : anchor === "personnel" ? hrIndex % 2 === 0 ? -0.12 : 0.12 : 0.1);
-  return { room, anchor, target, alpha, beta: historicNorth ? 0.7 : anchor === "property" ? 0.85 : 0.93, radius: anchor === "glyph" ? 3.8 : anchor === "printer" ? 3.7 : anchor === "ledger" ? 3.9 : anchor === "boundary" ? 5.5 : 4.6 };
+  return { room, anchor, target, alpha, beta: layout.edition > 0 || historicNorth ? 0.7 : anchor === "property" ? 0.85 : 0.93, radius: anchor === "glyph" ? 3.8 : anchor === "printer" ? 3.7 : anchor === "ledger" ? 3.9 : anchor === "boundary" ? 5.5 : 4.6 };
 }
 var substantial = /* @__PURE__ */ new Set(["recruit", "survey", "evict", "lease", "glyph", "assemble", "notarize", "print", "audit", "queue", "commit", "memory"]);
 function duration(action, kind) {
@@ -1149,8 +1277,8 @@ function planOfficeSteps(events, context, ensureDisclosure = false) {
     if (event.kind.startsWith("HR_") && hrIndex >= 0 && ["APPROVED", "REJECTED", "NOT_REACHED"].includes(status)) hrStates[hrIndex] = status;
     if (event.kind === "PREMISES_DISCOVERY") tenantCode = event.finding.match(/U\+[A-Fa-f0-9]{4,6}/)?.[0];
     const same = previous?.shot.room === room && previous.shot.anchor === anchor && (action !== "recruit" || previous.hrIndex === hrIndex);
-    const distance = previous ? Math.hypot(previous.shot.target.x - shot.target.x, previous.shot.target.z - shot.target.z) : 0;
-    const arriveMs = same ? 0 : previous?.shot.room === room ? 620 : 1350 + Math.round(distance * 15);
+    const distance2 = previous ? Math.hypot(previous.shot.target.x - shot.target.x, previous.shot.target.z - shot.target.z) : 0;
+    const arriveMs = same ? 0 : previous?.shot.room === room ? 620 : 1350 + Math.round(distance2 * 15);
     const [workMs, holdMs] = duration(action, event.kind);
     const step = { id: context.id + ":" + index, event, source: context.source || "recorded", ordinal: context.ordinal || event.ordinal || "", text: context.text || "", action, shot, hasFile: context.hasFile ?? !!context.ordinal, publication: event.kind === "PUBLICATION" || event.kind === "DISCLOSE_OBSERVED", arriveMs, workMs, holdMs, glyphs: [...glyphs], hrIndex, hrStates: [...hrStates], tenantCode };
     result.push(step);
@@ -1201,6 +1329,7 @@ var element = (id) => document.getElementById(id);
 var OfficeSupervisionDesk = class {
   constructor(authority) {
     this.authority = authority;
+    officeEstate.subscribe(() => this.updateScene());
     this.checkbox.addEventListener("change", () => this.applyMode(true));
     element("supervision-autonomy").addEventListener("click", () => {
       this.disable();
@@ -1443,7 +1572,7 @@ var OfficeSupervisionDesk = class {
     element("supervision-current").textContent = text2;
   }
   sceneState(step = this.activeStep || this.lastStep) {
-    return { room: step?.shot.room || "reception", route: [], ordinal: this.folio?.ordinal || "", text: this.published ? this.folio?.text || "" : "PENDING", emoji: this.companion?.companion.emoji, companionName: this.companion?.companion.name, paused: true, reducedMotion: this.media.matches, quality: "standard", seed: tourSeed(this.mandate) };
+    return { room: step?.shot.room || "reception", route: [], ordinal: this.folio?.ordinal || "", text: this.published ? this.folio?.text || "" : "PENDING", emoji: this.companion?.companion.emoji, companionName: this.companion?.companion.name, paused: true, reducedMotion: this.media.matches, quality: "standard", seed: tourSeed(this.mandate), layout: officeEstate.current };
   }
   updateScene(step = this.activeStep || this.lastStep) {
     this.renderer?.update(this.sceneState(step));
@@ -1637,6 +1766,66 @@ var OfficeSupervisionDesk = class {
       };
       this.frame = requestAnimationFrame(frame);
     });
+  }
+};
+
+// web/office-reorganization.ts
+var ReorganizationPanel = class {
+  button = node("button", "Announce Another Reorganization");
+  status = node("p");
+  details = node("details");
+  table = node("table");
+  busy = false;
+  constructor(container) {
+    container.classList.add("reorganization-panel");
+    this.button.type = "button";
+    this.button.className = "button button-secondary";
+    this.button.addEventListener("click", () => {
+      if (this.busy) return;
+      try {
+        officeEstate.reorganize();
+      } catch (error) {
+        this.status.textContent = error instanceof Error ? error.message : "Facilities has deferred certainty.";
+      }
+    });
+    this.status.className = "field-help";
+    this.status.setAttribute("role", "status");
+    this.status.setAttribute("aria-live", "polite");
+    this.details.append(node("summary", "Inspect the current workplace arrangement"));
+    this.table.className = "estate-addresses";
+    this.details.append(this.table);
+    container.append(this.button, this.status, this.details);
+    officeEstate.subscribe(() => this.render());
+    this.render();
+  }
+  setReading(reading2) {
+    this.busy = reading2;
+    this.button.disabled = reading2;
+    this.button.title = reading2 ? "Complete or stop the reading before relocating the company." : "Authorize a new arrangement of the same responsibilities.";
+  }
+  render() {
+    const l = officeEstate.current;
+    this.status.textContent = "Estate edition " + l.edition + " \xB7 " + l.rows + " \xD7 " + l.columns + (l.amenity ? " \xB7 " + l.amenity.kind + " at " + l.amenity.address : " \xB7 all available space is committed to seriousness");
+    this.status.parentElement.dataset.estateEdition = String(l.edition);
+    const head = node("thead"), row = node("tr");
+    for (const name of ["Department", "Address", "Partition policy"]) {
+      const th = node("th", name);
+      th.scope = "col";
+      row.append(th);
+    }
+    head.append(row);
+    const body = node("tbody");
+    for (const p of [...l.placements].sort((a, b) => a.slot - b.slot)) {
+      const tr = node("tr"), theme = partitionStyles.find((s) => s.id === p.partition);
+      tr.append(node("td", rooms.find((r) => r.id === p.room).short), node("td", p.address), node("td", theme ? theme.name + " \xB7 " + theme.claim : "Founding architectural certainty"));
+      body.append(tr);
+    }
+    if (l.amenity) {
+      const tr = node("tr");
+      tr.append(node("td", l.amenity.kind === "atrium" ? "Atrium: Chief Growth Officer in residence" : "Breakroom: mandatory optional restoration"), node("td", l.amenity.address), node("td", "The company is accommodating the appearance of a perk."));
+      body.append(tr);
+    }
+    this.table.replaceChildren(node("caption", "Current department addresses"), head, body);
   }
 };
 
@@ -3577,6 +3766,7 @@ var supervision = new OfficeSupervisionDesk({ reading: () => reading, paused: ()
   wakeReading?.();
   readingControls();
 }, notice: (text2) => setText("run-status", text2) });
+var reorganizationPanels = [new ReorganizationPanel(byId2("supervision-reorganization")), new ReorganizationPanel(byId2("office-reorganization"))];
 var companions = new CompanionDesk({ remember: (discovery) => {
   office.remember(discovery);
   supervision.remember(discovery);
@@ -3619,6 +3809,7 @@ async function observeLine(folio, sequence, publish) {
   return true;
 }
 function readingControls() {
+  for (const panel of reorganizationPanels) panel.setReading(reading);
   stopButton.setAttribute("aria-disabled", String(!reading));
   revealButton.textContent = activityMode === "rehearsal" || activityMode === "replay" ? "Reveal completed proceedings" : streaming ? "Waive disclosure delays" : "Reveal complete output";
   pauseButton.setAttribute("aria-disabled", String(!reading));

@@ -1,5 +1,6 @@
 import {OfficeTourDesk} from './office-tour';
 import {OfficeSupervisionDesk} from './office-supervision';
+import {ReorganizationPanel} from './office-reorganization';
 import {prepareSharedEncounter} from './shared-encounter';
 import {CompanionDesk} from './companions';
 import {parseMandate,autocorrectMandate,addOrdinals,windowCount,chooseMagnitudeWarning,type MandateInteger} from './mandate-input';
@@ -31,6 +32,7 @@ const precedent=new PrecedentView();
 new PremisesDesk();
 const office=new OfficeTourDesk();
 const supervision=new OfficeSupervisionDesk({reading:()=>reading,paused:()=>paused,pause:setReadingPaused,wake:()=>{wakeReading?.();readingControls();},notice:text=>setText('run-status',text)});
+const reorganizationPanels=[new ReorganizationPanel(byId('supervision-reorganization')),new ReorganizationPanel(byId('office-reorganization'))];
 const companions=new CompanionDesk({remember:discovery=>{office.remember(discovery);supervision.remember(discovery);},clearCompanions:()=>{office.clearCompanions();supervision.clearCompanions();}});
 let currentLimit='15';
 let receivedPacket:ExecutionPacket|undefined;
@@ -47,6 +49,7 @@ async function observeLine(folio:Folio,sequence:number,publish:()=>void){
  if(sequence!==mandateSequence)return false;release();return true;
 }
 function readingControls() {
+  for(const panel of reorganizationPanels)panel.setReading(reading);
   stopButton.setAttribute('aria-disabled', String(!reading));
   revealButton.textContent = activityMode==='rehearsal'||activityMode==='replay'?'Reveal completed proceedings':streaming ? 'Waive disclosure delays' : 'Reveal complete output';
   pauseButton.setAttribute('aria-disabled', String(!reading));

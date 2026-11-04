@@ -134,7 +134,7 @@ export function createProductionStage(scene:Scene){
   parcel.setEnabled(action==='deliver'||receiving||action==='requisition');parcel.position.x=-1.3+1.3*work;parcel.position.y=1.18+.14*Math.sin(work*Math.PI);parcelFace.mesh.position.x=parcel.position.x;parcelFace.mesh.position.y=parcel.position.y;parcelFace.mesh.setEnabled(parcel.isEnabled());
   receivingStamp.setEnabled(receiving);receivingStamp.position.x=-.7+Math.max(0,step.glyphs.length-1)*.2;receivingStamp.position.y=1.75-.45*Math.sin(work*Math.PI);
   lens.position.set(-.4+.8*work,1.45,0);seal.scaling.setAll(.25+.75*work);
-  printed.mesh.position.z=-.35-.8*work;printed.mesh.scaling.y=.1+.9*work;printed.mesh.rotation.x=Math.PI/2*(1-work*.7);printed.mesh.rotation.y=Math.PI;
+  printed.mesh.position.z=-.35-.8*work;printed.mesh.scaling.y=.1+.9*work;printed.mesh.rotation.x=Math.PI/2*(1-work*.7);printed.mesh.rotation.y=layout.edition===0&&book.placement(shot.room).position.z>0?Math.PI:0;
   triangle.position.set(.3+work*.4,1.3+Math.sin(work*Math.PI)*.6,-.4);triangle.rotation.z=work*3;triangle.setEnabled(work>.7);
   links.forEach((link,i)=>link.setEnabled(i<4||work>.65));auditFace.mesh.scaling.setAll(.92+.08*work);
   envelope.position.x=-.65+1.3*work;envelope.position.y=.98+.1*Math.sin(work*Math.PI);

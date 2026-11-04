@@ -2,18 +2,18 @@ import {rooms,type RoomId} from './office-content.ts';
 
 export const layoutVersion='estate-v1';
 export const partitionStyles=[
- {id:'hearts',name:'Giant pink hearts',claim:'Psychological Safety Infrastructure'},
- {id:'bars',name:'Jail bars',claim:'Employee Autonomy Framework'},
- {id:'picket',name:'White picket fences',claim:'Boundaryless Collaboration'},
- {id:'cheese',name:'Giant cheese panels',claim:'A More Porous Organization'},
- {id:'blinds',name:'Venetian blinds',claim:'Radical Transparency'},
- {id:'tape',name:'Tangled red tape',claim:'Frictionless Delivery'},
- {id:'hedges',name:'Tall hedges',claim:'Organic Growth'},
- {id:'cardboard',name:'Cardboard fortifications',claim:'Permanent Interim Arrangements'},
- {id:'cabinets',name:'Filing cabinets',claim:'Open Access to Information'},
- {id:'bubbles',name:'Bubble-wrap panels',claim:'Organizational Resilience'},
- {id:'dominoes',name:'Oversized dominoes',claim:'Independent Risk Containment'},
- {id:'waffles',name:'Waffle grids',claim:'Matrix Management'},
+ {id:'hearts',name:'Giant pink hearts',claim:'Psychological Safety Infrastructure',placard:'PSYCHOLOGICAL SAFETY'},
+ {id:'bars',name:'Jail bars',claim:'Employee Autonomy Framework',placard:'EMPLOYEE AUTONOMY'},
+ {id:'picket',name:'White picket fences',claim:'Boundaryless Collaboration',placard:'BOUNDARYLESS COLLABORATION'},
+ {id:'cheese',name:'Giant cheese panels',claim:'A More Porous Organization',placard:'POROUS ORGANIZATION'},
+ {id:'blinds',name:'Venetian blinds',claim:'Radical Transparency',placard:'RADICAL TRANSPARENCY'},
+ {id:'tape',name:'Tangled red tape',claim:'Frictionless Delivery',placard:'FRICTIONLESS DELIVERY'},
+ {id:'hedges',name:'Tall hedges',claim:'Organic Growth',placard:'ORGANIC GROWTH'},
+ {id:'cardboard',name:'Cardboard fortifications',claim:'Permanent Interim Arrangements',placard:'PERMANENT INTERIM'},
+ {id:'cabinets',name:'Filing cabinets',claim:'Open Access to Information',placard:'OPEN ACCESS'},
+ {id:'bubbles',name:'Bubble-wrap panels',claim:'Organizational Resilience',placard:'RESILIENCE'},
+ {id:'dominoes',name:'Oversized dominoes',claim:'Independent Risk Containment',placard:'RISK CONTAINMENT'},
+ {id:'waffles',name:'Waffle grids',claim:'Matrix Management',placard:'MATRIX MANAGEMENT'},
 ] as const;
 export type PartitionId='classic'|typeof partitionStyles[number]['id'];
 export type StationId='desk'|'personnel'|'boundary'|'property'|'glyph'|'notary'|'printer'|'ledger'|'queue'|'memory'|'entrance';
@@ -82,6 +82,13 @@ export function routes(layout:EstateLayout):CorridorRoutePlanner {
  return {route:(from,to)=>{if(from.room===to.room)return from.station===to.station?[ground(book.resolve(from))]:compact([...inside(from),...inside(to).reverse()]);return compact([...exit(from),...graphRoute(graph,book.outside(from.room),book.outside(to.room)),...exit(to).reverse()]);}};
 }
 export const routeLength=(points:readonly Point[])=>points.slice(1).reduce((sum,p,i)=>sum+distance(points[i],p),0);
+/** Fit actual estate corners into the orbital camera's horizontal and vertical frusta. */
+export function estateOverviewRadius(layout:EstateLayout,aspect:number,alpha:number,beta:number,fov:number){
+ if(![aspect,alpha,beta,fov].every(Number.isFinite)||aspect<=0||fov<=0||fov>=Math.PI)throw new Error('Facilities cannot frame this perspective.');
+ const n={x:Math.cos(alpha)*Math.sin(beta),y:Math.cos(beta),z:Math.sin(alpha)*Math.sin(beta)},right={x:-Math.sin(alpha),z:Math.cos(alpha)},up={x:-Math.cos(alpha)*Math.cos(beta),y:Math.sin(beta),z:-Math.sin(alpha)*Math.cos(beta)},tan=Math.tan(fov/2);let radius=0;
+ for(const x of [layout.bounds.minX-.6,layout.bounds.maxX+.6])for(const z of [layout.bounds.minZ-.7,layout.bounds.maxZ+.7])for(const y of [-.5,3.3]){const yy=y-.2,depth=x*n.x+yy*n.y+z*n.z,horizontal=Math.abs(x*right.x+z*right.z),vertical=Math.abs(x*up.x+yy*up.y+z*up.z);radius=Math.max(radius,depth+horizontal/(tan*aspect),depth+vertical/tan);}
+ return Math.max(layout.edition===0?33:20,radius*1.08);
+}
 export function pointAlong(points:readonly Point[],fraction:number):Point {
  if(!points.length)throw new Error('A journey requires an address.');let remaining=routeLength(points)*Math.max(0,Math.min(1,fraction));
  for(let i=1;i<points.length;i++){const length=distance(points[i-1],points[i]);if(remaining<=length&&length>0){const t=remaining/length;return {x:points[i-1].x+(points[i].x-points[i-1].x)*t,y:points[i-1].y+(points[i].y-points[i-1].y)*t,z:points[i-1].z+(points[i].z-points[i-1].z)*t};}remaining-=length;}return points.at(-1)!;

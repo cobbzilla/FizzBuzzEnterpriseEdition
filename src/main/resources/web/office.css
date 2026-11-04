@@ -92,3 +92,9 @@
 .output-panel[data-supervised=true] #run-status { font-size: .75rem; line-height: 1.4; margin-bottom: 8px; }
 @media (max-height: 650px) { .supervision-stage { height: clamp(110px, 25dvh, 160px); } }
 @media (forced-colors: active) { .supervision-stage, .supervision-caption { border-color: CanvasText; } }
+.reorganization-panel { margin-top: 12px; border-top: 1px solid var(--line); padding-top: 12px; }
+.reorganization-panel button, .reorganization-panel summary { min-height: 44px; }
+.reorganization-panel details { font-size: .78rem; overflow-wrap: anywhere; }
+.reorganization-panel summary { cursor: pointer; padding: 10px 0; }
+.estate-addresses { border-collapse: collapse; width: 100%; table-layout: fixed; }
+.estate-addresses th, .estate-addresses td { border-bottom: 1px solid var(--line); text-align: left; padding: 8px 4px; vertical-align: top; overflow-wrap: anywhere; }

@@ -65,7 +65,7 @@ export function shotFor(room:RoomId,anchor:OfficeAnchor,hrIndex=-1,layout:Estate
  const book=addresses(layout),placement=book.placement(room),target=book.resolve({room,station:anchor});
  const historicNorth=layout.edition===0&&placement.position.z>0;
  const alpha=(historicNorth?Math.PI/2:-Math.PI/2+placement.yaw)+(anchor==='glyph'?.22:anchor==='notary'?-.22:anchor==='queue'?-.14:anchor==='personnel'?(hrIndex%2===0?-.12:.12):.1);
- return {room,anchor,target,alpha,beta:historicNorth?.7:anchor==='property'?.85:.93,radius:anchor==='glyph'?3.8:anchor==='printer'?3.7:anchor==='ledger'?3.9:anchor==='boundary'?5.5:4.6};
+ return {room,anchor,target,alpha,beta:layout.edition>0||historicNorth?.7:anchor==='property'?.85:.93,radius:anchor==='glyph'?3.8:anchor==='printer'?3.7:anchor==='ledger'?3.9:anchor==='boundary'?5.5:4.6};
 }
 
 const substantial=new Set<OfficeAction>(['recruit','survey','evict','lease','glyph','assemble','notarize','print','audit','queue','commit','memory']);

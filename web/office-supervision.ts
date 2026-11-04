@@ -1,4 +1,5 @@
 import {releaseAsset} from './release-assets';
+import {officeEstate} from './office-estate';
 import {node} from './companion-story';
 import {tourSeed} from './office-model';
 import {hoveringLabel,hoveringCadence,observationEnvelope,planOfficeSteps,planFolio,ObservationClock,type ObservedOfficeStep,type OfficeCue,type ObservationEnvelope} from './office-supervision-model';
@@ -27,6 +28,7 @@ export class OfficeSupervisionDesk {
  private folio?:Folio;private published=false;private companion?:Discovery;private mandate='15';private mode='mandate';private observed=0;private blocked='';
 
  constructor(private readonly authority:ReadingAuthority){
+  officeEstate.subscribe(()=>this.updateScene());
   this.checkbox.addEventListener('change',()=>this.applyMode(true));
   element('supervision-autonomy').addEventListener('click',()=>{this.disable();this.checkbox.focus();});
   element('supervision-pause').addEventListener('click',()=>{if(this.authority.reading())this.authority.pause(!this.authority.paused());});
@@ -101,7 +103,7 @@ export class OfficeSupervisionDesk {
  clearCompanions(){this.companion=undefined;this.updateScene();}
  complete(){if(this.enabled){this.pane.dataset.state='complete';this.current('Observation is complete. The company is still withholding trust.');}this.syncControls();}
  private current(text:string){element('supervision-current').textContent=text;}
- private sceneState(step=this.activeStep||this.lastStep):OfficeSceneState{return {room:step?.shot.room||'reception',route:[],ordinal:this.folio?.ordinal||'',text:this.published?this.folio?.text||'':'PENDING',emoji:this.companion?.companion.emoji,companionName:this.companion?.companion.name,paused:true,reducedMotion:this.media.matches,quality:'standard',seed:tourSeed(this.mandate)};}
+ private sceneState(step=this.activeStep||this.lastStep):OfficeSceneState{return {room:step?.shot.room||'reception',route:[],ordinal:this.folio?.ordinal||'',text:this.published?this.folio?.text||'':'PENDING',emoji:this.companion?.companion.emoji,companionName:this.companion?.companion.name,paused:true,reducedMotion:this.media.matches,quality:'standard',seed:tourSeed(this.mandate),layout:officeEstate.current};}
  private updateScene(step=this.activeStep||this.lastStep){this.renderer?.update(this.sceneState(step));}
  private visible(){
   if(!this.enabled||document.hidden||document.querySelector('dialog[open]'))return false;
