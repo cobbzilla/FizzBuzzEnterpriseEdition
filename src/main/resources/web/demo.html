@@ -105,6 +105,7 @@
                 <div class="supervision-controls" role="group" aria-label="Executive observation playback"><button type="button" id="supervision-pause" aria-disabled="true">Pause</button><button type="button" id="supervision-next" aria-disabled="true">Next step</button><progress id="supervision-progress" value="0" max="1" aria-label="Observed decisions in the current sequence"></progress></div>
                 <div class="supervision-caption" id="supervision-caption" tabindex="0" role="region" aria-label="Current observed decision"><p id="supervision-current" role="status" aria-live="polite" aria-atomic="true">Run a mandate. No employee has yet been deprived of autonomy.</p></div>
                 <details id="supervision-evidence" class="supervision-evidence"><summary>Inspect current paperwork</summary><p id="supervision-source"></p><pre id="supervision-document" tabindex="0" role="region" aria-label="Supplied observation record"></pre></details>
+                <div id="supervision-reorganization"></div>
               </section>
               <section class="companion-roll" id="companion-roll" aria-labelledby="companion-title"><h3 id="companion-title">Companion roll call</h3>
                 <p id="companion-status" class="field-help" role="status" aria-live="polite" aria-atomic="true">Awaiting the first disclosed Fizz, Buzz or FizzBuzz.</p>
@@ -156,11 +157,12 @@
                 <button type="button" id="office-walk" class="button button-secondary" aria-pressed="false">Walk in this room</button>
                 <button type="button" id="office-zoom-in" class="button button-secondary" aria-label="Zoom into the office">+</button><button type="button" id="office-zoom-out" class="button button-secondary" aria-label="Zoom out of the office">−</button>
               </div>
+              <div id="office-walking-controls" class="office-toolbar" role="group" aria-label="Walking movement" hidden><button type="button" data-office-move="forward">Move forward</button><button type="button" data-office-move="back">Move back</button><button type="button" data-office-move="left">Move left</button><button type="button" data-office-move="right">Move right</button></div>
               <div class="office-layout">
                 <div class="office-world-column">
                   <div class="office-stage" id="office-stage"><canvas id="office-canvas" tabindex="0" role="img" aria-label="Interactive three-dimensional office. The room directory provides the same inspections." aria-describedby="office-camera-help"></canvas><div class="office-loading" id="office-loading"><p>Facilities is locating the building…</p></div></div>
                   <p class="field-help" id="office-camera-help">Drag to rotate the cutaway; use the zoom buttons or pinch. Choose a room below to inspect it. Walking supports W, A, S, D while this view has focus, or the movement buttons. Escape leaves the enlarged view or releases the walking camera.</p>
-                  <div id="office-walking-controls" class="office-toolbar" role="group" aria-label="Walking movement" hidden><button type="button" data-office-move="forward">Move forward</button><button type="button" data-office-move="back">Move back</button><button type="button" data-office-move="left">Move left</button><button type="button" data-office-move="right">Move right</button></div>
+                  <div id="office-reorganization"></div>
                   <div class="office-playback" role="group" aria-label="Recorded file route playback"><button type="button" id="office-choose-mandate">Choose a mandate</button><button type="button" id="office-pause" aria-pressed="false">Pause route</button><button type="button" id="office-replay">Replay route</button><button type="button" id="office-next">Next recorded stop</button><label><input type="checkbox" id="office-follow"> Follow new files</label><label><input type="checkbox" id="office-follow-route"> Follow the route camera</label></div>
                   <p class="office-route-caption" id="office-route-status">Run a mandate to supply a recorded file. Every room is already open for fictional inspection.</p>
                   <ol id="office-route" class="office-route" aria-label="Recorded route stops"></ol>

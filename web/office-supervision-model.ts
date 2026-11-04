@@ -1,5 +1,6 @@
 import type {ExecutionEvent,ExecutionPacket,Folio} from './chronicle.ts';
-import {roomById,type RoomId} from './office-content.ts';
+import type {RoomId} from './office-content.ts';
+import {addresses,foundingEstate,type EstateLayout,type OfficeAddress} from './office-layout.ts';
 
 export const hoveringLabel='Executive Hovering: Trust Has Been Suspended';
 export const hoveringCadence='executive-hovering';
@@ -13,6 +14,7 @@ export interface ObservedOfficeStep {
  id:string;event:ExecutionEvent;source:'recorded'|'disclosure'|'rehearsal';ordinal:string;
  text:string;action:OfficeAction;shot:OfficeShot;hasFile:boolean;publication:boolean;
  arriveMs:number;workMs:number;holdMs:number;glyphs:readonly GlyphReceipt[];hrIndex:number;hrStates:readonly PersonnelLamp[];tenantCode?:string;
+ origin?:OfficeAddress&{hrIndex:number};
 }
 export interface OfficeCue {step:ObservedOfficeStep;travel:number;work:number;hold:number;phase:'arrival'|'work'|'hold';complete:boolean}
 export interface ObservationEnvelope {prefix:ExecutionEvent[];groups:Map<string,ExecutionEvent[]>;suffix:ExecutionEvent[];omitted:number;cache:string;recorded:boolean}
@@ -60,13 +62,11 @@ export function identifyAction(event:ExecutionEvent,previous?:ObservedOfficeStep
  return {action:kind==='NUMERAL'?'fragment':'paper',room:'reception',anchor:'desk'};
 }
 
-export function shotFor(room:RoomId,anchor:OfficeAnchor,hrIndex=-1):OfficeShot {
- const r=roomById(room)!;
- const offsets:Record<OfficeAnchor,[number,number,number]>={desk:[-.3,1.1,-.9],personnel:[-.3,1.1,-.9],boundary:[0,1.05,-1.65],property:[-2.35,.9,-1.6],glyph:[-.25,1.15,-.65],notary:[-2.35,1.1,-1.6],printer:[-2.35,.9,-1.6],ledger:[-.3,1.1,-.65],queue:[2.35,1,-1.6],memory:[-2.35,1.15,-1.6]};
- const offset=offsets[anchor];
- const target={x:r.x+offset[0],y:offset[1],z:r.z+offset[2]};
- const alpha=(r.z>0?Math.PI/2:-Math.PI/2)+(anchor==='glyph'?.22:anchor==='notary'?-.22:anchor==='queue'?-.14:anchor==='personnel'?(hrIndex%2===0?-.12:.12):.1);
- return {room,anchor,target,alpha,beta:r.z>0?.7:anchor==='property'?.85:.93,radius:anchor==='glyph'?3.8:anchor==='printer'?3.7:anchor==='ledger'?3.9:anchor==='boundary'?5.5:4.6};
+export function shotFor(room:RoomId,anchor:OfficeAnchor,hrIndex=-1,layout:EstateLayout=foundingEstate):OfficeShot {
+ const book=addresses(layout),placement=book.placement(room),target=book.resolve({room,station:anchor});
+ const historicNorth=layout.edition===0&&placement.position.z>0;
+ const alpha=(historicNorth?Math.PI/2:-Math.PI/2+placement.yaw)+(anchor==='glyph'?.22:anchor==='notary'?-.22:anchor==='queue'?-.14:anchor==='personnel'?(hrIndex%2===0?-.12:.12):.1);
+ return {room,anchor,target,alpha,beta:layout.edition>0||historicNorth?.7:anchor==='property'?.85:.93,radius:anchor==='glyph'?3.8:anchor==='printer'?3.7:anchor==='ledger'?3.9:anchor==='boundary'?5.5:4.6};
 }
 
 const substantial=new Set<OfficeAction>(['recruit','survey','evict','lease','glyph','assemble','notarize','print','audit','queue','commit','memory']);
@@ -94,6 +94,7 @@ export function planOfficeSteps(events:readonly ExecutionEvent[],context:{id:str
   const arriveMs=same?0:previous?.shot.room===room?620:1350+Math.round(distance*15);
   const [workMs,holdMs]=duration(action,event.kind);
   const step:ObservedOfficeStep={id:context.id+':'+index,event,source:context.source||'recorded',ordinal:context.ordinal||event.ordinal||'',text:context.text||'',action,shot,hasFile:context.hasFile??!!context.ordinal,publication:event.kind==='PUBLICATION'||event.kind==='DISCLOSE_OBSERVED',arriveMs,workMs,holdMs,glyphs:[...glyphs],hrIndex,hrStates:[...hrStates],tenantCode};
+  if(previous)step.origin={room:previous.shot.room,station:previous.shot.anchor,hrIndex:previous.hrIndex};
   result.push(step);previous=step;
  }
  if(ensureDisclosure&&!result.some(s=>s.publication)){

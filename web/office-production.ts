@@ -7,6 +7,7 @@ import {StandardMaterial} from '@babylonjs/core/Materials/standardMaterial';
 import {DynamicTexture} from '@babylonjs/core/Materials/Textures/dynamicTexture';
 import {Color3} from '@babylonjs/core/Maths/math.color';
 import type {OfficeCue} from './office-supervision-model';
+import {addresses,foundingEstate,layoutToken,type EstateLayout} from './office-layout.ts';
 
 export function createProductionStage(scene:Scene){
  const material=(name:string,hex:string)=>{const m=new StandardMaterial(name,scene);m.diffuseColor=Color3.FromHexString(hex);m.emissiveColor=m.diffuseColor.scale(.12);m.specularColor=Color3.Black();return m;};
@@ -89,10 +90,11 @@ export function createProductionStage(scene:Scene){
  const setGroups=(...names:string[])=>{for(const [name,g]of groups){const enabled=names.includes(name);if(g.isEnabled(false)!==enabled)g.setEnabled(enabled);}};
  const short=(value:string)=>value.length>20?value.slice(0,9)+'…'+value.slice(-6):value;
 
- function update(cue:OfficeCue){
+ function update(cue:OfficeCue,layout:EstateLayout=foundingEstate){
   const {step,work,travel}=cue,{action,event,shot}=step;
-  const key=step.id+'|'+work+'|'+travel;if(key===visualKey)return;visualKey=key;
-  root.position.set(shot.target.x,0,shot.target.z);
+  const key=step.id+'|'+work+'|'+travel+'|'+layoutToken(layout);if(key===visualKey)return;visualKey=key;
+  const book=addresses(layout),station=book.resolve({room:shot.room,station:shot.anchor});
+  root.position.set(station.x,0,station.z);root.rotation.y=book.placement(shot.room).yaw;
   if(currentOrdinal!==step.ordinal){currentOrdinal=step.ordinal;shownGlyphs=0;glyphSignatures.length=0;for(const g of glyphs)g.mesh.setEnabled(false);}
   if(currentId!==step.id){
    currentId=step.id;
@@ -132,7 +134,7 @@ export function createProductionStage(scene:Scene){
   parcel.setEnabled(action==='deliver'||receiving||action==='requisition');parcel.position.x=-1.3+1.3*work;parcel.position.y=1.18+.14*Math.sin(work*Math.PI);parcelFace.mesh.position.x=parcel.position.x;parcelFace.mesh.position.y=parcel.position.y;parcelFace.mesh.setEnabled(parcel.isEnabled());
   receivingStamp.setEnabled(receiving);receivingStamp.position.x=-.7+Math.max(0,step.glyphs.length-1)*.2;receivingStamp.position.y=1.75-.45*Math.sin(work*Math.PI);
   lens.position.set(-.4+.8*work,1.45,0);seal.scaling.setAll(.25+.75*work);
-  printed.mesh.position.z=-.35-.8*work;printed.mesh.scaling.y=.1+.9*work;printed.mesh.rotation.x=Math.PI/2*(1-work*.7);printed.mesh.rotation.y=Math.PI;
+  printed.mesh.position.z=-.35-.8*work;printed.mesh.scaling.y=.1+.9*work;printed.mesh.rotation.x=Math.PI/2*(1-work*.7);printed.mesh.rotation.y=layout.edition===0&&book.placement(shot.room).position.z>0?Math.PI:0;
   triangle.position.set(.3+work*.4,1.3+Math.sin(work*Math.PI)*.6,-.4);triangle.rotation.z=work*3;triangle.setEnabled(work>.7);
   links.forEach((link,i)=>link.setEnabled(i<4||work>.65));auditFace.mesh.scaling.setAll(.92+.08*work);
   envelope.position.x=-.65+1.3*work;envelope.position.y=.98+.1*Math.sin(work*Math.PI);

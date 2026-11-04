@@ -92,3 +92,29 @@
 .output-panel[data-supervised=true] #run-status { font-size: .75rem; line-height: 1.4; margin-bottom: 8px; }
 @media (max-height: 650px) { .supervision-stage { height: clamp(110px, 25dvh, 160px); } }
 @media (forced-colors: active) { .supervision-stage, .supervision-caption { border-color: CanvasText; } }
+.reorganization-panel { margin-top: 12px; border-top: 1px solid var(--line); padding-top: 12px; }
+.reorganization-panel button, .reorganization-panel summary { min-height: 44px; }
+.reorganization-panel details { font-size: .78rem; overflow-wrap: anywhere; }
+.reorganization-panel summary { cursor: pointer; padding: 10px 0; }
+.estate-addresses { border-collapse: collapse; width: 100%; table-layout: fixed; }
+.estate-addresses th, .estate-addresses td { border-bottom: 1px solid var(--line); text-align: left; padding: 8px 4px; vertical-align: top; overflow-wrap: anywhere; }
+.estate-controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.estate-controls progress { width: min(100%, 180px); accent-color: var(--success); }
+.estate-map { display: grid; grid-template-columns: repeat(var(--estate-columns, 4), minmax(0, 1fr)); gap: 6px; list-style: none; padding: 0; margin: 10px 0 18px; }
+.estate-map > li { border: 1px solid var(--line); padding: 8px; min-width: 0; overflow-wrap: anywhere; display: flex; flex-direction: column; gap: 4px; background: var(--white); }
+.estate-map > li[aria-current] { border: 2px solid var(--ink); padding: 7px; background: var(--paper-deep); }
+.estate-map > li[aria-current]::after { content: 'Current department'; font-size: .9em; font-weight: bold; }
+.estate-map button { font: inherit; text-align: left; overflow-wrap: anywhere; min-width: 0; padding: 5px; }
+.estate-minutes { max-height: 24rem; overflow: auto; overscroll-behavior: contain; scrollbar-gutter: stable; padding: 8px 12px; border: 1px solid var(--line); }
+.estate-minutes > ol { margin: 0; padding-left: 20px; }
+.estate-minutes h5 { font-size: 1em; margin: 10px 0 6px; }
+.estate-minutes li + li { margin-top: 6px; }
+.estate-minutes p { margin: 6px 0; }
+.estate-perk { border-left: 3px solid var(--ink); padding: 12px; margin: 12px 0; background: var(--white); }
+.estate-perk h4 { margin: 0; }
+@media (max-width: 480px) { .estate-map { gap: 3px; } .estate-map > li { padding: 4px; } .estate-map > li[aria-current] { padding: 3px; } }
+.estate-announcement { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
+.estate-sharing input { flex: 1 1 12rem; min-width: 0; max-width: 100%; font: inherit; padding: 8px; }
+.estate-minutes h4 { font-size: 1em; margin: 10px 0 6px; }
+.estate-perk h3 { margin: 0; }
+.estate-map span { hyphens: auto; }

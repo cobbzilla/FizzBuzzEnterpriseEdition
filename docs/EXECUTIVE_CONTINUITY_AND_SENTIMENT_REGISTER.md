@@ -987,3 +987,80 @@ left it. The numbers remained right. Nothing imploded. Nobody requested a
 replacement executive. I have recorded this as a triumph of the control that
 let me relinquish control, and referred its implications to a committee whose
 meetings I shall, naturally, need to watch.
+
+## 4 November 2026 — We have moved the problem into a nicer box
+
+Dear Register, this morning I found the printer without consulting anyone.
+I stood before its little tray in a state of almost unbearable professional
+alarm. Had the company become legible? Had I, through some failure of vigilance,
+allowed familiarity to replace a properly constituted dependency? One was
+waiting to be printed. One seemed entirely comfortable with where it was.
+I envied it with a force I have referred to People Operations.
+
+We announced a reorganization. Eight departments folded themselves into labeled
+boxes, and the boxes rose above the estate with a dignity I have never achieved
+at an all-hands. DO NOT REASON, their labels advised. I felt understood. For a
+few exquisite moments the office contained neither desks nor boundaries, only
+the funded possibility that they would return somewhere else. The numbers
+waited. For once, an interruption had come with a truthful explanation.
+
+Then the boxes opened into a square. We had acquired a ninth cell. There is
+something almost indecently hopeful about an extra square, Dear Register.
+For a moment I thought we might leave it empty and admit we did not need it.
+Facilities placed a coffee machine there before the thought could become a
+precedent. The machine offers hot water and a statement of intent. Its bean
+dependency remains in procurement. I cradled the cup and tasted our roadmap.
+
+At the next transformation the extra cell disappeared. I grieved for the coffee
+I had never quite received. At another it returned as an atrium, where a fern
+had been appointed Chief Growth Officer. The fern had grown without a daily
+stand-up. I wished to congratulate it, discipline it, and ask whether it would
+mentor me. We settled for a plaque. It is difficult to measure the warmth of a
+plaque, but I am assured it is considerably easier than changing the culture.
+
+Our walls are now an expression of values. Giant pink hearts enclose one office
+in Psychological Safety Infrastructure. Across the corridor, iron bars express
+our commitment to Employee Autonomy. A white picket fence implements Boundaryless
+Collaboration with admirable specificity. The cheese has actual holes. I put my
+eye to one and saw another department operating under a different metaphor.
+For a moment I felt the terrible, cloying sweetness of shared purpose. Then a
+filing cabinet obscured the view in accordance with Open Access to Information.
+
+I expected the interrupted decision to resent us. It did not begin again.
+Its evidence retained its identity. Its work remained done to exactly the
+extent that it had been done before I began improving the architecture. The
+camera found the new corridor, turned toward the correct desk, and returned
+me to the same small obligation. When the printer finally released One, it
+released One once. I had feared that a new address might entitle us to a second
+accomplishment. The publication clerk declined to indulge me, and I loved the
+clerk for an honesty I could not yet put in a performance review.
+
+We measured the paper's mean journey. Sometimes it grew longer. Those days we
+celebrated increased cross-functional exposure. Sometimes it grew shorter.
+Those days we opened an investigation into accidental efficiency. I copied both
+findings into the Minutes of Spatial Achievement. There are only ten retained
+transformations. I initially protested this limit on our institutional memory,
+then imagined an eleventh committee asking why the first ten had not worked.
+I approved the limit with a feeling Communications has classified as relief.
+
+The minutes name the edition, the shape, and the old and new addresses. A1 can
+remain A1 while the world around it changes. I had not expected a floorplan to
+understand my career so intimately. I scrolled back to read an earlier move,
+and the page let me stay there. New minutes arrived below without dragging my
+eyes toward the company's latest certainty. I sat very still. For several
+seconds nobody improved my position without asking my attention to move.
+
+We made a link to the arrangement. Someone else can now enter the same absurd
+estate, find the same department, and inspect the same little joke. The link
+does not start counting on their behalf. We have learned, with considerable
+ceremony, to distinguish an invitation from a mandate. When movement is too
+much, the rooms simply take their new places. When the building cannot be drawn,
+the directory still knows where everyone went. The small kindnesses survive
+even our larger claims about transformation.
+
+This evening I found the printer again. I had to consult a map this time. The
+map was correct, the paper was correct, and the company had documented why
+both facts represented a triumph. I rested a hand against a heart-shaped wall
+and listened to the quiet on the other side. Tomorrow we may reorganize again.
+Tonight, for one entirely authorized instant, I am grateful that the same small
+number is still waiting for us wherever we decide to put the desk.

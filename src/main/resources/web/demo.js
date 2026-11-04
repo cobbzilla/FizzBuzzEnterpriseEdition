@@ -4,49 +4,49 @@
 var prop = (id, name, object, story, a, aa, b, bb) => ({ id, name, object, story, actions: [{ label: a, answer: aa }, { label: b, answer: bb }] });
 var officeVersion = "office-v1";
 var rooms = [
-  { id: "reception", name: "Reception & Queue Formation", short: "Reception", subtitle: "Please take a number. Numbers must first take a number.", color: "#d7bf83", x: -10.8, z: -3.4, props: [
+  { id: "reception", name: "Reception & Queue Formation", short: "Reception", subtitle: "Please take a number. Numbers must first take a number.", color: "#d7bf83", props: [
     prop("ticket-machine", "The ticket machine", "kiosk", "A brass plaque explains that the queue for tickets is ticketed. The machine is very proud of having eliminated uncertainty about where to wait.", "Request a ticket", "Your request has been placed in the queue for permission to join the queue. The estimated waiting time is one successful organizational transformation.", "Ask who is ahead of you", "The machine prints a blank ticket. Nobody is ahead of you. Nobody has seniority."),
     prop("authorized-shortcut", "Authorized shortcut", "door", "The arrow promises Reception in only one corridor. You are standing in Reception. The arrow is technically delivering exceptional value.", "Take the shortcut", "You arrive at Reception. A congratulatory notice welcomes you back from your successful cross-functional journey. Your departure and arrival have been recorded as two office visits.", "Suggest a shorter route", "The Committee for Reducing Corridors requests a longer corridor in which to discuss your suggestion."),
     prop("suggestion-shredder", "Your Voice Matters", "shredder", "The suggestion box sits directly on a shredder. A little green lamp indicates that stakeholder feedback is being processed in real time.", "Submit a suggestion", "The machine makes a thoughtful noise and produces twelve narrow action items. The company celebrates its most granular feedback to date.", "Ask for a receipt", "A receipt is printed, read aloud to the shredder, and processed. You are thanked for your commitment to a paperless feedback culture."),
     prop("visitor-badge", "Visitor identity desk", "badge", "A badge says VISITOR. Under it, in smaller type: A visitor is someone wearing a visitor badge. The definition has survived three independent audits.", "Request a permanent badge", "Your permanent badge says TEMPORARY PERMANENT VISITOR. It expires when permanence is redefined.", "Ask to leave", "Departure is available at any time through the visible Close office control. Reception is disappointed by this unusually humane policy.")
   ] },
-  { id: "personnel", name: "First Ordinal Recruitment", short: "Recruitment", subtitle: "One vacancy. One candidate. Seven offices. Tremendous competition.", color: "#b7d0ba", x: -3.6, z: -3.4, props: [
+  { id: "personnel", name: "First Ordinal Recruitment", short: "Recruitment", subtitle: "One vacancy. One candidate. Seven offices. Tremendous competition.", color: "#b7d0ba", props: [
     prop("portrait-of-one", "Employee of the Entire Sequence", "portrait", "A framed numeral 1 looks down upon an empty chair. Nobody can remember whether the portrait was taken before or after its induction.", "Congratulate One", "One thanks you for recognizing its individual contribution. It would also like to recognize itself as the team that made the contribution possible.", "Nominate Two", "Two has excellent potential but was not present at the beginning. The panel encourages it to apply for a later beginning."),
     prop("orientation-chair", "Orientation chair", "chair", "The chair has completed orientation six times. It understands the company better than anyone and is therefore ineligible for promotion.", "Offer the chair a promotion", "The chair declines a standing appointment. HR records a regrettable lack of flexibility.", "Ask where One sits", "One has been granted a flexible seating arrangement consisting of this one chair. The company calls this choice."),
     prop("welcome-cake", "The induction cake", "cake", "A cake reads WELCOME TO YOUR PROBATIONARY COMMENCEMENT. The slice marked 1 has its own probationary period.", "Request a slice", "Catering asks whether you intend to eat the slice or merely occupy it. Facilities has strong views about unauthorized occupancy.", "Read the ingredients", "Sugar, flour, and the unanimous confidence of seven independently appointed offices. May contain traces of ambition."),
     prop("headcount-chart", "Strategic headcount forecast", "chart", "A chart rises impressively from zero to one. The vertical axis begins at 0.999. The board has described the growth as unprecedented.", "Ask about recruitment costs", "The company recruited exactly one employee and established seven offices to support the appointment. HR describes the ratio as people-first.", "Set a stretch target", "The stretch target is 1.0. HR has already convened a working group to distinguish it from 1.")
   ] },
-  { id: "procurement", name: "Glyph Procurement & Receiving", short: "Procurement", subtitle: "The second z is a separate commercial obligation.", color: "#e0b19c", x: 3.6, z: -3.4, props: [
+  { id: "procurement", name: "Glyph Procurement & Receiving", short: "Procurement", subtitle: "The second z is a separate commercial obligation.", color: "#e0b19c", props: [
     prop("second-z", "The second z", "crate", "Two identical crates contain two different contractual obligations. The second z insists that similarity is not consent to unpaid overtime.", "Ask to reuse the first z", "Receiving refuses. The first z is already at work. Asking it to appear twice would constitute an undocumented secondment.", "Offer the second z a title", "The z accepts Senior Terminal Consonant. The other z immediately requests a parity review."),
     prop("approved-forklift", "The requisition forklift", "forklift", "A tiny forklift is licensed to carry one letter. It has been waiting all morning for written confirmation that F is not two letters standing on each other.", "Load a capital B", "The forklift requests a structural drawing showing whether the two bulges are independent business units.", "Ask about lowercase stock", "Lowercase inventory is competitively priced and entirely inadmissible. Procurement calls this a strong supplier relationship."),
     prop("purchase-order", "Eight positions, eight promises", "papers", "An enormous purchase order itemizes F, i, z, z, B, u, z, z. Each z has initialed its own row, creating an exciting new legibility problem.", "Consolidate the line items", "Four z requisitions are merged into one requisition to request four separate z requisitions. Procurement reports a 75% reduction in top-level complexity.", "Request expedited shipping", "Your letters arrive in alphabetical order. Assembly requests that they return through the approved entrance."),
     prop("supplier-phone", "The inexhaustible supplier", "phone", "A telephone connects to an inexhaustible fictional supplier. Its hold message says that your character is very important to us.", "Ask when z will arrive", "The supplier says z is last on its list, then clarifies that the list is alphabetical and delivery is immediate.", "Request a supplier review", "The supplier awards Procurement five stars for ordering the same five things forever. Both parties describe this as a diversified portfolio.")
   ] },
-  { id: "premises", name: "Vacant String Estate Agency", short: "Premises", subtitle: "Certified nothing. Ready for immediate numerical occupation.", color: "#b4c9d9", x: 10.8, z: -3.4, props: [
+  { id: "premises", name: "Vacant String Estate Agency", short: "Premises", subtitle: "Certified nothing. Ready for immediate numerical occupation.", color: "#b4c9d9", props: [
     prop("invisible-tenant", "The invisible tenant", "room", "An apparently empty miniature room contains a tiny sign reading SITTING TENANT. This is fictional tour scenery; an actual discovered character is identified in the evidence panel.", "Knock politely", "A non-breaking space says it cannot leave because it has made a binding commitment to remain attached to the premises.", "Request an inspection", "The sign produces a tenancy agreement whose signature is a blank space. Legal considers the execution flawless."),
     prop("bel-doorbell", "The confiscated BEL", "bell", "A brass bell is labeled BEL, NOT A PERSONALITY TRAIT. The inspector keeps it in a soundproof evidence cabinet.", "Ring the bell", "The cabinet displays DING. An internal memo apologizes for the unauthorized appearance of a word outside the numerical production system.", "Ask why it was evicted", "The bell was found occupying an empty string and repeatedly announcing that nobody was there."),
     prop("vertical-staircase", "The vertical tab staircase", "stairs", "A staircase goes up exactly one decorative step and immediately comes back down. The sign calls it an executive development pathway.", "Take the development pathway", "You return with exactly the same elevation and a certificate of increased potential.", "Ask for a horizontal tab", "The horizontal tab has requested a transfer to Workplace Spacing. Both departments have become considerably wider."),
     prop("vacancy-certificate", "Certificate of nothing", "frame", "A large frame contains no picture. It is the most comprehensively documented object in the room.", "Inspect the frame", "The frame is occupied by its vacancy certificate. Facilities has opened an incident concerning the certificate\u2019s effect on vacancy.", "Move in", "This is a tour display. Actual numerical occupants obtain real request-bound leases through the production offices. The miniature landlord nevertheless asks for three references.")
   ] },
-  { id: "notary", name: "Independent Proclamation Notary", short: "Notary", subtitle: "Trust, but convene a separate office to inspect the trust.", color: "#c3bad6", x: -10.8, z: 3.4, props: [
+  { id: "notary", name: "Independent Proclamation Notary", short: "Notary", subtitle: "Trust, but convene a separate office to inspect the trust.", color: "#c3bad6", props: [
     prop("rubber-stamp", "The approval stamp", "stamp", "The stamp reads APPROVED. A smaller stamp reads APPROVED FOR APPROVAL. The second stamp is waiting for the first to become available.", "Stamp the approval", "A third stamp appears: ACKNOWLEDGED. It declines to express an opinion on the first two stamps.", "Ask for a digital signature", "The stamp is photographed at extremely high resolution. Digital transformation is declared complete."),
     prop("magnifying-glass", "The independent lens", "lens", "A magnifying glass sits under a second magnifying glass. The second has been appointed to ensure that the first is not making things up.", "Look more closely", "The company becomes larger while its purpose remains exactly the same. Strategy considers this a successful growth intervention.", "Ask who inspects the second lens", "The inspector points to the perfectly visible lens directory. The tour mercifully declines to generate an infinite number of lenses."),
     prop("capitalization-court", "The capitalization bench", "papers", "A capital F and a lowercase f sit at opposite ends of a desk. The lowercase f has brought excellent references and the wrong identity.", "Hear the lowercase appeal", "The bench recognizes the applicant\u2019s potential while declining to recognize it as Fizz.", "Approve BuzzFizz", "Both words have arrived, but the independent witness notices that they are standing in the wrong order. Communications blames a matrix reporting structure."),
     prop("notary-plant", "Independent botanical witness", "plant", "A plant has been placed beside the desk to make scrutiny feel more welcoming. It has received no instructions and is therefore the most independent thing in the room.", "Ask for its opinion", "The plant offers a new leaf. The bench records this as constructive feedback.", "Request more transparency", "The pot is replaced by an identical pot containing a policy on transparency. The plant\u2019s roots remain undisclosed.")
   ] },
-  { id: "memory", name: "Institutional Memory Archives", short: "Memory", subtitle: "We remember everything except why.", color: "#c4c5a0", x: -3.6, z: 3.4, props: [
+  { id: "memory", name: "Institutional Memory Archives", short: "Memory", subtitle: "We remember everything except why.", color: "#c4c5a0", props: [
     prop("forgotten-shelf", "The forgotten shelf", "shelves", "Rows of files are impeccably indexed under THINGS WE WILL CERTAINLY REMEMBER. A sticky note asks whose files these are.", "Ask whether we met before", "The archive finds a perfect record of our previous meeting and asks you to introduce yourself for continuity purposes.", "Find the filing policy", "The policy is filed under FINDING THE FILING POLICY. Access requires familiarity with the filing policy."),
     prop("memory-ladder", "The career ladder", "stairs", "A ladder reaches a shelf labeled LOW-HANGING FRUIT. A second sign says the ladder is reserved for senior stakeholders.", "Climb the career ladder", "At the top is a memorandum congratulating you on the climb and inviting you to support someone else\u2019s ladder.", "Ask what is on the bottom shelf", "The bottom shelf contains strategic priorities. They have been placed there to ensure that everyone can step over them."),
     prop("reuse-court", "The Non-Performance Award", "trophy", "A trophy celebrates work that was correctly not done again. Its maker has produced an identical second trophy pending review.", "Congratulate the archive", "The archive recalls your congratulations from an earlier engagement and returns a certified copy of its thanks.", "Demand fresh work", "The archive asks why. It records your answer, in case someone asks the same question again."),
     prop("expiry-clock", "The relevance clock", "clock", "A clock has two hands: CURRENT and FORMERLY CURRENT. Their disagreement is described as a healthy succession pipeline.", "Ask what time it is", "It is the right time to revisit our assumptions. The clock declines to give a more operational answer.", "Request permanent relevance", "Your request will remain permanently relevant until the applicable expiry policy changes.")
   ] },
-  { id: "publication", name: "Official Publication & Distribution", short: "Publication", subtitle: "Please remain calm. A complete line is about to happen.", color: "#9fc9c2", x: 3.6, z: 3.4, props: [
+  { id: "publication", name: "Official Publication & Distribution", short: "Publication", subtitle: "Please remain calm. A complete line is about to happen.", color: "#9fc9c2", props: [
     prop("serious-printer", "The very serious printer", "printer", "A printer waits beneath a banner reading EVERY LINE A MILESTONE. It has never experienced a normal day.", "Print a test page", "The test page says TEST PAGE. A committee is astonished by the precision of the deliverable.", "Ask why it is so large", "The printer accommodates both the numerical output and the organization\u2019s expectations of itself."),
     prop("paper-airport", "The paper departure lounge", "papers", "A single sheet waits at a miniature departure gate. Its destination is THE USER. It has arrived three hours early.", "Announce boarding", "The sheet is asked to prove that it is the same sheet whose boarding was announced. Boarding pauses for document reconciliation.", "Request priority boarding", "Priority boarding gives the sheet permission to wait in a smaller, more exclusive queue."),
     prop("output-conveyor", "The complete-line conveyor", "conveyor", "A conveyor carries perfectly ordinary sheets with extraordinary confidence. A sign warns that fragments must travel together.", "Separate the fragments", "The belt refuses to stage a family separation. Fizz and its line ending continue under joint custody.", "Accelerate the conveyor", "The conveyor writes URGENT on the same delivery schedule. Operations calls this an escalation path."),
     prop("celebration-budget", "Strategic confetti reserve", "confetti", "A small jar contains a single paper triangle. The celebration budget has been optimized for shareholder confidence.", "Release the confetti", "The triangle moves ceremonially to the other side of the jar. Leadership thanks everyone for making the moment possible.", "Request a larger celebration", "The company authorizes a larger jar. The triangle is encouraged to grow into its expanded responsibilities.")
   ] },
-  { id: "executive", name: "Executive Alignment & Exemptions", short: "Executive", subtitle: "The organization has never been more organized around organizing.", color: "#c9b48c", x: 10.8, z: 3.4, props: [
+  { id: "executive", name: "Executive Alignment & Exemptions", short: "Executive", subtitle: "The organization has never been more organized around organizing.", color: "#c9b48c", props: [
     prop("open-door", "Open Door Policy", "door", "A closed door carries an OPEN DOOR POLICY poster. Behind it is another closed door, demonstrating depth of commitment.", "Open the door", "The second door welcomes you to a more senior level of openness. It has requested that you knock through the appropriate channels.", "Ask to speak directly", "Direct communication is available by scheduling a conversation with the office that schedules direct communication."),
     prop("work-life-plant", "Work\u2013Life Balance", "plant", "A plant labeled WORK\u2013LIFE BALANCE leans toward the exit. It has submitted a flexible growing request.", "Water the plant", "The plant receives a resilience webinar. It would still quite like water.", "Approve flexible growing", "The plant may lean toward any window, provided it remains facing its desk during core hours."),
     prop("strategy-whiteboard", "The strategy whiteboard", "chart", "The board contains one enormous circle labeled ALIGNMENT. Around it is a second circle labeled ALIGNMENT ON ALIGNMENT.", "Request a concrete action", "A third circle is drawn. It is labeled ACTION ORIENTATION. The meeting declares itself outcome-focused.", "Erase a circle", "The company forms a task force to understand the emerging alignment gap."),
@@ -54,6 +54,392 @@ var rooms = [
   ] }
 ];
 var roomById = (id) => rooms.find((r) => r.id === id);
+
+// web/office-layout.ts
+var layoutVersion = "estate-v1";
+var partitionStyles = [
+  { id: "hearts", name: "Giant pink hearts", claim: "Psychological Safety Infrastructure", placard: "PSYCHOLOGICAL SAFETY" },
+  { id: "bars", name: "Jail bars", claim: "Employee Autonomy Framework", placard: "EMPLOYEE AUTONOMY" },
+  { id: "picket", name: "White picket fences", claim: "Boundaryless Collaboration", placard: "BOUNDARYLESS COLLABORATION" },
+  { id: "cheese", name: "Giant cheese panels", claim: "A More Porous Organization", placard: "POROUS ORGANIZATION" },
+  { id: "blinds", name: "Venetian blinds", claim: "Radical Transparency", placard: "RADICAL TRANSPARENCY" },
+  { id: "tape", name: "Tangled red tape", claim: "Frictionless Delivery", placard: "FRICTIONLESS DELIVERY" },
+  { id: "hedges", name: "Tall hedges", claim: "Organic Growth", placard: "ORGANIC GROWTH" },
+  { id: "cardboard", name: "Cardboard fortifications", claim: "Permanent Interim Arrangements", placard: "PERMANENT INTERIM" },
+  { id: "cabinets", name: "Filing cabinets", claim: "Open Access to Information", placard: "OPEN ACCESS" },
+  { id: "bubbles", name: "Bubble-wrap panels", claim: "Organizational Resilience", placard: "RESILIENCE" },
+  { id: "dominoes", name: "Oversized dominoes", claim: "Independent Risk Containment", placard: "RISK CONTAINMENT" },
+  { id: "waffles", name: "Waffle grids", claim: "Matrix Management", placard: "MATRIX MANAGEMENT" }
+];
+var stationOffsets = { desk: { x: -0.3, y: 1.1, z: -0.9 }, personnel: { x: -0.3, y: 1.1, z: -0.9 }, boundary: { x: 0, y: 1.05, z: -1.65 }, property: { x: -2.35, y: 0.9, z: -1.6 }, glyph: { x: -0.25, y: 1.15, z: -0.65 }, notary: { x: -2.35, y: 1.1, z: -1.6 }, printer: { x: -2.35, y: 0.9, z: -1.6 }, ledger: { x: -0.3, y: 1.1, z: -0.65 }, queue: { x: 2.35, y: 1, z: -1.6 }, memory: { x: -2.35, y: 1.15, z: -1.6 }, entrance: { x: 0, y: 0, z: 2.35 } };
+var width = 7.2;
+var depth = 6.8;
+var hash = (value) => {
+  let n = 2166136261;
+  for (const c of value) n = Math.imul(n ^ c.charCodeAt(0), 16777619);
+  return n >>> 0;
+};
+function random(seed) {
+  let n = hash(seed);
+  return () => {
+    n += 1831565813;
+    let t = n;
+    t = Math.imul(t ^ t >>> 15, t | 1);
+    t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+function shuffle(values, rng) {
+  const out = [...values];
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [out[i], out[j]] = [out[j], out[i]];
+  }
+  return out;
+}
+var rounded = (n) => Math.round(n * 1e6) / 1e6;
+var distance = (a, b) => Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z);
+var slotPosition = (slot, rows, columns) => ({ x: rounded((slot % columns - (columns - 1) / 2) * width), y: 0, z: rounded((Math.floor(slot / columns) - (rows - 1) / 2) * depth) });
+var slotAddress = (slot, columns) => String.fromCharCode(65 + slot % columns) + (Math.floor(slot / columns) + 1);
+function generate(seed, edition, rows, columns) {
+  if (!/^[a-f0-9]{32}$/.test(seed) || !Number.isSafeInteger(edition) || edition < 0 || edition > 1e6) throw new Error("Facilities received an unfamiliar estate charter.");
+  const rng = random(seed + ":" + edition), slots = Array.from({ length: rows * columns }, (_, i) => i), amenitySlot = rows === 3 ? Math.floor(rng() * 9) : -1;
+  const available = slots.filter((i) => i !== amenitySlot), order = edition === 0 ? rooms.map((r) => r.id) : shuffle(rooms.map((r) => r.id), rng);
+  const palette = shuffle([...partitionStyles.map((s) => s.id)], rng);
+  if (edition === 1) {
+    palette.splice(palette.indexOf("hearts"), 1);
+    palette.splice(palette.indexOf("bars"), 1);
+    palette.unshift("hearts", "bars");
+  }
+  const placements = order.map((room, i) => {
+    const slot = available[i], row = Math.floor(slot / columns);
+    return Object.freeze({ room, slot, address: slotAddress(slot, columns), position: Object.freeze(slotPosition(slot, rows, columns)), yaw: edition === 0 ? 0 : row === rows - 1 ? Math.PI : 0, partition: edition === 0 ? "classic" : palette[i] });
+  });
+  const amenity = amenitySlot < 0 ? void 0 : Object.freeze({ slot: amenitySlot, address: slotAddress(amenitySlot, columns), kind: rng() < 0.5 ? "atrium" : "breakroom", position: Object.freeze(slotPosition(amenitySlot, rows, columns)) });
+  return Object.freeze({ version: layoutVersion, seed, edition, rows, columns, placements: Object.freeze(placements), amenity, bounds: Object.freeze({ minX: -columns * width / 2, maxX: columns * width / 2, minZ: -rows * depth / 2, maxZ: rows * depth / 2 }) });
+}
+var rowEstate = { create: (s, e) => generate(s, e, 2, 4) };
+var squareEstate = { create: (s, e) => generate(s, e, 3, 3) };
+function estate(seed, edition) {
+  return (edition % 2 ? squareEstate : rowEstate).create(seed, edition);
+}
+var foundingEstate = estate("00000000000000000000000000000000", 0);
+function nextEstate(layout) {
+  if (layout.edition >= 1e6) throw new Error("One million transformations require a new company.");
+  return estate(layout.seed, layout.edition + 1);
+}
+function layoutToken(layout) {
+  return layout.version + "." + layout.seed + "." + layout.edition;
+}
+function parseLayoutToken(token) {
+  const m = /^estate-v1\.([a-f0-9]{32})\.(0|[1-9][0-9]{0,6})$/.exec(token);
+  if (!m) throw new Error("This relocation memo uses an unfamiliar estate charter.");
+  return estate(m[1], Number(m[2]));
+}
+function addresses(layout) {
+  const placement = (room) => {
+    const p = layout.placements.find((p2) => p2.room === room);
+    if (!p) throw new Error("The estate has misplaced " + room + ".");
+    return p;
+  };
+  const local = (room, point) => {
+    const p = placement(room), c = Math.cos(p.yaw), s = Math.sin(p.yaw);
+    return { x: rounded(p.position.x + point.x * c + point.z * s), y: point.y, z: rounded(p.position.z - point.x * s + point.z * c) };
+  };
+  return { placement, local, resolve: (a) => local(a.room, stationOffsets[a.station]), door: (room) => local(room, { x: 0, y: 0, z: 2.75 }), outside: (room) => local(room, { x: 0, y: 0, z: depth / 2 }) };
+}
+var pointKey = (p) => rounded(p.x) + "," + rounded(p.z);
+function corridorGraph(layout) {
+  const points = /* @__PURE__ */ new Map(), links = /* @__PURE__ */ new Map(), book = addresses(layout);
+  const add = (p) => {
+    const k = pointKey(p);
+    points.set(k, p);
+    if (!links.has(k)) links.set(k, []);
+    return k;
+  };
+  const connect = (a, b) => {
+    const ka = add(a), kb = add(b);
+    if (ka === kb) return;
+    links.get(ka).push(kb);
+    links.get(kb).push(ka);
+  };
+  const xs = Array.from({ length: layout.columns + 1 }, (_, i) => rounded(layout.bounds.minX + i * width)), zs = Array.from({ length: layout.rows + 1 }, (_, i) => rounded(layout.bounds.minZ + i * depth));
+  for (const z of zs) {
+    const row = [...xs.map((x) => ({ x, y: 0, z })), ...layout.placements.map((p) => book.outside(p.room)).filter((p) => Math.abs(p.z - z) < 1e-3)].sort((a, b) => a.x - b.x);
+    for (let i = 1; i < row.length; i++) connect(row[i - 1], row[i]);
+  }
+  for (const x of xs) for (let i = 1; i < zs.length; i++) connect({ x, y: 0, z: zs[i - 1] }, { x, y: 0, z: zs[i] });
+  return { points, links };
+}
+function graphRoute(graph, from, to) {
+  const start = pointKey(from), end = pointKey(to), scores = /* @__PURE__ */ new Map([[start, 0]]), previous = /* @__PURE__ */ new Map(), remaining = new Set(graph.points.keys());
+  while (remaining.size) {
+    let current, best = Infinity;
+    for (const k of remaining) {
+      const d = scores.get(k) ?? Infinity;
+      if (d < best) {
+        best = d;
+        current = k;
+      }
+    }
+    if (!current) break;
+    remaining.delete(current);
+    if (current === end) {
+      const path = [end];
+      while (path.at(-1) !== start) path.push(previous.get(path.at(-1)));
+      return path.reverse().map((k) => graph.points.get(k));
+    }
+    for (const k of graph.links.get(current) || []) {
+      const d = best + distance(graph.points.get(current), graph.points.get(k));
+      if (d < (scores.get(k) ?? Infinity)) {
+        scores.set(k, d);
+        previous.set(k, current);
+      }
+    }
+  }
+  throw new Error("Facilities cannot approve an unreachable department.");
+}
+var compact = (points) => points.filter((p, i) => i === 0 || distance(p, points[i - 1]) > 1e-5);
+function routes(layout) {
+  const book = addresses(layout), graph = corridorGraph(layout);
+  const ground = (p) => ({ ...p, y: 0 });
+  const inside = (a) => {
+    const offset = stationOffsets[a.station], side = offset.x < -0.9 ? -1.25 : 1.25, hub = book.local(a.room, { x: 0, y: 0, z: 1.05 });
+    return a.station === "entrance" ? compact([ground(book.resolve(a)), hub]) : compact([ground(book.resolve(a)), book.local(a.room, { x: side, y: 0, z: offset.z }), book.local(a.room, { x: side, y: 0, z: 1.05 }), hub]);
+  };
+  const exit = (a) => compact([...inside(a), book.door(a.room), book.outside(a.room)]);
+  return { route: (from, to) => {
+    if (from.room === to.room) return from.station === to.station ? [ground(book.resolve(from))] : compact([...inside(from), ...inside(to).reverse()]);
+    return compact([...exit(from), ...graphRoute(graph, book.outside(from.room), book.outside(to.room)), ...exit(to).reverse()]);
+  } };
+}
+var routeLength = (points) => points.slice(1).reduce((sum, p, i) => sum + distance(points[i], p), 0);
+function pointAlong(points, fraction) {
+  if (!points.length) throw new Error("A journey requires an address.");
+  if (fraction >= 1) return points.at(-1);
+  if (fraction <= 0) return points[0];
+  let remaining = routeLength(points) * Math.max(0, Math.min(1, fraction));
+  for (let i = 1; i < points.length; i++) {
+    const length = distance(points[i - 1], points[i]);
+    if (remaining <= length && length > 0) {
+      const t = remaining / length;
+      return { x: points[i - 1].x + (points[i].x - points[i - 1].x) * t, y: points[i - 1].y + (points[i].y - points[i - 1].y) * t, z: points[i - 1].z + (points[i].z - points[i - 1].z) * t };
+    }
+    remaining -= length;
+  }
+  return points.at(-1);
+}
+function validateEstate(layout) {
+  if (layout.version !== layoutVersion || !Number.isSafeInteger(layout.edition) || layout.edition < 0 || layout.edition > 1e6 || !/^[a-f0-9]{32}$/.test(layout.seed) || layout.rows !== (layout.edition % 2 ? 3 : 2) || layout.columns !== (layout.edition % 2 ? 3 : 4)) throw new Error("The estate charter has an unsupported topology or edition.");
+  if (layout.placements.length !== 8 || new Set(layout.placements.map((p) => p.room)).size !== 8 || new Set(layout.placements.map((p) => p.slot)).size !== 8) throw new Error("Every department requires one unique office.");
+  for (const p of layout.placements) {
+    if (!rooms.some((r) => r.id === p.room) || !Number.isInteger(p.slot) || p.slot < 0 || p.slot >= layout.rows * layout.columns || p.address !== slotAddress(p.slot, layout.columns) || ![p.position.x, p.position.y, p.position.z].every(Number.isFinite) || distance(p.position, slotPosition(p.slot, layout.rows, layout.columns)) > 1e-5 || ![0, Math.PI].includes(p.yaw) || p.partition !== "classic" && !partitionStyles.some((s) => s.id === p.partition)) throw new Error("A department has an unrecognized address or partition.");
+  }
+  if (layout.rows === 3 !== !!layout.amenity || layout.amenity && layout.placements.some((p) => p.slot === layout.amenity.slot)) throw new Error("The amenity has occupied a department.");
+  if (!Object.values(layout.bounds).every(Number.isFinite) || layout.bounds.minX !== -layout.columns * width / 2 || layout.bounds.maxX !== layout.columns * width / 2 || layout.bounds.minZ !== -layout.rows * depth / 2 || layout.bounds.maxZ !== layout.rows * depth / 2) throw new Error("The estate bounds do not match its charter.");
+  if (layout.amenity) {
+    const a = layout.amenity;
+    if (!["atrium", "breakroom"].includes(a.kind) || !Number.isInteger(a.slot) || a.slot < 0 || a.slot >= 9 || a.address !== slotAddress(a.slot, layout.columns) || !Object.values(a.position).every(Number.isFinite) || distance(a.position, slotPosition(a.slot, layout.rows, layout.columns)) > 1e-5) throw new Error("The amenity has no valid address.");
+  }
+  const planner = routes(layout);
+  for (const from of rooms) for (const to of rooms) {
+    const path = planner.route({ room: from.id, station: "entrance" }, { room: to.id, station: "entrance" });
+    if (!path.every((p) => Number.isFinite(p.x) && Number.isFinite(p.y) && Number.isFinite(p.z))) throw new Error("A department has escaped geometry.");
+  }
+  return layout;
+}
+
+// web/office-relocation-model.ts
+var relocationDuration = 12500;
+var relocationPhase = (p) => p < 0.15 ? "packing" : p < 0.72 ? "moving" : p < 0.86 ? "unpacking" : "returning";
+function sealEstate(layout) {
+  validateEstate(layout);
+  const frozen = Object.isFrozen(layout) && Object.isFrozen(layout.bounds) && Object.isFrozen(layout.placements) && layout.placements.every((p) => Object.isFrozen(p) && Object.isFrozen(p.position)) && (!layout.amenity || Object.isFrozen(layout.amenity) && Object.isFrozen(layout.amenity.position));
+  if (frozen) return layout;
+  return Object.freeze({ ...layout, bounds: Object.freeze({ ...layout.bounds }), placements: Object.freeze(layout.placements.map((p) => Object.freeze({ ...p, position: Object.freeze({ ...p.position }) }))), amenity: layout.amenity ? Object.freeze({ ...layout.amenity, position: Object.freeze({ ...layout.amenity.position }) }) : void 0 });
+}
+var RelocationCoordinator = class {
+  value;
+  authority;
+  listeners = /* @__PURE__ */ new Set();
+  pending;
+  serial = 0;
+  last;
+  allowed = false;
+  constructor(initial2 = foundingEstate, authority = nextEstate) {
+    this.value = sealEstate(initial2);
+    this.authority = authority;
+  }
+  get current() {
+    return this.value;
+  }
+  get moving() {
+    return !!this.pending;
+  }
+  get relocation() {
+    const p = this.pending;
+    if (!p) return;
+    const progress = p.elapsed / relocationDuration;
+    return Object.freeze({ id: p.id, from: p.from, to: p.to, progress, phase: relocationPhase(progress) });
+  }
+  get displayed() {
+    const p = this.relocation;
+    return p && p.progress >= 0.72 ? p.to : this.value;
+  }
+  subscribe(listener) {
+    this.listeners.add(listener);
+    return () => this.listeners.delete(listener);
+  }
+  notify(kind, relocation) {
+    for (const listener of this.listeners) listener({ kind, relocation });
+  }
+  request() {
+    if (this.pending) return this.pending.to;
+    const candidate = sealEstate(this.authority(this.value));
+    if (candidate.edition !== this.value.edition + 1 || candidate.rows === this.value.rows || candidate.seed !== this.value.seed) throw new Error("Facilities must alternate estates and advance exactly one edition.");
+    for (const room of this.value.placements) {
+      const moved = candidate.placements.find((p) => p.room === room.room);
+      if (distance(room.position, moved.position) < 0.5) throw new Error("Every department must experience an actual relocation.");
+    }
+    this.pending = { id: ++this.serial, from: this.value, to: candidate, elapsed: 0 };
+    this.last = void 0;
+    this.allowed = false;
+    this.notify("staged", this.relocation);
+    return candidate;
+  }
+  advance(now, allow, id = this.pending?.id) {
+    if (!this.pending || id !== this.pending.id) return;
+    if (!Number.isFinite(now)) throw new Error("A relocation requires a finite clock.");
+    const delta = this.last === void 0 || !this.allowed ? 0 : Math.max(0, Math.min(100, now - this.last));
+    this.last = now;
+    this.allowed = allow;
+    if (!allow) return;
+    this.pending.elapsed = Math.min(relocationDuration, this.pending.elapsed + delta);
+    if (this.pending.elapsed >= relocationDuration) {
+      this.finish();
+      return;
+    }
+    if (delta) this.notify("progress", this.relocation);
+  }
+  finish() {
+    const p = this.relocation;
+    if (!p) return false;
+    this.value = p.to;
+    this.pending = void 0;
+    this.last = void 0;
+    this.allowed = false;
+    this.notify("committed", Object.freeze({ ...p, progress: 1, phase: "returning" }));
+    return true;
+  }
+  cancel() {
+    const p = this.relocation;
+    if (!p) return false;
+    this.pending = void 0;
+    this.last = void 0;
+    this.allowed = false;
+    this.notify("cancelled", p);
+    return true;
+  }
+  /** Immediate application is useful to read a saved or reduced-motion charter. */
+  reorganize() {
+    const target = this.request();
+    this.finish();
+    return target;
+  }
+};
+
+// web/office-estate-records.ts
+var titles = ["The Great Boundaryless Containment", "Project Horizontal Ascendancy", "The Accountability Dispersal Initiative", "Operation Unbroken Silos", "The Furniture-Led Recovery", "A Return to Forward Thinking", "The Strategic Proximity Correction", "Project Tomorrow Was Yesterday", "The Workplace Simplification Complex", "The Final Interim Configuration", "The Synergy Redistribution Event", "The Transformational Transformation"];
+var rationales = ["The old rooms had become dangerously familiar. Familiarity permits decisions without asking where to go.", "An independent consultant observed that our office had an arrangement. We have acted decisively on this finding.", "Staff could locate the printer from memory. This constituted an unmanaged concentration of institutional knowledge.", "The company requires a change of direction. Facilities has supplied several, including a turn past the new wall.", "Our previous floorplan contained silos. These new enclosures have each signed a declaration denying that description.", "Management promised movement. No specific mention was made of progress.", "The board wished to see a matrix. Facilities would like the board to stop using metaphors around contractors.", "The estate was aligned with the last strategy. A new strategy has since been left in a meeting room.", "The shortest route had become a single point of failure. We have diversified the inconvenience.", "Several desks reported a sense of stability. The company takes such allegations seriously.", "A photograph suggested we had finished organizing. Facilities regrets the misleading impression.", "Our long-term vision remains unchanged: to have a long-term vision after the next move."];
+var estateLabel = (l) => "Edition " + l.edition + " \xB7 " + l.rows + "\xD7" + l.columns;
+var qualifiedAddress = (l, room) => estateLabel(l) + " / " + l.placements.find((p) => p.room === room).address;
+function meanCommute(l) {
+  const planner = routes(l);
+  let total = 0, count = 0;
+  for (const from of rooms) for (const to of rooms) if (from !== to) {
+    total += routeLength(planner.route({ room: from.id, station: "desk" }, { room: to.id, station: "desk" }));
+    count++;
+  }
+  return total / count;
+}
+function estateMemo(from, to) {
+  if (from.seed !== to.seed || to.edition !== from.edition + 1) throw new Error("These minutes do not describe one consecutive relocation.");
+  const before = meanCommute(from), after = meanCommute(to), change = (after / before - 1) * 100;
+  const finding = Math.abs(change) < 0.05 ? "Paper travel is unchanged. Facilities has nevertheless achieved a complete renewal of the signage." : change > 0 ? "Illustrated paper travel increased " + change.toFixed(1) + "%. Facilities reports improved cross-functional exposure." : "Illustrated paper travel decreased " + Math.abs(change).toFixed(1) + "%. Facilities is investigating the accidental efficiency.";
+  return Object.freeze({ from, to, title: titles[(to.edition - 1) % titles.length], rationale: rationales[(to.edition - 1) % rationales.length], before, after, finding });
+}
+function readEstateSession(raw) {
+  if (raw.length > 12e3) throw new Error("Facilities has exceeded its filing cabinet.");
+  const record = JSON.parse(raw);
+  if (record.schema !== "slopbuzz-estate-session/v1" || typeof record.current !== "string" || !Array.isArray(record.history) || record.history.length > 10) throw new Error("The saved estate charter is unfamiliar.");
+  const current = parseLayoutToken(record.current), history2 = [];
+  for (const pair of record.history) {
+    if (!Array.isArray(pair) || pair.length !== 2 || pair.some((p) => typeof p !== "string")) throw new Error("Incomplete relocation minutes.");
+    const from = parseLayoutToken(pair[0]), to = parseLayoutToken(pair[1]);
+    if (history2.length && layoutToken(history2.at(-1).to) !== layoutToken(from)) throw new Error("The minutes are out of sequence.");
+    history2.push(estateMemo(from, to));
+  }
+  if (history2.length && layoutToken(history2.at(-1).to) !== layoutToken(current)) throw new Error("The minutes refer to another estate.");
+  return { current, history: history2 };
+}
+function writeEstateSession(current, history2) {
+  return JSON.stringify({ schema: "slopbuzz-estate-session/v1", current: layoutToken(current), history: history2.slice(-10).map((m) => [layoutToken(m.from), layoutToken(m.to)]) });
+}
+var amenities = {
+  atrium: { name: "The Strategic Growth Atrium", story: "One plant has been promoted to Chief Growth Officer. Its superior performance is attributed to remaining silent during planning. The benches are for admiring growth; sitting is interpreted as a development objective.", actions: [{ label: "Inspect the promotion", answer: "The fern grew four millimeters without a stand-up. Management has requisitioned a root-cause analysis and a smaller pot." }, { label: "Review the seating policy", answer: "The benches are permanently available for the idea of taking a break. Physical occupancy requires a compelling business case." }, { label: "Request natural light", answer: "The skylight is a forecast. Facilities has installed a plaque confirming that brighter days remain on the roadmap." }] },
+  breakroom: { name: "The Compulsory Optional Restoration Suite", story: "A coffee machine occupies the ninth cell as an independent cost center. The mugs say WE VALUE YOUR INPUT. None has a handle. A biscuit is being withheld pending clarification of whether crumbs count as deliverables.", actions: [{ label: "Request a coffee", answer: "The machine dispenses a cup of hot water and a statement of intent. The bean dependency is in procurement. It has been in procurement since the founding." }, { label: "Inspect the biscuit", answer: "It is a display biscuit. Consuming company culture is encouraged in principle, but this would compromise the exhibit." }, { label: "Read the fridge notice", answer: "PLEASE LABEL ALL ITEMS WITH NAME, DATE, COST CENTER, AND SUCCESSION PLAN. An unlabeled yogurt has been appointed interim facilities director." }] }
+};
+
+// web/office-estate.ts
+var OfficeEstate = class extends RelocationCoordinator {
+};
+var estateRecords = { notice: "", history: [] };
+var key = "slopbuzz:estate:v1";
+var initial = foundingEstate;
+try {
+  const url = new URL(location.href), token = url.searchParams.get("estate");
+  let saved;
+  try {
+    const raw = sessionStorage.getItem(key);
+    if (raw) saved = readEstateSession(raw);
+  } catch {
+    estateRecords.notice = "Facilities could not read its saved minutes. This arrangement remains available for the current visit.";
+  }
+  if (token !== null) {
+    try {
+      initial = parseLayoutToken(token);
+      if (saved && layoutToken(saved.current) === token) estateRecords.history = saved.history;
+    } catch {
+      estateRecords.notice = "This relocation memo is malformed or belongs to an unfamiliar edition. The founding estate is open; counting and inspections remain available.";
+    }
+  } else if (url.searchParams.has("tour")) initial = foundingEstate;
+  else if (saved) {
+    initial = saved.current;
+    estateRecords.history = saved.history;
+  } else {
+    const bytes = crypto.getRandomValues(new Uint8Array(16));
+    initial = estate([...bytes].map((b) => b.toString(16).padStart(2, "0")).join(""), 0);
+  }
+} catch {
+}
+var officeEstate = new OfficeEstate(initial);
+officeEstate.subscribe((event) => {
+  if (event.kind !== "committed") return;
+  estateRecords.notice = "";
+  estateRecords.history.push(estateMemo(event.relocation.from, event.relocation.to));
+  estateRecords.history = estateRecords.history.slice(-10);
+  try {
+    sessionStorage.setItem(key, writeEstateSession(officeEstate.current, estateRecords.history));
+  } catch {
+    estateRecords.notice = "Facilities cannot save this visit in tab storage. The current arrangement and its minutes remain available until this page closes.";
+  }
+  try {
+    const url = new URL(location.href);
+    url.searchParams.set("estate", layoutToken(officeEstate.current));
+    history.replaceState(history.state, "", url);
+  } catch {
+  }
+});
 
 // web/office-model.ts
 var roomForEvent = (e) => {
@@ -158,9 +544,11 @@ function tourSeed(text2) {
   for (let i = 0; i < text2.length; i++) h = Math.imul(h ^ text2.charCodeAt(i), 16777619);
   return h >>> 0;
 }
-function officeShare(scope2, mandate, room, prop2, authority = "factor-resonance-v1", action) {
+function officeShare(scope2, mandate, room, prop2, authority = "factor-resonance-v1", action, estate2) {
+  if (estate2) parseLayoutToken(estate2);
   const url = new URL("demo/", scope2);
   url.search = new URLSearchParams({ limit: mandate, authority, tour: officeVersion, room, ...prop2 ? { prop: prop2 } : {}, ...action === 0 || action === 1 ? { action: String(action) } : {} }).toString();
+  if (estate2) url.searchParams.set("estate", estate2);
   url.hash = "office-tour";
   return url.href;
 }
@@ -235,9 +623,9 @@ var magnitudeWarnings = Object.freeze([
   "SUSPECTED SCALE VIOLATION: Your integer might be too substantial for the current stationery.",
   "POSSIBLE ENTERPRISE INCIDENT: This value may have activated a policy nobody has finished writing."
 ]);
-function chooseMagnitudeWarning(previous = -1, random = Math.random) {
-  const width = previous >= 0 ? magnitudeWarnings.length - 1 : magnitudeWarnings.length;
-  let index = Math.min(width - 1, Math.floor(random() * width));
+function chooseMagnitudeWarning(previous = -1, random2 = Math.random) {
+  const width2 = previous >= 0 ? magnitudeWarnings.length - 1 : magnitudeWarnings.length;
+  let index = Math.min(width2 - 1, Math.floor(random2() * width2));
   if (previous >= 0 && index >= previous) index++;
   return { index, text: magnitudeWarnings[index] };
 }
@@ -251,7 +639,7 @@ function validDiscovery(x) {
   if (!x || !decimal(x.mandate) || !text(x.strategy) || !text(x.catalogVersion) || x.seedPolicy !== seedPolicy || typeof x.discoveredAt !== "string" || !Number.isFinite(Date.parse(x.discoveredAt))) return false;
   const c = x.companion, a = x.assignment, f = a?.factors;
   if (!c || !["single", "pair"].includes(c.kind) || !Array.isArray(c.components) || !c.components.every(text) || !["Common", "Uncommon", "Rare", "Legendary", "Mythic"].includes(c.rarity) || !Number.isSafeInteger(c.weight) || c.weight < 1 || c.weight > 1e9) return false;
-  if (!["id", "emoji", "name", "category", "personality", "backstory", "energy", "goal"].every((key) => text(c[key]))) return false;
+  if (!["id", "emoji", "name", "category", "personality", "backstory", "energy", "goal"].every((key2) => text(c[key2]))) return false;
   if (!a || !decimal(a.ordinal) || a.ordinal === "0" || BigInt(a.ordinal) > BigInt(x.mandate) || !["Fizz", "Buzz", "FizzBuzz"].includes(a.flavor) || a.companionId !== c.id || !Number.isSafeInteger(a.ticket) || a.ticket < 0 || a.ticket >= 1e9) return false;
   const n = BigInt(a.ordinal), flavor = n % 15n === 0n ? "FizzBuzz" : n % 3n === 0n ? "Fizz" : n % 5n === 0n ? "Buzz" : "";
   return flavor === a.flavor && !!f && text(f.factors) && decimal(f.cofactor) && typeof f.complete === "boolean" && Number.isInteger(f.divisions) && f.divisions >= 0 && Number.isInteger(f.divisionBudget) && f.divisionBudget >= f.divisions && Number.isInteger(f.trialPrimeCeiling);
@@ -354,8 +742,8 @@ function parseOfficeManifest(x) {
   return m;
 }
 async function verifyOfficePackage(manifest, bytes) {
-  const hash = [...new Uint8Array(await crypto.subtle.digest("SHA-256", bytes))].map((x) => x.toString(16).padStart(2, "0")).join("");
-  if (bytes.byteLength !== manifest.bytes || hash !== manifest.sha256) throw new Error("The delivered building does not match its manifest.");
+  const hash2 = [...new Uint8Array(await crypto.subtle.digest("SHA-256", bytes))].map((x) => x.toString(16).padStart(2, "0")).join("");
+  if (bytes.byteLength !== manifest.bytes || hash2 !== manifest.sha256) throw new Error("The delivered building does not match its manifest.");
 }
 
 // web/office-pack-key.ts
@@ -368,8 +756,8 @@ function officeCacheKey(base, url) {
 // web/office-pack.ts
 var officePackKey = (base = scope, url = releaseAsset("office-world.js")) => officeCacheKey(base, url);
 async function saveOfficePack() {
-  const url = releaseAsset("office-world.js"), key = officePackKey();
-  if (!key) throw new Error("This deployment does not publish a versioned offline building.");
+  const url = releaseAsset("office-world.js"), key2 = officePackKey();
+  if (!key2) throw new Error("This deployment does not publish a versioned offline building.");
   const manifestReply = await fetch(releaseAsset("office-pack.json"));
   if (!manifestReply.ok) throw new Error("The building manifest could not be obtained.");
   const manifest = parseOfficeManifest(await manifestReply.json());
@@ -377,7 +765,7 @@ async function saveOfficePack() {
   if (!reply.ok) throw new Error("The building could not be downloaded.");
   const bytes = await reply.arrayBuffer();
   await verifyOfficePackage(manifest, bytes);
-  const cache = await caches.open(key);
+  const cache = await caches.open(key2);
   await cache.put(url, new Response(bytes, { headers: { "Content-Type": "text/javascript; charset=UTF-8", "Cache-Control": "public, max-age=31536000, immutable" } }));
   return bytes.byteLength;
 }
@@ -406,7 +794,6 @@ var OfficeTourDesk = class {
   visited = /* @__PURE__ */ new Set();
   persistence = true;
   audio;
-  intersecting = true;
   walking = false;
   root = byId("office-experience");
   canvas = byId("office-canvas");
@@ -418,6 +805,13 @@ var OfficeTourDesk = class {
   media = matchMedia("(prefers-reduced-motion: reduce)");
   directory = /* @__PURE__ */ new Map();
   constructor() {
+    officeEstate.subscribe((event) => {
+      this.syncRenderer();
+      if (event.kind === "committed") {
+        this.renderAddress();
+        this.shareLink();
+      }
+    });
     try {
       const limit = new URL(location.href).searchParams.get("limit");
       if (limit !== null) this.archive.mandate = String(parseMandate(limit));
@@ -488,11 +882,17 @@ var OfficeTourDesk = class {
       }
       this.retainFile();
       this.renderer.walk(this.room);
-      this.canvas.focus();
+      byId("office-stage").scrollIntoView({ block: "nearest", behavior: "instant" });
+      this.activity();
+      this.canvas.focus({ preventScroll: true });
     });
     byId("office-zoom-in").addEventListener("click", () => this.renderer?.zoom(-1));
     byId("office-zoom-out").addEventListener("click", () => this.renderer?.zoom(1));
-    document.querySelectorAll("[data-office-move]").forEach((b) => b.addEventListener("click", () => this.renderer?.move(b.dataset.officeMove)));
+    document.querySelectorAll("[data-office-move]").forEach((b) => b.addEventListener("click", () => {
+      byId("office-stage").scrollIntoView({ block: "nearest", behavior: "instant" });
+      this.activity();
+      this.renderer?.move(b.dataset.officeMove);
+    }));
     this.canvas.addEventListener("keydown", (e) => {
       if (e.key === "Escape" && !this.dialog.open) {
         this.renderer?.overview();
@@ -556,8 +956,10 @@ var OfficeTourDesk = class {
         const route = routeFor(this.archive.current());
         if (route[this.routeIndex]) this.select(route[this.routeIndex].room, false);
       }
+      this.syncRenderer();
     });
     this.motion.addEventListener("change", () => {
+      if (!this.motion.checked) officeEstate.finish();
       this.syncRenderer();
       this.playbackLabels();
     });
@@ -588,10 +990,7 @@ var OfficeTourDesk = class {
       const d = this.archive.companions.get(this.archive.current()?.ordinal || "");
       if (d) companionDialog().open(d, byId("office-companion-story"));
     });
-    const observer = new IntersectionObserver((entries) => {
-      this.intersecting = entries[0].isIntersecting;
-      this.activity();
-    }, { rootMargin: "100px" });
+    const observer = new IntersectionObserver(() => this.activity(), { rootMargin: "100px" });
     observer.observe(byId("office-stage"));
     new ResizeObserver(() => this.renderer?.resize()).observe(byId("office-stage"));
     document.addEventListener("visibilitychange", () => {
@@ -701,7 +1100,7 @@ var OfficeTourDesk = class {
       let readiness;
       this.canvas.removeAttribute("data-rendered");
       this.canvas.dataset.module = releaseAsset("office-world.js").href;
-      this.renderer = module.createOffice({ canvas: this.canvas, state: this.sceneState(), onRoom: (id) => this.select(id), onProp: (room, prop2) => {
+      this.renderer = module.createOffice({ canvas: this.canvas, state: this.sceneState(), onRoom: (id) => this.select(id), onAmenity: () => document.dispatchEvent(new CustomEvent("office-amenity", { detail: "office" })), onProp: (room, prop2) => {
         this.select(room);
         const p = roomById(room)?.props.find((x) => x.id === prop2);
         if (p) this.inspectProp(p);
@@ -757,6 +1156,7 @@ var OfficeTourDesk = class {
     else this.canvas.setAttribute("aria-hidden", "true");
   }
   close(target = this.enter) {
+    officeEstate.finish();
     this.exitFocus = target;
     this.opened = false;
     ++this.opening;
@@ -794,10 +1194,15 @@ var OfficeTourDesk = class {
   routeCamera(value) {
     byId("office-follow-route").checked = value;
   }
+  renderAddress() {
+    this.root.dataset.room = this.room;
+    document.dispatchEvent(new CustomEvent("office-location", { detail: { view: "office" } }));
+    byId("office-room-label").textContent = "Department " + String(rooms.findIndex((r) => r.id === this.room) + 1).padStart(2, "0") + " \xB7 Address " + officeEstate.current.placements.find((p) => p.room === this.room).address;
+  }
   renderRoom() {
     const room = roomById(this.room);
     for (const [id, b] of this.directory) b.setAttribute("aria-pressed", String(id === this.room));
-    byId("office-room-label").textContent = "Room " + String(rooms.indexOf(room) + 1).padStart(2, "0");
+    this.renderAddress();
     byId("office-room-title").textContent = room.name;
     byId("office-room-subtitle").textContent = room.subtitle;
     const selected = this.selectedProp;
@@ -899,9 +1304,9 @@ var OfficeTourDesk = class {
     byId("office-companion-story").hidden = !d;
   }
   updateRoute() {
-    const file = this.archive.current(), route = routeFor(file), key = (file?.ordinal || "") + "|" + route.map((s) => s.room + ":" + s.source).join("|") + "|" + this.completedZero;
-    if (key === this.routeKey) return;
-    this.routeKey = key;
+    const file = this.archive.current(), route = routeFor(file), key2 = (file?.ordinal || "") + "|" + route.map((s) => s.room + ":" + s.source).join("|") + "|" + this.completedZero;
+    if (key2 === this.routeKey) return;
+    this.routeKey = key2;
     this.routeIndex = -1;
     byId("office-route-status").textContent = file ? "Recorded route summary for " + file.ordinal + " \xB7 " + file.text + ". " + (this.archive.mode !== "mandate" ? "This is retained playback. " : "") + "The moving file illustrates these stops; it does not measure execution time." : this.completedZero ? "Zero\u2019s mandate is complete. No numerical file was needed. The estate\u2019s overhead remains fully funded." : "Run a mandate to supply a recorded file. Every room is open for fictional inspection.";
     byId("office-route").replaceChildren(...route.map((s, i) => {
@@ -942,16 +1347,21 @@ var OfficeTourDesk = class {
   }
   sceneState() {
     const file = this.archive.current(), d = file ? this.archive.companions.get(file.ordinal) : void 0;
-    return { room: this.room, route: routeFor(file), ordinal: file?.ordinal || "", text: file?.text || "", emoji: d?.companion.emoji, companionName: d?.companion.name, paused: this.paused, reducedMotion: !this.motion.checked, quality: byId("office-quality").value, seed: tourSeed(this.archive.mandate) };
+    return { room: this.room, route: routeFor(file), ordinal: file?.ordinal || "", text: file?.text || "", emoji: d?.companion.emoji, companionName: d?.companion.name, paused: this.paused, followRoute: byId("office-follow-route").checked, reducedMotion: !this.motion.checked, quality: byId("office-quality").value, seed: tourSeed(this.archive.mandate), layout: officeEstate.displayed, relocation: officeEstate.relocation };
   }
   syncRenderer() {
-    this.renderer?.update(this.sceneState());
+    try {
+      this.renderer?.update(this.sceneState());
+    } catch {
+      this.fallback();
+    }
   }
   activity() {
-    this.renderer?.active(this.opened && this.intersecting && !document.hidden);
+    const rect = byId("office-stage").getBoundingClientRect();
+    this.renderer?.active(this.opened && rect.height > 0 && rect.bottom > -100 && rect.top < innerHeight + 100 && !document.hidden);
   }
   shareLink() {
-    byId("office-share-link").value = officeShare(scope, this.archive.mandate, this.room, this.selectedProp?.id, byId("companion-strategy").value || "factor-resonance-v1", this.selectedAction);
+    byId("office-share-link").value = officeShare(scope, this.archive.mandate, this.room, this.selectedProp?.id, byId("companion-strategy").value || "factor-resonance-v1", this.selectedAction, layoutToken(officeEstate.current));
   }
   async soundPreference() {
     const enabled = byId("office-sound").checked;
@@ -1042,13 +1452,11 @@ function identifyAction(event, previous) {
   if (kind === "FRAGMENT" || kind === "VISITOR") return { action: kind === "FRAGMENT" ? "fragment" : "classify", room: previous?.shot.room === "procurement" ? "procurement" : "reception", anchor: previous?.shot.room === "procurement" ? "glyph" : "desk" };
   return { action: kind === "NUMERAL" ? "fragment" : "paper", room: "reception", anchor: "desk" };
 }
-function shotFor(room, anchor, hrIndex = -1) {
-  const r = roomById(room);
-  const offsets = { desk: [-0.3, 1.1, -0.9], personnel: [-0.3, 1.1, -0.9], boundary: [0, 1.05, -1.65], property: [-2.35, 0.9, -1.6], glyph: [-0.25, 1.15, -0.65], notary: [-2.35, 1.1, -1.6], printer: [-2.35, 0.9, -1.6], ledger: [-0.3, 1.1, -0.65], queue: [2.35, 1, -1.6], memory: [-2.35, 1.15, -1.6] };
-  const offset = offsets[anchor];
-  const target = { x: r.x + offset[0], y: offset[1], z: r.z + offset[2] };
-  const alpha = (r.z > 0 ? Math.PI / 2 : -Math.PI / 2) + (anchor === "glyph" ? 0.22 : anchor === "notary" ? -0.22 : anchor === "queue" ? -0.14 : anchor === "personnel" ? hrIndex % 2 === 0 ? -0.12 : 0.12 : 0.1);
-  return { room, anchor, target, alpha, beta: r.z > 0 ? 0.7 : anchor === "property" ? 0.85 : 0.93, radius: anchor === "glyph" ? 3.8 : anchor === "printer" ? 3.7 : anchor === "ledger" ? 3.9 : anchor === "boundary" ? 5.5 : 4.6 };
+function shotFor(room, anchor, hrIndex = -1, layout = foundingEstate) {
+  const book = addresses(layout), placement = book.placement(room), target = book.resolve({ room, station: anchor });
+  const historicNorth = layout.edition === 0 && placement.position.z > 0;
+  const alpha = (historicNorth ? Math.PI / 2 : -Math.PI / 2 + placement.yaw) + (anchor === "glyph" ? 0.22 : anchor === "notary" ? -0.22 : anchor === "queue" ? -0.14 : anchor === "personnel" ? hrIndex % 2 === 0 ? -0.12 : 0.12 : 0.1);
+  return { room, anchor, target, alpha, beta: layout.edition > 0 || historicNorth ? 0.7 : anchor === "property" ? 0.85 : 0.93, radius: anchor === "glyph" ? 3.8 : anchor === "printer" ? 3.7 : anchor === "ledger" ? 3.9 : anchor === "boundary" ? 5.5 : 4.6 };
 }
 var substantial = /* @__PURE__ */ new Set(["recruit", "survey", "evict", "lease", "glyph", "assemble", "notarize", "print", "audit", "queue", "commit", "memory"]);
 function duration(action, kind) {
@@ -1070,10 +1478,11 @@ function planOfficeSteps(events, context, ensureDisclosure = false) {
     if (event.kind.startsWith("HR_") && hrIndex >= 0 && ["APPROVED", "REJECTED", "NOT_REACHED"].includes(status)) hrStates[hrIndex] = status;
     if (event.kind === "PREMISES_DISCOVERY") tenantCode = event.finding.match(/U\+[A-Fa-f0-9]{4,6}/)?.[0];
     const same = previous?.shot.room === room && previous.shot.anchor === anchor && (action !== "recruit" || previous.hrIndex === hrIndex);
-    const distance = previous ? Math.hypot(previous.shot.target.x - shot.target.x, previous.shot.target.z - shot.target.z) : 0;
-    const arriveMs = same ? 0 : previous?.shot.room === room ? 620 : 1350 + Math.round(distance * 15);
+    const distance2 = previous ? Math.hypot(previous.shot.target.x - shot.target.x, previous.shot.target.z - shot.target.z) : 0;
+    const arriveMs = same ? 0 : previous?.shot.room === room ? 620 : 1350 + Math.round(distance2 * 15);
     const [workMs, holdMs] = duration(action, event.kind);
     const step = { id: context.id + ":" + index, event, source: context.source || "recorded", ordinal: context.ordinal || event.ordinal || "", text: context.text || "", action, shot, hasFile: context.hasFile ?? !!context.ordinal, publication: event.kind === "PUBLICATION" || event.kind === "DISCLOSE_OBSERVED", arriveMs, workMs, holdMs, glyphs: [...glyphs], hrIndex, hrStates: [...hrStates], tenantCode };
+    if (previous) step.origin = { room: previous.shot.room, station: previous.shot.anchor, hrIndex: previous.hrIndex };
     result.push(step);
     previous = step;
   }
@@ -1117,11 +1526,54 @@ var ObservationClock = class {
   }
 };
 
+// web/office-direction.ts
+var lerp = (a, b, t) => a + (b - a) * t;
+var angle = (a, b, t) => a + Math.atan2(Math.sin(b - a), Math.cos(b - a)) * t;
+var OfficeShotDirector = class {
+  key = "";
+  path = [];
+  route(step, layout) {
+    const key2 = layoutToken(layout) + "|" + step.origin?.room + "|" + step.origin?.station + "|" + step.shot.room + "|" + step.shot.anchor;
+    if (key2 !== this.key) {
+      this.key = key2;
+      this.path = step.origin ? routes(layout).route(step.origin, { room: step.shot.room, station: step.shot.anchor }) : [addresses(layout).resolve({ room: step.shot.room, station: step.shot.anchor })];
+    }
+    return this.path;
+  }
+  duration(step, layout) {
+    if (!step.origin) return step.arriveMs;
+    const same = step.origin.room === step.shot.room;
+    if (same && step.origin.station === step.shot.anchor) return step.origin.hrIndex === step.hrIndex ? 0 : 620;
+    return Math.round((same ? 650 : 1150) + routeLength(this.route(step, layout)) / 6 * 1e3);
+  }
+  pose(cue, layout) {
+    const step = cue.step, to = shotFor(step.shot.room, step.shot.anchor, step.hrIndex, layout), t = cue.travel;
+    const from = step.origin ? shotFor(step.origin.room, step.origin.station, step.origin.hrIndex, layout) : { ...to, target: { x: 0, y: 0.2, z: 0 }, alpha: -Math.PI / 2.6, beta: 0.88, radius: 33 };
+    const p = pointAlong(this.route(step, layout), t), cross = !!step.origin && step.origin.room !== step.shot.room;
+    const target = step.origin ? { x: p.x, y: lerp(from.target.y, to.target.y, t) + Math.sin(t * Math.PI) * 0.3, z: p.z } : { x: lerp(0, to.target.x, t), y: lerp(0.2, to.target.y, t), z: lerp(0, to.target.z, t) };
+    return { target, file: { x: p.x, y: 0, z: p.z }, alpha: angle(from.alpha, to.alpha, t), beta: lerp(from.beta, to.beta, t) - (cross ? Math.sin(t * Math.PI) * 0.12 : 0), radius: lerp(from.radius, to.radius, t) + (cross ? Math.sin(t * Math.PI) * 5 : 0) };
+  }
+};
+function rebaseObservation(elapsed, oldArrival, newArrival) {
+  return elapsed < oldArrival && oldArrival > 0 ? elapsed / oldArrival * newArrival : Math.max(0, elapsed - oldArrival) + newArrival;
+}
+
 // web/office-supervision.ts
 var element = (id) => document.getElementById(id);
 var OfficeSupervisionDesk = class {
   constructor(authority) {
     this.authority = authority;
+    officeEstate.subscribe((event) => {
+      this.updateScene();
+      if (event.kind === "committed") {
+        const label = element("supervision-current").querySelector("strong"), step = this.activeStep || this.lastStep;
+        if (label && step) label.textContent = label.textContent.replace(/ · Address [A-D][1-3]$/, " \xB7 Address " + officeEstate.current.placements.find((p) => p.room === step.shot.room).address);
+      }
+      if (event.kind !== "progress") {
+        this.syncControls();
+        this.authority.wake();
+      }
+    });
     this.checkbox.addEventListener("change", () => this.applyMode(true));
     element("supervision-autonomy").addEventListener("click", () => {
       this.disable();
@@ -1131,7 +1583,7 @@ var OfficeSupervisionDesk = class {
       if (this.authority.reading()) this.authority.pause(!this.authority.paused());
     });
     element("supervision-next").addEventListener("click", () => {
-      if (!this.authority.reading() || !this.authority.paused()) return;
+      if (!this.authority.reading() || !this.authority.paused() || officeEstate.moving) return;
       element("mandate-output").scrollIntoView({ block: "start", behavior: "instant" });
       this.credits = 1;
       this.authority.wake();
@@ -1210,6 +1662,7 @@ var OfficeSupervisionDesk = class {
     return Number(this.normalCadence);
   }
   disable() {
+    officeEstate.finish();
     if (!this.enabled) return;
     this.checkbox.checked = false;
     this.applyMode(false);
@@ -1256,8 +1709,9 @@ var OfficeSupervisionDesk = class {
     button.textContent = paused2 ? "Resume" : "Pause";
     button.setAttribute("aria-disabled", String(!reading2));
     button.setAttribute("aria-pressed", String(paused2));
-    element("supervision-next").setAttribute("aria-disabled", String(!reading2 || !paused2));
-    if (this.enabled && reading2 && !paused2 && !this.visible()) this.authority.notice("Executive observation is waiting for attention. Return to the office view to continue.");
+    element("supervision-next").setAttribute("aria-disabled", String(!reading2 || !paused2 || officeEstate.moving));
+    if (officeEstate.moving && reading2) this.authority.notice("Facilities has suspended disclosure while all eight departments reconsider their addresses. Your pause and current decision are retained.");
+    else if (this.enabled && reading2 && !paused2 && !this.visible()) this.authority.notice("Executive observation is waiting for attention. Return to the office view to continue.");
   }
   begin(mandate, mode = "mandate") {
     this.interrupt();
@@ -1282,6 +1736,7 @@ var OfficeSupervisionDesk = class {
     this.syncControls();
   }
   interrupt() {
+    officeEstate.finish();
     this.epoch++;
     this.credits = 0;
     this.cancelFrame?.();
@@ -1364,10 +1819,14 @@ var OfficeSupervisionDesk = class {
     element("supervision-current").textContent = text2;
   }
   sceneState(step = this.activeStep || this.lastStep) {
-    return { room: step?.shot.room || "reception", route: [], ordinal: this.folio?.ordinal || "", text: this.published ? this.folio?.text || "" : "PENDING", emoji: this.companion?.companion.emoji, companionName: this.companion?.companion.name, paused: true, reducedMotion: this.media.matches, quality: "standard", seed: tourSeed(this.mandate) };
+    return { room: step?.shot.room || "reception", route: [], ordinal: this.folio?.ordinal || "", text: this.published ? this.folio?.text || "" : "PENDING", emoji: this.companion?.companion.emoji, companionName: this.companion?.companion.name, paused: true, reducedMotion: this.media.matches, quality: "standard", seed: tourSeed(this.mandate), layout: officeEstate.displayed, relocation: officeEstate.relocation };
   }
   updateScene(step = this.activeStep || this.lastStep) {
-    this.renderer?.update(this.sceneState(step));
+    try {
+      this.renderer?.update(this.sceneState(step));
+    } catch {
+      this.graphicsFailure();
+    }
   }
   visible() {
     if (!this.enabled || document.hidden || document.querySelector("dialog[open]")) return false;
@@ -1455,12 +1914,14 @@ var OfficeSupervisionDesk = class {
   }
   show(step, index, total) {
     this.activeStep = step;
+    this.pane.dataset.room = step.shot.room;
+    document.dispatchEvent(new CustomEvent("office-location", { detail: { view: "supervision" } }));
     this.pane.dataset.kind = step.event.kind;
     this.pane.dataset.ordinal = step.ordinal;
     this.pane.dataset.action = step.action;
     this.pane.dataset.state = "running";
     const status = element("supervision-current");
-    status.replaceChildren(node("strong", index + 1 + " / " + total + " \xB7 " + step.event.office), document.createTextNode(step.event.finding));
+    status.replaceChildren(node("strong", index + 1 + " / " + total + " \xB7 " + step.event.office + " \xB7 Address " + officeEstate.current.placements.find((p) => p.room === step.shot.room).address), document.createTextNode(step.event.finding));
     element("supervision-caption").scrollTop = 0;
     const source = step.source === "rehearsal" ? "Read-only personnel specimen. Numerical output is retained." : step.source === "disclosure" ? "Observed result or cache receipt. Fresh production work is not inferred." : this.mode === "replay" ? "Retained Java evidence. No business operation is being repeated." : "Recorded Java evidence. The operation has already completed; its UI disclosure is being choreographed.";
     element("supervision-source").textContent = source + (this.envelope?.omitted ? " The source dossier omitted " + this.envelope.omitted + " entries; absent work is not reconstructed." : "");
@@ -1484,6 +1945,9 @@ var OfficeSupervisionDesk = class {
   }
   playOne(step, index, total, epoch, current, publish) {
     return new Promise((resolve) => {
+      const director = new OfficeShotDirector();
+      step = { ...step, arriveMs: director.duration(step, officeEstate.current) };
+      let layoutKey = layoutToken(officeEstate.current);
       const clock = new ObservationClock(step);
       let shown = false, published = false, manual = false, settled = false;
       const finish = (ok) => {
@@ -1496,14 +1960,22 @@ var OfficeSupervisionDesk = class {
       };
       const cancel = () => finish(false);
       this.cancelFrame = cancel;
-      const frame = (now) => {
+      const frame2 = (now) => {
         if (epoch !== this.epoch || !this.enabled || !current()) {
           finish(false);
           return;
         }
+        const key2 = layoutToken(officeEstate.current);
+        if (key2 !== layoutKey) {
+          const arrival = director.duration(step, officeEstate.current);
+          clock.elapsed = rebaseObservation(clock.elapsed, step.arriveMs, arrival);
+          step.arriveMs = arrival;
+          layoutKey = key2;
+          this.updateScene(step);
+        }
         this.activity();
-        const visible = this.visible(), paused2 = this.authority.paused();
-        const waiting = !visible ? "attention" : paused2 ? "paused" : "";
+        const moving = officeEstate.moving, visible2 = this.visible(), paused2 = this.authority.paused();
+        const waiting = moving ? "facilities" : !visible2 ? "attention" : paused2 ? "paused" : "";
         if (waiting !== this.blocked) {
           const previous = this.blocked;
           this.blocked = waiting;
@@ -1513,19 +1985,19 @@ var OfficeSupervisionDesk = class {
           }
         }
         if (!shown) {
-          if ((this.ready || this.fallback) && visible && (!paused2 || this.credits > 0)) {
+          if (!moving && (this.ready || this.fallback) && visible2 && (!paused2 || this.credits > 0)) {
             shown = true;
             this.show(step, index, total);
           } else {
-            this.frame = requestAnimationFrame(frame);
+            this.frame = requestAnimationFrame(frame2);
             return;
           }
         }
-        if (paused2 && this.credits > 0 && visible) {
+        if (!moving && paused2 && this.credits > 0 && visible2) {
           this.credits = 0;
           manual = true;
         }
-        const allow = visible && (this.ready || this.fallback) && (!paused2 || manual);
+        const allow = !moving && visible2 && (this.ready || this.fallback) && (!paused2 || manual);
         const cue = clock.tick(now, allow, manual);
         this.renderer?.direct(cue);
         if (this.pane.dataset.phase !== cue.phase) {
@@ -1543,7 +2015,7 @@ var OfficeSupervisionDesk = class {
               return;
             }
             this.activity();
-            if (!this.visible()) {
+            if (officeEstate.moving || !this.visible()) {
               this.frame = requestAnimationFrame(acknowledge);
               return;
             }
@@ -1554,10 +2026,305 @@ var OfficeSupervisionDesk = class {
             finish(true);
           };
           this.frame = requestAnimationFrame(acknowledge);
-        } else this.frame = requestAnimationFrame(frame);
+        } else this.frame = requestAnimationFrame(frame2);
       };
-      this.frame = requestAnimationFrame(frame);
+      this.frame = requestAnimationFrame(frame2);
     });
+  }
+};
+
+// web/office-relocation.ts
+var reduced = matchMedia("(prefers-reduced-motion: reduce)");
+var frame = 0;
+function visible() {
+  if (document.hidden) return false;
+  const dialog = document.querySelector("dialog[open]");
+  if (dialog && dialog.id !== "office-modal") return false;
+  return ["office-stage", "supervision-stage"].some((id) => {
+    const el = document.getElementById(id);
+    if (!el || el.closest("[hidden]")) return false;
+    const r = el.getBoundingClientRect();
+    return r.width > 0 && Math.min(r.bottom, innerHeight) - Math.max(r.top, 0) > Math.min(60, r.height * 0.2);
+  });
+}
+function tick(now) {
+  frame = 0;
+  if (!officeEstate.moving) return;
+  if (reduced.matches || document.getElementById("office-motion")?.checked === false) {
+    officeEstate.finish();
+    return;
+  }
+  officeEstate.advance(now, visible());
+  if (officeEstate.moving) frame = requestAnimationFrame(tick);
+}
+officeEstate.subscribe((event) => {
+  if (event.kind === "staged" && !frame) frame = requestAnimationFrame(tick);
+});
+reduced.addEventListener("change", () => {
+  if (reduced.matches) officeEstate.finish();
+});
+addEventListener("pagehide", () => {
+  cancelAnimationFrame(frame);
+  officeEstate.finish();
+}, { once: true });
+function requestReorganization() {
+  officeEstate.request();
+  if (reduced.matches) officeEstate.finish();
+}
+
+// web/office-reorganization.ts
+var announcement = node("p");
+announcement.className = "estate-announcement";
+announcement.setAttribute("role", "status");
+announcement.setAttribute("aria-live", "polite");
+announcement.setAttribute("aria-atomic", "true");
+document.body.append(announcement);
+var announce = (text2) => {
+  const parent = document.querySelector("#office-modal[open]") || document.body;
+  if (announcement.parentElement !== parent) parent.append(announcement);
+  if (announcement.textContent !== text2) announcement.textContent = text2;
+};
+var ReorganizationPanel = class {
+  constructor(container) {
+    this.container = container;
+    container.classList.add("reorganization-panel");
+    this.button.type = "button";
+    this.button.className = "button button-secondary";
+    this.button.addEventListener("click", () => {
+      if (officeEstate.moving) return;
+      try {
+        requestReorganization();
+      } catch (error) {
+        this.status.textContent = error instanceof Error ? error.message : "Facilities has deferred certainty.";
+        announce(this.status.textContent);
+      }
+    });
+    this.status.className = "field-help";
+    this.notice.className = "field-help";
+    this.details.append(node("summary", "Inspect the current workplace arrangement"));
+    this.map.className = "estate-map";
+    this.map.setAttribute("role", "list");
+    this.map.setAttribute("aria-label", "Current estate floorplan");
+    this.table.className = "estate-addresses";
+    this.scroll.className = "estate-minutes";
+    this.scroll.tabIndex = 0;
+    this.scroll.setAttribute("role", "region");
+    this.scroll.setAttribute("aria-label", "Minutes of Spatial Achievement");
+    this.scroll.append(this.empty, this.minutes);
+    this.details.addEventListener("toggle", () => {
+      if (this.details.open && this.firstOpen) {
+        this.firstOpen = false;
+        this.scroll.scrollTop = this.scroll.scrollHeight;
+      }
+    });
+    this.perk.hidden = true;
+    this.perk.className = "estate-perk";
+    const share = node("input");
+    share.type = "url";
+    share.hidden = true;
+    share.readOnly = true;
+    share.setAttribute("aria-label", "Reorganization visit link");
+    const copy = node("button", "Copy This Approved Chaos");
+    copy.type = "button";
+    copy.addEventListener("click", async () => {
+      const input = document.getElementById("limit"), authority = document.getElementById("companion-strategy");
+      let mandate = "15";
+      try {
+        mandate = String(parseMandate(input.value));
+      } catch {
+      }
+      const room = document.getElementById(this.view === "office" ? "office-experience" : "supervision-pane")?.dataset.room || "reception";
+      const visit = this.view === "office" ? document.getElementById("office-share-link").value : officeShare(scope, mandate, room, void 0, authority.value, void 0, layoutToken(officeEstate.current));
+      const currentVisit = new URL(visit);
+      currentVisit.searchParams.set("limit", mandate);
+      currentVisit.searchParams.set("authority", authority.value);
+      currentVisit.searchParams.set("estate", layoutToken(officeEstate.current));
+      share.value = currentVisit.href;
+      share.hidden = false;
+      try {
+        await navigator.clipboard.writeText(currentVisit.href);
+        announce("Approved chaos copied. The link reproduces this estate and prefills a mandate; it never starts counting automatically.");
+      } catch {
+        share.focus();
+        share.select();
+        announce("Copy the selected visit link using your browser copy command.");
+      }
+    });
+    const sharing = node("div");
+    sharing.className = "estate-controls estate-sharing";
+    sharing.append(copy, share);
+    this.details.append(sharing, this.map, this.perk, this.table, node(this.view === "office" ? "h3" : "h4", "Minutes of Spatial Achievement"), node("p", "The latest ten transformations are retained in this tab. These distances describe illustrated desk-to-desk paper routes in scene units; they are not service response times."), this.scroll);
+    this.skip.type = "button";
+    this.skip.addEventListener("click", () => {
+      this.button.focus({ preventScroll: true });
+      officeEstate.finish();
+    });
+    this.progress.max = 1;
+    this.progress.setAttribute("aria-label", "Facilities relocation progress");
+    const controls = node("div");
+    controls.className = "estate-controls";
+    controls.append(this.button, this.skip, this.progress);
+    container.append(node("p", "Facilities improves the same eight departments by putting them somewhere else. Each announcement alternates a 2\xD74 estate with a 3\xD73 estate, sometimes making room for a thoroughly conditional perk. Disclosure waits during the move; Java does no additional work."), controls, this.status, this.notice, this.details);
+    officeEstate.subscribe((event) => {
+      this.transaction();
+      if (event.kind === "committed" || event.kind === "cancelled") this.render();
+      if (event.kind === "committed") announce("Facilities declares victory. " + estateLabel(officeEstate.current) + ". Proceedings may resume at the interrupted decision.");
+    });
+    document.addEventListener("office-location", (event) => {
+      const detail = event.detail;
+      if (detail.view === this.view) this.highlight();
+    });
+    document.addEventListener("office-amenity", (event) => {
+      if (event.detail === this.view) {
+        this.details.open = true;
+        this.inspectAmenity(this.details.querySelector("summary"));
+      }
+    });
+    this.render();
+    this.transaction();
+  }
+  container;
+  button = node("button", "Announce Another Reorganization");
+  status = node("p");
+  notice = node("p");
+  details = node("details");
+  table = node("table");
+  skip = node("button", "Waive the Moving Ceremony");
+  progress = node("progress");
+  phase = "";
+  map = node("ol");
+  minutes = node("ol");
+  scroll = node("div");
+  memoNodes = /* @__PURE__ */ new Map();
+  empty = node("p", "No transformations are recorded yet. The company is coping with the unsettling adequacy of its existing furniture.");
+  firstOpen = true;
+  perk = node("section");
+  perkTrigger;
+  get view() {
+    return this.container.id.startsWith("supervision") ? "supervision" : "office";
+  }
+  setReading(_reading) {
+    this.button.title = "Authorize a new arrangement of the same responsibilities. Current proceedings wait for Facilities.";
+  }
+  transaction() {
+    const r = officeEstate.relocation;
+    this.button.setAttribute("aria-disabled", String(!!r));
+    if (!r && document.activeElement === this.skip) this.button.focus({ preventScroll: true });
+    this.skip.hidden = !r;
+    this.progress.hidden = !r;
+    if (!r) {
+      this.phase = "";
+      return;
+    }
+    this.progress.value = r.progress;
+    this.container.dataset.relocationPhase = r.phase;
+    if (this.phase !== r.phase) {
+      this.phase = r.phase;
+      const text2 = { packing: "Packing every department. Responsibilities are being carefully separated from accountability.", moving: "All eight offices are in transit. The moving boxes have been granted acting management authority.", unpacking: "Unpacking the approved future. These addresses remain provisional until Facilities declares victory.", returning: "Returning to the interrupted decision. No work has been repeated; no responsibility has been reduced." }[r.phase];
+      this.status.textContent = text2;
+      announce(text2);
+    }
+  }
+  highlight() {
+    const room = document.getElementById(this.view === "office" ? "office-experience" : "supervision-pane")?.dataset.room || "reception";
+    for (const cell of this.map.children) {
+      if (cell.dataset.room === room) cell.setAttribute("aria-current", "location");
+      else cell.removeAttribute("aria-current");
+    }
+  }
+  inspectAmenity(trigger) {
+    const l = officeEstate.current;
+    if (!l.amenity) return;
+    this.perkTrigger = trigger;
+    const specimen = amenities[l.amenity.kind], title2 = node(this.view === "office" ? "h3" : "h4", specimen.name + " \xB7 " + estateLabel(l) + " / " + l.amenity.address), answer = node("p");
+    answer.setAttribute("role", "status");
+    answer.setAttribute("aria-live", "polite");
+    answer.setAttribute("aria-atomic", "true");
+    title2.tabIndex = -1;
+    const actions = node("div");
+    actions.className = "estate-controls";
+    for (const action of specimen.actions) {
+      const button = node("button", action.label);
+      button.type = "button";
+      button.addEventListener("click", () => answer.textContent = action.answer);
+      actions.append(button);
+    }
+    const close = node("button", "Close amenity inspection");
+    close.type = "button";
+    close.addEventListener("click", () => {
+      this.perk.hidden = true;
+      (this.perkTrigger?.isConnected ? this.perkTrigger : this.details.querySelector("summary"))?.focus({ preventScroll: true });
+    });
+    this.perk.replaceChildren(title2, node("p", "Fictional Facilities specimen. This perk has no role in the recorded numerical proceedings."), node("p", specimen.story), actions, answer, close);
+    this.perk.hidden = false;
+    title2.focus({ preventScroll: true });
+    this.perk.scrollIntoView({ block: "nearest", behavior: "instant" });
+  }
+  appendMemo(m) {
+    const li = node("li");
+    li.append(node(this.view === "office" ? "h4" : "h5", "Transformation " + m.to.edition + ": " + m.title), node("p", m.rationale), node("p", m.finding + " Mean illustrated commute: " + m.before.toFixed(1) + " \u2192 " + m.after.toFixed(1) + " scene units."));
+    const moves = node("ul");
+    for (const p of m.to.placements) {
+      const name = rooms.find((r) => r.id === p.room).short;
+      moves.append(node("li", name + ": " + qualifiedAddress(m.from, p.room) + " \u2192 " + qualifiedAddress(m.to, p.room)));
+    }
+    li.append(moves);
+    this.minutes.append(li);
+    this.memoNodes.set(m.to.edition, li);
+  }
+  render() {
+    const l = officeEstate.current;
+    delete this.container.dataset.relocationPhase;
+    this.status.textContent = estateLabel(l) + (l.amenity ? " \xB7 " + l.amenity.kind + " at " + l.amenity.address : " \xB7 all available space is committed to seriousness");
+    this.container.dataset.estateEdition = String(l.edition);
+    this.notice.textContent = estateRecords.notice;
+    this.notice.hidden = !estateRecords.notice;
+    const head = node("thead"), row = node("tr");
+    for (const name of ["Department", "Address", "Partition policy"]) {
+      const th = node("th", name);
+      th.scope = "col";
+      row.append(th);
+    }
+    head.append(row);
+    const body = node("tbody"), cells = [];
+    for (let slot = 0; slot < l.rows * l.columns; slot++) {
+      const p = l.placements.find((p2) => p2.slot === slot), cell = node("li");
+      if (p) {
+        cell.dataset.room = p.room;
+        const theme = partitionStyles.find((s) => s.id === p.partition), name = rooms.find((r) => r.id === p.room).short;
+        cell.append(node("strong", p.address), node("span", name));
+        const tr = node("tr");
+        tr.append(node("td", name), node("td", p.address), node("td", theme ? theme.name + " \xB7 " + theme.claim : "Founding architectural certainty"));
+        body.append(tr);
+      } else if (l.amenity) {
+        const a = l.amenity, button = node("button", "Inspect " + a.kind + " at " + a.address);
+        button.type = "button";
+        button.addEventListener("click", () => this.inspectAmenity(button));
+        cell.append(node("strong", a.address), button);
+        const tr = node("tr");
+        tr.append(node("td", a.kind === "atrium" ? "Atrium: Chief Growth Officer in residence" : "Breakroom: mandatory optional restoration"), node("td", a.address), node("td", "The company is accommodating the appearance of a perk."));
+        body.append(tr);
+      }
+      cells.push(cell);
+    }
+    if (this.map.contains(document.activeElement)) {
+      this.details.querySelector("summary")?.focus({ preventScroll: true });
+    }
+    this.map.style.setProperty("--estate-columns", String(l.columns));
+    this.map.replaceChildren(...cells);
+    this.map.setAttribute("aria-label", "Current estate floorplan: " + estateLabel(l));
+    this.highlight();
+    this.table.replaceChildren(node("caption", "Current department addresses"), head, body);
+    this.empty.hidden = estateRecords.history.length > 0;
+    const following = this.scroll.scrollHeight - this.scroll.clientHeight - this.scroll.scrollTop < 24, ids = new Set(estateRecords.history.map((m) => m.to.edition));
+    for (const [id, el] of this.memoNodes) if (!ids.has(id)) {
+      el.remove();
+      this.memoNodes.delete(id);
+    }
+    for (const memo of estateRecords.history) if (!this.memoNodes.has(memo.to.edition)) this.appendMemo(memo);
+    if (!estateRecords.history.length) this.minutes.setAttribute("aria-label", "No transformations have been recorded in this tab.");
+    else this.minutes.removeAttribute("aria-label");
+    if (following) this.scroll.scrollTop = this.scroll.scrollHeight;
   }
 };
 
@@ -1689,7 +2456,7 @@ function explainedPath(path) {
 }
 function annotate(response, info) {
   const headers = new Headers(response.headers);
-  const safe = Object.fromEntries(["mode", "engine", "storage", "cache", "revision", "protocol", "narrative"].filter((key) => info[key] !== void 0).map((key) => [key, info[key]]));
+  const safe = Object.fromEntries(["mode", "engine", "storage", "cache", "revision", "protocol", "narrative"].filter((key2) => info[key2] !== void 0).map((key2) => [key2, info[key2]]));
   headers.set("X-SlopBuzz-Execution-Runtime", JSON.stringify(safe).replace(/[^\x20-\x7e]/g, (char) => "\\u" + char.charCodeAt(0).toString(16).padStart(4, "0")));
   return new Response(response.body, { status: response.status, headers });
 }
@@ -1897,8 +2664,8 @@ var CompanionDesk = class {
       const starts = /* @__PURE__ */ new Set();
       for (const [ordinal, text2] of this.visible) if (/^(Fizz|Buzz|FizzBuzz)$/.test(text2)) starts.add(((BigInt(ordinal) - 1n) / 100n * 100n + 1n).toString());
       for (const start of starts) {
-        const key = mandate + "|" + policy + "|" + start;
-        let batch = this.batches.get(key);
+        const key2 = mandate + "|" + policy + "|" + start;
+        let batch = this.batches.get(key2);
         if (!batch) {
           batch = (async () => {
             const reply = await request("/companions/window?start=" + start + "&count=100&strategy=" + policy + "&seed=" + mandate);
@@ -1907,9 +2674,9 @@ var CompanionDesk = class {
             if (data.schema !== "slopbuzz-companion-window/v2" || data.seedPolicy !== seedPolicy || data.mandateSeed !== mandate || data.catalogVersion !== this.version || data.strategy !== policy || data.start !== start || data.count !== 100 || !Array.isArray(data.assignments)) throw new Error("Assignment evidence belongs to a different charter.");
             return data.assignments;
           })();
-          this.batches.set(key, batch);
+          this.batches.set(key2, batch);
           batch.catch(() => {
-            if (this.batches.get(key) === batch) this.batches.delete(key);
+            if (this.batches.get(key2) === batch) this.batches.delete(key2);
           });
         }
         const assignments = await batch;
@@ -1932,7 +2699,7 @@ var CompanionDesk = class {
     }
   }
   render() {
-    const rows = [...this.visible.keys()].map((key) => this.assigned.get(key)).filter((a) => !!a).slice(-100);
+    const rows = [...this.visible.keys()].map((key2) => this.assigned.get(key2)).filter((a) => !!a).slice(-100);
     const signature = rows.map((a) => a.ordinal + ":" + a.companionId).join("|");
     if (signature === this.lastSignature) return;
     if ((!this.following || this.list.contains(document.activeElement) || this.dialog.open) && this.list.childElementCount) {
@@ -2044,7 +2811,7 @@ function setText(id, value) {
 // web/onboarding.ts
 function parseDossier(value) {
   const data = value;
-  if (!data || data.schema !== "slopbuzz-onboarding/v1" || typeof data.caseId !== "string" || !["MANDATE", "REHEARSAL"].includes(data.purpose) || !Number.isInteger(data.candidate) || !["APPROVED", "REJECTED"].includes(data.status) || !Array.isArray(data.steps) || data.steps.length !== 7 || data.steps.some((step) => !step || !["APPROVED", "REJECTED", "NOT_REACHED"].includes(step.state) || ["office", "rule", "received", "finding", "document"].some((key) => typeof step[key] !== "string"))) throw new Error("The personnel record has an unsupported format.");
+  if (!data || data.schema !== "slopbuzz-onboarding/v1" || typeof data.caseId !== "string" || !["MANDATE", "REHEARSAL"].includes(data.purpose) || !Number.isInteger(data.candidate) || !["APPROVED", "REJECTED"].includes(data.status) || !Array.isArray(data.steps) || data.steps.length !== 7 || data.steps.some((step) => !step || !["APPROVED", "REJECTED", "NOT_REACHED"].includes(step.state) || ["office", "rule", "received", "finding", "document"].some((key2) => typeof step[key2] !== "string"))) throw new Error("The personnel record has an unsupported format.");
   if (data.status === "APPROVED" && (data.candidate !== 1 || data.startingOrdinal !== 1 || data.steps.some((step) => step.state !== "APPROVED")) || data.status === "REJECTED" && (data.startingOrdinal !== null || !data.steps.some((step) => step.state === "REJECTED"))) throw new Error("The personnel verdict contradicts its recorded decisions.");
   return data;
 }
@@ -2915,14 +3682,14 @@ We thank the number for its patience with the organization built around it.
 var ChronicleLanguage = class {
   bags = /* @__PURE__ */ new Map();
   random;
-  constructor(random = Math.random) {
-    this.random = random;
+  constructor(random2 = Math.random) {
+    this.random = random2;
   }
-  pick(key, options) {
-    let bag = this.bags.get(key);
+  pick(key2, options) {
+    let bag = this.bags.get(key2);
     if (!bag) {
       bag = { remaining: [] };
-      this.bags.set(key, bag);
+      this.bags.set(key2, bag);
     }
     if (!bag.remaining.length) {
       bag.remaining = options.map((_, index2) => index2);
@@ -3231,10 +3998,10 @@ var ExecutiveChronicle = class {
       const panel = byId2("mandate-output");
       panel.dataset.viewportFit = String(innerHeight > 600 && panel.getBoundingClientRect().height <= innerHeight - 24 - (document.querySelector("#discovery-register")?.getBoundingClientRect().height || 0));
     };
-    let frame = 0;
+    let frame2 = 0;
     const schedule = () => {
-      if (!frame) frame = requestAnimationFrame(() => {
-        frame = 0;
+      if (!frame2) frame2 = requestAnimationFrame(() => {
+        frame2 = 0;
         layout();
       });
     };
@@ -3376,11 +4143,11 @@ var ExecutiveChronicle = class {
     return article;
   }
   trim() {
-    for (const [key, article] of this.rendered) {
+    for (const [key2, article] of this.rendered) {
       if (this.rendered.size <= 24) break;
       if (article.contains(document.activeElement)) continue;
       article.remove();
-      this.rendered.delete(key);
+      this.rendered.delete(key2);
       this.collapsed++;
     }
     let notice = this.entries.querySelector(".chronicle-archive-note");
@@ -3409,11 +4176,11 @@ var ExecutiveChronicle = class {
   }
   rehearsal(data, count) {
     this.pauseIfReading();
-    const key = `rehearsal-${data.caseId}`;
-    let article = this.entries.querySelector(`[data-rehearsal="${CSS.escape(key)}"]`);
+    const key2 = `rehearsal-${data.caseId}`;
+    let article = this.entries.querySelector(`[data-rehearsal="${CSS.escape(key2)}"]`);
     if (!article) {
       article = node2("article", void 0, "chronicle-note");
-      article.dataset.rehearsal = key;
+      article.dataset.rehearsal = key2;
       this.entries.append(article);
     }
     let prose = this.rehearsals.get(data);
@@ -3498,6 +4265,12 @@ var supervision = new OfficeSupervisionDesk({ reading: () => reading, paused: ()
   wakeReading?.();
   readingControls();
 }, notice: (text2) => setText("run-status", text2) });
+officeEstate.subscribe((event) => {
+  if (event.kind !== "progress") {
+    wakeReading?.();
+  }
+});
+var reorganizationPanels = [new ReorganizationPanel(byId2("supervision-reorganization")), new ReorganizationPanel(byId2("office-reorganization"))];
 var companions = new CompanionDesk({ remember: (discovery) => {
   office.remember(discovery);
   supervision.remember(discovery);
@@ -3534,12 +4307,13 @@ async function observeLine(folio, sequence, publish) {
     if (generation === supervision.generation || !supervision.enabled) break;
   }
   if (sequence !== mandateSequence) return false;
-  while (paused && !supervision.enabled && sequence === mandateSequence) await waitForPace();
+  while ((officeEstate.moving || paused && !supervision.enabled) && sequence === mandateSequence) await waitForPace();
   if (sequence !== mandateSequence) return false;
   release();
   return true;
 }
 function readingControls() {
+  for (const panel of reorganizationPanels) panel.setReading(reading);
   stopButton.setAttribute("aria-disabled", String(!reading));
   revealButton.textContent = activityMode === "rehearsal" || activityMode === "replay" ? "Reveal completed proceedings" : streaming ? "Waive disclosure delays" : "Reveal complete output";
   pauseButton.setAttribute("aria-disabled", String(!reading));
@@ -3622,7 +4396,7 @@ function validateLimit() {
 }
 stopButton.addEventListener("click", () => {
   if (!reading) return;
-  ++mandateSequence;
+  officeEstate.finish(), ++mandateSequence;
   reading = false;
   streaming = false;
   paused = false;
@@ -3671,7 +4445,7 @@ async function revealOutput(text2, sequence, serviceMillis) {
   if (supervision.enabled) await supervision.prelude(() => sequence === mandateSequence);
   for (let index = 0; index < lines2.length; index++) {
     if (sequence !== mandateSequence) return;
-    while (paused && !supervision.enabled && sequence === mandateSequence) await waitForPace();
+    while ((officeEstate.moving || paused && !supervision.enabled) && sequence === mandateSequence) await waitForPace();
     if (sequence !== mandateSequence) return;
     if (immediate()) {
       discloseLines(String(index + 1), lines2.slice(index));

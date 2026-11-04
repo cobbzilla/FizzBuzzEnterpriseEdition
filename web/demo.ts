@@ -1,5 +1,7 @@
+import {officeEstate} from './office-estate';
 import {OfficeTourDesk} from './office-tour';
 import {OfficeSupervisionDesk} from './office-supervision';
+import {ReorganizationPanel} from './office-reorganization';
 import {prepareSharedEncounter} from './shared-encounter';
 import {CompanionDesk} from './companions';
 import {parseMandate,autocorrectMandate,addOrdinals,windowCount,chooseMagnitudeWarning,type MandateInteger} from './mandate-input';
@@ -31,6 +33,8 @@ const precedent=new PrecedentView();
 new PremisesDesk();
 const office=new OfficeTourDesk();
 const supervision=new OfficeSupervisionDesk({reading:()=>reading,paused:()=>paused,pause:setReadingPaused,wake:()=>{wakeReading?.();readingControls();},notice:text=>setText('run-status',text)});
+officeEstate.subscribe(event=>{if(event.kind!=='progress'){wakeReading?.();}});
+const reorganizationPanels=[new ReorganizationPanel(byId('supervision-reorganization')),new ReorganizationPanel(byId('office-reorganization'))];
 const companions=new CompanionDesk({remember:discovery=>{office.remember(discovery);supervision.remember(discovery);},clearCompanions:()=>{office.clearCompanions();supervision.clearCompanions();}});
 let currentLimit='15';
 let receivedPacket:ExecutionPacket|undefined;
@@ -43,10 +47,11 @@ async function observeLine(folio:Folio,sequence:number,publish:()=>void){
  let published=false;const release=()=>{if(published||sequence!==mandateSequence)return;published=true;publish();};
  while(supervision.enabled&&!revealAll){const generation=supervision.generation;await supervision.observe(folio,()=>sequence===mandateSequence,release);if(sequence!==mandateSequence)return false;if(generation===supervision.generation||!supervision.enabled)break;}
  if(sequence!==mandateSequence)return false;
- while(paused&&!supervision.enabled&&sequence===mandateSequence)await waitForPace();
+ while((officeEstate.moving||paused&&!supervision.enabled)&&sequence===mandateSequence)await waitForPace();
  if(sequence!==mandateSequence)return false;release();return true;
 }
 function readingControls() {
+  for(const panel of reorganizationPanels)panel.setReading(reading);
   stopButton.setAttribute('aria-disabled', String(!reading));
   revealButton.textContent = activityMode==='rehearsal'||activityMode==='replay'?'Reveal completed proceedings':streaming ? 'Waive disclosure delays' : 'Reveal complete output';
   pauseButton.setAttribute('aria-disabled', String(!reading));
@@ -104,7 +109,7 @@ function validateLimit() {
 }
 stopButton.addEventListener('click',()=>{
  if(!reading)return;
- ++mandateSequence;reading=false;streaming=false;paused=false;wakeReading?.();readingControls();
+ (officeEstate.finish(),++mandateSequence);reading=false;streaming=false;paused=false;wakeReading?.();readingControls();
  supervision.interrupt();
  runButton.removeAttribute('aria-disabled');byId('output').removeAttribute('aria-busy');
  personnel.stopReading();
@@ -151,7 +156,7 @@ async function revealOutput(text: string, sequence: number, serviceMillis: numbe
   if(supervision.enabled)await supervision.prelude(()=>sequence===mandateSequence);
   for (let index = 0; index < lines.length; index++) {
     if (sequence !== mandateSequence) return;
-    while (paused && !supervision.enabled && sequence === mandateSequence) await waitForPace();
+    while ((officeEstate.moving || paused && !supervision.enabled) && sequence === mandateSequence) await waitForPace();
     if (sequence !== mandateSequence) return;
     if (immediate()) {
       discloseLines(String(index+1),lines.slice(index));
