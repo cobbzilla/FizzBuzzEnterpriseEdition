@@ -4458,8 +4458,8 @@ var DemoWorkspace = class {
       if (document.hidden) this.run.pause();
     });
     addEventListener("popstate", () => {
-      const desk = readDesk(new URL(location.href));
-      if (desk !== this.desk) this.show(desk, false);
+      const desk2 = readDesk(new URL(location.href));
+      if (desk2 !== this.desk) this.show(desk2, false);
     });
     const resize = new ResizeObserver(() => this.fit());
     resize.observe(document.querySelector(".site-header"));
@@ -4479,7 +4479,12 @@ var DemoWorkspace = class {
     this.draftSummary();
     this.sections("experiment");
     this.sections("evidence");
-    this.show(readDesk(new URL(location.href)), false, false);
+    const entry = new URL(location.href), desk = readDesk(entry);
+    if (desk !== "authorize" && entry.searchParams.get("desk") !== desk) {
+      entry.searchParams.set("desk", desk);
+      history.replaceState(history.state, "", entry);
+    }
+    this.show(desk, false, false);
   }
   run;
   desk = "authorize";
