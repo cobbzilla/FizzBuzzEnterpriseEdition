@@ -35,7 +35,7 @@ export async function verifyAnalytics(origin: string, expectedRevision?: string,
   assert.equal(accepted.status(),200,'First-party pageview rejected');
   assert.equal(accepted.headers()['cache-control'],'no-store');
   await expect(page.locator('#health-value')).toHaveText('LIVE');
-  await page.selectOption('#display-speed','0');
+  await page.selectOption('#authorize-display-speed','0');
   const demo = page.waitForResponse(response => isIntake(response.url()), {timeout:30000});
   await page.click('#run-button');
   assert.equal((await demo).status(),200,'First-party demo event rejected');

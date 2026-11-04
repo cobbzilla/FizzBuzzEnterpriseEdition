@@ -1,3 +1,4 @@
+import {demoControl,demoAction} from './demo-controls';
 import {createStaticServer} from '../scripts/serve.ts';
 import {test,expect,type Page} from '@playwright/test';
 async function invoke(page:Page,path:string,method='GET') {
@@ -20,14 +21,14 @@ test('local UI, cache, receipts, docs, cadence and scrolling',async({page})=>{
   await expect(page.locator('#runtime-status, #offline-status')).toHaveCount(0);
   await expect(page.locator('#display-speed')).toHaveValue('1800');
   expect(await page.locator('#display-speed option').allTextContents()).not.toContain('ms/line');
-  await page.selectOption('#display-speed','0');await page.fill('#limit','100');await page.click('#run-button');
+  await demoAction(page,'selectOption','#display-speed','0');await demoAction(page,'fill','#limit','100');await demoAction(page,'click','#run-button');
   await expect(page.locator('#run-status')).toContainText('Mandate complete');
   await expect(page.locator('#cache-result')).toHaveText('MISS');
   expect(await page.locator('#output').evaluate(e=>e.scrollTop+e.clientHeight>=e.scrollHeight-2)).toBe(true);
-  await page.click('#run-button');await expect(page.locator('#cache-result')).toHaveText('HIT');
+  await demoAction(page,'click','#run-button');await expect(page.locator('#cache-result')).toHaveText('HIT');
   await page.goto('/#operations');await expect(page.locator('#health-value')).toHaveText('LIVE');
-  await page.click('#canary-button');await expect(page.locator('#canary-value')).toHaveText('APPROVED');
-  await page.click('#recovery-button');await expect(page.locator('#recovery-value')).toHaveText('COPY MATCHED');
+  await demoAction(page,'click','#canary-button');await expect(page.locator('#canary-value')).toHaveText('APPROVED');
+  await demoAction(page,'click','#recovery-button');await expect(page.locator('#recovery-value')).toHaveText('COPY MATCHED');
   await page.getByRole('link',{name:'Cache report'}).click();await expect(page.locator('pre')).toContainText('slopbuzz-cache/v1');
   await page.goto('/api/');await expect(page.locator('#api-total')).toContainText('ratified operations');
   await page.goto('/changelog/');await expect(page.locator('main')).toContainText('browser-enterprise-runtime');
@@ -53,7 +54,7 @@ test('fresh recovery detects tampering and restart refuses corrupt data',async({
     await new Promise<void>((resolve,reject)=>{const tx=db.transaction('entries','readwrite');tx.objectStore('entries').put('1|1|COMMITTED|GENESIS|bad|1\n',1);tx.oncomplete=()=>resolve();tx.onabort=()=>reject(tx.error);});db.close();
   });
   const recovery=await invoke(page,'/operations/recovery','POST');expect(recovery.status).toBe(503);expect(recovery.body).toContain('STORED_INVALID');
-  await page.reload();await page.click('#run-button');await expect(page.locator('#run-status')).toContainText('could not be completed');await expect(page.locator('#health-value')).toHaveText('UNAVAILABLE');
+  await page.reload();await demoAction(page,'click','#run-button');await expect(page.locator('#run-status')).toContainText('could not be completed');await expect(page.locator('#health-value')).toHaveText('UNAVAILABLE');
 });
 test('whole release works with its origin server stopped',async({page},info)=>{
   const server=createStaticServer('dist','/',{engine:info.project.metadata.engine});
@@ -67,13 +68,13 @@ test('whole release works with its origin server stopped',async({page},info)=>{
     await new Promise<void>(resolve=>{server.close(()=>resolve());server.closeAllConnections();});
     await page.reload();await expect(page.locator('#health-value')).toHaveText('LIVE');
     expect((await invoke(page,'/operations/runtime')).body).toContain(info.project.metadata.engine==='js'?'js':'wasm');
-    await page.selectOption('#display-speed','0');await page.click('#run-button');await expect(page.locator('#run-status')).toContainText('Mandate complete');
+    await demoAction(page,'selectOption','#display-speed','0');await demoAction(page,'click','#run-button');await expect(page.locator('#run-status')).toContainText('Mandate complete');
     await expect(page.locator('#personnel-verdict')).toHaveText('Approved to start at 1');
-    await page.click('[data-personnel-scenario="missing-induction"]');await expect(page.locator('#personnel-verdict')).toHaveText('Application rejected');
-    await page.selectOption('#premises-scenario','bell');await page.click('#premises-submit');await expect(page.locator('#premises-status')).toContainText('U+0007');
-    await page.fill('#limit','1001');await page.click('#run-button');await expect(page.locator('#run-status')).toContainText('Mandate complete. 1001 lines disclosed');
+    await demoAction(page,'click','[data-personnel-scenario="missing-induction"]');await expect(page.locator('#experiment-personnel-verdict')).toHaveText('Application rejected');
+    await demoAction(page,'selectOption','#premises-scenario','bell');await demoAction(page,'click','#premises-submit');await expect(page.locator('#premises-status')).toContainText('U+0007');
+    await demoAction(page,'fill','#limit','1001');await demoAction(page,'click','#run-button');await expect(page.locator('#run-status')).toContainText('Mandate complete. 1001 lines disclosed');
     await page.goto(`http://127.0.0.1:${port}/#operations`);
-    await page.click('#procurement-button');await expect(page.locator('#procurement-status')).toContainText('8 separate line items');
+    await demoAction(page,'click','#procurement-button');await expect(page.locator('#procurement-status')).toContainText('8 separate line items');
     await page.goto(`http://127.0.0.1:${port}/api/`);await expect(page.locator('#api-total')).toContainText('ratified operations');
     await page.goto(`http://127.0.0.1:${port}/about/`);await expect(page.locator('#company-profile')).toContainText('fictional institution');await expect(page.locator('#founding-title')).toHaveText('Confounding the courage to convene');
     await page.goto(`http://127.0.0.1:${port}/company-history/`);await expect(page.locator('#about-title')).toContainText('About The Serious Business Company');
@@ -100,8 +101,8 @@ test('subdirectory hosting resolves workers, docs and API assets',async({page},i
   try {
     await page.goto(`http://127.0.0.1:${port}/portfolio/slopbuzz/demo/`);
     await expect(page.locator('#health-value')).toHaveText('LIVE');
-    await page.selectOption('#display-speed','0');await page.click('#run-button');await expect(page.locator('#run-status')).toContainText('Mandate complete');
-    await page.getByRole('link',{name:'API charter',exact:true}).click();await expect(page.locator('#api-total')).toContainText('ratified operations');
+    await demoAction(page,'selectOption','#display-speed','0');await demoAction(page,'click','#run-button');await expect(page.locator('#run-status')).toContainText('Mandate complete');
+    await page.click('#company-menu');await page.getByRole('link',{name:'API charter',exact:true}).click();await expect(page.locator('#api-total')).toContainText('ratified operations');
   }finally{server.close();server.closeAllConnections();}
 });
 test('the owner rejects a request addressed with the wrong execution revision',async({page})=>{
@@ -147,7 +148,7 @@ test('an installed update waits for the current release to close',async({page,co
     await page.evaluate(async()=>{await (await navigator.serviceWorker.ready).update();});
     await expect.poll(()=>page.evaluate(async()=>!!(await navigator.serviceWorker.getRegistration())?.waiting)).toBe(true);
     // The old controller remains authoritative while this tab can submit requests.
-    await page.selectOption('#display-speed','0');await page.click('#run-button');await expect(page.locator('#run-status')).toContainText('Mandate complete');
+    await demoAction(page,'selectOption','#display-speed','0');await demoAction(page,'click','#run-button');await expect(page.locator('#run-status')).toContainText('Mandate complete');
     await page.close();
     const next=await context.newPage();await next.goto(origin+'/demo/');await expect(next.locator('#health-value')).toHaveText('LIVE');
     await expect.poll(()=>next.evaluate(()=>caches.keys())).not.toEqual(oldKeys);

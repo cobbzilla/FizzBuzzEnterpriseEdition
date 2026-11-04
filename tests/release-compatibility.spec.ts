@@ -1,3 +1,4 @@
+import {demoControl,demoAction} from './demo-controls';
 import {readFile} from 'node:fs/promises';
 import {build} from 'esbuild';
 import {test,expect,type Page} from '@playwright/test';
@@ -40,19 +41,19 @@ test.beforeEach(async({context},info)=>{
 });
 test('hard reload beside a frozen legacy owner keeps demo, BigInt and one durable journal working',async({page,context},info)=>{
   await installLegacy(page,info.project.metadata.engine);
-  await page.selectOption('#display-speed','0');await page.fill('#limit','17');await page.click('#run-button');
+  await demoAction(page,'selectOption','#display-speed','0');await demoAction(page,'fill','#limit','17');await demoAction(page,'click','#run-button');
   await expect(page.locator('#run-status')).toContainText('Mandate complete');
   const next=await context.newPage();await next.goto('/demo/');await next.reload();
   await expect(next.locator('#health-value')).toHaveText('LIVE');
-  await next.selectOption('#display-speed','0');
+  await demoAction(next,'selectOption','#display-speed','0');
   for(const limit of ['1','15','1234']){
-    await next.fill('#limit',limit);await next.click('#run-button');
+    await demoAction(next,'fill','#limit',limit);await demoAction(next,'click','#run-button');
     await expect(next.locator('#run-status')).toContainText('Mandate complete');
     await expect(next.locator('#output-count')).toContainText(`${limit} line`);
   }
   const currentRevision=await next.evaluate(async()=>(await (await fetch('/runtime-config.json')).json()).revision);
   const retained=await invoke(next,'/audit/evidence');expect(retained.revision).toBe(legacyRevision);
-  await next.fill('#limit','19');await next.click('#run-button');await expect(next.locator('#run-status')).toContainText('Mandate complete');
+  await demoAction(next,'fill','#limit','19');await demoAction(next,'click','#run-button');await expect(next.locator('#run-status')).toContainText('Mandate complete');
   await expect(next.locator('#personnel-verdict')).toHaveText('Earlier administration');
   await expect(next.locator('#chronicle-entries')).toContainText('One has reported for duty');
   await expect(next.locator('#chronicle-entries')).toContainText('without forwarding a detailed execution dossier');
@@ -61,21 +62,21 @@ test('hard reload beside a frozen legacy owner keeps demo, BigInt and one durabl
   const catalog=await invoke(next,'/companions/catalog');expect(catalog.status).toBe(200);expect(JSON.parse(catalog.body).entries).toHaveLength(3200);expect(catalog.revision).toBe(currentRevision);
   const companionWindow=await invoke(next,'/companions/window?start=9007199254740993&count=3&strategy=factor-resonance-v1');expect(companionWindow.status).toBe(200);expect(companionWindow.revision).toBe(currentRevision);
   expect(JSON.parse((await invoke(next,'/audit/evidence')).body).headDigest).toBe(JSON.parse(beforeRehearsal.body).headDigest);
-  await next.click('[data-personnel-scenario="zero"]');await expect(next.locator('#personnel-verdict')).toHaveText('Application rejected');
+  await demoAction(next,'click','[data-personnel-scenario="zero"]');await expect(next.locator('#experiment-personnel-verdict')).toHaveText('Application rejected');
   const afterRehearsal=await invoke(next,'/audit/evidence');expect(JSON.parse(afterRehearsal.body).journalEntries).toBe(JSON.parse(beforeRehearsal.body).journalEntries);
   expect(JSON.parse(retained.body).journalEntries).toBe(33);
-  await next.selectOption('#precedent-scenario','lowercase-fizz');await next.click('#precedent-submit');await expect(next.locator('#precedent-status')).toContainText('Reuse rejected by Independent Lexical Bench');
-  await next.selectOption('#premises-scenario','bell');await next.click('#premises-submit');await expect(next.locator('#premises-status')).toContainText('U+0007');
-  await next.fill('#limit','17');await next.click('#run-button');await expect(next.locator('#run-status')).toContainText('Mandate complete');await expect(next.locator('#precedent-source')).toContainText('earlier administration');
+  await demoAction(next,'selectOption','#precedent-scenario','lowercase-fizz');await demoAction(next,'click','#precedent-submit');await expect(next.locator('#experiment-precedent-status')).toContainText('Reuse rejected by Independent Lexical Bench');
+  await demoAction(next,'selectOption','#premises-scenario','bell');await demoAction(next,'click','#premises-submit');await expect(next.locator('#premises-status')).toContainText('U+0007');
+  await demoAction(next,'fill','#limit','17');await demoAction(next,'click','#run-button');await expect(next.locator('#run-status')).toContainText('Mandate complete');await expect(next.locator('#precedent-source')).toContainText('earlier administration');
   const window=await invoke(next,'/fizzbuzz/window?start=9007199254740993&count=2');
   expect(window.status).toBe(200);expect(window.body).toBe('Fizz\n9007199254740994\n');expect(window.revision).toBe(currentRevision);
   const forecast=await invoke(next,'/capacity/forecast/extended?limit=9007199254740993');
   expect(JSON.parse(forecast.body).totalLines).toBe('9007199254740993');expect(forecast.revision).toBe(currentRevision);
   await next.goto('/#operations');
-  await next.click('#procurement-button');await expect(next.locator('#procurement-status')).toContainText('8 separate line items');
+  await demoAction(next,'click','#procurement-button');await expect(next.locator('#procurement-status')).toContainText('8 separate line items');
   await next.goto('/demo/');
-  await next.fill('#limit','9007199254740993');await next.selectOption('#display-speed','225');await next.click('#run-button');
-  await expect(next.locator('#output-count')).toContainText('of 9007199254740993 lines');await next.click('#stop-reading');
+  await demoAction(next,'fill','#limit','9007199254740993');await demoAction(next,'selectOption','#display-speed','225');await demoAction(next,'click','#run-button');
+  await expect(next.locator('#output-count')).toContainText('of 9007199254740993 lines');await demoAction(next,'click','#stop-reading');
   // Release-local desks have not created a second persistent journal or even a DB.
   expect(await next.evaluate(async()=>(await indexedDB.databases()).map(db=>db.name))).toEqual([`slopbuzz:${new URL(next.url()).origin}/`]);
   const before=JSON.parse((await invoke(next,'/audit/evidence')).body);
@@ -83,7 +84,7 @@ test('hard reload beside a frozen legacy owner keeps demo, BigInt and one durabl
   await expect.poll(async()=>JSON.parse((await invoke(next,'/operations/runtime')).body).revision).toBe(currentRevision);
   const after=await invoke(next,'/audit/evidence');expect(after.revision).toBe(currentRevision);
   expect(JSON.parse(after.body).headDigest).toBe(before.headDigest);expect(JSON.parse(after.body).journalEntries).toBe(52);
-  await next.fill('#limit','17');await next.selectOption('#display-speed','0');await next.click('#run-button');
+  await demoAction(next,'fill','#limit','17');await demoAction(next,'selectOption','#display-speed','0');await demoAction(next,'click','#run-button');
   await expect(next.locator('#run-status')).toContainText('Mandate complete');await expect(next.locator('#cache-result')).toHaveText('HIT');
   await expect(next.locator('#precedent-status')).toContainText('Certificate of Authorized Non-Performance');
 });
@@ -91,7 +92,7 @@ test('an earlier HR-aware owner contributes its real personnel record without in
  await page.route('**/runtime-config.json',async route=>{const response=await route.fetch();await route.fulfill({json:{...await response.json(),revision:legacyRevision,engine:info.project.metadata.engine}});});
  await page.route('**/runtime-worker.js',route=>route.fulfill({contentType:'text/javascript',body:personnelWorker}));
  await page.goto('/demo/');await expect(page.locator('#health-value')).toHaveText('LIVE');
- const next=await context.newPage();await next.goto('/demo/');await next.selectOption('#display-speed','0');await next.fill('#limit','1');await next.click('#run-button');await expect(next.locator('#run-status')).toContainText('Mandate complete');
+ const next=await context.newPage();await next.goto('/demo/');await demoAction(next,'selectOption','#display-speed','0');await demoAction(next,'fill','#limit','1');await demoAction(next,'click','#run-button');await expect(next.locator('#run-status')).toContainText('Mandate complete');
  await expect(next.locator('#chronicle-entries')).toContainText('Personnel has supplied the actual case file');await expect(next.locator('#chronicle-entries')).toContainText('Recorded personnel · procedure explained');await expect(next.locator('#chronicle-entries')).toContainText('other departments are explained as procedure');
  expect(JSON.parse((await invoke(next,'/audit/evidence')).body).journalEntries).toBe(1);
 });
@@ -99,7 +100,7 @@ test('an unknown legacy protocol is refused before a mandate is submitted',async
   await installLegacy(page,info.project.metadata.engine,true);
   const next=await context.newPage();await next.goto('/demo/');
   await expect(next.locator('#health-value')).toHaveText('UNAVAILABLE');
-  await next.click('#run-button');await expect(next.locator('#run-status')).toContainText('unsupported protocol');
+  await demoAction(next,'click','#run-button');await expect(next.locator('#run-status')).toContainText('unsupported protocol');
   expect(JSON.parse((await invoke(page,'/audit/evidence')).body).journalEntries).toBe(0);
 });
 test('a transient release worker refuses retained operations',async({page})=>{

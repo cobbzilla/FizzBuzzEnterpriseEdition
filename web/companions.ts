@@ -28,7 +28,7 @@ export class CompanionDesk {
  private readonly roll=document.querySelector<HTMLElement>('#companion-roll')!;
  private readonly requireRoll=document.querySelector<HTMLInputElement>('#require-companion-roll-call')!;
  private rollScroll=0;
- private restoringRoll=false;private rollTransition=0;
+ private restoringRoll=false;private rollTransition=0;private rollVisible=false;
  private visible=new Map<string,string>();private batches=new Map<string,Promise<Assignment[]>>();private assigned=new Map<string,Assignment>();
  private lastSignature='';private entries=new Map<string,Companion>();private version='';private generation=0;private following=true;private mandate='15';
  constructor(private readonly office?:{remember(d:Discovery):void;clearCompanions():void}){
@@ -36,7 +36,8 @@ export class CompanionDesk {
   this.requireRoll.addEventListener('change',attendance);attendance();
   this.enabled.addEventListener('change',()=>{this.office?.clearCompanions();this.generation++;this.following=true;this.list.replaceChildren();this.lastSignature='';this.latest.hidden=true;if(this.enabled.checked){this.status.textContent='Opening companion appointments for disclosed output…';void this.refresh();}else this.status.textContent='Companion allocation suspended. Official numerical output remains available.';});
   this.policy.addEventListener('change',()=>{this.office?.clearCompanions();this.generation++;this.batches.clear();this.assigned.clear();this.list.replaceChildren();this.lastSignature='';this.following=true;this.status.textContent='Consulting the selected allocation authority…';void this.refresh();});
-  this.scroller.addEventListener('scroll',()=>{if(this.roll.hidden||this.restoringRoll)return;const atBottom=this.scroller.scrollHeight-this.scroller.clientHeight-this.scroller.scrollTop<24;const resume=atBottom&&!this.following;this.following=atBottom;if(resume)this.render();});
+  this.scroller.addEventListener('scroll',()=>{if(this.roll.hidden||this.restoringRoll||!this.scroller.getClientRects().length)return;this.rollScroll=this.scroller.scrollTop;const atBottom=this.scroller.scrollHeight-this.scroller.clientHeight-this.scroller.scrollTop<24;const resume=atBottom&&!this.following;this.following=atBottom;if(resume)this.render();});
+  document.addEventListener('demo-watch-layout',()=>{const visible=this.scroller.getClientRects().length>0;if(visible&&!this.rollVisible){this.restoringRoll=true;this.scroller.scrollTop=this.following?this.scroller.scrollHeight:this.rollScroll;requestAnimationFrame(()=>{this.restoringRoll=false;});}this.rollVisible=visible;});
   this.latest.addEventListener('click',()=>{this.following=true;this.render();this.scroller.scrollTop=this.scroller.scrollHeight;});
   void companionPolicies().then(policies=>{const selected=new URL(location.href).searchParams.get('authority')||this.policy.value;this.policy.replaceChildren(...policies.map(p=>{const option=node('option',p.name);option.value=p.id;return option;}));if(policies.some(p=>p.id===selected))this.policy.value=selected;this.policy.disabled=false;}).catch(error=>{this.status.textContent='Companion policy registry unavailable: '+error.message;});
  }

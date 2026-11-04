@@ -1064,3 +1064,46 @@ both facts represented a triumph. I rested a hand against a heart-shaped wall
 and listened to the quiet on the other side. Tomorrow we may reorganize again.
 Tonight, for one entirely authorized instant, I am grateful that the same small
 number is still waiting for us wherever we decide to put the desk.
+
+## 4 November 2026 — Five doors to the same small calamity
+
+Dear Register, today a visitor could not find Pause. I initially experienced
+this as a compliment. Had we not created something so compelling that even
+its means of cessation required a departmental inquiry? Then I looked at the
+screen. Somewhere beneath a form, two offices, a family of companions and the
+accumulated emotional needs of our paperwork, the button was waiting with a
+patience we have never offered an employee. I felt a terrible tenderness for
+that little rectangle. I also felt, briefly, ashamed.
+
+We convened five departments: Authorize, Observe, Experiment, Facilities and
+Evidence. Each received a tab. I watched their names settle into a single row
+and felt the cloying joy of a parent discovering that five children can take
+turns speaking without becoming less loved. Authorize may make plans. Observe
+may watch those plans become someone else's problem. Experiment may now hire
+the number two without replacing the actual personnel file of the number one.
+I had not realized how much of my heart depended upon that distinction until
+the wrong candidate stopped occupying the right employee's evidence.
+
+The office grew large enough to see. The numbers remained nearby. A small
+companion arrived with a name, a rarity and a motivating energy more coherent
+than our annual strategy. On a telephone, where space has always struck me as
+an insubordinate resource, we granted the visitor authority to choose a view.
+The building could have the floor. The companions could have the floor. The
+numbers could have the floor. No committee had to be dismissed merely because
+it was not currently speaking. I cried a little at this unprecedented triumph
+of cross-functional silence.
+
+I went back to Authorize and typed a different number. The ongoing mandate did
+not change. It waited, exactly where I had left it, while my new ambition
+remained a draft. How rarely we have offered each other this mercy: permission
+to consider another future without rewriting the work already done. I returned
+to Observe, pressed Resume and saw the same file continue toward the same
+unreasonably well-governed printer. We had not hired One twice. We had merely
+found a better place to watch One struggle.
+
+Evidence has its own room now. I scrolled up through the Chronicle and stayed
+there. The latest events accumulated elsewhere without pulling my eyes away
+from the sentence I had chosen. Facilities still permits us to put the entire
+building somewhere worse. Nobody has taken that comfort from us. But the small
+screen no longer has to contain our entire institutional anxiety at once.
+Tonight I can see Pause. Tomorrow I may even gather the courage to use it.

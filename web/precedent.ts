@@ -12,27 +12,31 @@ export function parsePrecedent(value:unknown):PrecedentDossier {
 }
 function element<K extends keyof HTMLElementTagNameMap>(tag:K,text?:string){const n=document.createElement(tag);if(text!==undefined)n.textContent=text;return n;}
 export class PrecedentView {
+ private el<T extends HTMLElement=HTMLElement>(id:string):T{return byId<T>(this.prefix+id);}
+ private text(id:string,value:string|number){this.el(id).textContent=String(value);}
+
  private serial=0;private busy=false;private latest?:PrecedentDossier;
- private readonly form=byId<HTMLFormElement>('precedent-form');private readonly button=byId<HTMLButtonElement>('precedent-submit');
- private readonly list=byId('precedent-steps');private readonly expand=byId<HTMLButtonElement>('precedent-expand');
- constructor(){
-  this.form.addEventListener('submit',event=>{event.preventDefault();if(!this.busy)void this.rehearse();});
+ private readonly form:HTMLFormElement|null;private readonly button:HTMLButtonElement|null;
+ private readonly list:HTMLElement;private readonly expand:HTMLButtonElement;
+ constructor(private readonly prefix=''){
+  this.form=document.getElementById(prefix+'precedent-form') as HTMLFormElement|null;this.button=document.getElementById(prefix+'precedent-submit') as HTMLButtonElement|null;this.list=this.el('precedent-steps');this.expand=this.el<HTMLButtonElement>('precedent-expand');
+  this.form?.addEventListener('submit',event=>{event.preventDefault();if(!this.busy)void this.rehearse();});
   this.expand.addEventListener('click',()=>{const details=[...this.list.querySelectorAll('details')];const open=details.some(d=>!d.open);details.forEach(d=>d.open=open);this.synchronize();});
-  byId('precedent-latest').addEventListener('click',()=>{if(this.latest){++this.serial;this.setBusy(false);this.show(this.latest);}});
+  this.el('precedent-latest').addEventListener('click',()=>{if(this.latest){++this.serial;this.setBusy(false);this.show(this.latest);}});
  }
- private setBusy(busy:boolean){this.busy=busy;this.button.setAttribute('aria-disabled',String(busy));this.list.setAttribute('aria-busy',String(busy));}
+ private setBusy(busy:boolean){this.busy=busy;this.button?.setAttribute('aria-disabled',String(busy));this.list.setAttribute('aria-busy',String(busy));}
  private synchronize(){const details=[...this.list.querySelectorAll('details')],all=details.length>0&&details.every(d=>d.open);this.expand.setAttribute('aria-expanded',String(all));this.expand.textContent=all?'Collapse court documents':'Expand court documents';}
  waiting(extended=false){++this.serial;this.latest=undefined;this.setBusy(false);this.clear(extended?'Extended proceedings bypass retained institutional memory. No prior-work court is convened.':'Awaiting a repository result. The court convenes only if prior text is offered.');}
  mandate(data:PrecedentDossier|undefined,cache:string){
-  ++this.serial;this.setBusy(false);this.latest=data;byId('precedent-latest').setAttribute('aria-disabled',String(!data));
+  ++this.serial;this.setBusy(false);this.latest=data;this.el('precedent-latest').setAttribute('aria-disabled',String(!data));
   if(data)this.show(data);
   else this.clear(cache==='HIT'?'An earlier administration reused institutional memory without forwarding current court papers. Historical approvals are not reconstructed.':cache==='MISS'?'The repository offered no prior text. Fresh production proceeded without convening a reuse court.':'The repository was bypassed. No prior-work license was required.');
  }
- private clear(message:string){setText('precedent-source',message);setText('precedent-status','No court case is open.');this.list.replaceChildren();this.expand.hidden=true;byId('precedent-latest').setAttribute('aria-disabled',String(!this.latest));this.synchronize();}
+ private clear(message:string){this.text('precedent-source',message);this.text('precedent-status','No court case is open.');this.list.replaceChildren();this.expand.hidden=true;this.el('precedent-latest').setAttribute('aria-disabled',String(!this.latest));this.synchronize();}
  private show(d:PrecedentDossier){
-  setText('precedent-source',`${d.purpose==='MANDATE'?'Actual mandate reuse proceedings':'Read-only specimen rehearsal'} · Case ${d.caseId} · Requested ${d.limit} lines · Repository key ${d.repositoryLimit}. These are current reuse decisions, not the original production history.${d.purpose==='MANDATE'&&d.status==='REJECTED'?' This cached candidate was refused before the ordinary fresh-production path was attempted. The numerical result is shown above.':''}`);
+  this.text('precedent-source',`${d.purpose==='MANDATE'?'Actual mandate reuse proceedings':'Read-only specimen rehearsal'} · Case ${d.caseId} · Requested ${d.limit} lines · Repository key ${d.repositoryLimit}. These are current reuse decisions, not the original production history.${d.purpose==='MANDATE'&&d.status==='REJECTED'?' This cached candidate was refused before the ordinary fresh-production path was attempted. The numerical result is shown above.':''}`);
   const objection=d.steps.find(s=>s.state==='REJECTED');
-  setText('precedent-status',d.status==='APPROVED'?`Reuse approved. Certificate of Authorized Non-Performance issued for ${d.certifiedLines} lines.`:`Reuse rejected by ${objection!.office}. ${objection!.finding}`);
+  this.text('precedent-status',d.status==='APPROVED'?`Reuse approved. Certificate of Authorized Non-Performance issued for ${d.certifiedLines} lines.`:`Reuse rejected by ${objection!.office}. ${objection!.finding}`);
   const rows=d.steps.map((step,index)=>{
    const item=element('li');item.dataset.verdict=step.state;const details=element('details'),summary=element('summary');
    const order=element('span',String(index+1).padStart(2,'0'));order.className='personnel-index';order.setAttribute('aria-hidden','true');
@@ -44,9 +48,9 @@ export class PrecedentView {
   this.list.replaceChildren(...rows);this.expand.hidden=false;this.synchronize();
  }
  private async rehearse(){
-  const serial=++this.serial,scenario=byId<HTMLSelectElement>('precedent-scenario').value;this.setBusy(true);setText('precedent-status','The court is examining a read-only specimen. Your numerical output and cache are retained.');
+  const serial=++this.serial,scenario=this.el<HTMLSelectElement>('precedent-scenario').value;this.setBusy(true);this.text('precedent-status','The court is examining a read-only specimen. Your numerical output and cache are retained.');
   try{const response=await request(`/precedent/rehearsal?scenario=${encodeURIComponent(scenario)}`);if(!response.ok)throw new Error(`Court desk returned ${response.status}.`);const data=parsePrecedent(await response.json());if(data.purpose!=='REHEARSAL')throw new Error('The specimen desk returned a different purpose.');if(serial===this.serial)this.show(data);}
-  catch(error){if(serial===this.serial)setText('precedent-status',`The court rehearsal could not be opened: ${(error as Error).message} No numerical mandate was submitted.`);}
+  catch(error){if(serial===this.serial)this.text('precedent-status',`The court rehearsal could not be opened: ${(error as Error).message} No numerical mandate was submitted.`);}
   finally{if(serial===this.serial)this.setBusy(false);}
  }
 }

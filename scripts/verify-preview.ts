@@ -1,3 +1,4 @@
+import {demoNavigator} from './demo-navigation.ts';
 import {chromium} from '@playwright/test';
 import {execFileSync} from 'node:child_process';
 import assert from 'node:assert/strict';
@@ -17,20 +18,22 @@ try {
  await page.waitForFunction(()=>document.querySelector('#health-value')?.textContent === 'LIVE',null,{timeout:60000});
  const release=await page.request.get('http://localhost:18088/release.json').then(r=>r.json());assert.equal(release.revision,revision);assert.equal(release.dirty,false);
  const evidence=await page.request.get('http://localhost:18088/validation/report.json').then(r=>r.json());assert.equal(evidence.revision,revision);assert.equal(evidence.status,'PASSED');assert.equal(evidence.browserLifecycle.status,'PASSED');
- await page.selectOption('#display-speed','0');await page.click('#run-button');
+ await page.selectOption('#authorize-display-speed','0');await page.click('#run-button');
  await page.waitForFunction(()=>document.querySelector('#run-status')?.textContent?.includes('Mandate complete'));
  assert.equal((await page.locator('#output').textContent())?.split('\n').filter(Boolean).length,15);
  assert.ok((await page.locator('#chronicle-entries').textContent())?.includes('One has reported for duty'));
  assert.ok((await page.locator('#chronicle-entries [data-premises-ordinal="7"]').textContent())?.includes('U+00A0'));
+ await demoNavigator(page).watch('commentary');
+ await demoNavigator(page).experiment('premises');
  await page.selectOption('#premises-scenario','bell');await page.click('#premises-submit');await page.waitForFunction(()=>document.querySelector('#premises-status')?.textContent?.includes('U+0007'));
- assert.ok(await page.locator('#chronicle-scroll').evaluate(element=>element.scrollHeight>element.clientHeight));
+ await demoNavigator(page).evidence('chronicle');assert.ok(await page.locator('#chronicle-scroll').evaluate(element=>element.scrollHeight>element.clientHeight));
  assert.equal(await page.locator('#runtime-status, #offline-status').count(),0);
  for(const port of [18088,18089]) {
   for(const route of ['demo','bestiary','department-of-improbable-appointments','about','company-history','accessibility','api','validation']) {
    await page.goto(`http://localhost:${port}/${route}/`);
    assert.equal(await page.getByRole('navigation',{name:'Primary navigation'}).getByRole('link',{name:'About',exact:true}).count(),1);
    assert.equal(await page.getByRole('navigation',{name:'Primary navigation'}).getByRole('link',{name:'Companion bestiary',exact:true}).count(),0);
-   assert.equal(await page.locator('main h1').count(),1);
+   assert.equal(await page.locator('main h1:visible').count(),1);
    if(route==='bestiary')await page.waitForFunction(()=>document.querySelector('#bestiary-status')?.textContent?.includes('3200 companions'));
    if(route==='department-of-improbable-appointments')await page.waitForFunction(()=>document.querySelector('#rarity-rows')?.children.length===3200);
   }

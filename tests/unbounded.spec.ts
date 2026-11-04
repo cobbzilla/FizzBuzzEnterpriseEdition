@@ -1,3 +1,4 @@
+import {demoControl,demoAction} from './demo-controls';
 import {test,expect,type Page} from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 async function invoke(page:Page,path:string) {
@@ -14,23 +15,23 @@ test('numeric character governance is opt-in and can correct the current value',
  await expect(page.locator('#limit')).toHaveAttribute('type','text');
  await expect(page.locator('#limit')).not.toHaveAttribute('max');
  await expect(page.locator('#numeric-autocorrect')).not.toBeChecked();
- await page.fill('#limit','Dept -1,234.5x');
+ await demoAction(page,'fill','#limit','Dept -1,234.5x');
  await expect(page.locator('#limit')).toHaveValue('Dept -1,234.5x');
- await page.click('#run-button');await expect(page.locator('#limit')).toHaveAttribute('aria-invalid','true');
+ await demoAction(page,'click','#run-button');await expect(page.locator('#limit')).toHaveAttribute('aria-invalid','true');
  await page.getByRole('checkbox',{name:'Enforce Numeric Character Governance'}).check();
  await expect(page.locator('#limit')).toHaveValue('12345');
  await expect(page.locator('#limit')).not.toHaveAttribute('aria-invalid','true');
- await page.fill('#limit','a9,007,199,254,740,993 obligations');
+ await demoAction(page,'fill','#limit','a9,007,199,254,740,993 obligations');
  await expect(page.locator('#limit')).toHaveValue('9007199254740993');
  await expect(page.locator('#magnitude-warning')).toBeVisible();
- await page.uncheck('#numeric-autocorrect');await page.fill('#limit','letters can remain');
+ await demoAction(page,'uncheck','#numeric-autocorrect');await demoAction(page,'fill','#limit','letters can remain');
  await expect(page.locator('#limit')).toHaveValue('letters can remain');
  await expect(page.locator('#magnitude-warning')).toBeHidden();
 });
 test('a mandate above one thousand completes with exact rolling output',async({page})=>{
  await page.goto('/demo/');await expect(page.locator('#health-value')).toHaveText('LIVE');
  const before=await invoke(page,'/audit/evidence');
- await page.fill('#limit','1234');await page.selectOption('#display-speed','0');await page.click('#run-button');
+ await demoAction(page,'fill','#limit','1234');await demoAction(page,'selectOption','#display-speed','0');await demoAction(page,'click','#run-button');
  await expect(page.locator('#run-status')).toContainText('Mandate complete. 1234 lines disclosed');
  await expect(page.locator('#cache-result')).toHaveText('BYPASS');
  await expect(page.locator('#magnitude-warning')).toBeHidden();
@@ -42,26 +43,26 @@ test('a mandate above one thousand completes with exact rolling output',async({p
 });
 test('BigInt mandates keep their exact bound, rotate a warning and can be stopped',async({page})=>{
  await page.goto('/demo/');await expect(page.locator('#health-value')).toHaveText('LIVE');
- await page.fill('#limit','9007199254740991');await expect(page.locator('#magnitude-warning')).toBeHidden();
- await page.fill('#limit','9007199254740993');await expect(page.locator('#magnitude-warning')).toBeVisible();
+ await demoAction(page,'fill','#limit','9007199254740991');await expect(page.locator('#magnitude-warning')).toBeHidden();
+ await demoAction(page,'fill','#limit','9007199254740993');await expect(page.locator('#magnitude-warning')).toBeVisible();
  const first=await page.locator('#magnitude-warning').textContent();
- await page.fill('#limit','9007199254740994');expect(await page.locator('#magnitude-warning').textContent()).not.toBe(first);
- await page.fill('#limit','9007199254740993');await page.selectOption('#display-speed','225');await page.click('#run-button');
+ await demoAction(page,'fill','#limit','9007199254740994');expect(await page.locator('#magnitude-warning').textContent()).not.toBe(first);
+ await demoAction(page,'fill','#limit','9007199254740993');await demoAction(page,'selectOption','#display-speed','225');await demoAction(page,'click','#run-button');
  await expect(page.locator('#output-count')).toContainText('of 9007199254740993 lines');
  await expect(page.locator('#forecast-units')).toHaveText('13811038857269522');
- await page.click('#stop-reading');await expect(page.locator('#run-status')).toContainText('Proceedings stopped');
+ await demoAction(page,'click','#stop-reading');await expect(page.locator('#run-status')).toContainText('Proceedings stopped');
  const stopped=await page.locator('#output').textContent();await page.waitForTimeout(300);
  expect(await page.locator('#output').textContent()).toBe(stopped);
- await page.fill('#limit','15');await page.selectOption('#display-speed','0');await page.click('#run-button');
+ await demoAction(page,'fill','#limit','15');await demoAction(page,'selectOption','#display-speed','0');await demoAction(page,'click','#run-button');
  await expect(page.locator('#run-status')).toContainText('Mandate complete');
  await expect(page.locator('#magnitude-warning')).toBeHidden();
 });
 test('extended disclosure can pause and waive delays without losing browser responsiveness',async({page})=>{
- await page.goto('/demo/');await page.fill('#limit','1001');await page.selectOption('#display-speed','225');await page.click('#run-button');
+ await page.goto('/demo/');await demoAction(page,'fill','#limit','1001');await demoAction(page,'selectOption','#display-speed','225');await demoAction(page,'click','#run-button');
  await expect(page.locator('#output-count')).toContainText('of 1001 lines');
- await page.click('#pause-reading');const paused=await page.locator('#output').textContent();await page.waitForTimeout(300);
+ await demoAction(page,'click','#pause-reading');const paused=await page.locator('#output').textContent();await page.waitForTimeout(300);
  expect(await page.locator('#output').textContent()).toBe(paused);
- await page.getByRole('button',{name:'Waive disclosure delays',exact:true}).click();
+ const waive=await demoControl(page,'#reveal-all');await expect(waive).toHaveText('Waive disclosure delays');await waive.click();
  await expect(page.locator('#run-status')).toContainText('Mandate complete. 1001 lines disclosed');
 });
 test('Java BigInteger windows agree with a native BigInt oracle beyond machine bounds',async({page})=>{
@@ -86,7 +87,7 @@ test('extended API request desks preserve decimal strings and finite window vali
 });
 test('oversized policy notice and governance controls reflow accessibly',async({page},info)=>{
  test.skip(info.project.metadata.engine==='js','DOM is audited once per browser; arithmetic is checked in both engines.');
- await page.goto('/demo/');await page.fill('#limit','1'+'0'.repeat(100));await page.check('#numeric-autocorrect');
+ await page.goto('/demo/');await demoAction(page,'fill','#limit','1'+'0'.repeat(100));await demoAction(page,'check','#numeric-autocorrect');
  const audit=await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21a','wcag21aa','wcag22aa']).analyze();
  expect(audit.violations.map(v=>({id:v.id,nodes:v.nodes.map(n=>n.target)}))).toEqual([]);
  await page.setViewportSize({width:320,height:800});

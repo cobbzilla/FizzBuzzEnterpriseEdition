@@ -1607,6 +1607,11 @@ var OfficeSupervisionDesk = class {
     resize.observe(element("supervision-stage"));
     new IntersectionObserver(() => this.activity(), { threshold: [0, 0.15] }).observe(element("supervision-stage"));
     document.addEventListener("visibilitychange", () => this.activity());
+    document.addEventListener("demo-desk-change", () => this.activity());
+    document.addEventListener("demo-watch-layout", () => {
+      this.activity();
+      requestAnimationFrame(() => this.renderer?.resize());
+    });
     this.media.addEventListener("change", () => this.updateScene());
     addEventListener("pagehide", () => {
       this.interrupt();
@@ -1685,11 +1690,6 @@ var OfficeSupervisionDesk = class {
       element("pace-help").textContent = "Executive Hovering owns the disclosure queue. Each recorded decision must be witnessed. Restore Autonomy or uncheck Executive Hovering to recover your preceding cadence.";
       if (!this.authority.reading()) this.current("Executive oversight is standing by for supplied proceedings. Run or replay a mandate to begin a new observation.");
       void this.ensureScene();
-      if (user) requestAnimationFrame(() => {
-        if (!this.enabled) return;
-        element("supervision-title").focus({ preventScroll: true });
-        element("mandate-output").scrollIntoView({ block: "start", behavior: this.media.matches ? "instant" : "smooth" });
-      });
     } else {
       this.interrupt();
       this.cadence.disabled = false;
@@ -1701,6 +1701,7 @@ var OfficeSupervisionDesk = class {
     }
     this.activity();
     this.syncControls();
+    document.dispatchEvent(new Event("demo-presentation-change"));
     if (user) this.authority.wake();
   }
   syncControls() {
@@ -1830,11 +1831,12 @@ var OfficeSupervisionDesk = class {
   }
   visible() {
     if (!this.enabled || document.hidden || document.querySelector("dialog[open]")) return false;
+    if (document.body.classList.contains("demo-page")) return document.body.dataset.desk === "observe";
     const rect = element("supervision-stage").getBoundingClientRect(), bottom = innerHeight - (document.querySelector("#discovery-register")?.getBoundingClientRect().height || 0);
     return rect.width > 0 && Math.min(rect.bottom, bottom) - Math.max(rect.top, 0) >= Math.min(60, rect.height * 0.2);
   }
   activity() {
-    const active = this.visible();
+    const rect = this.canvas.getBoundingClientRect(), active = this.visible() && rect.width > 0 && rect.height > 0;
     if (active !== this.sceneActive) {
       this.sceneActive = active;
       this.renderer?.active(active);
@@ -1844,9 +1846,12 @@ var OfficeSupervisionDesk = class {
     clearTimeout(this.readiness);
     this.readiness = setTimeout(() => {
       if (this.ready || !this.enabled) return;
-      if (this.visible()) this.graphicsFailure();
+      if (this.sceneActive) this.graphicsFailure();
       else this.armReadiness();
     }, 2e4);
+  }
+  presentationReady() {
+    return this.ready || this.fallback || !this.canvas.getClientRects().length;
   }
   async ensureScene() {
     if (this.renderer) {
@@ -1922,6 +1927,7 @@ var OfficeSupervisionDesk = class {
     this.pane.dataset.state = "running";
     const status = element("supervision-current");
     status.replaceChildren(node("strong", index + 1 + " / " + total + " \xB7 " + step.event.office + " \xB7 Address " + officeEstate.current.placements.find((p) => p.room === step.shot.room).address), document.createTextNode(step.event.finding));
+    this.authority.notice((this.authority.paused() ? "Paused observation" : "Observing") + " \xB7 " + (index + 1) + " / " + total + " \xB7 " + step.event.office);
     element("supervision-caption").scrollTop = 0;
     const source = step.source === "rehearsal" ? "Read-only personnel specimen. Numerical output is retained." : step.source === "disclosure" ? "Observed result or cache receipt. Fresh production work is not inferred." : this.mode === "replay" ? "Retained Java evidence. No business operation is being repeated." : "Recorded Java evidence. The operation has already completed; its UI disclosure is being choreographed.";
     element("supervision-source").textContent = source + (this.envelope?.omitted ? " The source dossier omitted " + this.envelope.omitted + " entries; absent work is not reconstructed." : "");
@@ -1985,7 +1991,7 @@ var OfficeSupervisionDesk = class {
           }
         }
         if (!shown) {
-          if (!moving && (this.ready || this.fallback) && visible2 && (!paused2 || this.credits > 0)) {
+          if (!moving && this.presentationReady() && visible2 && (!paused2 || this.credits > 0)) {
             shown = true;
             this.show(step, index, total);
           } else {
@@ -1997,7 +2003,7 @@ var OfficeSupervisionDesk = class {
           this.credits = 0;
           manual = true;
         }
-        const allow = !moving && visible2 && (this.ready || this.fallback) && (!paused2 || manual);
+        const allow = !moving && visible2 && this.presentationReady() && (!paused2 || manual);
         const cue = clock.tick(now, allow, manual);
         this.renderer?.direct(cue);
         if (this.pane.dataset.phase !== cue.phase) {
@@ -2128,7 +2134,7 @@ var ReorganizationPanel = class {
     const copy = node("button", "Copy This Approved Chaos");
     copy.type = "button";
     copy.addEventListener("click", async () => {
-      const input = document.getElementById("limit"), authority = document.getElementById("companion-strategy");
+      const input = document.getElementById("limit"), authority = document.getElementById("authorize-companion-strategy") || document.getElementById("companion-strategy");
       let mandate = "15";
       try {
         mandate = String(parseMandate(input.value));
@@ -2154,7 +2160,7 @@ var ReorganizationPanel = class {
     const sharing = node("div");
     sharing.className = "estate-controls estate-sharing";
     sharing.append(copy, share);
-    this.details.append(sharing, this.map, this.perk, this.table, node(this.view === "office" ? "h3" : "h4", "Minutes of Spatial Achievement"), node("p", "The latest ten transformations are retained in this tab. These distances describe illustrated desk-to-desk paper routes in scene units; they are not service response times."), this.scroll);
+    this.details.append(sharing, this.map, this.perk, this.table, node("h3", "Minutes of Spatial Achievement"), node("p", "The latest ten transformations are retained in this tab. These distances describe illustrated desk-to-desk paper routes in scene units; they are not service response times."), this.scroll);
     this.skip.type = "button";
     this.skip.addEventListener("click", () => {
       this.button.focus({ preventScroll: true });
@@ -2243,7 +2249,7 @@ var ReorganizationPanel = class {
     const l = officeEstate.current;
     if (!l.amenity) return;
     this.perkTrigger = trigger;
-    const specimen = amenities[l.amenity.kind], title2 = node(this.view === "office" ? "h3" : "h4", specimen.name + " \xB7 " + estateLabel(l) + " / " + l.amenity.address), answer = node("p");
+    const specimen = amenities[l.amenity.kind], title2 = node("h3", specimen.name + " \xB7 " + estateLabel(l) + " / " + l.amenity.address), answer = node("p");
     answer.setAttribute("role", "status");
     answer.setAttribute("aria-live", "polite");
     answer.setAttribute("aria-atomic", "true");
@@ -2269,7 +2275,7 @@ var ReorganizationPanel = class {
   }
   appendMemo(m) {
     const li = node("li");
-    li.append(node(this.view === "office" ? "h4" : "h5", "Transformation " + m.to.edition + ": " + m.title), node("p", m.rationale), node("p", m.finding + " Mean illustrated commute: " + m.before.toFixed(1) + " \u2192 " + m.after.toFixed(1) + " scene units."));
+    li.append(node("h4", "Transformation " + m.to.edition + ": " + m.title), node("p", m.rationale), node("p", m.finding + " Mean illustrated commute: " + m.before.toFixed(1) + " \u2192 " + m.after.toFixed(1) + " scene units."));
     const moves = node("ul");
     for (const p of m.to.placements) {
       const name = rooms.find((r) => r.id === p.room).short;
@@ -2592,11 +2598,23 @@ var CompanionDesk = class {
       void this.refresh();
     });
     this.scroller.addEventListener("scroll", () => {
-      if (this.roll.hidden || this.restoringRoll) return;
+      if (this.roll.hidden || this.restoringRoll || !this.scroller.getClientRects().length) return;
+      this.rollScroll = this.scroller.scrollTop;
       const atBottom = this.scroller.scrollHeight - this.scroller.clientHeight - this.scroller.scrollTop < 24;
       const resume = atBottom && !this.following;
       this.following = atBottom;
       if (resume) this.render();
+    });
+    document.addEventListener("demo-watch-layout", () => {
+      const visible2 = this.scroller.getClientRects().length > 0;
+      if (visible2 && !this.rollVisible) {
+        this.restoringRoll = true;
+        this.scroller.scrollTop = this.following ? this.scroller.scrollHeight : this.rollScroll;
+        requestAnimationFrame(() => {
+          this.restoringRoll = false;
+        });
+      }
+      this.rollVisible = visible2;
     });
     this.latest.addEventListener("click", () => {
       this.following = true;
@@ -2629,6 +2647,7 @@ var CompanionDesk = class {
   rollScroll = 0;
   restoringRoll = false;
   rollTransition = 0;
+  rollVisible = false;
   visible = /* @__PURE__ */ new Map();
   batches = /* @__PURE__ */ new Map();
   assigned = /* @__PURE__ */ new Map();
@@ -2767,7 +2786,7 @@ function prepareSharedEncounter(input) {
   const status = node("p", "The referred mandate is ready. Run it to reproduce the sequence. No numerical mandate has been submitted.");
   status.setAttribute("role", "status");
   panel.append(title2, status);
-  document.querySelector("#companion-help").after(panel);
+  document.querySelector("#authorize-companion-help, #companion-help").after(panel);
   if (!ordinal || !/^[1-9][0-9]*$/.test(ordinal) || BigInt(ordinal) > BigInt(mandate) || !strategy || !catalogVersion || !expected || query.get("seedPolicy") !== seedPolicy) {
     status.textContent = "The mandate was prefilled. This referral has incomplete or unsupported encounter evidence; select an authority and run to explore.";
     return;
@@ -2823,32 +2842,47 @@ function parseDossier(value) {
   return data;
 }
 var PersonnelProceedings = class {
-  constructor(actions) {
+  constructor(actions, prefix = "") {
     this.actions = actions;
-    document.querySelectorAll("[data-personnel-scenario]").forEach((button) => button.addEventListener("click", () => {
+    this.prefix = prefix;
+    this.scenarios().forEach((button) => button.addEventListener("click", () => {
       if (button.getAttribute("aria-disabled") !== "true") actions.rehearse(button.dataset.personnelScenario);
     }));
-    byId2("personnel-replay").addEventListener("click", () => {
+    this.el("personnel-replay").addEventListener("click", () => {
       if ((this.dossier || this.playbackAvailable) && !this.busy) actions.replay();
     });
-    byId2("personnel-step").addEventListener("click", () => {
+    this.el("personnel-step").addEventListener("click", () => {
       if ((this.dossier || this.playbackAvailable) && !this.busy) actions.step();
     });
-    byId2("personnel-documents").addEventListener("click", () => {
+    this.el("personnel-documents").addEventListener("click", () => {
       if (!this.dossier || this.busy) return;
-      byId2("personnel-documents").focus();
-      byId2("personnel-dialog").showModal();
+      this.el("personnel-documents").focus();
+      this.el("personnel-dialog").showModal();
     });
-    byId2("personnel-dialog-close").addEventListener("click", () => byId2("personnel-dialog").close());
-    byId2("personnel-dialog").addEventListener("close", () => byId2("personnel-documents").focus({ preventScroll: true }));
-    byId2("personnel-documents-toggle").addEventListener("click", () => {
-      const open = byId2("personnel-documents-toggle").getAttribute("aria-expanded") !== "true";
+    this.el("personnel-dialog-close").addEventListener("click", () => this.el("personnel-dialog").close());
+    this.el("personnel-dialog").addEventListener("close", () => {
+      const opener = this.el("personnel-documents");
+      if (opener.getClientRects().length) opener.focus({ preventScroll: true });
+      else document.querySelector("[data-open-personnel]")?.focus({ preventScroll: true });
+    });
+    this.el("personnel-documents-toggle").addEventListener("click", () => {
+      const open = this.el("personnel-documents-toggle").getAttribute("aria-expanded") !== "true";
       this.rows.forEach((row) => row.details.open = open);
       this.synchronizeDisclosure();
     });
     this.updateControls();
   }
   actions;
+  prefix;
+  el(id) {
+    return byId2(this.prefix + id);
+  }
+  text(id, value) {
+    this.el(id).textContent = String(value);
+  }
+  scenarios() {
+    return this.prefix ? document.querySelectorAll("#desk-experiment [data-personnel-scenario]") : document.createElement("div").querySelectorAll("button");
+  }
   dossier;
   visible = 0;
   rows = [];
@@ -2861,8 +2895,8 @@ var PersonnelProceedings = class {
   }
   synchronizeDisclosure() {
     const open = this.rows.length > 0 && this.rows.every((row) => row.details.open);
-    byId2("personnel-documents-toggle").setAttribute("aria-expanded", String(open));
-    setText("personnel-documents-toggle", open ? "Fold all documents" : "Expand all documents");
+    this.el("personnel-documents-toggle").setAttribute("aria-expanded", String(open));
+    this.text("personnel-documents-toggle", open ? "Fold all documents" : "Expand all documents");
   }
   get record() {
     return this.dossier;
@@ -2875,9 +2909,9 @@ var PersonnelProceedings = class {
     this.updateControls();
   }
   updateControls() {
-    for (const id of ["personnel-replay", "personnel-step"]) byId2(id).setAttribute("aria-disabled", String(!this.dossier && !this.playbackAvailable || this.busy));
-    byId2("personnel-documents").setAttribute("aria-disabled", String(!this.dossier || this.busy));
-    document.querySelectorAll("[data-personnel-scenario]").forEach((button) => button.setAttribute("aria-disabled", String(this.busy)));
+    for (const id of ["personnel-replay", "personnel-step"]) this.el(id).setAttribute("aria-disabled", String(!this.dossier && !this.playbackAvailable || this.busy));
+    this.el("personnel-documents").setAttribute("aria-disabled", String(!this.dossier || this.busy));
+    this.scenarios().forEach((button) => button.setAttribute("aria-disabled", String(this.busy)));
   }
   loading() {
     this.clear("Obtaining the personnel file\u2026", "Awaiting response");
@@ -2888,12 +2922,12 @@ var PersonnelProceedings = class {
     this.rows = [];
     this.visible = 0;
     this.busy = false;
-    byId2("personnel-steps").replaceChildren();
-    byId2("personnel-steps").hidden = true;
-    setText("personnel-origin", message);
-    setText("personnel-verdict", verdict);
-    setText("personnel-status", "No new personnel decisions are available to read.");
-    byId2("personnel-step").textContent = "Step through";
+    this.el("personnel-steps").replaceChildren();
+    this.el("personnel-steps").hidden = true;
+    this.text("personnel-origin", message);
+    this.text("personnel-verdict", verdict);
+    this.text("personnel-status", "No new personnel decisions are available to read.");
+    this.el("personnel-step").textContent = "Step through";
     this.synchronizeDisclosure();
     this.updateControls();
   }
@@ -2926,10 +2960,10 @@ var PersonnelProceedings = class {
     this.dossier = data;
     this.visible = 0;
     this.source = source || (data.purpose === "REHEARSAL" ? "Read-only rehearsal" : "Mandate record");
-    setText("personnel-origin", `${this.source} \xB7 Applicant ${data.candidate} \xB7 Position: Initial ordinal \xB7 Case ${data.caseId}`);
-    setText("personnel-verdict", "Reading completed record");
-    setText("personnel-status", "Reading completed proceedings \xB7 0 of 7 offices disclosed.");
-    setText("personnel-step", "Step through");
+    this.text("personnel-origin", `${this.source} \xB7 Applicant ${data.candidate} \xB7 Position: Initial ordinal \xB7 Case ${data.caseId}`);
+    this.text("personnel-verdict", "Reading completed record");
+    this.text("personnel-status", "Reading completed proceedings \xB7 0 of 7 offices disclosed.");
+    this.text("personnel-step", "Step through");
     this.rows = data.steps.map((step, index) => {
       const item = document.createElement("li");
       item.dataset.read = "false";
@@ -2963,8 +2997,8 @@ var PersonnelProceedings = class {
       item.append(details);
       return { item, badge, details };
     });
-    byId2("personnel-steps").replaceChildren(...this.rows.map((row) => row.item));
-    byId2("personnel-steps").hidden = false;
+    this.el("personnel-steps").replaceChildren(...this.rows.map((row) => row.item));
+    this.el("personnel-steps").hidden = false;
     this.setBusy(false);
     this.synchronizeDisclosure();
   }
@@ -2979,9 +3013,9 @@ var PersonnelProceedings = class {
       row.badge.textContent = read ? state === "APPROVED" ? "Approved" : state === "REJECTED" ? "Rejected" : "Not reached" : "Not yet read";
     });
     const last = this.dossier.steps[Math.max(0, this.visible - 1)];
-    setText("personnel-status", this.visible === 7 ? this.dossier.status === "APPROVED" ? "All seven offices disclosed. Commencement authorized at 1." : `Personnel application rejected by ${this.dossier.steps.find((step) => step.state === "REJECTED").office}. Subsequent offices were not reached.` : `Reading completed proceedings \xB7 ${this.visible} of 7 offices disclosed${this.visible ? `. ${last.office}: ${last.state === "APPROVED" ? "approved" : last.state === "REJECTED" ? "rejected" : "not reached"}` : ""}.`);
-    setText("personnel-verdict", this.visible === 7 ? this.dossier.status === "APPROVED" ? "Approved to start at 1" : "Application rejected" : "Reading completed record");
-    setText("personnel-step", this.visible > 0 && this.visible < 7 ? "Next office" : "Step through");
+    this.text("personnel-status", this.visible === 7 ? this.dossier.status === "APPROVED" ? "All seven offices disclosed. Commencement authorized at 1." : `Personnel application rejected by ${this.dossier.steps.find((step) => step.state === "REJECTED").office}. Subsequent offices were not reached.` : `Reading completed proceedings \xB7 ${this.visible} of 7 offices disclosed${this.visible ? `. ${last.office}: ${last.state === "APPROVED" ? "approved" : last.state === "REJECTED" ? "rejected" : "not reached"}` : ""}.`);
+    this.text("personnel-verdict", this.visible === 7 ? this.dossier.status === "APPROVED" ? "Approved to start at 1" : "Application rejected" : "Reading completed record");
+    this.text("personnel-step", this.visible > 0 && this.visible < 7 ? "Next office" : "Step through");
     this.actions.disclosed?.(this.dossier, this.visible);
   }
   async read(data, clock, source) {
@@ -3003,7 +3037,7 @@ var PersonnelProceedings = class {
   }
   stopReading() {
     this.setBusy(false);
-    if (this.dossier && this.visible < 7) setText("personnel-status", `Reading adjourned after ${this.visible} of 7 offices. Replay or inspect the completed record when ready.`);
+    if (this.dossier && this.visible < 7) this.text("personnel-status", `Reading adjourned after ${this.visible} of 7 offices. Replay or inspect the completed record when ready.`);
     else if (!this.dossier) this.clear("Proceedings adjourned before a personnel file was disclosed.");
   }
 };
@@ -3022,15 +3056,13 @@ function element2(tag, text2) {
   return n;
 }
 var PrecedentView = class {
-  serial = 0;
-  busy = false;
-  latest;
-  form = byId2("precedent-form");
-  button = byId2("precedent-submit");
-  list = byId2("precedent-steps");
-  expand = byId2("precedent-expand");
-  constructor() {
-    this.form.addEventListener("submit", (event) => {
+  constructor(prefix = "") {
+    this.prefix = prefix;
+    this.form = document.getElementById(prefix + "precedent-form");
+    this.button = document.getElementById(prefix + "precedent-submit");
+    this.list = this.el("precedent-steps");
+    this.expand = this.el("precedent-expand");
+    this.form?.addEventListener("submit", (event) => {
       event.preventDefault();
       if (!this.busy) void this.rehearse();
     });
@@ -3040,7 +3072,7 @@ var PrecedentView = class {
       details.forEach((d) => d.open = open);
       this.synchronize();
     });
-    byId2("precedent-latest").addEventListener("click", () => {
+    this.el("precedent-latest").addEventListener("click", () => {
       if (this.latest) {
         ++this.serial;
         this.setBusy(false);
@@ -3048,9 +3080,23 @@ var PrecedentView = class {
       }
     });
   }
+  prefix;
+  el(id) {
+    return byId2(this.prefix + id);
+  }
+  text(id, value) {
+    this.el(id).textContent = String(value);
+  }
+  serial = 0;
+  busy = false;
+  latest;
+  form;
+  button;
+  list;
+  expand;
   setBusy(busy) {
     this.busy = busy;
-    this.button.setAttribute("aria-disabled", String(busy));
+    this.button?.setAttribute("aria-disabled", String(busy));
     this.list.setAttribute("aria-busy", String(busy));
   }
   synchronize() {
@@ -3068,22 +3114,22 @@ var PrecedentView = class {
     ++this.serial;
     this.setBusy(false);
     this.latest = data;
-    byId2("precedent-latest").setAttribute("aria-disabled", String(!data));
+    this.el("precedent-latest").setAttribute("aria-disabled", String(!data));
     if (data) this.show(data);
     else this.clear(cache === "HIT" ? "An earlier administration reused institutional memory without forwarding current court papers. Historical approvals are not reconstructed." : cache === "MISS" ? "The repository offered no prior text. Fresh production proceeded without convening a reuse court." : "The repository was bypassed. No prior-work license was required.");
   }
   clear(message) {
-    setText("precedent-source", message);
-    setText("precedent-status", "No court case is open.");
+    this.text("precedent-source", message);
+    this.text("precedent-status", "No court case is open.");
     this.list.replaceChildren();
     this.expand.hidden = true;
-    byId2("precedent-latest").setAttribute("aria-disabled", String(!this.latest));
+    this.el("precedent-latest").setAttribute("aria-disabled", String(!this.latest));
     this.synchronize();
   }
   show(d) {
-    setText("precedent-source", `${d.purpose === "MANDATE" ? "Actual mandate reuse proceedings" : "Read-only specimen rehearsal"} \xB7 Case ${d.caseId} \xB7 Requested ${d.limit} lines \xB7 Repository key ${d.repositoryLimit}. These are current reuse decisions, not the original production history.${d.purpose === "MANDATE" && d.status === "REJECTED" ? " This cached candidate was refused before the ordinary fresh-production path was attempted. The numerical result is shown above." : ""}`);
+    this.text("precedent-source", `${d.purpose === "MANDATE" ? "Actual mandate reuse proceedings" : "Read-only specimen rehearsal"} \xB7 Case ${d.caseId} \xB7 Requested ${d.limit} lines \xB7 Repository key ${d.repositoryLimit}. These are current reuse decisions, not the original production history.${d.purpose === "MANDATE" && d.status === "REJECTED" ? " This cached candidate was refused before the ordinary fresh-production path was attempted. The numerical result is shown above." : ""}`);
     const objection = d.steps.find((s) => s.state === "REJECTED");
-    setText("precedent-status", d.status === "APPROVED" ? `Reuse approved. Certificate of Authorized Non-Performance issued for ${d.certifiedLines} lines.` : `Reuse rejected by ${objection.office}. ${objection.finding}`);
+    this.text("precedent-status", d.status === "APPROVED" ? `Reuse approved. Certificate of Authorized Non-Performance issued for ${d.certifiedLines} lines.` : `Reuse rejected by ${objection.office}. ${objection.finding}`);
     const rows = d.steps.map((step, index) => {
       const item = element2("li");
       item.dataset.verdict = step.state;
@@ -3113,9 +3159,9 @@ var PrecedentView = class {
     this.synchronize();
   }
   async rehearse() {
-    const serial = ++this.serial, scenario = byId2("precedent-scenario").value;
+    const serial = ++this.serial, scenario = this.el("precedent-scenario").value;
     this.setBusy(true);
-    setText("precedent-status", "The court is examining a read-only specimen. Your numerical output and cache are retained.");
+    this.text("precedent-status", "The court is examining a read-only specimen. Your numerical output and cache are retained.");
     try {
       const response = await request(`/precedent/rehearsal?scenario=${encodeURIComponent(scenario)}`);
       if (!response.ok) throw new Error(`Court desk returned ${response.status}.`);
@@ -3123,7 +3169,7 @@ var PrecedentView = class {
       if (data.purpose !== "REHEARSAL") throw new Error("The specimen desk returned a different purpose.");
       if (serial === this.serial) this.show(data);
     } catch (error) {
-      if (serial === this.serial) setText("precedent-status", `The court rehearsal could not be opened: ${error.message} No numerical mandate was submitted.`);
+      if (serial === this.serial) this.text("precedent-status", `The court rehearsal could not be opened: ${error.message} No numerical mandate was submitted.`);
     } finally {
       if (serial === this.serial) this.setBusy(false);
     }
@@ -3930,6 +3976,8 @@ function paragraphs(folio, language) {
   return parts;
 }
 var ExecutiveChronicle = class {
+  relocating = false;
+  relocation = 0;
   language = new ChronicleLanguage();
   rehearsals = /* @__PURE__ */ new WeakMap();
   packet;
@@ -3955,7 +4003,7 @@ var ExecutiveChronicle = class {
       this.pinAfterResize = false;
     };
     this.body.addEventListener("scroll", () => {
-      if (this.pinAfterResize) return;
+      if (this.pinAfterResize || this.relocating || !this.body.getClientRects().length) return;
       this.pinned = this.atBottom();
       if (this.pinned && this.follow.checked && this.pending) this.latest();
     }, { passive: true });
@@ -4125,7 +4173,7 @@ var ExecutiveChronicle = class {
   render(folio) {
     const article = node2("article", void 0, "chronicle-folio");
     article.dataset.ordinal = folio.ordinal;
-    article.append(node2("p", `Ordinal ${folio.ordinal} \xB7 ${folio.cache === "HIT" ? "Institutional memory" : folio.recorded ? "Recorded Java proceedings" : folio.events.length ? "Recorded personnel \xB7 procedure explained" : "Observed output \xB7 procedure explained"}`, "chronicle-source"), node2("h4", title(folio)));
+    article.append(node2("p", `Ordinal ${folio.ordinal} \xB7 ${folio.cache === "HIT" ? "Institutional memory" : folio.recorded ? "Recorded Java proceedings" : folio.events.length ? "Recorded personnel \xB7 procedure explained" : "Observed output \xB7 procedure explained"}`, "chronicle-source"), node2("h3", title(folio)));
     folio.narrative ??= Object.freeze(paragraphs(folio, this.language));
     for (const paragraph of folio.narrative) article.append(node2("p", paragraph, "chronicle-prose"));
     const certificate = folio.events.find((e) => e.kind === "PREMISES_CERTIFICATE");
@@ -4175,7 +4223,7 @@ var ExecutiveChronicle = class {
       return;
     }
     const article = node2("article", void 0, "chronicle-note");
-    article.append(node2("h4", heading), node2("p", text2));
+    article.append(node2("h3", heading), node2("p", text2));
     this.entries.append(article);
     const notes = this.entries.querySelectorAll(".chronicle-note");
     if (notes.length > 16) notes[0].remove();
@@ -4195,7 +4243,7 @@ var ExecutiveChronicle = class {
       prose = Object.freeze([this.language.write("rehearsal", "This is a read-only rehearsal using the actual personnel offices. Existing numerical output is retained; the rehearsal creates no numerical audit entries."), ...data.steps.map((decision) => this.language.write("office", `${decision.office} \u2014 ${decision.state === "APPROVED" ? "Approved" : decision.state === "REJECTED" ? "Rejected" : "Not reached"}. ${decision.finding} ${decision.document}`))]);
       this.rehearsals.set(data, prose);
     }
-    article.replaceChildren(node2("h4", `Management intervention: applicant ${data.candidate}`), node2("p", prose[0]));
+    article.replaceChildren(node2("h3", `Management intervention: applicant ${data.candidate}`), node2("p", prose[0]));
     for (const paragraph of prose.slice(1, count + 1)) article.append(node2("p", paragraph));
     setText("chronicle-current", count === 7 ? data.status === "APPROVED" ? "Personnel rehearsal approved: One may start work." : `Personnel rehearsal rejected by ${data.steps.find((e) => e.state === "REJECTED").office}.` : `Reading completed personnel rehearsal: ${count} of 7 offices.`);
     const rehearsals = this.entries.querySelectorAll("[data-rehearsal]");
@@ -4215,7 +4263,22 @@ var ExecutiveChronicle = class {
     return this.follow.checked && this.pinned;
   }
   pauseIfReading() {
-    if (!this.pinAfterResize && !this.atBottom()) this.pinned = false;
+    if (!this.relocating && this.body.getClientRects().length && !this.pinAfterResize && !this.atBottom()) this.pinned = false;
+  }
+  place(target) {
+    const section = this.body.closest(".chronicle");
+    if (section.parentElement === target) return;
+    const serial = ++this.relocation, following = this.isFollowing(), position = this.body.scrollTop;
+    this.relocating = true;
+    target.append(section);
+    if (following) this.followBottom();
+    else this.body.scrollTop = position;
+    requestAnimationFrame(() => {
+      if (serial !== this.relocation) return;
+      if (following && this.isFollowing()) this.followBottom();
+      else this.body.scrollTop = position;
+      this.relocating = false;
+    });
   }
   followBottom() {
     if (this.isFollowing()) this.body.scrollTop = this.body.scrollHeight;
@@ -4247,6 +4310,506 @@ var ExecutiveChronicle = class {
   }
 };
 
+// web/demo-workspace-model.ts
+var desks2 = ["authorize", "observe", "experiment", "facilities", "evidence"];
+var watchViews = ["overview", "output", "office", "companions", "commentary"];
+function readDesk(url) {
+  const explicit = url.searchParams.get("desk");
+  if (desks2.includes(explicit)) return explicit;
+  if (url.searchParams.get("tour") === "office-v1" || url.hash === "#office-tour") return "facilities";
+  if (/^#(precedent|chronicle|personnel|supervision-evidence)/.test(url.hash)) return "evidence";
+  if (url.hash.startsWith("#premises")) return "experiment";
+  if (["#mandate-output", "#output"].includes(url.hash)) return "observe";
+  return "authorize";
+}
+function watchView(value, office2, companions2) {
+  if (!watchViews.includes(value)) return "overview";
+  if (value === "office" && !office2 || value === "companions" && !companions2) return "output";
+  return value;
+}
+function initialWatchView(mobile, office2) {
+  return mobile ? office2 ? "office" : "output" : "overview";
+}
+function deskURL(source, desk) {
+  const next = new URL(source);
+  next.searchParams.set("desk", desk);
+  next.hash = "";
+  return next;
+}
+
+// web/demo-workspace.ts
+var DemoWorkspace = class {
+  constructor(run) {
+    this.run = run;
+    document.querySelectorAll("[data-desk-link]").forEach((link) => link.addEventListener("click", (event) => {
+      if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+      event.preventDefault();
+      this.navigate(link.dataset.deskLink);
+    }));
+    document.querySelectorAll("[data-go-desk]").forEach((button) => button.addEventListener("click", () => this.navigate(button.dataset.goDesk)));
+    document.querySelectorAll("[data-evidence]").forEach((button) => button.addEventListener("click", () => this.evidence(button.dataset.evidence)));
+    this.watch.addEventListener("change", () => {
+      this.manualView = true;
+      this.layout();
+    });
+    document.addEventListener("demo-presentation-change", () => this.layout());
+    byId2("authorize-require-companion-roll-call").removeAttribute("aria-controls");
+    byId2("authorize-executive-hovering").removeAttribute("aria-controls");
+    byId2("experiment-view").addEventListener("change", () => this.sections("experiment"));
+    byId2("evidence-view").addEventListener("change", () => this.sections("evidence"));
+    byId2("resume-current").addEventListener("click", () => {
+      this.navigate("observe");
+      this.run.resume();
+    });
+    byId2("office-choose-mandate").addEventListener("click", () => {
+      this.navigate("authorize");
+      byId2("limit").focus();
+    });
+    byId2("watch-settings-toggle").addEventListener("click", () => this.settings(byId2("watch-settings").hidden === true));
+    byId2("watch-settings-close").addEventListener("click", () => {
+      this.settings(false);
+      byId2("watch-settings-toggle").focus();
+    });
+    byId2("watch-settings").addEventListener("keydown", (event) => {
+      if (event.key === "Escape") {
+        event.stopPropagation();
+        this.settings(false);
+        byId2("watch-settings-toggle").focus();
+      }
+    });
+    byId2("watch-reorganize").addEventListener("click", () => {
+      this.settings(false);
+      requestReorganization();
+      byId2("watch-waive").focus({ preventScroll: true });
+    });
+    byId2("watch-waive").addEventListener("click", () => {
+      officeEstate.finish();
+      byId2("watch-settings-toggle").focus({ preventScroll: true });
+    });
+    byId2("watch-settings-toggle").before(byId2("watch-waive"));
+    byId2("watch-settings").append(byId2("reveal-all"), byId2("follow-output").closest("label"));
+    const ticker = document.createElement("span");
+    ticker.id = "watch-latest";
+    byId2("observed-mandate").after(ticker);
+    byId2("watch-waive").textContent = "Waive";
+    byId2("watch-waive").setAttribute("aria-label", "Waive the Moving Ceremony");
+    byId2("supervision-next").textContent = "Next";
+    byId2("supervision-next").setAttribute("aria-label", "Next recorded decision");
+    byId2("stop-reading").textContent = "Stop";
+    byId2("companion-spotlight").tabIndex = 0;
+    byId2("companion-spotlight").setAttribute("role", "region");
+    byId2("run-status").tabIndex = 0;
+    byId2("run-status").addEventListener("focus", () => this.run.pause());
+    byId2("supervision-current").removeAttribute("role");
+    byId2("supervision-current").setAttribute("aria-live", "off");
+    byId2("company-menu").addEventListener("click", () => this.companyMenu(document.body.dataset.companyMenu !== "open"));
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && document.body.dataset.companyMenu === "open") {
+        this.companyMenu(false);
+        byId2("company-menu").focus();
+      }
+    });
+    officeEstate.subscribe(() => {
+      byId2("watch-waive").hidden = !officeEstate.moving;
+    });
+    byId2("spotlight-open").addEventListener("click", () => {
+      if (this.discovery) companionDialog().open(this.discovery, byId2("spotlight-open"));
+    });
+    byId2("companion-dialog").addEventListener("close", () => {
+      if (this.pendingDiscovery) this.remember(this.pendingDiscovery);
+    });
+    byId2("spotlight-open").addEventListener("blur", () => queueMicrotask(() => {
+      if (this.pendingDiscovery && !document.querySelector("dialog[open]")) this.remember(this.pendingDiscovery);
+    }));
+    for (const id of this.policyIds) {
+      byId2("authorize-" + id).addEventListener("change", () => {
+        this.draftSummary();
+        this.saveDraft();
+      });
+      byId2(id).addEventListener("change", () => {
+        if (!this.committed && !this.applying) this.copyLiveToDraft();
+        this.layout();
+      });
+    }
+    byId2("limit").addEventListener("input", () => this.draftSummary());
+    const registry = byId2("companion-strategy");
+    new MutationObserver(() => {
+      const draft = byId2("authorize-companion-strategy"), selected = draft.value;
+      draft.replaceChildren(...[...registry.options].map((option) => option.cloneNode(true)));
+      const wanted = this.preferredAuthority || selected;
+      if ([...draft.options].some((option) => option.value === wanted)) {
+        draft.value = wanted;
+        this.preferredAuthority = "";
+      }
+      draft.disabled = registry.disabled;
+      this.draftSummary();
+    }).observe(registry, { childList: true, attributes: true, attributeFilter: ["disabled"] });
+    document.querySelectorAll("[data-open-personnel]").forEach((button) => button.addEventListener("click", () => {
+      const trigger = byId2("personnel-documents");
+      trigger.dispatchEvent(new MouseEvent("click"));
+    }));
+    new MutationObserver(() => {
+      byId2("personnel-record-summary").textContent = byId2("personnel-origin").textContent;
+    }).observe(byId2("personnel-origin"), { childList: true, characterData: true, subtree: true });
+    new MutationObserver(() => {
+      if (document.querySelector("dialog[open]")) this.run.pause();
+    }).observe(document.body, { subtree: true, attributes: true, attributeFilter: ["open"] });
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden) this.run.pause();
+    });
+    addEventListener("popstate", () => this.show(readDesk(new URL(location.href)), false));
+    const resize = new ResizeObserver(() => this.fit());
+    resize.observe(document.querySelector(".site-header"));
+    resize.observe(byId2("discovery-register"));
+    resize.observe(document.querySelector(".authorization-actions"));
+    addEventListener("resize", () => {
+      if (!this.manualView && this.committed) {
+        this.watch.value = initialWatchView(matchMedia("(max-width: 700px), (max-height: 500px)").matches, this.live().hovering);
+        this.layout();
+      } else this.fit();
+    });
+    const hash2 = location.hash;
+    if (hash2.startsWith("#precedent")) this.select("evidence-view").value = "precedent";
+    if (hash2.startsWith("#personnel")) this.select("evidence-view").value = "personnel";
+    if (hash2.startsWith("#premises")) this.select("experiment-view").value = "premises";
+    this.restoreDraft();
+    this.draftSummary();
+    this.sections("experiment");
+    this.sections("evidence");
+    this.show(readDesk(new URL(location.href)), false, false);
+  }
+  run;
+  desk = "authorize";
+  watch = byId2("watch-view");
+  stage = byId2("mandate-output");
+  policyIds = ["display-speed", "emoji-companions", "companion-strategy", "require-companion-roll-call", "executive-hovering"];
+  activeMandate = "";
+  discovery;
+  pendingDiscovery;
+  committed = false;
+  applying = false;
+  manualView = false;
+  preferredAuthority = new URL(location.href).searchParams.get("authority") || "";
+  scroll = /* @__PURE__ */ new Map();
+  get observing() {
+    return this.desk === "observe";
+  }
+  input(id) {
+    return byId2(id);
+  }
+  select(id) {
+    return byId2(id);
+  }
+  policy(prefix = "") {
+    return { cadence: this.select(prefix + "display-speed").value, companions: this.input(prefix + "emoji-companions").checked, authority: this.select(prefix + "companion-strategy").value, roll: this.input(prefix + "require-companion-roll-call").checked, hovering: this.input(prefix + "executive-hovering").checked };
+  }
+  live() {
+    return this.policy();
+  }
+  copyLiveToDraft() {
+    for (const id of this.policyIds) {
+      const source = byId2(id), draft = byId2("authorize-" + id);
+      if (source instanceof HTMLInputElement) draft.checked = source.checked;
+      else if (source.value !== "executive-hovering") draft.value = source.value;
+    }
+    this.draftSummary();
+  }
+  commitDraft(mandate) {
+    const policy = this.policy("authorize-");
+    this.applying = true;
+    const hover = this.input("executive-hovering");
+    if (hover.checked) {
+      hover.checked = false;
+      hover.dispatchEvent(new Event("change"));
+    }
+    this.select("display-speed").value = policy.cadence;
+    this.select("display-speed").dispatchEvent(new Event("change"));
+    for (const [id, value] of [["emoji-companions", policy.companions], ["require-companion-roll-call", policy.roll]]) {
+      const input = this.input(id);
+      if (input.checked !== value) {
+        input.checked = value;
+        input.dispatchEvent(new Event("change"));
+      }
+    }
+    const authority = this.select("companion-strategy");
+    if (authority.value !== policy.authority) {
+      authority.value = policy.authority;
+      authority.dispatchEvent(new Event("change"));
+    }
+    if (policy.hovering) {
+      hover.checked = true;
+      hover.dispatchEvent(new Event("change"));
+    }
+    this.applying = false;
+    this.activeMandate = mandate;
+    this.discovery = void 0;
+    this.pendingDiscovery = void 0;
+    this.committed = true;
+    this.manualView = false;
+    byId2("watch-latest").textContent = "";
+    this.watch.value = initialWatchView(matchMedia("(max-width: 700px), (max-height: 500px)").matches, policy.hovering);
+    byId2("observed-mandate").textContent = mandate.length > 28 ? mandate.slice(0, 12) + "\u2026 \xB7 " + mandate.length + "-digit mandate" : "Mandate " + mandate;
+    byId2("observe-empty").hidden = true;
+    this.stage.hidden = false;
+    byId2("resume-current").hidden = false;
+    this.clearCompanions();
+    this.saveDraft();
+    this.navigate("observe");
+    this.layout();
+  }
+  navigate(desk) {
+    this.show(desk, true);
+  }
+  show(desk, push, focus = true) {
+    const before = this.desk;
+    if (before !== desk) this.scroll.set(before, scrollY);
+    if (desk !== "observe") this.run.pause();
+    if (before === "observe" && desk !== "observe") this.placeChronicle(false);
+    this.desk = desk;
+    document.body.dataset.desk = desk;
+    this.companyMenu(false);
+    byId2("company-menu").hidden = desk !== "observe";
+    this.settings(false);
+    for (const key2 of desks2) byId2("desk-" + key2).hidden = key2 !== desk;
+    const url = deskURL(new URL(location.href), desk);
+    if (push && readDesk(new URL(location.href)) !== desk) history.pushState({ ...history.state }, "", url);
+    document.querySelectorAll("[data-desk-link]").forEach((link) => {
+      const key2 = link.dataset.deskLink;
+      link.href = deskURL(new URL(location.href), key2).href;
+      if (key2 === desk) link.setAttribute("aria-current", "page");
+      else link.removeAttribute("aria-current");
+    });
+    this.layout();
+    if (focus) {
+      const heading = byId2("desk-" + desk).querySelector("h1");
+      heading.focus({ preventScroll: true });
+      window.scrollTo({ top: desk === "observe" ? 0 : this.scroll.get(desk) || 0, behavior: "instant" });
+    }
+    document.dispatchEvent(new CustomEvent("demo-desk-change", { detail: { desk } }));
+    requestAnimationFrame(() => this.fit());
+  }
+  evidence(record) {
+    this.select("evidence-view").value = record;
+    this.sections("evidence");
+    this.navigate("evidence");
+  }
+  sections(kind) {
+    const value = this.select(kind + "-view").value, attribute = kind === "experiment" ? "experiment" : "record";
+    document.querySelectorAll("[data-" + attribute + "]").forEach((section) => section.hidden = section.dataset[attribute] !== value);
+    if (kind === "evidence" && this.desk === "evidence") this.placeChronicle(false);
+  }
+  settings(open) {
+    byId2("watch-settings").hidden = !open;
+    byId2("watch-settings-toggle").setAttribute("aria-expanded", String(open));
+  }
+  placeChronicle(watch) {
+    this.run.placeChronicle(byId2(watch ? "watch-chronicle-slot" : "evidence-chronicle-slot"));
+  }
+  layout() {
+    const policy = this.live(), view = watchView(this.watch.value, policy.hovering, policy.companions && policy.roll);
+    this.watch.value = view;
+    this.stage.dataset.watchView = view;
+    this.stage.dataset.companions = String(policy.companions);
+    this.stage.dataset.office = String(policy.hovering);
+    const officeOption = this.watch.querySelector('[value="office"]'), companionOption = this.watch.querySelector('[value="companions"]');
+    officeOption.disabled = !policy.hovering;
+    officeOption.textContent = policy.hovering ? "Office" : "Office \u2014 enable Executive Hovering";
+    companionOption.disabled = !policy.companions || !policy.roll;
+    companionOption.textContent = !policy.companions ? "Companions \u2014 commission appointments" : !policy.roll ? "Companions \u2014 enable Roll Call" : "Companions";
+    this.placeChronicle(this.observing && view === "commentary");
+    this.fit();
+    document.dispatchEvent(new Event("demo-watch-layout"));
+  }
+  companyMenu(open) {
+    document.body.dataset.companyMenu = open ? "open" : "closed";
+    byId2("company-menu").setAttribute("aria-expanded", String(open));
+  }
+  fit() {
+    document.body.dataset.expandedText = String(parseFloat(getComputedStyle(document.documentElement).fontSize) > 20);
+    document.documentElement.style.setProperty("--authorization-height", Math.ceil(document.querySelector(".authorization-actions").getBoundingClientRect().height) + "px");
+    if (!this.observing) return;
+    const top = byId2("desk-observe").getBoundingClientRect().top, bottom = byId2("discovery-register").getBoundingClientRect().height;
+    byId2("desk-observe").style.setProperty("--observe-height", Math.max(120, innerHeight - top - bottom - 8) + "px");
+  }
+  disclosed(folio) {
+    if (!folio) return;
+    const host = byId2("watch-prose"), text2 = folio.narrative?.slice(0, 2) || folio.events.slice(0, 2).map((event) => event.office + ": " + event.finding);
+    byId2("watch-latest").textContent = " \xB7 " + folio.ordinal + ": " + folio.text;
+    if (host.contains(document.activeElement) || host.scrollTop > 8) return;
+    const title2 = document.createElement("strong");
+    title2.textContent = "Ordinal " + folio.ordinal + " \xB7 " + folio.text;
+    host.replaceChildren(title2, ...text2.map((text3) => {
+      const p = document.createElement("p");
+      p.textContent = text3;
+      return p;
+    }));
+  }
+  clearCompanions() {
+    this.discovery = void 0;
+    this.pendingDiscovery = void 0;
+    byId2("spotlight-glyph").textContent = "\u25C7";
+    byId2("spotlight-name").textContent = this.live().companions ? "Awaiting a companion" : "Appointments suspended";
+    byId2("spotlight-detail").textContent = "No disclosed friend has reported for duty.";
+    byId2("spotlight-energy").textContent = "";
+    byId2("spotlight-open").disabled = true;
+  }
+  remember(discovery) {
+    if (discovery.mandate !== this.activeMandate || this.discovery && BigInt(discovery.assignment.ordinal) < BigInt(this.discovery.assignment.ordinal)) return;
+    if (document.activeElement === byId2("spotlight-open") || byId2("companion-dialog").open) {
+      this.pendingDiscovery = discovery;
+      return;
+    }
+    this.pendingDiscovery = void 0;
+    this.discovery = discovery;
+    const c = discovery.companion;
+    byId2("spotlight-glyph").textContent = c.emoji;
+    byId2("spotlight-name").textContent = c.name;
+    byId2("spotlight-detail").textContent = discovery.assignment.ordinal + " \xB7 " + discovery.assignment.flavor + " \xB7 " + c.rarity;
+    byId2("spotlight-energy").textContent = c.energy;
+    byId2("spotlight-open").disabled = false;
+  }
+  draftSummary() {
+    const p = this.policy("authorize-");
+    byId2("authorization-summary").textContent = (this.input("limit").value || "Unspecified") + " numbers \xB7 " + (p.companions ? "companions commissioned" : "no companion appointments") + " \xB7 " + (p.hovering ? "executive supervision authorized" : "ordinary disclosure");
+    const cadence = this.select("authorize-display-speed");
+    cadence.disabled = p.hovering;
+    byId2("authorize-pace-help").textContent = p.hovering ? "Executive Hovering governs every recorded decision; ordinary cadence resumes when supervision is withdrawn." : "Choose the ceremonial reading pace. Executive Fiat introduces no delay.";
+  }
+  saveDraft() {
+    try {
+      sessionStorage.setItem("slopbuzz:authorization-draft:v1", JSON.stringify(this.policy("authorize-")));
+    } catch {
+    }
+  }
+  restoreDraft() {
+    try {
+      const p = JSON.parse(sessionStorage.getItem("slopbuzz:authorization-draft:v1") || "null");
+      if (!p) return;
+      for (const [id, value] of [["emoji-companions", p.companions], ["require-companion-roll-call", p.roll], ["executive-hovering", p.hovering]]) if (typeof value === "boolean") this.input("authorize-" + id).checked = value;
+      if (["1800", "800", "225", "0"].includes(p.cadence)) this.select("authorize-display-speed").value = p.cadence;
+      if (!this.preferredAuthority && typeof p.authority === "string") this.preferredAuthority = p.authority;
+    } catch {
+    }
+  }
+};
+
+// web/personnel-experiment.ts
+var PersonnelExperiment = class {
+  view;
+  serial = 0;
+  reading = false;
+  paused = false;
+  stepping = false;
+  saved;
+  wake;
+  constructor() {
+    this.view = new PersonnelProceedings({ rehearse: (scenario) => void this.rehearse(scenario), replay: () => {
+      if (this.saved) void this.play(this.saved, true);
+    }, step: () => {
+      this.serial++;
+      this.reading = false;
+      this.wake?.();
+      if (!this.stepping || this.view.progress === 7) {
+        this.view.startStepThrough();
+        this.stepping = true;
+      }
+      this.view.step();
+      this.controls();
+    } }, "experiment-");
+    byId2("experiment-pause").addEventListener("click", () => {
+      if (this.reading) {
+        this.paused = !this.paused;
+        this.wake?.();
+        this.controls();
+      }
+    });
+    byId2("experiment-stop").addEventListener("click", () => {
+      this.serial++;
+      this.reading = false;
+      this.wake?.();
+      this.view.stopReading();
+      this.status("Rehearsal adjourned. The numerical mandate and its production papers remain intact.");
+      this.controls();
+    });
+    document.addEventListener("demo-desk-change", (event) => {
+      if (event.detail.desk !== "experiment" && this.reading) {
+        this.paused = true;
+        this.wake?.();
+        this.controls();
+      }
+    });
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden && this.reading) {
+        this.paused = true;
+        this.wake?.();
+        this.controls();
+      }
+    });
+    this.controls();
+  }
+  status(text2) {
+    byId2("experiment-status").textContent = text2;
+  }
+  controls() {
+    for (const id of ["experiment-pause", "experiment-stop"]) byId2(id).setAttribute("aria-disabled", String(!this.reading));
+    byId2("experiment-pause").textContent = this.paused ? "Resume rehearsal" : "Pause rehearsal";
+  }
+  wait(ms) {
+    return new Promise((resolve) => {
+      let timer;
+      const finish = () => {
+        clearTimeout(timer);
+        if (this.wake === finish) this.wake = void 0;
+        resolve();
+      };
+      this.wake = finish;
+      if (ms !== void 0) timer = setTimeout(finish, ms);
+    });
+  }
+  async rehearse(scenario) {
+    const serial = ++this.serial;
+    this.wake?.();
+    this.reading = false;
+    this.view.loading();
+    this.status("Obtaining a read-only personnel specimen\u2026");
+    this.controls();
+    try {
+      const reply = await request("/onboarding/rehearsal?scenario=" + encodeURIComponent(scenario));
+      if (!reply.ok) throw new Error("Personnel desk returned " + reply.status + ".");
+      const data = this.view.rehearsalRecord(await reply.json());
+      if (serial !== this.serial) return;
+      this.saved = data;
+      this.view.setPlaybackAvailable(true);
+      await this.play(data, false);
+    } catch (error) {
+      if (serial === this.serial) {
+        this.view.clear("The specimen could not be obtained.");
+        this.status("Personnel rehearsal failed: " + error.message + " No numerical mandate was submitted.");
+      }
+    }
+  }
+  async play(data, replay) {
+    const serial = ++this.serial;
+    this.wake?.();
+    this.reading = true;
+    this.stepping = false;
+    this.paused = byId2("desk-experiment").hidden === true;
+    this.controls();
+    this.status(replay ? "Replaying the retained specimen. No Java operation will be repeated." : "Reading completed personnel proceedings. Production output remains intact.");
+    await this.view.read(data, { current: () => serial === this.serial, waitWhilePaused: async () => {
+      while (this.paused && serial === this.serial) await this.wait();
+    }, delay: async () => {
+      const delay = Number(byId2("experiment-speed").value);
+      if (delay) await this.wait(delay);
+    } }, replay ? "Replay of read-only rehearsal" : void 0);
+    if (serial !== this.serial) return;
+    this.reading = false;
+    this.view.setBusy(false);
+    this.status("Personnel " + (replay ? "replay complete" : data.status === "APPROVED" ? "rehearsal approved" : "rehearsal rejected") + ". Numerical output and production evidence are retained.");
+    this.controls();
+  }
+};
+
 // web/demo.ts
 var runForm = byId2("run-form");
 var limitInput = byId2("limit");
@@ -4264,9 +4827,12 @@ var revealAll = false;
 var wakeReading;
 var activityMode = "mandate";
 var manualStep = false;
+var forecastSequence = 0;
 var chronicle = new ExecutiveChronicle();
 var precedent = new PrecedentView();
+new PrecedentView("experiment-");
 new PremisesDesk();
+var workspace;
 var office = new OfficeTourDesk();
 var supervision = new OfficeSupervisionDesk({ reading: () => reading, paused: () => paused, pause: setReadingPaused, wake: () => {
   wakeReading?.();
@@ -4281,21 +4847,25 @@ var reorganizationPanels = [new ReorganizationPanel(byId2("supervision-reorganiz
 var companions = new CompanionDesk({ remember: (discovery) => {
   office.remember(discovery);
   supervision.remember(discovery);
+  workspace?.remember(discovery);
 }, clearCompanions: () => {
   office.clearCompanions();
   supervision.clearCompanions();
+  workspace?.clearCompanions();
 } });
 var currentLimit = "15";
 var receivedPacket;
 var lastPlayback;
 var inspection;
-var personnel = new PersonnelProceedings({ rehearse: (scenario) => void rehearsePersonnel(scenario), replay: () => void replayPersonnel(), step: stepPersonnel, disclosed: (data, count) => {
-  if (data.purpose === "REHEARSAL") chronicle.rehearsal(data, count);
-} });
+var personnel = new PersonnelProceedings({ rehearse: () => {
+}, replay: () => void replayPersonnel(), step: stepPersonnel }, "");
+new PersonnelExperiment();
+workspace = new DemoWorkspace({ pause: () => setReadingPaused(true), resume: () => setReadingPaused(false), placeChronicle: (target) => chronicle.place(target) });
 function discloseLines(start, lines2) {
   companions.disclose(start, lines2);
   const folios = chronicle.disclose(start, lines2);
   office.disclose(currentLimit, folios);
+  workspace?.disclosed(folios.at(-1));
   lastPlayback = { kind: "mandate", folios: chronicle.records, limit: currentLimit, personnel: personnel.record, packet: receivedPacket };
   personnel.setPlaybackAvailable(true);
 }
@@ -4322,17 +4892,20 @@ async function observeLine(folio, sequence, publish) {
 function readingControls() {
   for (const panel of reorganizationPanels) panel.setReading(reading);
   stopButton.setAttribute("aria-disabled", String(!reading));
-  revealButton.textContent = activityMode === "rehearsal" || activityMode === "replay" ? "Reveal completed proceedings" : streaming ? "Waive disclosure delays" : "Reveal complete output";
+  revealButton.textContent = activityMode === "replay" ? "Reveal completed proceedings" : streaming ? "Waive disclosure delays" : "Reveal complete output";
   pauseButton.setAttribute("aria-disabled", String(!reading));
   revealButton.setAttribute("aria-disabled", String(!reading));
-  pauseButton.textContent = paused ? "Resume reading" : "Pause reading";
+  pauseButton.textContent = paused ? "Resume" : "Pause";
+  pauseButton.setAttribute("aria-label", paused ? "Resume reading" : "Pause reading");
   if (supervision.enabled) revealButton.textContent = "Restore autonomy and reveal output";
   supervision.syncControls();
 }
 function setReadingPaused(value) {
   if (!reading) return;
+  if (paused === value) return;
   paused = value;
-  setText("run-status", paused ? "Ceremonial reading paused. Resume or reveal the complete output when ready." : "Ceremonial reading resumed.");
+  const office2 = supervision.enabled ? byId2("supervision-current").querySelector("strong")?.textContent : void 0;
+  setText("run-status", office2 ? "Observation " + (paused ? "paused" : "resumed") + " \xB7 " + office2 : paused ? "Ceremonial reading paused. Resume or reveal the complete output when ready." : "Ceremonial reading resumed.");
   readingControls();
   wakeReading?.();
 }
@@ -4379,10 +4952,13 @@ function inspectMagnitude() {
   } else if (typeof limit !== "bigint") warnedValue = "";
   return limit;
 }
+var forecastTimer;
 limitInput.addEventListener("input", () => {
-  inspectMagnitude();
+  const limit = inspectMagnitude();
   limitInput.removeAttribute("aria-invalid");
   setText("limit-error", "");
+  clearTimeout(forecastTimer);
+  if (limit !== null) forecastTimer = setTimeout(() => void loadForecast(limit).catch(() => setText("forecast-units", "Unavailable")), 180);
 });
 autocorrect.addEventListener("change", () => {
   inspectMagnitude();
@@ -4423,12 +4999,13 @@ function showForecast(forecast) {
   setText("forecast-joint", forecast.fizzBuzzLines);
   setText("forecast-units", forecast.workloadUnits);
 }
-async function loadForecast(limit, sequence = mandateSequence) {
+async function loadForecast(limit, _sequence = mandateSequence) {
+  const sequence = ++forecastSequence;
   const desk = typeof limit === "number" && limit <= 1e3 ? "/capacity/forecast" : "/capacity/forecast/extended";
   const reply = await request(`${desk}?limit=${limit}`);
   if (!reply.ok) throw new Error(`Forecast desk returned ${reply.status}.`);
   const forecast = await reply.json();
-  if (sequence === mandateSequence) showForecast(forecast);
+  if (sequence === forecastSequence) showForecast(forecast);
 }
 function waitForPace(milliseconds) {
   return new Promise((resolve) => {
@@ -4577,6 +5154,7 @@ async function runMandate(event) {
   if (runButton.getAttribute("aria-disabled") === "true") return;
   const limit = validateLimit();
   if (limit === null) return;
+  workspace.commitDraft(String(limit));
   const sequence = ++mandateSequence;
   companions.reset(String(limit));
   wakeReading?.();
@@ -4601,10 +5179,6 @@ async function runMandate(event) {
   setText("trace-result", "Awaiting a receipt");
   byId2("output").textContent = "Awaiting a duly authorized number.";
   setText("output-count", "0 lines");
-  if (supervision.enabled || matchMedia("(max-width: 900px)").matches) {
-    byId2("output").focus({ preventScroll: true });
-    byId2("mandate-output").scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth", block: "start" });
-  }
   void loadForecast(limit, sequence).catch(() => {
     if (sequence === mandateSequence) setText("forecast-units", "Unavailable");
   });
@@ -4631,7 +5205,7 @@ async function runMandate(event) {
     runButton.removeAttribute("aria-disabled");
     byId2("output").removeAttribute("aria-busy");
     reading = true;
-    paused = false;
+    paused = !workspace.observing;
     revealAll = false;
     readingControls();
     const record = personnel.responseRecord(answer);
@@ -4663,23 +5237,6 @@ async function runMandate(event) {
     }
   }
 }
-function personnelClock(sequence) {
-  return {
-    current: () => sequence === mandateSequence,
-    waitWhilePaused: async () => {
-      while (paused && !supervision.enabled && sequence === mandateSequence) await waitForPace();
-    },
-    delay: async () => {
-      if (!supervision.enabled && !revealAll && Number(speedControl.value) > 0 && sequence === mandateSequence) await waitForPace(Number(speedControl.value));
-    },
-    beforeDecision: async (decision, data) => {
-      if (supervision.enabled && !revealAll) {
-        const source = (d) => ({ ordinal: String(data.candidate), kind: "HR_" + d.state, office: d.office, finding: d.finding, document: d.document });
-        await supervision.rehearsal(source(decision), () => sequence === mandateSequence, data.steps.slice(0, data.steps.indexOf(decision)).map(source));
-      }
-    }
-  };
-}
 function beginPersonnelActivity(mode) {
   const sequence = ++mandateSequence;
   wakeReading?.();
@@ -4699,49 +5256,12 @@ function beginPersonnelActivity(mode) {
   }
   return sequence;
 }
-async function rehearsePersonnel(scenario) {
-  const sequence = beginPersonnelActivity("rehearsal");
-  supervision.begin(currentLimit, "rehearsal");
-  personnel.loading();
-  setText("run-status", "Opening a read-only personnel rehearsal. Numerical output already shown is retained.");
-  try {
-    const response = await request(`/onboarding/rehearsal?scenario=${scenario}`);
-    if (!response.ok) throw new Error(`Personnel desk returned ${response.status}.`);
-    const data = personnel.rehearsalRecord(await response.json());
-    if (sequence !== mandateSequence) return;
-    lastPlayback = { kind: "rehearsal", data };
-    personnel.setPlaybackAvailable(true);
-    await personnel.read(data, personnelClock(sequence));
-    if (sequence !== mandateSequence) return;
-    setText("run-status", `Personnel rehearsal ${data.status === "APPROVED" ? "approved" : "rejected"}. No numerical output was requested by this rehearsal.`);
-  } catch (error) {
-    if (sequence === mandateSequence) {
-      personnel.clear("The personnel rehearsal could not be opened.");
-      setText("run-status", `Personnel rehearsal could not be completed: ${error.message}`);
-    }
-  } finally {
-    if (sequence === mandateSequence) {
-      reading = false;
-      personnel.setBusy(false);
-      readingControls();
-    }
-  }
-}
 async function replayPersonnel() {
   const saved = lastPlayback;
   if (!saved) return;
+  workspace.navigate("observe");
   const sequence = beginPersonnelActivity("replay");
-  if (saved.kind === "rehearsal") {
-    supervision.begin(currentLimit, "rehearsal-replay");
-    setText("run-status", "Replaying recorded personnel proceedings. Numerical output is retained.");
-    await personnel.read(saved.data, personnelClock(sequence), "Replay of read-only rehearsal");
-    if (sequence === mandateSequence) {
-      reading = false;
-      readingControls();
-      setText("run-status", "Personnel replay complete. The recorded business operation was not executed again.");
-    }
-    return;
-  }
+  workspace.clearCompanions();
   companions.reset(saved.limit);
   chronicle.begin(saved.limit, "replay");
   office.begin(saved.limit, "replay");
@@ -4760,6 +5280,7 @@ async function replayPersonnel() {
     const publish = () => {
       for (const folio of batch) companions.disclose(folio.ordinal, [folio.text]);
       chronicle.discloseFolios(batch);
+      workspace.disclosed(batch.at(-1));
       office.disclose(saved.limit, batch);
       output.append(document.createTextNode(batch.map((f) => f.text + "\n").join("")));
       followLatest();
@@ -4785,15 +5306,6 @@ async function replayPersonnel() {
 function stepPersonnel() {
   const saved = lastPlayback;
   if (!saved) return;
-  if (saved.kind === "rehearsal") {
-    if (!manualStep || personnel.progress === 7) {
-      beginPersonnelActivity("inspection");
-      personnel.startStepThrough();
-    }
-    personnel.step();
-    setText("run-status", "Inspecting recorded personnel paperwork: " + personnel.progress + " of 7 offices disclosed. Numerical output is retained.");
-    return;
-  }
   if (!manualStep || !inspection || inspection.index >= inspection.folios.length) {
     beginPersonnelActivity("inspection");
     inspection = { folios: saved.folios, index: 0 };
@@ -4811,6 +5323,7 @@ runForm.addEventListener("submit", runMandate);
 document.querySelectorAll("[data-limit]").forEach((button) => {
   button.addEventListener("click", () => {
     limitInput.value = button.dataset.limit || "15";
+    limitInput.dispatchEvent(new Event("input"));
     runForm.requestSubmit();
   });
 });

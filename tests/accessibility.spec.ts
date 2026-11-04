@@ -1,3 +1,4 @@
+import {demoControl,demoAction} from './demo-controls';
 import {test, expect, type Page} from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 // These DOM tests mock fixtures; offline cache behavior has its own lifecycle suite.
@@ -18,7 +19,7 @@ for (const route of routes) {
     if(route === 'response/') await expect(page.locator('#response-status')).toContainText('Response received');
     const nav = page.getByRole('navigation',{name:'Primary navigation',exact:true});
     expect(await nav.getByRole('link').allTextContents()).toEqual(['Live demo','Operations','API charter','About','Validation tribunal']);
-    await expect(page.locator('main h1')).toHaveCount(1);
+    await expect(page.locator('main h1:visible')).toHaveCount(1);
     await expect(page.locator('#runtime-status, #offline-status')).toHaveCount(0);
     await page.keyboard.press(browserName === 'webkit' ? 'Alt+Tab' : 'Tab');
     await expect(page.getByRole('link',{name:'Skip to main content'})).toBeFocused();
@@ -41,12 +42,12 @@ for (const route of routes) {
 }
 test('keyboard reading controls preserve focus, pause output and allow immediate completion',async({page})=>{
   await page.goto('/demo/'); await expect(page.locator('#health-value')).toHaveText('LIVE');
-  await page.fill('#limit','100');
-  await page.selectOption('#display-speed','225');
-  await page.locator('#run-button').focus(); await page.keyboard.press('Enter');
+  await demoAction(page,'fill','#limit','100');
+  await demoAction(page,'selectOption','#display-speed','225');
+  await (await demoControl(page,'#run-button')).focus(); await page.keyboard.press('Enter');
   await expect(page.locator('#output-count')).toContainText('of 100');
-  await expect(page.locator('#run-button')).toBeFocused();
-  await page.locator('#pause-reading').focus(); await page.keyboard.press('Enter');
+  await expect(page.locator('#observe-title')).toBeFocused();
+  await (await demoControl(page,'#pause-reading')).focus(); await page.keyboard.press('Enter');
   await expect(page.locator('#run-status')).toContainText('paused');
   const pausedOutput = await page.locator('#output').textContent();
   await page.waitForTimeout(2000);
@@ -55,17 +56,17 @@ test('keyboard reading controls preserve focus, pause output and allow immediate
   await audit(page);
   await page.keyboard.press('Enter');
   await expect(page.locator('#run-status')).toContainText('resumed');
-  await page.locator('#follow-output').uncheck();
+  await (await demoControl(page,'#follow-output')).uncheck();
   // Choose a reading position explicitly; paced disclosure may already have scrolled before pause.
-  await page.locator('#output').focus(); await page.keyboard.press('Home');
+  await (await demoControl(page,'#output')).focus(); await page.keyboard.press('Home');
   await expect.poll(()=>page.locator('#output').evaluate(e=>e.scrollTop)).toBe(0);
-  await page.locator('#reveal-all').focus(); await page.keyboard.press('Enter');
+  await (await demoControl(page,'#reveal-all')).focus(); await page.keyboard.press('Enter');
   await expect(page.locator('#run-status')).toContainText('All 100 lines are visible');
   expect(await page.locator('#output').evaluate(e=>e.scrollTop)).toBe(0);
   await expect(page.locator('#reveal-all')).toBeFocused();
-  await page.check('#follow-output');
+  await demoAction(page,'check','#follow-output');
   expect(await page.locator('#output').evaluate(e=>e.scrollTop+e.clientHeight>=e.scrollHeight-2)).toBe(true);
-  await page.fill('#limit','-1');await page.click('#run-button');
+  await demoAction(page,'fill','#limit','-1');await demoAction(page,'click','#run-button');
   await expect(page.locator('#limit')).toBeFocused();
   await expect(page.locator('#limit')).toHaveAttribute('aria-invalid','true');
   await audit(page);
@@ -85,7 +86,7 @@ test('expanded API schemas, invalid parameters, filtering and response regions',
   await audit(page);
   await page.setViewportSize({width:320,height:800});
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
-  await page.fill('#api-search','nonexistent committee');
+  await demoAction(page,'fill','#api-search','nonexistent committee');
   await expect(page.locator('#api-status')).toContainText('0 of');
   await expect(page.locator('#api-sections a:visible')).toHaveCount(0);
 });
@@ -93,7 +94,7 @@ test('reduced motion and forced colors preserve keyboard focus and controls',asy
   await page.emulateMedia({reducedMotion:'reduce',forcedColors:'active'});
   await page.goto('/demo/');
   expect(await page.locator('html').evaluate(e=>getComputedStyle(e).scrollBehavior)).toBe('auto');
-  await page.locator('#run-button').focus();
+  await (await demoControl(page,'#run-button')).focus();
   expect(await page.locator('#run-button').evaluate(e=>getComputedStyle(e).outlineStyle)).not.toBe('none');
   await expect(page.locator('#run-button')).toBeVisible();
 });
@@ -102,7 +103,7 @@ test('validation rehearsal announces its result and reveals a named evidence reg
   await page.route('**/validation/fixtures.json',route=>route.fulfill({json:[{path:'/fizzbuzz?limit=3',status:200,body:'1\n2\nFizz\n'}]}));
   await page.goto('/validation/');
   await expect(page.locator('#report-status')).toContainText('loaded');
-  await page.locator('#rehearse').focus();await page.keyboard.press('Enter');
+  await (await demoControl(page,'#rehearse')).focus();await page.keyboard.press('Enter');
   await expect(page.locator('#verdict')).toContainText('1 bundled JVM fixtures matched');
   await expect(page.locator('#rehearsal-output')).toBeVisible();
   await expect(page.locator('#rehearse')).toBeFocused();

@@ -10,128 +10,54 @@
   <link rel="stylesheet" href="/assets/site.css"><link rel="stylesheet" href="/assets/office.css">
   <script type="module" src="/assets/demo.js"></script>
 </head>
-<body>
+<body class="demo-page">
   <!--SITE_HEADER-->
 
-  <main id="main" tabindex="-1">
-    <section class="section demo-section" id="demo" aria-labelledby="demo-title">
-      <div class="shell">
-        <div class="section-heading">
-          <div><p class="eyebrow">Live proceedings / Mandate execution desk</p><h1 id="demo-title">Issue a numerical mandate</h1></div>
-          <p>Run the real Java service. Repeat a mandate to observe Redis remember what the committee already decided.</p>
-        </div>
-        <div class="demo-workspace">
-          <div class="demo-grid">
-            <section class="panel mandate-panel" id="mandate-controls" aria-labelledby="mandate-title">
-              <h2 id="mandate-title">Mandate controls</h2>
-              <form id="run-form" novalidate>
+  <main id="main" tabindex="-1" class="demo-app">
+    <div class="shell demo-shell">
+      <nav class="demo-navigation" aria-label="Demo departments"><a href="?desk=authorize" data-desk-link="authorize" aria-current="page">Authorize</a>
+<a href="?desk=observe" data-desk-link="observe">Observe</a>
+<a href="?desk=experiment" data-desk-link="experiment">Experiment</a>
+<a href="?desk=facilities" data-desk-link="facilities">Facilities</a>
+<a href="?desk=evidence" data-desk-link="evidence">Evidence</a></nav>
+      <section id="desk-authorize" class="demo-desk" aria-labelledby="demo-title">
+        <header class="desk-heading"><p class="eyebrow">Department of Preemptive Permission</p><h1 id="demo-title" tabindex="-1">Authorize the inevitable</h1><p>Commission real Java proceedings. Specify the amount of business and the degree of managerial interference.</p></header>
+        <div class="authorize-grid"><section class="panel mandate-panel" id="mandate-controls" aria-labelledby="mandate-title"><h2 id="mandate-title">The numerical mandate</h2><form id="run-form" novalidate="">
                 <label for="limit">Upper limit</label>
                 <p class="field-help" id="limit-help">Enter a non-negative whole number of any size. The first number is always 1. Extended mandates stream progressively and retain the latest 1,000 lines on screen.</p>
                 <div class="form-row">
-                  <input id="limit" name="limit" type="text" inputmode="numeric" autocomplete="off" spellcheck="false" value="15" required aria-describedby="limit-help limit-error">
-                  <button class="button button-primary" id="run-button" type="submit">Run the mandate</button>
+                  <input id="limit" name="limit" type="text" inputmode="numeric" autocomplete="off" spellcheck="false" value="15" required="" aria-describedby="limit-help limit-error">
+
                 </div>
                 <label class="numeric-governance"><input type="checkbox" id="numeric-autocorrect" aria-describedby="numeric-governance-help"> Enforce Numeric Character Governance</label>
                 <p class="field-help" id="numeric-governance-help">When checked, automatically remove everything except digits 0–9. Extended streaming proceedings do not add entries to the retained audit ledger or cache.</p>
-                <p class="magnitude-warning" id="magnitude-warning" role="status" aria-live="polite" aria-atomic="true" hidden></p>
+                <p class="magnitude-warning" id="magnitude-warning" role="status" aria-live="polite" aria-atomic="true" hidden=""></p>
                 <p class="field-error" id="limit-error" aria-live="polite"></p>
-              </form>
-              <fieldset class="companion-controls"><legend>Optional Companion Appointments</legend>
-                <label class="check-label"><input type="checkbox" id="emoji-companions" checked aria-describedby="companion-help"> Commission emoji companions</label>
-                <label for="companion-strategy">Swappable allocation authority</label>
-                <select id="companion-strategy" disabled aria-describedby="companion-help"><option value="factor-resonance-v1">Prime Factor Affinity Directorate</option></select>
-                <p id="companion-help" class="field-help">Fizz, Buzz and FizzBuzz receive friends selected by the exact mandate number and allocation authority. The same number, authority and catalog reproduce the same sequence; try another number to explore. Your five rarest disclosed companions remain in the register below. Changing this policy appoints new companions to disclosed output without repeating the numerical business. <a href="/bestiary/">Meet all 3,200 companions and inspect the scarcity charter.</a></p>
-              </fieldset>
-              <div class="presets" role="group" aria-label="Suggested mandates">
+              </form><div class="presets" role="group" aria-label="Suggested mandates">
                 <span>Try a brief:</span>
                 <button type="button" data-limit="15" aria-label="Run mandate for 15 numbers">15</button>
                 <button type="button" data-limit="100" aria-label="Run mandate for 100 numbers">100</button>
                 <button type="button" data-limit="1000" aria-label="Run mandate for 1000 numbers">1000</button>
-              </div>
-              <div class="pace-control">
-                <label for="display-speed">Mandatory disclosure cadence</label>
-                <select id="display-speed" aria-describedby="pace-help">
+              </div><div class="authorization-actions"><button class="button button-primary" id="run-button" form="run-form" type="submit">Run the mandate</button><button class="button button-secondary" id="resume-current" type="button" hidden>Resume current run</button></div><p id="authorization-summary" class="field-help"></p></section>
+        <section class="panel authorization-policy" aria-labelledby="presentation-title"><h2 id="presentation-title">Terms of observation</h2><div class="pace-control">
+                <label for="authorize-display-speed">Mandatory disclosure cadence</label>
+                <select id="authorize-display-speed" aria-describedby="authorize-pace-help">
                   <option value="1800" selected>Full Board Ratification</option>
                   <option value="800">Interdepartmental Sign-Off</option>
                   <option value="225">Emergency Delegated Authority</option>
                   <option value="0">Executive Fiat</option>
                 </select>
-                <p id="pace-help">Every office decision and numerical line must clear its assigned disclosure queue. Executive Fiat waives the queue for real-time reading. Change authority mid-proclamation and the next disclosure obeys. The completed Java proceedings and service response are timed separately from this reading.</p>
-              </div>
-              <div class="run-meta" role="group" aria-label="Latest response measurements">
-                <div><span class="meta-label">Elapsed</span><strong id="latency">—</strong></div>
-                <div><span class="meta-label">Redis</span><strong id="cache-result">—</strong></div>
-                <div><span class="meta-label">Target</span><strong>&lt; 1 second</strong></div>
-                <div><span class="meta-label">Proclamation desk</span><strong id="health-value">Checking…</strong></div>
-              </div>
-              <div class="trace-receipt">
-                <span class="meta-label">Trace receipt</span>
-                <code id="trace-result">Awaiting a mandate</code>
-                <small>Give this ID to the logging department to locate the request proceedings.</small>
-              </div>
-              <div class="reading-controls" role="group" aria-label="Proceedings and output reading controls">
-                <button class="button button-secondary" id="pause-reading" type="button" aria-controls="chronicle-entries output" aria-disabled="true">Pause reading</button>
-                <button class="button button-secondary" id="reveal-all" type="button" aria-controls="chronicle-entries output" aria-disabled="true">Reveal complete output</button>
-                <button class="button button-secondary" id="stop-reading" type="button" aria-controls="chronicle-entries output" aria-disabled="true">Stop proceedings</button>
-                <label><input type="checkbox" id="follow-output" checked> Follow new output</label>
-              </div>
-              <section class="personnel-controls" aria-labelledby="personnel-controls-title">
-                <h3 id="personnel-controls-title">Proceedings review</h3>
-                <div class="personnel-actions" role="group" aria-label="Recorded proceedings playback">
-                  <button class="button button-secondary" id="personnel-replay" type="button" aria-controls="chronicle-entries output" aria-disabled="true">Replay proceedings</button>
-                  <button class="button button-secondary" id="personnel-step" type="button" aria-controls="chronicle-entries output" aria-disabled="true">Step through</button>
-                  <button class="button button-secondary" id="personnel-documents" type="button" aria-controls="personnel-dialog" aria-haspopup="dialog" aria-disabled="true">Inspect paperwork</button>
-                </div>
-                <fieldset class="personnel-rehearsals" aria-describedby="personnel-rehearsal-help">
-                  <legend>Management intervention rehearsals</legend>
-                  <p class="field-help" id="personnel-rehearsal-help">Open a read-only application using the real personnel offices. Rehearsals replace the current reading and leave numerical output intact. Replay reads retained results again. Neither submits another numerical mandate or creates audit entries.</p>
-                  <div class="personnel-actions">
-                    <button class="button button-secondary" type="button" data-personnel-scenario="approved" aria-controls="personnel-case">Submit a complete application</button>
-                    <button class="button button-secondary" type="button" data-personnel-scenario="zero" aria-controls="personnel-case">Nominate zero</button>
-                    <button class="button button-secondary" type="button" data-personnel-scenario="two" aria-controls="personnel-case">Nominate two</button>
-                    <button class="button button-secondary" type="button" data-personnel-scenario="missing-induction" aria-controls="personnel-case">Omit induction paperwork</button>
-                  </div>
-                </fieldset>
-              </section>
-            </section>
-            <section class="panel output-panel" id="mandate-output" aria-labelledby="output-title">
-              <div class="output-dock">
-              <div class="output-heading"><h2 id="output-title">Official output</h2><span id="output-count">0 lines</span></div>
-              <p class="inline-status" id="run-status" role="status" aria-live="polite" aria-atomic="true">Ready to receive a mandate.</p>
-              <pre class="terminal" id="output" tabindex="0" role="region" aria-label="FizzBuzz output">Awaiting a duly authorized number.</pre>
-              <section class="supervision-pane" id="supervision-pane" hidden aria-labelledby="supervision-title">
-                <div class="supervision-heading"><h3 id="supervision-title" tabindex="-1">Executive observation</h3><button type="button" id="supervision-autonomy" title="Restore employee autonomy and normal cadence" aria-label="Restore employee autonomy and normal cadence">Autonomy</button></div>
-                <div class="supervision-stage" id="supervision-stage"><canvas id="supervision-canvas" tabindex="-1" role="img" aria-label="Recorded numerical proceedings in the three-dimensional office" aria-describedby="supervision-help"></canvas><div id="supervision-loading" class="supervision-loading" tabindex="0" role="region" aria-label="Office display availability" aria-live="polite"><p>The executive is locating something to supervise.</p></div></div>
-                <div class="supervision-controls" role="group" aria-label="Executive observation playback"><button type="button" id="supervision-pause" aria-disabled="true">Pause</button><button type="button" id="supervision-next" aria-disabled="true">Next step</button><progress id="supervision-progress" value="0" max="1" aria-label="Observed decisions in the current sequence"></progress></div>
-                <div class="supervision-caption" id="supervision-caption" tabindex="0" role="region" aria-label="Current observed decision"><p id="supervision-current" role="status" aria-live="polite" aria-atomic="true">Run a mandate. No employee has yet been deprived of autonomy.</p></div>
-                <details id="supervision-evidence" class="supervision-evidence"><summary>Inspect current paperwork</summary><p id="supervision-source"></p><pre id="supervision-document" tabindex="0" role="region" aria-label="Supplied observation record"></pre></details>
-                <div id="supervision-reorganization"></div>
-              </section>
-              <section class="companion-roll" id="companion-roll" aria-labelledby="companion-title"><h3 id="companion-title">Companion roll call</h3>
-                <p id="companion-status" class="field-help" role="status" aria-live="polite" aria-atomic="true">Awaiting the first disclosed Fizz, Buzz or FizzBuzz.</p>
-                <p class="field-help" id="companion-scroll-help">Select a companion for its story. Latest 100 encounters; reading older entries pauses following.</p>
-                <button type="button" class="button button-secondary" id="companion-latest" hidden>Show latest companions</button>
-                <div class="companion-scroll" id="companion-scroll" tabindex="0" role="region" aria-label="Disclosed emoji companions" aria-describedby="companion-scroll-help"><ol id="companion-list"></ol></div>
-              </section>
-              </div>
-              <section class="chronicle" aria-labelledby="chronicle-title">
-                <h3 id="chronicle-title">Executive Chronicle of Numerical Affairs</h3>
-                <div class="chronicle-preferences" role="group" aria-label="Executive disclosure preferences">
-                  <label><input type="checkbox" id="require-companion-roll-call" checked aria-controls="companion-roll"> Require Companion Roll Call</label>
-                  <label><input type="checkbox" id="executive-hovering" aria-controls="supervision-pane display-speed" aria-describedby="supervision-help"> Executive Hovering: Trust Has Been Suspended</label>
-                </div>
-                <p id="supervision-help" class="chronicle-caption">Executive Hovering places the office beneath Official Output and lets its recorded steps control disclosure. Arrival, work, and an executive opportunity to stare precede the next decision. Java has already completed the business; this is its evidence being replayed. Pause or step through individual decisions, or restore Autonomy to recover your preceding cadence. Reduced motion uses stationary shots. Hiding Roll Call keeps companion appointments and discoveries available.</p>
-                <p class="chronicle-current" id="chronicle-current" role="status" aria-live="polite" aria-atomic="true">The company awaits an opportunity to explain itself.</p>
-                <div class="chronicle-tools">
-                  <label class="check-label"><input type="checkbox" id="follow-chronicle" checked> Follow new proceedings</label>
-                  <label for="chronicle-ordinal">Inspect a disclosed ordinal <select id="chronicle-ordinal"><option value="latest">Latest proceedings</option></select></label>
-                </div>
-                <p class="chronicle-caption" id="chronicle-caption">The full corporate minutes follow the numbers. Automatic scrolling pauses when you scroll up; return to the bottom or choose “Latest proceedings” to resume.</p>
-                <div class="chronicle-scroll" id="chronicle-scroll" tabindex="0" role="region" aria-label="Executive chronicle, scrollable corporate minutes" aria-describedby="chronicle-caption"><div id="chronicle-entries"><p class="chronicle-standby">Reception has sharpened its pencil. No mandate has yet inconvenienced the committees.</p></div></div>
-              </section>
-            </section>
-          </div>
-          <aside class="panel forecast-panel" id="advisory-inventory" aria-labelledby="forecast-title">
+                <p id="authorize-pace-help">Every office decision and numerical line must clear its assigned disclosure queue. Executive Fiat waives the queue for real-time reading. Change authority mid-proclamation and the next disclosure obeys. The completed Java proceedings and service response are timed separately from this reading.</p>
+              </div><div class="chronicle-preferences" role="group" aria-label="Executive disclosure preferences">
+                  <label><input type="checkbox" id="authorize-require-companion-roll-call" checked="" aria-controls="authorize-companion-roll"> Require Companion Roll Call</label>
+                  <label><input type="checkbox" id="authorize-executive-hovering" aria-controls="authorize-supervision-pane authorize-display-speed" aria-describedby="authorize-supervision-help"> Executive Hovering: Trust Has Been Suspended</label>
+                </div><p id="authorize-supervision-help" class="field-help">Executive Hovering lets every recorded office decision govern disclosure. Companions and Roll Call are independently optional.</p><fieldset class="companion-controls"><legend>Optional Companion Appointments</legend>
+                <label class="check-label"><input type="checkbox" id="authorize-emoji-companions" checked="" aria-describedby="authorize-companion-help"> Commission emoji companions</label>
+                <label for="authorize-companion-strategy">Swappable allocation authority</label>
+                <select id="authorize-companion-strategy" disabled="" aria-describedby="authorize-companion-help"><option value="factor-resonance-v1">Prime Factor Affinity Directorate</option></select>
+                <p id="authorize-companion-help" class="field-help">Fizz, Buzz and FizzBuzz receive friends selected by the exact mandate number and allocation authority. The same number, authority and catalog reproduce the same sequence; try another number to explore. Your five rarest disclosed companions remain in the register below. Changing this policy appoints new companions to disclosed output without repeating the numerical business. <a href="/bestiary/">Meet all 3,200 companions and inspect the scarcity charter.</a></p>
+              </fieldset></section></div>
+        <aside class="panel forecast-panel" id="advisory-inventory" aria-labelledby="forecast-title">
             <p class="eyebrow">Advisory inventory</p>
             <h2 id="forecast-title">Before the first number is printed</h2>
             <p>Our capacity planning bureau forecasts the exact mix of proclamations, including the inevitable surprise at fifteen.</p>
@@ -145,11 +71,121 @@
             <p class="fine-print">Workload units are fictional internal planning measures. They are not prices or observed compute costs.</p>
             <a class="text-link" href="/capacity/forecast?limit=15">View the forecast API <span aria-hidden="true">↗</span></a>
           </aside>
-          <section class="panel office-panel" id="office-tour" aria-labelledby="office-title">
+      </section>
+      <section id="desk-observe" class="demo-desk observe-desk" aria-labelledby="observe-title" hidden>
+        <header class="observe-heading"><div><h1 id="observe-title" tabindex="-1">Observe the consequences</h1><span id="observed-mandate">No mandate has been authorized.</span></div><label for="watch-view">View <select id="watch-view"><option value="overview">Overview</option><option value="output">Official Output</option><option value="office">Office</option><option value="companions">Companions</option><option value="commentary">Commentary</option></select></label></header>
+        <p class="inline-status" id="run-status" role="status" aria-live="polite" aria-atomic="true">Ready to receive a mandate.</p>
+        <div id="observe-empty" class="observe-empty"><h2>There is nothing to supervise. An alarming condition.</h2><p>Authorize a mandate to populate the output, proceedings, and optional companions. Opening this tab never submits business.</p><button type="button" class="button button-primary" data-go-desk="authorize">Authorize a mandate</button></div>
+        <section id="mandate-output" class="output-panel watch-workspace" data-watch-view="overview" aria-label="Current numerical performance" hidden>
+          <div class="output-dock">
+            <section id="watch-output" class="watch-card" aria-labelledby="output-title"><div class="output-heading"><h2 id="output-title">Official output</h2><span id="output-count">0 lines</span></div><pre class="terminal" id="output" tabindex="0" role="region" aria-label="FizzBuzz output">Awaiting a duly authorized number.</pre></section>
+            <section class="supervision-pane" id="supervision-pane" hidden="" aria-labelledby="supervision-title"><h2 id="supervision-title" class="workspace-sr" tabindex="-1">Executive observation</h2>
+
+                <div class="supervision-stage" id="supervision-stage"><canvas id="supervision-canvas" tabindex="-1" role="img" aria-label="Recorded numerical proceedings in the three-dimensional office" aria-describedby="supervision-help"></canvas><div id="supervision-loading" class="supervision-loading" tabindex="0" role="region" aria-label="Office display availability" aria-live="polite"><p>The executive is locating something to supervise.</p></div></div>
+
+                <div class="supervision-caption" id="supervision-caption" tabindex="0" role="region" aria-label="Current observed decision"><p id="supervision-current" role="status" aria-live="polite" aria-atomic="true">Run a mandate. No employee has yet been deprived of autonomy.</p></div>
+
+
+              </section>
+            <section id="companion-spotlight" class="watch-card companion-spotlight" aria-labelledby="spotlight-title"><h2 id="spotlight-title">Latest appointment</h2><button id="spotlight-open" type="button" aria-haspopup="dialog" aria-controls="companion-dialog" disabled><span id="spotlight-glyph" aria-hidden="true">◇</span><span><strong id="spotlight-name">Awaiting a companion</strong><small id="spotlight-detail">No disclosed friend has reported for duty.</small></span></button><p id="spotlight-energy"></p></section>
+            <section id="watch-commentary" class="watch-card" aria-labelledby="watch-commentary-title"><h2 id="watch-commentary-title">Current proceedings</h2><div id="watch-prose" tabindex="0" role="region" aria-label="Current corporate commentary"><p>Reception is preparing an unnecessarily comprehensive explanation.</p></div><button type="button" class="text-button" data-evidence="chronicle">Read the full proceedings</button></section>
+            <section class="companion-roll" id="companion-roll" aria-labelledby="companion-title"><h3 id="companion-title">Companion roll call</h3>
+                <p id="companion-status" class="field-help" role="status" aria-live="polite" aria-atomic="true">Awaiting the first disclosed Fizz, Buzz or FizzBuzz.</p>
+                <p class="field-help" id="companion-scroll-help">Select a companion for its story. Latest 100 encounters; reading older entries pauses following.</p>
+                <button type="button" class="button button-secondary" id="companion-latest" hidden="">Show latest companions</button>
+                <div class="companion-scroll" id="companion-scroll" tabindex="0" role="region" aria-label="Disclosed emoji companions" aria-describedby="companion-scroll-help"><ol id="companion-list"></ol></div>
+              </section>
+            <div id="watch-chronicle-slot"></div>
+          </div>
+        </section>
+        <div class="watch-transport" role="group" aria-label="Presentation controls"><div class="reading-controls" role="group" aria-label="Proceedings and output reading controls">
+                <button class="button button-secondary" id="pause-reading" type="button" aria-controls="chronicle-entries output" aria-disabled="true">Pause reading</button>
+                <button class="button button-secondary" id="reveal-all" type="button" aria-controls="chronicle-entries output" aria-disabled="true">Reveal complete output</button>
+                <button class="button button-secondary" id="stop-reading" type="button" aria-controls="chronicle-entries output" aria-disabled="true">Stop proceedings</button>
+                <label><input type="checkbox" id="follow-output" checked=""> Follow new output</label>
+              </div><div class="supervision-controls" role="group" aria-label="Executive observation playback"><button type="button" id="supervision-pause" aria-disabled="true">Pause</button><button type="button" id="supervision-next" aria-disabled="true">Next step</button><progress id="supervision-progress" value="0" max="1" aria-label="Observed decisions in the current sequence"></progress></div><button type="button" id="watch-settings-toggle" aria-expanded="false" aria-controls="watch-settings">Options</button><button type="button" data-evidence="chronicle">Evidence</button></div>
+        <section id="watch-settings" class="watch-settings panel" aria-label="Live presentation settings" hidden><div class="settings-heading"><h2>Adjust executive interference</h2><button type="button" id="watch-settings-close" aria-label="Close presentation settings">×</button></div><p class="field-help">These controls change the current presentation. Authorize holds a separate draft for the next mandate.</p><div class="pace-control">
+                <label for="display-speed">Mandatory disclosure cadence</label>
+                <select id="display-speed" aria-describedby="pace-help">
+                  <option value="1800" selected>Full Board Ratification</option>
+                  <option value="800">Interdepartmental Sign-Off</option>
+                  <option value="225">Emergency Delegated Authority</option>
+                  <option value="0">Executive Fiat</option>
+                </select>
+                <p id="pace-help">Every office decision and numerical line must clear its assigned disclosure queue. Executive Fiat waives the queue for real-time reading. Change authority mid-proclamation and the next disclosure obeys. The completed Java proceedings and service response are timed separately from this reading.</p>
+              </div><div class="chronicle-preferences" role="group" aria-label="Executive disclosure preferences">
+                  <label><input type="checkbox" id="require-companion-roll-call" checked="" aria-controls="companion-roll"> Require Companion Roll Call</label>
+                  <label><input type="checkbox" id="executive-hovering" aria-controls="supervision-pane display-speed" aria-describedby="supervision-help"> Executive Hovering: Trust Has Been Suspended</label>
+                </div><p id="supervision-help" class="field-help">The office's recorded steps control disclosure. Reduced motion uses stationary shots. Restore autonomy to recover your ordinary cadence.</p><fieldset class="companion-controls"><legend>Optional Companion Appointments</legend>
+                <label class="check-label"><input type="checkbox" id="emoji-companions" checked="" aria-describedby="companion-help"> Commission emoji companions</label>
+                <label for="companion-strategy">Swappable allocation authority</label>
+                <select id="companion-strategy" disabled="" aria-describedby="companion-help"><option value="factor-resonance-v1">Prime Factor Affinity Directorate</option></select>
+                <p id="companion-help" class="field-help">Fizz, Buzz and FizzBuzz receive friends selected by the exact mandate number and allocation authority. The same number, authority and catalog reproduce the same sequence; try another number to explore. Your five rarest disclosed companions remain in the register below. Changing this policy appoints new companions to disclosed output without repeating the numerical business. <a href="/bestiary/">Meet all 3,200 companions and inspect the scarcity charter.</a></p>
+              </fieldset><div class="personnel-actions" role="group" aria-label="Recorded proceedings playback">
+                  <button class="button button-secondary" id="personnel-replay" type="button" aria-controls="chronicle-entries output" aria-disabled="true">Replay proceedings</button>
+                  <button class="button button-secondary" id="personnel-step" type="button" aria-controls="chronicle-entries output" aria-disabled="true">Step through</button>
+                  <button class="button button-secondary" id="personnel-documents" type="button" aria-controls="personnel-dialog" aria-haspopup="dialog" aria-disabled="true">Inspect paperwork</button>
+                </div><button type="button" id="supervision-autonomy">Restore autonomy</button><div class="live-estate-actions"><button type="button" id="watch-reorganize">Announce Another Reorganization</button><button type="button" id="watch-waive" hidden>Waive the Moving Ceremony</button><button type="button" data-go-desk="facilities">Explore facilities</button></div></section>
+      </section>
+      <section id="desk-experiment" class="demo-desk" aria-labelledby="experiment-title" hidden>
+        <header class="desk-heading"><p class="eyebrow">Bureau of Controlled Interference</p><h1 id="experiment-title" tabindex="-1">Experiment with consequences</h1><p>Read-only specimens use the actual Java offices. Your mandate and its production records remain intact.</p></header>
+        <label class="desk-selector" for="experiment-view">Experiment <select id="experiment-view"><option value="personnel">Personnel</option><option value="precedent">Prior Work</option><option value="premises">Vacant Premises</option></select></label>
+        <section data-experiment="personnel" class="panel experiment-personnel"><h2>Can we hire the number one?</h2><fieldset class="personnel-rehearsals" aria-describedby="personnel-rehearsal-help">
+                  <legend>Management intervention rehearsals</legend>
+                  <p class="field-help" id="personnel-rehearsal-help">Open a read-only application using the real personnel offices. Rehearsals replace the current reading and leave numerical output intact. Replay reads retained results again. Neither submits another numerical mandate or creates audit entries.</p>
+                  <div class="personnel-actions">
+                    <button class="button button-secondary" type="button" data-personnel-scenario="approved" aria-controls="personnel-case">Submit a complete application</button>
+                    <button class="button button-secondary" type="button" data-personnel-scenario="zero" aria-controls="personnel-case">Nominate zero</button>
+                    <button class="button button-secondary" type="button" data-personnel-scenario="two" aria-controls="personnel-case">Nominate two</button>
+                    <button class="button button-secondary" type="button" data-personnel-scenario="missing-induction" aria-controls="personnel-case">Omit induction paperwork</button>
+                  </div>
+                </fieldset><label for="experiment-speed">Rehearsal cadence <select id="experiment-speed"><option value="225">Emergency Delegated Authority</option><option value="1800">Full Board Ratification</option><option value="0">Executive Fiat</option></select></label><div class="experiment-playback"><button type="button" id="experiment-pause">Pause rehearsal</button><button type="button" id="experiment-stop">Stop rehearsal</button><button type="button" id="experiment-personnel-replay">Replay proceedings</button><button type="button" id="experiment-personnel-step">Step through</button><button type="button" id="experiment-personnel-documents" aria-haspopup="dialog" aria-controls="experiment-personnel-dialog">Inspect paperwork</button></div><p id="experiment-status" role="status" aria-live="polite">Choose an intervention. No rehearsal has been commissioned.</p></section>
+        <section data-experiment="precedent" class="panel precedent-panel" hidden><h2>Permission to do no new work</h2><p>Petition five offices for a Certificate of Authorized Non-Performance.</p><form id="experiment-precedent-form" class="precedent-form" aria-describedby="experiment-precedent-help">
+              <label for="experiment-precedent-scenario">Management petition</label>
+              <select id="experiment-precedent-scenario">
+                <option value="approved">Adopt fifteen's approved prior work</option>
+                <option value="wrong-mandate">Borrow a different mandate's authority</option>
+                <option value="missing-line">Declare fourteen lines a complete fifteen</option>
+                <option value="lowercase-fizz">Request an unauthorized lowercase rebrand</option>
+                <option value="zero">License the reuse of absolutely nothing</option>
+              </select>
+              <button class="button button-primary" id="experiment-precedent-submit" type="submit" aria-controls="experiment-precedent-case">Convene a read-only court</button>
+              <p class="field-help" id="experiment-precedent-help">Published deterministic rules decide every application. No human sign-off is required. Rejected cases leave later offices marked “Not reached.”</p>
+            </form><div class="precedent-actions">
+              <button class="button button-secondary" id="experiment-precedent-latest" type="button" data-evidence="precedent">Inspect production case</button>
+              <button class="button button-secondary" id="experiment-precedent-expand" type="button" aria-controls="experiment-precedent-steps" aria-expanded="false" hidden="">Expand court documents</button>
+            </div>
+            <section id="experiment-precedent-case" aria-labelledby="experiment-precedent-case-title" aria-busy="false">
+              <h3 id="experiment-precedent-case-title">Current reuse proceedings</h3>
+              <p class="precedent-source" id="experiment-precedent-source">No prior work has yet petitioned for adoption.</p>
+              <p id="experiment-precedent-status" class="inline-status" role="status" aria-live="polite" aria-atomic="true">No court case is open.</p>
+              <ol id="experiment-precedent-steps" class="personnel-steps" role="list" aria-label="Five prior-work office decisions"></ol>
+            </section>
+          </section>
+        <div data-experiment="premises" hidden><section class="panel premises-panel" aria-labelledby="premises-title">
+            <p class="eyebrow">Facilities / Vacant String Real Estate and Occupancy Directorate</p>
+            <h2 id="premises-title">Nothing may move in until nothing is there</h2>
+            <p>Every new numerical line needs inspected premises and a single-use lease. Occasionally the inspector finds an invisible tenant: a space with conditions, a tab with territorial ambitions, or a BEL demanding a doorbell. The offices identify the character, remove it and inspect again before numerical text moves in.</p>
+            <p>Actual production findings appear with each number in the Executive Chronicle. The ordinary portfolio presents a hidden occupant at every seventh ordinal; the same ordinal starts with the same property condition. Cached answers acquire no new inspections.</p>
+            <form id="premises-form" class="premises-form" novalidate="" aria-describedby="premises-help">
+              <div><label for="premises-ordinal">Prospective numerical tenant</label><input id="premises-ordinal" type="text" inputmode="numeric" autocomplete="off" spellcheck="false" value="7" required="" aria-describedby="premises-help premises-error"><p id="premises-error" class="field-error" aria-live="polite"></p></div>
+              <div><label for="premises-scenario">Property condition or management intervention</label><select id="premises-scenario">
+                <option value="survey">Survey the ordinary property portfolio</option><option value="vacant">Present genuinely vacant premises</option>
+                <option value="non-breaking-space">Discover a non-breaking space</option><option value="newline">Discover an unauthorized newline</option><option value="tab">Discover a territorial tab</option><option value="vertical-tab">Discover a vertical tab</option><option value="bell">Discover a BEL with doorbell ambitions</option><option value="carriage-return">Discover a carriage return</option><option value="form-feed">Discover a form feed</option><option value="zero-width-space">Discover a zero-width space</option><option value="byte-order-mark">Discover a byte-order mark</option><option value="word-joiner">Discover a word joiner</option>
+                <option value="occupied">Let Fizz move in before the inspection</option><option value="failed-eviction">Appoint a bailiff who files paperwork and does nothing</option><option value="borrowed-lease">Borrow another request's lease</option><option value="reused-lease">Present an already closed lease</option>
+              </select></div>
+              <button id="premises-submit" class="button button-primary" type="submit" aria-controls="premises-result">Commission a read-only inspection</button>
+              <p id="premises-help" class="field-help">Use any positive whole ordinal without leading zeros. These specimens use the real Java offices. No human approval is required. They leave Official output, the numerical audit and the cache untouched. Hidden characters are named and shown as code points; BEL plays no sound.</p>
+            </form>
+            <p id="premises-status" class="inline-status" role="status" aria-live="polite" aria-atomic="true">No specimen inspection has been commissioned.</p>
+            <div id="premises-result" aria-busy="false"></div>
+          </section></div>
+      </section>
+      <section id="desk-facilities" class="demo-desk" aria-labelledby="facilities-title" hidden><header class="desk-heading"><p class="eyebrow">Capital Expenditure Appreciation Department</p><h1 id="facilities-title" tabindex="-1">Facilities without restraint</h1><p>Explore the building independently of the directed performance. Every unnecessary arrangement remains available for inspection.</p></header><section class="panel office-panel" id="office-tour" aria-labelledby="office-title">
             <div class="office-invitation"><div><p class="eyebrow">An entirely unnecessary place to do necessary paperwork</p><h2 id="office-title">The Serious Business Office</h2><p>Eight departments. Thirty-two questionable arrangements. Follow a disclosed number through its recorded proceedings, or explore the furniture that made those proceedings inevitable.</p></div><button class="button button-primary" id="office-enter" type="button" aria-controls="office-experience">Enter the office</button></div>
             <p id="office-status" class="inline-status" role="status" aria-live="polite">Reception has approved your right to look around.</p>
             <div id="office-home-slot">
-            <div id="office-experience" hidden>
+            <div id="office-experience" hidden="">
               <div class="office-toolbar" role="group" aria-label="Office visit controls">
                 <button type="button" id="office-close" class="button button-secondary">Close office</button>
                 <button type="button" id="office-enlarge" class="button button-secondary" aria-controls="office-modal">Enlarge office</button>
@@ -157,7 +193,7 @@
                 <button type="button" id="office-walk" class="button button-secondary" aria-pressed="false">Walk in this room</button>
                 <button type="button" id="office-zoom-in" class="button button-secondary" aria-label="Zoom into the office">+</button><button type="button" id="office-zoom-out" class="button button-secondary" aria-label="Zoom out of the office">−</button>
               </div>
-              <div id="office-walking-controls" class="office-toolbar" role="group" aria-label="Walking movement" hidden><button type="button" data-office-move="forward">Move forward</button><button type="button" data-office-move="back">Move back</button><button type="button" data-office-move="left">Move left</button><button type="button" data-office-move="right">Move right</button></div>
+              <div id="office-walking-controls" class="office-toolbar" role="group" aria-label="Walking movement" hidden=""><button type="button" data-office-move="forward">Move forward</button><button type="button" data-office-move="back">Move back</button><button type="button" data-office-move="left">Move left</button><button type="button" data-office-move="right">Move right</button></div>
               <div class="office-layout">
                 <div class="office-world-column">
                   <div class="office-stage" id="office-stage"><canvas id="office-canvas" tabindex="0" role="img" aria-label="Interactive three-dimensional office. The room directory provides the same inspections." aria-describedby="office-camera-help"></canvas><div class="office-loading" id="office-loading"><p>Facilities is locating the building…</p></div></div>
@@ -176,33 +212,31 @@
                   <div class="office-props" id="office-props" role="group" aria-label="Room curiosities"></div>
                   <article class="office-story" aria-labelledby="office-story-title"><p class="eyebrow">Fictional office inspection</p><h4 id="office-story-title">Welcome to the estate</h4><p id="office-story-text">Select an object in the room or its named button to inspect the company’s arrangements.</p><div id="office-story-actions" class="office-story-actions"></div><p id="office-story-answer" role="status" aria-live="polite"></p></article>
                   <p class="office-curiosities" id="office-curiosities">0 of 32 curiosities discovered.</p>
-                  <details class="office-evidence" open><summary>Recorded business evidence</summary><p id="office-evidence-source">No mandate has supplied a file. The tour’s office stories are available independently.</p><ol id="office-evidence" tabindex="0" aria-label="Recorded decisions for this department"></ol><p id="office-companion"></p><button type="button" id="office-companion-story" aria-haspopup="dialog" aria-controls="companion-dialog" hidden>Open appointed companion’s biography</button></details>
-                  <div class="office-share"><label for="office-share-link">Share this office visit</label><input id="office-share-link" type="url" readonly><button type="button" id="office-share-copy">Copy visit link</button><p id="office-share-status" role="status"></p></div>
+                  <details class="office-evidence" open=""><summary>Recorded business evidence</summary><p id="office-evidence-source">No mandate has supplied a file. The tour’s office stories are available independently.</p><ol id="office-evidence" tabindex="0" aria-label="Recorded decisions for this department"></ol><p id="office-companion"></p><button type="button" id="office-companion-story" aria-haspopup="dialog" aria-controls="companion-dialog" hidden="">Open appointed companion’s biography</button></details>
+                  <div class="office-share"><label for="office-share-link">Share this office visit</label><input id="office-share-link" type="url" readonly=""><button type="button" id="office-share-copy">Copy visit link</button><p id="office-share-status" role="status"></p></div>
                 </div>
               </div>
             </div>
             </div>
-          </section>
-          <section class="panel precedent-panel" aria-labelledby="precedent-title">
-            <p class="eyebrow">Prior Work Ratification / Institutional Memory Court</p>
-            <h2 id="precedent-title">Permission to do no new work</h2>
-            <p>Repeat a bounded mandate to convene five offices before reusing its cached answer. Admission, jurisdiction, completeness, independent lexical review and final licensing must all agree. The resulting Certificate of Authorized Non-Performance is an achievement the company takes extremely seriously.</p>
-            <p><a href="#precedent-case" class="text-link">Inspect the current court papers</a>, or challenge the same Java authorities with a specimen below. Rehearsals do not print numbers, change the cache or add numerical audit entries.</p>
-            <form id="precedent-form" class="precedent-form" aria-describedby="precedent-help">
-              <label for="precedent-scenario">Management petition</label>
-              <select id="precedent-scenario">
-                <option value="approved">Adopt fifteen's approved prior work</option>
-                <option value="wrong-mandate">Borrow a different mandate's authority</option>
-                <option value="missing-line">Declare fourteen lines a complete fifteen</option>
-                <option value="lowercase-fizz">Request an unauthorized lowercase rebrand</option>
-                <option value="zero">License the reuse of absolutely nothing</option>
-              </select>
-              <button class="button button-primary" id="precedent-submit" type="submit" aria-controls="precedent-case">Convene a read-only court</button>
-              <p class="field-help" id="precedent-help">Published deterministic rules decide every application. No human sign-off is required. Rejected cases leave later offices marked “Not reached.”</p>
-            </form>
-            <div class="precedent-actions">
+          </section></section>
+      <section id="desk-evidence" class="demo-desk" aria-labelledby="evidence-title" hidden><header class="desk-heading"><p class="eyebrow">The Evidentiary Burden</p><h1 id="evidence-title" tabindex="-1">Evidence of our diligence</h1><p>Complete records for the current retained mandate. Reading the paperwork never repeats the business.</p></header>
+        <label class="desk-selector" for="evidence-view">Record <select id="evidence-view"><option value="chronicle">Executive Chronicle</option><option value="personnel">Personnel</option><option value="precedent">Prior Work</option><option value="office">Office Decisions</option><option value="estate">Spatial Achievement</option><option value="receipt">Service Receipt</option></select></label>
+        <section data-record="chronicle" id="evidence-chronicle-slot"><section class="chronicle" aria-labelledby="chronicle-title">
+                <h2 id="chronicle-title">Executive Chronicle of Numerical Affairs</h2>
+
+
+                <p class="chronicle-current" id="chronicle-current" role="status" aria-live="polite" aria-atomic="true">The company awaits an opportunity to explain itself.</p>
+                <div class="chronicle-tools">
+                  <label class="check-label"><input type="checkbox" id="follow-chronicle" checked=""> Follow new proceedings</label>
+                  <label for="chronicle-ordinal">Inspect a disclosed ordinal <select id="chronicle-ordinal"><option value="latest">Latest proceedings</option></select></label>
+                </div>
+                <p class="chronicle-caption" id="chronicle-caption">The full corporate minutes follow the numbers. Automatic scrolling pauses when you scroll up; return to the bottom or choose “Latest proceedings” to resume.</p>
+                <div class="chronicle-scroll" id="chronicle-scroll" tabindex="0" role="region" aria-label="Executive chronicle, scrollable corporate minutes" aria-describedby="chronicle-caption"><div id="chronicle-entries"><p class="chronicle-standby">Reception has sharpened its pencil. No mandate has yet inconvenienced the committees.</p></div></div>
+              </section></section>
+        <section data-record="personnel" class="panel record-panel" hidden><h2>Personnel case papers</h2><p id="personnel-record-summary">No personnel record has accompanied a mandate.</p><button type="button" class="button button-secondary" data-open-personnel>Inspect the seven-office dossier</button></section>
+        <section data-record="precedent" class="panel precedent-panel" hidden><h2>Actual reuse proceedings</h2><div class="precedent-actions">
               <button class="button button-secondary" id="precedent-latest" type="button" aria-controls="precedent-case" aria-disabled="true">Restore latest mandate case</button>
-              <button class="button button-secondary" id="precedent-expand" type="button" aria-controls="precedent-steps" aria-expanded="false" hidden>Expand court documents</button>
+              <button class="button button-secondary" id="precedent-expand" type="button" aria-controls="precedent-steps" aria-expanded="false" hidden="">Expand court documents</button>
             </div>
             <section id="precedent-case" aria-labelledby="precedent-case-title" aria-busy="false">
               <h3 id="precedent-case-title">Current reuse proceedings</h3>
@@ -211,30 +245,21 @@
               <ol id="precedent-steps" class="personnel-steps" role="list" aria-label="Five prior-work office decisions"></ol>
             </section>
           </section>
-          <section class="panel premises-panel" aria-labelledby="premises-title">
-            <p class="eyebrow">Facilities / Vacant String Real Estate and Occupancy Directorate</p>
-            <h2 id="premises-title">Nothing may move in until nothing is there</h2>
-            <p>Every new numerical line needs inspected premises and a single-use lease. Occasionally the inspector finds an invisible tenant: a space with conditions, a tab with territorial ambitions, or a BEL demanding a doorbell. The offices identify the character, remove it and inspect again before numerical text moves in.</p>
-            <p>Actual production findings appear with each number in the Executive Chronicle. The ordinary portfolio presents a hidden occupant at every seventh ordinal; the same ordinal starts with the same property condition. Cached answers acquire no new inspections.</p>
-            <form id="premises-form" class="premises-form" novalidate aria-describedby="premises-help">
-              <div><label for="premises-ordinal">Prospective numerical tenant</label><input id="premises-ordinal" type="text" inputmode="numeric" autocomplete="off" spellcheck="false" value="7" required aria-describedby="premises-help premises-error"><p id="premises-error" class="field-error" aria-live="polite"></p></div>
-              <div><label for="premises-scenario">Property condition or management intervention</label><select id="premises-scenario">
-                <option value="survey">Survey the ordinary property portfolio</option><option value="vacant">Present genuinely vacant premises</option>
-                <option value="non-breaking-space">Discover a non-breaking space</option><option value="newline">Discover an unauthorized newline</option><option value="tab">Discover a territorial tab</option><option value="vertical-tab">Discover a vertical tab</option><option value="bell">Discover a BEL with doorbell ambitions</option><option value="carriage-return">Discover a carriage return</option><option value="form-feed">Discover a form feed</option><option value="zero-width-space">Discover a zero-width space</option><option value="byte-order-mark">Discover a byte-order mark</option><option value="word-joiner">Discover a word joiner</option>
-                <option value="occupied">Let Fizz move in before the inspection</option><option value="failed-eviction">Appoint a bailiff who files paperwork and does nothing</option><option value="borrowed-lease">Borrow another request's lease</option><option value="reused-lease">Present an already closed lease</option>
-              </select></div>
-              <button id="premises-submit" class="button button-primary" type="submit" aria-controls="premises-result">Commission a read-only inspection</button>
-              <p id="premises-help" class="field-help">Use any positive whole ordinal without leading zeros. These specimens use the real Java offices. No human approval is required. They leave Official output, the numerical audit and the cache untouched. Hidden characters are named and shown as code points; BEL plays no sound.</p>
-            </form>
-            <p id="premises-status" class="inline-status" role="status" aria-live="polite" aria-atomic="true">No specimen inspection has been commissioned.</p>
-            <div id="premises-result" aria-busy="false"></div>
-          </section>
-        </div>
-      </div>
-    </section>
-
+        <section data-record="office" class="panel record-panel" hidden><h2>Current observed decision</h2><details id="supervision-evidence" class="supervision-evidence"><summary>Inspect current paperwork</summary><p id="supervision-source"></p><pre id="supervision-document" tabindex="0" role="region" aria-label="Supplied observation record"></pre></details></section>
+        <section data-record="estate" class="panel record-panel" hidden><h2>Minutes of Spatial Achievement</h2><div id="supervision-reorganization"></div></section>
+        <section data-record="receipt" class="panel record-panel" hidden><h2>Service receipt</h2><div class="run-meta" role="group" aria-label="Latest response measurements">
+                <div><span class="meta-label">Elapsed</span><strong id="latency">—</strong></div>
+                <div><span class="meta-label">Redis</span><strong id="cache-result">—</strong></div>
+                <div><span class="meta-label">Target</span><strong>&lt; 1 second</strong></div>
+                <div><span class="meta-label">Proclamation desk</span><strong id="health-value">Checking…</strong></div>
+              </div><div class="trace-receipt">
+                <span class="meta-label">Trace receipt</span>
+                <code id="trace-result">Awaiting a mandate</code>
+                <small>Give this ID to the logging department to locate the request proceedings.</small>
+              </div></section>
+      </section>
+    </div>
   </main>
-
   <dialog id="personnel-dialog" aria-labelledby="personnel-title">
     <div class="case-dialog-tools"><button class="button button-secondary" id="personnel-dialog-close" type="button">Close case papers</button><button class="button button-secondary" id="personnel-documents-toggle" type="button" aria-controls="personnel-steps" aria-expanded="false">Expand all documents</button></div>
               <section class="personnel-case" id="personnel-case" aria-labelledby="personnel-title">
@@ -244,6 +269,18 @@
                 <p class="personnel-origin" id="personnel-origin">Run a mandate or submit a rehearsal to inspect the personnel file.</p>
                 <p class="inline-status" id="personnel-status" role="status" aria-live="polite" aria-atomic="true">No personnel proceedings have been read.</p>
                 <ol class="personnel-steps" id="personnel-steps" role="list" aria-label="Seven personnel office decisions" hidden></ol>
+              </section>
+
+  </dialog>
+  <dialog id="experiment-personnel-dialog" aria-labelledby="experiment-personnel-title">
+    <div class="case-dialog-tools"><button class="button button-secondary" id="experiment-personnel-dialog-close" type="button">Close case papers</button><button class="button button-secondary" id="experiment-personnel-documents-toggle" type="button" aria-controls="experiment-personnel-steps" aria-expanded="false">Expand all documents</button></div>
+              <section class="experiment-personnel-case" id="experiment-personnel-case" aria-labelledby="experiment-personnel-title">
+                <div class="experiment-personnel-heading"><h2 id="experiment-personnel-title">Personnel case papers</h2><span class="experiment-personnel-verdict" id="experiment-personnel-verdict">Awaiting application</span></div>
+                <p class="experiment-personnel-premise">The company must hire 1 before it can start counting.</p>
+                <p>HR consists of seven offices applying published rules. Each approval follows from the preceding document; no human sign-off is required. Open an office to inspect its reasoning.</p>
+                <p class="experiment-personnel-origin" id="experiment-personnel-origin">Run a mandate or submit a rehearsal to inspect the personnel file.</p>
+                <p class="inline-status" id="experiment-personnel-status" role="status" aria-live="polite" aria-atomic="true">No personnel proceedings have been read.</p>
+                <ol class="experiment-personnel-steps" id="experiment-personnel-steps" role="list" aria-label="Seven personnel office decisions" hidden></ol>
               </section>
 
   </dialog>
