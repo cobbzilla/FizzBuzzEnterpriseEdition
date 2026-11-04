@@ -1,3 +1,4 @@
+import {demoControl,demoAction} from './demo-controls';
 import {test, expect} from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 
@@ -28,7 +29,7 @@ test('each individual z reports to receiving without creating audit work', async
  expect(dossier).toMatchObject({product: 'FizzBuzz', text: 'FizzBuzz', assembly: 'CERTIFIED', demonstration: true, auditTransactions: 0});
  expect(dossier.lineItems.map((item: {position: number}) => item.position)).toEqual([1,2,3,4,5,6,7,8]);
  for (const product of ['Fizz','Buzz']) {
-  await page.selectOption('#procurement-product', product); await form.getByRole('button').click();
+  await demoAction(page,'selectOption','#procurement-product', product); await form.getByRole('button').click();
   await expect(page.locator('#procurement-status')).toContainText(`${product} certified`);
   await expect(items).toHaveCount(4);
  }
@@ -49,7 +50,7 @@ test('procurement API charter has an operable product selector and dossier link'
 
 test('receiving evidence reflows and exposes its controls to keyboard and accessibility tools', async ({page}, info) => {
  test.skip(info.project.metadata.engine === 'js', 'The DOM is audited once per browser; both compiled targets exercise procurement.');
- await page.goto('/'); await page.locator('#procurement-button').click();
+ await page.goto('/'); await (await demoControl(page,'#procurement-button')).click();
  await expect(page.locator('#procurement-status')).toContainText('certified');
  await page.getByText('Read the machine-readable procurement dossier', {exact: true}).click();
  const result = await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21a','wcag21aa','wcag22aa']).analyze();
@@ -65,10 +66,10 @@ test('a receiving failure is announced and the desk can accept a subsequent insp
  await page.locator('#procurement-product').evaluate((select: HTMLSelectElement) => {
   const option = document.createElement('option'); option.value = 'Unauthorized'; option.text = 'Unauthorized'; select.add(option); select.value = option.value;
  });
- await page.click('#procurement-button');
+ await demoAction(page,'click','#procurement-button');
  await expect(page.locator('#procurement-status')).toContainText('HTTP 400');
  await expect(page.locator('#procurement-results')).toBeHidden();
  await expect(page.locator('#procurement-button')).not.toHaveAttribute('aria-disabled', 'true');
- await page.selectOption('#procurement-product', 'Fizz'); await page.click('#procurement-button');
+ await demoAction(page,'selectOption','#procurement-product', 'Fizz'); await demoAction(page,'click','#procurement-button');
  await expect(page.locator('#procurement-status')).toContainText('Fizz certified');
 });

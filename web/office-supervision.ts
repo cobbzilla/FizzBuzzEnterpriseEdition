@@ -43,6 +43,8 @@ export class OfficeSupervisionDesk {
   const resize=new ResizeObserver(()=>{this.renderer?.resize();this.activity();});resize.observe(element('supervision-stage'));
   new IntersectionObserver(()=>this.activity(),{threshold:[0,.15]}).observe(element('supervision-stage'));
   document.addEventListener('visibilitychange',()=>this.activity());
+  document.addEventListener('demo-desk-change',()=>this.activity());
+  document.addEventListener('demo-watch-layout',()=>{this.activity();requestAnimationFrame(()=>this.renderer?.resize());});
   this.media.addEventListener('change',()=>this.updateScene());
   addEventListener('pagehide',()=>{this.interrupt();this.renderer?.dispose();clearTimeout(this.readiness);},{once:true});
   this.applyMode(false);
@@ -61,13 +63,13 @@ export class OfficeSupervisionDesk {
    element('pace-help').textContent='Executive Hovering owns the disclosure queue. Each recorded decision must be witnessed. Restore Autonomy or uncheck Executive Hovering to recover your preceding cadence.';
    if(!this.authority.reading())this.current('Executive oversight is standing by for supplied proceedings. Run or replay a mandate to begin a new observation.');
    void this.ensureScene();
-   if(user)requestAnimationFrame(()=>{if(!this.enabled)return;element('supervision-title').focus({preventScroll:true});element('mandate-output').scrollIntoView({block:'start',behavior:this.media.matches?'instant':'smooth'});});
+   // Navigation and focus belong to the workspace, including preference changes.
   }else{
    this.interrupt();this.cadence.disabled=false;this.cadence.querySelector('option[value="'+hoveringCadence+'"]')?.remove();this.cadence.value=this.normalCadence;
    this.pane.hidden=true;delete element('mandate-output').dataset.supervised;
    element('pace-help').textContent=this.normalPaceHelp;
   }
-  this.activity();this.syncControls();if(user)this.authority.wake();
+  this.activity();this.syncControls();document.dispatchEvent(new Event('demo-presentation-change'));if(user)this.authority.wake();
  }
  syncControls(){
   const reading=this.authority.reading(),paused=this.authority.paused();
@@ -111,11 +113,13 @@ export class OfficeSupervisionDesk {
  private updateScene(step=this.activeStep||this.lastStep){try{this.renderer?.update(this.sceneState(step));}catch{this.graphicsFailure();}}
  private visible(){
   if(!this.enabled||document.hidden||document.querySelector('dialog[open]'))return false;
+  if(document.body.classList.contains('demo-page'))return document.body.dataset.desk==='observe';
   const rect=element('supervision-stage').getBoundingClientRect(),bottom=innerHeight-(document.querySelector('#discovery-register')?.getBoundingClientRect().height||0);
   return rect.width>0&&Math.min(rect.bottom,bottom)-Math.max(rect.top,0)>=Math.min(60,rect.height*.2);
  }
- private activity(){const active=this.visible();if(active!==this.sceneActive){this.sceneActive=active;this.renderer?.active(active);}}
- private armReadiness(){clearTimeout(this.readiness);this.readiness=setTimeout(()=>{if(this.ready||!this.enabled)return;if(this.visible())this.graphicsFailure();else this.armReadiness();},20000);}
+ private activity(){const rect=this.canvas.getBoundingClientRect(),active=this.visible()&&rect.width>0&&rect.height>0;if(active!==this.sceneActive){this.sceneActive=active;this.renderer?.active(active);}}
+ private armReadiness(){clearTimeout(this.readiness);this.readiness=setTimeout(()=>{if(this.ready||!this.enabled)return;if(this.sceneActive)this.graphicsFailure();else this.armReadiness();},20000);}
+ private presentationReady(){return this.ready||this.fallback||!this.canvas.getClientRects().length;}
  private async ensureScene(){
   if(this.renderer){this.activity();this.renderer.resize();return;}if(this.fallback)return;if(this.loading)return this.loading;
   this.loading=(async()=>{
@@ -137,6 +141,7 @@ export class OfficeSupervisionDesk {
   this.activeStep=step;this.pane.dataset.room=step.shot.room;document.dispatchEvent(new CustomEvent('office-location',{detail:{view:'supervision'}}));
   this.pane.dataset.kind=step.event.kind;this.pane.dataset.ordinal=step.ordinal;this.pane.dataset.action=step.action;this.pane.dataset.state='running';
   const status=element('supervision-current');status.replaceChildren(node('strong',(index+1)+' / '+total+' · '+step.event.office+' · Address '+officeEstate.current.placements.find(p=>p.room===step.shot.room)!.address),document.createTextNode(step.event.finding));
+  this.authority.notice((this.authority.paused()?'Paused observation':'Observing')+' · '+(index+1)+' / '+total+' · '+step.event.office);
   element('supervision-caption').scrollTop=0;
   const source=step.source==='rehearsal'?'Read-only personnel specimen. Numerical output is retained.':step.source==='disclosure'?'Observed result or cache receipt. Fresh production work is not inferred.':this.mode==='replay'?'Retained Java evidence. No business operation is being repeated.':'Recorded Java evidence. The operation has already completed; its UI disclosure is being choreographed.';
   element('supervision-source').textContent=source+(this.envelope?.omitted?' The source dossier omitted '+this.envelope.omitted+' entries; absent work is not reconstructed.':'');
@@ -164,11 +169,11 @@ export class OfficeSupervisionDesk {
     const waiting=moving?'facilities':!visible?'attention':paused?'paused':'';
     if(waiting!==this.blocked){const previous=this.blocked;this.blocked=waiting;if(this.authority.reading()){if(waiting==='attention')this.authority.notice('Executive observation is waiting for attention. Return to the office view to continue.');else if(previous==='attention'&&!waiting)this.authority.notice('Executive observation resumed. The office controls disclosure.');}}
     if(!shown){
-     if(!moving&&(this.ready||this.fallback)&&visible&&(!paused||this.credits>0)){shown=true;this.show(step,index,total);}
+     if(!moving&&this.presentationReady()&&visible&&(!paused||this.credits>0)){shown=true;this.show(step,index,total);}
      else{this.frame=requestAnimationFrame(frame);return;}
     }
     if(!moving&&paused&&this.credits>0&&visible){this.credits=0;manual=true;}
-    const allow=!moving&&visible&&(this.ready||this.fallback)&&(!paused||manual);
+    const allow=!moving&&visible&&this.presentationReady()&&(!paused||manual);
     const cue:OfficeCue=clock.tick(now,allow,manual);this.renderer?.direct(cue);
     if(this.pane.dataset.phase!==cue.phase){this.pane.dataset.phase=cue.phase;element<HTMLProgressElement>('supervision-progress').title=cue.phase==='arrival'?'Arriving at the next office':cue.phase==='work'?'The supplied decision is being illustrated':'A mandatory opportunity for executive contemplation';}
     if(step.publication&&!published&&clock.elapsed>=step.arriveMs+step.workMs){published=true;publish?.();}

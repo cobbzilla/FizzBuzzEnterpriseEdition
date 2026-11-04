@@ -8,10 +8,12 @@ import {parseMandate,autocorrectMandate,addOrdinals,windowCount,chooseMagnitudeW
 import {trackUsage} from './telemetry';
 import { request, config,proclamation } from './runtime';
 import {byId,setText} from './dom';
-import {PersonnelProceedings,type PersonnelPlayback,type PersonnelScenario,type PersonnelDossier} from './onboarding';
+import {PersonnelProceedings,type PersonnelDossier} from './onboarding';
 import {ExecutiveChronicle,readProclamation,type Folio,type ExecutionPacket} from './chronicle';
 import {PrecedentView} from './precedent';
 import {PremisesDesk} from './premises';
+import {DemoWorkspace} from './demo-workspace';
+import {PersonnelExperiment} from './personnel-experiment';
 const runForm = byId<HTMLFormElement>('run-form');
 const limitInput = byId<HTMLInputElement>('limit');
 const speedControl = byId<HTMLSelectElement>('display-speed');
@@ -26,22 +28,27 @@ let reading = false;
 let paused = false;
 let revealAll = false;
 let wakeReading: (() => void) | undefined;
-let activityMode:'mandate'|'rehearsal'|'replay'|'inspection'='mandate';
+let activityMode:'mandate'|'replay'|'inspection'='mandate';
 let manualStep=false;
+let forecastSequence=0;
 const chronicle=new ExecutiveChronicle();
 const precedent=new PrecedentView();
+new PrecedentView('experiment-');
 new PremisesDesk();
+let workspace:DemoWorkspace|undefined;
 const office=new OfficeTourDesk();
 const supervision=new OfficeSupervisionDesk({reading:()=>reading,paused:()=>paused,pause:setReadingPaused,wake:()=>{wakeReading?.();readingControls();},notice:text=>setText('run-status',text)});
 officeEstate.subscribe(event=>{if(event.kind!=='progress'){wakeReading?.();}});
 const reorganizationPanels=[new ReorganizationPanel(byId('supervision-reorganization')),new ReorganizationPanel(byId('office-reorganization'))];
-const companions=new CompanionDesk({remember:discovery=>{office.remember(discovery);supervision.remember(discovery);},clearCompanions:()=>{office.clearCompanions();supervision.clearCompanions();}});
+const companions=new CompanionDesk({remember:discovery=>{office.remember(discovery);supervision.remember(discovery);workspace?.remember(discovery);},clearCompanions:()=>{office.clearCompanions();supervision.clearCompanions();workspace?.clearCompanions();}});
 let currentLimit='15';
 let receivedPacket:ExecutionPacket|undefined;
-let lastPlayback:{kind:'mandate';folios:Folio[];limit:string;personnel?:PersonnelDossier;packet?:ExecutionPacket}|{kind:'rehearsal';data:PersonnelDossier}|undefined;
+let lastPlayback:{kind:'mandate';folios:Folio[];limit:string;personnel?:PersonnelDossier;packet?:ExecutionPacket}|undefined;
 let inspection:{folios:Folio[];index:number}|undefined;
-const personnel=new PersonnelProceedings({rehearse:scenario=>void rehearsePersonnel(scenario),replay:()=>void replayPersonnel(),step:stepPersonnel,disclosed:(data,count)=>{if(data.purpose==='REHEARSAL')chronicle.rehearsal(data,count);}});
-function discloseLines(start:string,lines:readonly string[]){companions.disclose(start,lines);const folios=chronicle.disclose(start,lines);office.disclose(currentLimit,folios);lastPlayback={kind:'mandate',folios:chronicle.records,limit:currentLimit,personnel:personnel.record,packet:receivedPacket};personnel.setPlaybackAvailable(true);}
+const personnel=new PersonnelProceedings({rehearse:()=>{},replay:()=>void replayPersonnel(),step:stepPersonnel},'');
+new PersonnelExperiment();
+workspace=new DemoWorkspace({pause:()=>setReadingPaused(true),resume:()=>setReadingPaused(false),placeChronicle:target=>chronicle.place(target)});
+function discloseLines(start:string,lines:readonly string[]){companions.disclose(start,lines);const folios=chronicle.disclose(start,lines);office.disclose(currentLimit,folios);workspace?.disclosed(folios.at(-1));lastPlayback={kind:'mandate',folios:chronicle.records,limit:currentLimit,personnel:personnel.record,packet:receivedPacket};personnel.setPlaybackAvailable(true);}
 const immediate=()=>revealAll||(!supervision.enabled&&Number(speedControl.value)===0);
 async function observeLine(folio:Folio,sequence:number,publish:()=>void){
  let published=false;const release=()=>{if(published||sequence!==mandateSequence)return;published=true;publish();};
@@ -53,17 +60,20 @@ async function observeLine(folio:Folio,sequence:number,publish:()=>void){
 function readingControls() {
   for(const panel of reorganizationPanels)panel.setReading(reading);
   stopButton.setAttribute('aria-disabled', String(!reading));
-  revealButton.textContent = activityMode==='rehearsal'||activityMode==='replay'?'Reveal completed proceedings':streaming ? 'Waive disclosure delays' : 'Reveal complete output';
+  revealButton.textContent = activityMode==='replay'?'Reveal completed proceedings':streaming ? 'Waive disclosure delays' : 'Reveal complete output';
   pauseButton.setAttribute('aria-disabled', String(!reading));
   revealButton.setAttribute('aria-disabled', String(!reading));
-  pauseButton.textContent = paused ? 'Resume reading' : 'Pause reading';
+  pauseButton.textContent = paused ? 'Resume' : 'Pause';
+  pauseButton.setAttribute('aria-label',paused?'Resume reading':'Pause reading');
   if(supervision.enabled)revealButton.textContent='Restore autonomy and reveal output';
   supervision.syncControls();
 }
 function setReadingPaused(value:boolean){
   if (!reading) return;
+  if(paused===value)return;
   paused = value;
-  setText('run-status', paused ? 'Ceremonial reading paused. Resume or reveal the complete output when ready.' : 'Ceremonial reading resumed.');
+  const office=supervision.enabled?byId('supervision-current').querySelector('strong')?.textContent:undefined;
+  setText('run-status', office?'Observation '+(paused?'paused':'resumed')+' · '+office:paused ? 'Ceremonial reading paused. Resume or reveal the complete output when ready.' : 'Ceremonial reading resumed.');
   readingControls();
   wakeReading?.();
 }
@@ -98,7 +108,8 @@ function inspectMagnitude() {
  } else if(typeof limit!=='bigint') warnedValue='';
  return limit;
 }
-limitInput.addEventListener('input',()=>{inspectMagnitude();limitInput.removeAttribute('aria-invalid');setText('limit-error','');});
+let forecastTimer:ReturnType<typeof setTimeout>|undefined;
+limitInput.addEventListener('input',()=>{const limit=inspectMagnitude();limitInput.removeAttribute('aria-invalid');setText('limit-error','');clearTimeout(forecastTimer);if(limit!==null)forecastTimer=setTimeout(()=>void loadForecast(limit).catch(()=>setText('forecast-units','Unavailable')),180);});
 autocorrect.addEventListener('change',()=>{inspectMagnitude();limitInput.removeAttribute('aria-invalid');setText('limit-error','');});
 function validateLimit() {
  const limit=inspectMagnitude();
@@ -125,12 +136,13 @@ function showForecast(forecast: Forecast) {
   setText('forecast-units', forecast.workloadUnits);
 }
 
-async function loadForecast(limit: MandateInteger, sequence = mandateSequence) {
+async function loadForecast(limit: MandateInteger, _sequence = mandateSequence) {
+  const sequence=++forecastSequence;
   const desk=typeof limit==='number'&&limit<=1000?'/capacity/forecast':'/capacity/forecast/extended';
   const reply = await request(`${desk}?limit=${limit}`);
   if (!reply.ok) throw new Error(`Forecast desk returned ${reply.status}.`);
   const forecast = await reply.json();
-  if (sequence === mandateSequence) showForecast(forecast);
+  if (sequence === forecastSequence) showForecast(forecast);
 }
 
 function waitForPace(milliseconds?: number) {
@@ -248,6 +260,7 @@ async function runMandate(event: Event) {
   if (runButton.getAttribute('aria-disabled') === 'true') return;
   const limit = validateLimit();
   if (limit === null) return;
+  workspace!.commitDraft(String(limit));
   const sequence = ++mandateSequence;
   companions.reset(String(limit));
   wakeReading?.(); reading = false; streaming=false;activityMode='mandate';manualStep=false;inspection=undefined;lastPlayback=undefined;receivedPacket=undefined;currentLimit=String(limit);supervision.begin(currentLimit);readingControls();personnel.setPlaybackAvailable(false);personnel.loading();chronicle.begin(currentLimit);office.begin(currentLimit);
@@ -258,7 +271,6 @@ async function runMandate(event: Event) {
   setText('trace-result', 'Awaiting a receipt');
   byId('output').textContent = 'Awaiting a duly authorized number.';
   setText('output-count', '0 lines');
-  if(supervision.enabled||matchMedia('(max-width: 900px)').matches){byId('output').focus({preventScroll:true});byId('mandate-output').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth',block:'start'});}
   void loadForecast(limit, sequence).catch(() => {
     if (sequence === mandateSequence) setText('forecast-units', 'Unavailable');
   });
@@ -277,7 +289,7 @@ async function runMandate(event: Event) {
     setText('trace-result', answer.headers.get('X-SlopBuzz-Trace-Id') || 'UNAVAILABLE');
     runButton.removeAttribute('aria-disabled');
     byId('output').removeAttribute('aria-busy');
-    reading=true;paused=false;revealAll=false;readingControls();
+    reading=true;paused=!workspace!.observing;revealAll=false;readingControls();
     const record=personnel.responseRecord(answer);
     if(record){personnel.prepare(record);personnel.disclose(7);}
     lastPlayback={kind:'mandate',folios:[],limit:currentLimit,personnel:record,packet};personnel.setPlaybackAvailable(true);
@@ -304,49 +316,23 @@ async function runMandate(event: Event) {
   }
 }
 
-function personnelClock(sequence:number):PersonnelPlayback {
- return {
-  current:()=>sequence===mandateSequence,
-  waitWhilePaused:async()=>{while(paused&&!supervision.enabled&&sequence===mandateSequence)await waitForPace();},
-  delay:async()=>{if(!supervision.enabled&&!revealAll&&Number(speedControl.value)>0&&sequence===mandateSequence)await waitForPace(Number(speedControl.value));},
-  beforeDecision:async(decision,data)=>{if(supervision.enabled&&!revealAll){const source=(d:typeof decision)=>({ordinal:String(data.candidate),kind:'HR_'+d.state,office:d.office,finding:d.finding,document:d.document});await supervision.rehearsal(source(decision),()=>sequence===mandateSequence,data.steps.slice(0,data.steps.indexOf(decision)).map(source));}},
- };
-}
-function beginPersonnelActivity(mode:'rehearsal'|'replay'|'inspection'){
+function beginPersonnelActivity(mode:'replay'|'inspection'){
  const sequence=++mandateSequence;wakeReading?.();supervision.interrupt();activityMode=mode;manualStep=mode==='inspection';reading=mode!=='inspection';streaming=false;paused=false;revealAll=false;
  runButton.removeAttribute('aria-disabled');byId('output').removeAttribute('aria-busy');readingControls();
  if(supervision.enabled&&mode!=='inspection'){byId('supervision-title').focus({preventScroll:true});byId('mandate-output').scrollIntoView({block:'start',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});}
  return sequence;
 }
-async function rehearsePersonnel(scenario:PersonnelScenario){
- const sequence=beginPersonnelActivity('rehearsal');supervision.begin(currentLimit,'rehearsal');personnel.loading();
- setText('run-status','Opening a read-only personnel rehearsal. Numerical output already shown is retained.');
- try {
-  const response=await request(`/onboarding/rehearsal?scenario=${scenario}`);
-  if(!response.ok)throw new Error(`Personnel desk returned ${response.status}.`);
-  const data=personnel.rehearsalRecord(await response.json());if(sequence!==mandateSequence)return;
-  lastPlayback={kind:'rehearsal',data};personnel.setPlaybackAvailable(true);
-  await personnel.read(data,personnelClock(sequence));if(sequence!==mandateSequence)return;
-  setText('run-status',`Personnel rehearsal ${data.status==='APPROVED'?'approved':'rejected'}. No numerical output was requested by this rehearsal.`);
- }catch(error){if(sequence===mandateSequence){personnel.clear('The personnel rehearsal could not be opened.');setText('run-status',`Personnel rehearsal could not be completed: ${error.message}`);}}
- finally{if(sequence===mandateSequence){reading=false;personnel.setBusy(false);readingControls();}}
-}
 async function replayPersonnel(){
  const saved=lastPlayback;if(!saved)return;
+ workspace!.navigate('observe');
  const sequence=beginPersonnelActivity('replay');
- if(saved.kind==='rehearsal'){
-  supervision.begin(currentLimit,'rehearsal-replay');
-  setText('run-status','Replaying recorded personnel proceedings. Numerical output is retained.');
-  await personnel.read(saved.data,personnelClock(sequence),'Replay of read-only rehearsal');
-  if(sequence===mandateSequence){reading=false;readingControls();setText('run-status','Personnel replay complete. The recorded business operation was not executed again.');}return;
- }
- companions.reset(saved.limit);chronicle.begin(saved.limit,'replay');office.begin(saved.limit,'replay');supervision.begin(saved.limit,'replay');setText('run-status','Replaying the retained numerical output and its corporate minutes. No mandate was submitted.');
+ workspace!.clearCompanions();companions.reset(saved.limit);chronicle.begin(saved.limit,'replay');office.begin(saved.limit,'replay');supervision.begin(saved.limit,'replay');setText('run-status','Replaying the retained numerical output and its corporate minutes. No mandate was submitted.');
  const output=byId('output');output.textContent='';
  if(!saved.folios.length&&saved.packet){supervision.receive(saved.packet,'1',0);if(supervision.enabled)await supervision.prelude(()=>sequence===mandateSequence);}
  for(let i=0;i<saved.folios.length;){
   while(paused&&!supervision.enabled&&sequence===mandateSequence)await waitForPace();if(sequence!==mandateSequence)return;
   const batch=immediate()?saved.folios.slice(i):saved.folios.slice(i,i+1),shown=i+batch.length;
-  const publish=()=>{for(const folio of batch)companions.disclose(folio.ordinal,[folio.text]);chronicle.discloseFolios(batch);office.disclose(saved.limit,batch);output.append(document.createTextNode(batch.map(f=>f.text+'\n').join('')));followLatest();setText('output-count',shown+' of '+saved.folios.length+' retained lines');};
+  const publish=()=>{for(const folio of batch)companions.disclose(folio.ordinal,[folio.text]);chronicle.discloseFolios(batch);workspace!.disclosed(batch.at(-1));office.disclose(saved.limit,batch);output.append(document.createTextNode(batch.map(f=>f.text+'\n').join('')));followLatest();setText('output-count',shown+' of '+saved.folios.length+' retained lines');};
   if(batch.length===1){if(!await observeLine(batch[0],sequence,publish))return;}else publish();i+=batch.length;
   if(i<saved.folios.length&&!supervision.enabled&&!revealAll&&Number(speedControl.value)>0)await waitForPace(Number(speedControl.value));
  }
@@ -355,10 +341,6 @@ async function replayPersonnel(){
 }
 function stepPersonnel(){
  const saved=lastPlayback;if(!saved)return;
- if(saved.kind==='rehearsal'){
-  if(!manualStep||personnel.progress===7){beginPersonnelActivity('inspection');personnel.startStepThrough();}
-  personnel.step();setText('run-status','Inspecting recorded personnel paperwork: '+personnel.progress+' of 7 offices disclosed. Numerical output is retained.');return;
- }
  if(!manualStep||!inspection||inspection.index>=inspection.folios.length){beginPersonnelActivity('inspection');inspection={folios:saved.folios,index:0};chronicle.begin(saved.limit,'replay');}
  const folio=inspection.folios[inspection.index++];if(folio){chronicle.discloseFolios([folio]);office.inspect(folio);}else chronicle.finish(saved.limit==='0');
  setText('personnel-step',inspection.index<inspection.folios.length?'Next ordinal':'Step through');
@@ -369,6 +351,7 @@ runForm.addEventListener('submit',runMandate);
 document.querySelectorAll<HTMLButtonElement>('[data-limit]').forEach((button) => {
   button.addEventListener('click', () => {
     limitInput.value = button.dataset.limit || '15';
+    limitInput.dispatchEvent(new Event('input'));
     runForm.requestSubmit();
   });
 });

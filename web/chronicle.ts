@@ -53,6 +53,7 @@ function paragraphs(folio:Folio,language:ChronicleLanguage):string[]{
  return parts;
 }
 export class ExecutiveChronicle {
+ private relocating=false;private relocation=0;
  private readonly language=new ChronicleLanguage();
  private readonly rehearsals=new WeakMap<PersonnelDossier,readonly string[]>();
  private packet?:ExecutionPacket;
@@ -74,7 +75,7 @@ export class ExecutiveChronicle {
  constructor(){
   const pause=()=>{if(this.body.scrollHeight-this.body.clientHeight<=4)return;this.pinned=false;this.pinAfterResize=false;};
   this.body.addEventListener('scroll',()=>{
-   if(this.pinAfterResize)return;
+   if(this.pinAfterResize||this.relocating||!this.body.getClientRects().length)return;
    this.pinned=this.atBottom();
    if(this.pinned&&this.follow.checked&&this.pending)this.latest();
   },{passive:true});
@@ -127,7 +128,7 @@ export class ExecutiveChronicle {
  }
  private render(folio:Folio){
   const article=node('article',undefined,'chronicle-folio');article.dataset.ordinal=folio.ordinal;
-  article.append(node('p',`Ordinal ${folio.ordinal} · ${folio.cache==='HIT'?'Institutional memory':folio.recorded?'Recorded Java proceedings':folio.events.length?'Recorded personnel · procedure explained':'Observed output · procedure explained'}`,'chronicle-source'),node('h4',title(folio)));
+  article.append(node('p',`Ordinal ${folio.ordinal} · ${folio.cache==='HIT'?'Institutional memory':folio.recorded?'Recorded Java proceedings':folio.events.length?'Recorded personnel · procedure explained':'Observed output · procedure explained'}`,'chronicle-source'),node('h3',title(folio)));
   folio.narrative??=Object.freeze(paragraphs(folio,this.language));
   for(const paragraph of folio.narrative)article.append(node('p',paragraph,'chronicle-prose'));
   const certificate=folio.events.find(e=>e.kind==='PREMISES_CERTIFICATE');if(certificate?.document)try{const data=parsePremises(JSON.parse(certificate.document));if(data.ordinal===folio.ordinal&&data.purpose==='MANDATE'&&folio.cache!=='HIT')article.append(premisesCard(data));}catch{/* Optional property papers cannot erase an observed numerical answer. */}
@@ -140,7 +141,7 @@ export class ExecutiveChronicle {
  }
  note(text:string,heading='Corporate minutes'){
   this.pauseIfReading();if(!this.isFollowing()){this.pending=true;this.pendingNotes.push({text,heading});if(this.pendingNotes.length>16)this.pendingNotes.shift();return;}
-  const article=node('article',undefined,'chronicle-note');article.append(node('h4',heading),node('p',text));this.entries.append(article);
+  const article=node('article',undefined,'chronicle-note');article.append(node('h3',heading),node('p',text));this.entries.append(article);
   const notes=this.entries.querySelectorAll('.chronicle-note');if(notes.length>16)notes[0].remove();this.followBottom();
  }
  rehearsal(data:PersonnelDossier,count:number){
@@ -148,7 +149,7 @@ export class ExecutiveChronicle {
   const key=`rehearsal-${data.caseId}`;let article=this.entries.querySelector<HTMLElement>(`[data-rehearsal="${CSS.escape(key)}"]`);
   if(!article){article=node('article',undefined,'chronicle-note');article.dataset.rehearsal=key;this.entries.append(article);}
   let prose=this.rehearsals.get(data);if(!prose){prose=Object.freeze([this.language.write('rehearsal','This is a read-only rehearsal using the actual personnel offices. Existing numerical output is retained; the rehearsal creates no numerical audit entries.'),...data.steps.map(decision=>this.language.write('office',`${decision.office} — ${decision.state==='APPROVED'?'Approved':decision.state==='REJECTED'?'Rejected':'Not reached'}. ${decision.finding} ${decision.document}`))]);this.rehearsals.set(data,prose);}
-  article.replaceChildren(node('h4',`Management intervention: applicant ${data.candidate}`),node('p',prose[0]));
+  article.replaceChildren(node('h3',`Management intervention: applicant ${data.candidate}`),node('p',prose[0]));
   for(const paragraph of prose.slice(1,count+1))article.append(node('p',paragraph));
   setText('chronicle-current',count===7?(data.status==='APPROVED'?'Personnel rehearsal approved: One may start work.':`Personnel rehearsal rejected by ${data.steps.find(e=>e.state==='REJECTED')!.office}.`):`Reading completed personnel rehearsal: ${count} of 7 offices.`);
   const rehearsals=this.entries.querySelectorAll('[data-rehearsal]');if(rehearsals.length>8)rehearsals[0].remove();this.followBottom();
@@ -161,7 +162,13 @@ export class ExecutiveChronicle {
  }
  private atBottom(){return this.body.scrollHeight-this.body.clientHeight-this.body.scrollTop<=4;}
  private isFollowing(){return this.follow.checked&&this.pinned;}
- private pauseIfReading(){if(!this.pinAfterResize&&!this.atBottom())this.pinned=false;}
+ private pauseIfReading(){if(!this.relocating&&this.body.getClientRects().length&&!this.pinAfterResize&&!this.atBottom())this.pinned=false;}
+ place(target:HTMLElement){
+  const section=this.body.closest('.chronicle')!;if(section.parentElement===target)return;
+  const serial=++this.relocation,following=this.isFollowing(),position=this.body.scrollTop;this.relocating=true;target.append(section);
+  if(following)this.followBottom();else this.body.scrollTop=position;
+  requestAnimationFrame(()=>{if(serial!==this.relocation)return;if(following&&this.isFollowing())this.followBottom();else this.body.scrollTop=position;this.relocating=false;});
+ }
  private followBottom(){if(this.isFollowing())this.body.scrollTop=this.body.scrollHeight;}
  private latest(){this.inspected?.remove();this.inspected=undefined;this.follow.checked=true;this.pinned=true;this.pinAfterResize=false;this.selector.value='latest';for(const [ordinal,option]of this.options)if(!this.snapshots.has(ordinal)){option.remove();this.options.delete(ordinal);}if(this.pending){this.pending=false;const notes=this.pendingNotes;this.pendingNotes=[];this.entries.replaceChildren();this.rendered.clear();this.note(this.language.write('resume','Following has resumed at the latest retained minutes. No business operation was submitted again.'),'Reading position restored');this.discloseFolios(this.records.slice(-24));for(const entry of notes)this.note(entry.text,entry.heading);}const last=this.records.at(-1);if(last)setText('chronicle-current',`Ordinal ${last.ordinal}: ${title(last)}. Official output: ${last.text}.`);this.followBottom();}
 }

@@ -1,3 +1,4 @@
+import {demoControl,demoAction} from './demo-controls';
 import {test,expect} from '@playwright/test';
 test.use({serviceWorkers:'block',userAgent:'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36'});
 import {gunzipSync} from 'node:zlib';
@@ -14,7 +15,7 @@ test('cookieless traffic and explicit usage are sanitized and non-blocking',asyn
  await page.goto('/demo/?secret=do-not-send&utm_campaign=launch&limit=9007199254740993&authority=factor-resonance-v1&seedPolicy=mandate-v1&ordinal=3&companion=private-encounter');
  await expect.poll(()=>events.filter(e=>e.event==='$pageview').length).toBe(1);
  await expect(page.locator('#health-value')).toHaveText('LIVE');
- await page.fill('#limit','3');await page.click('#run-button');
+ await demoAction(page,'fill','#limit','3');await demoAction(page,'click','#run-button');
  await expect.poll(()=>events.filter(e=>e.event==='slopbuzz_demo_run').length).toBe(1);
  const demo=events.find(e=>e.event==='slopbuzz_demo_run');expect(demo.properties.outcome).toBe('success');
  expect(demo.properties.environment).toBe('preview');
@@ -26,7 +27,7 @@ test('cookieless traffic and explicit usage are sanitized and non-blocking',asyn
  const card=page.locator('.api-card').first();await card.locator('summary').first().click();await card.getByRole('button').click();
  await expect.poll(()=>events.filter(e=>e.event==='slopbuzz_api_request').length).toBe(1);
  await page.route('**/intake/e/**',route=>route.abort());
- await page.goto('/demo/');await page.selectOption('#display-speed','0');await page.click('#run-button');await expect(page.locator('#run-status')).toContainText('Mandate complete');
+ await page.goto('/demo/');await demoAction(page,'selectOption','#display-speed','0');await demoAction(page,'click','#run-button');await expect(page.locator('#run-status')).toContainText('Mandate complete');
 });
 test('cookieless delivery continues when DNT and GPC are both enabled',async({page})=>{
  await page.addInitScript(()=>{
@@ -45,7 +46,7 @@ test('cookieless delivery continues when DNT and GPC are both enabled',async({pa
  });
  await page.goto('/demo/');await expect(page.locator('#health-value')).toHaveText('LIVE');
  await expect.poll(()=>events.filter(e=>e.event==='$pageview').length).toBe(1);
- await page.selectOption('#display-speed','0');await page.click('#run-button');
+ await demoAction(page,'selectOption','#display-speed','0');await demoAction(page,'click','#run-button');
  await expect.poll(()=>events.filter(e=>e.event==='slopbuzz_demo_run').length).toBe(1);
  expect(events.every(e=>e.properties.distinct_id==='$posthog_cookieless')).toBe(true);
  expect(direct).toEqual([]);
