@@ -342,20 +342,97 @@ var RelocationCoordinator = class {
   }
 };
 
+// web/office-estate-records.ts
+var titles = ["The Great Boundaryless Containment", "Project Horizontal Ascendancy", "The Accountability Dispersal Initiative", "Operation Unbroken Silos", "The Furniture-Led Recovery", "A Return to Forward Thinking", "The Strategic Proximity Correction", "Project Tomorrow Was Yesterday", "The Workplace Simplification Complex", "The Final Interim Configuration", "The Synergy Redistribution Event", "The Transformational Transformation"];
+var rationales = ["The old rooms had become dangerously familiar. Familiarity permits decisions without asking where to go.", "An independent consultant observed that our office had an arrangement. We have acted decisively on this finding.", "Staff could locate the printer from memory. This constituted an unmanaged concentration of institutional knowledge.", "The company requires a change of direction. Facilities has supplied several, including a turn past the new wall.", "Our previous floorplan contained silos. These new enclosures have each signed a declaration denying that description.", "Management promised movement. No specific mention was made of progress.", "The board wished to see a matrix. Facilities would like the board to stop using metaphors around contractors.", "The estate was aligned with the last strategy. A new strategy has since been left in a meeting room.", "The shortest route had become a single point of failure. We have diversified the inconvenience.", "Several desks reported a sense of stability. The company takes such allegations seriously.", "A photograph suggested we had finished organizing. Facilities regrets the misleading impression.", "Our long-term vision remains unchanged: to have a long-term vision after the next move."];
+var estateLabel = (l) => "Edition " + l.edition + " \xB7 " + l.rows + "\xD7" + l.columns;
+var qualifiedAddress = (l, room) => estateLabel(l) + " / " + l.placements.find((p) => p.room === room).address;
+function meanCommute(l) {
+  const planner = routes(l);
+  let total = 0, count = 0;
+  for (const from of rooms) for (const to of rooms) if (from !== to) {
+    total += routeLength(planner.route({ room: from.id, station: "desk" }, { room: to.id, station: "desk" }));
+    count++;
+  }
+  return total / count;
+}
+function estateMemo(from, to) {
+  if (from.seed !== to.seed || to.edition !== from.edition + 1) throw new Error("These minutes do not describe one consecutive relocation.");
+  const before = meanCommute(from), after = meanCommute(to), change = (after / before - 1) * 100;
+  const finding = Math.abs(change) < 0.05 ? "Paper travel is unchanged. Facilities has nevertheless achieved a complete renewal of the signage." : change > 0 ? "Illustrated paper travel increased " + change.toFixed(1) + "%. Facilities reports improved cross-functional exposure." : "Illustrated paper travel decreased " + Math.abs(change).toFixed(1) + "%. Facilities is investigating the accidental efficiency.";
+  return Object.freeze({ from, to, title: titles[(to.edition - 1) % titles.length], rationale: rationales[(to.edition - 1) % rationales.length], before, after, finding });
+}
+function readEstateSession(raw) {
+  if (raw.length > 12e3) throw new Error("Facilities has exceeded its filing cabinet.");
+  const record = JSON.parse(raw);
+  if (record.schema !== "slopbuzz-estate-session/v1" || typeof record.current !== "string" || !Array.isArray(record.history) || record.history.length > 10) throw new Error("The saved estate charter is unfamiliar.");
+  const current = parseLayoutToken(record.current), history2 = [];
+  for (const pair of record.history) {
+    if (!Array.isArray(pair) || pair.length !== 2 || pair.some((p) => typeof p !== "string")) throw new Error("Incomplete relocation minutes.");
+    const from = parseLayoutToken(pair[0]), to = parseLayoutToken(pair[1]);
+    if (history2.length && layoutToken(history2.at(-1).to) !== layoutToken(from)) throw new Error("The minutes are out of sequence.");
+    history2.push(estateMemo(from, to));
+  }
+  if (history2.length && layoutToken(history2.at(-1).to) !== layoutToken(current)) throw new Error("The minutes refer to another estate.");
+  return { current, history: history2 };
+}
+function writeEstateSession(current, history2) {
+  return JSON.stringify({ schema: "slopbuzz-estate-session/v1", current: layoutToken(current), history: history2.slice(-10).map((m) => [layoutToken(m.from), layoutToken(m.to)]) });
+}
+var amenities = {
+  atrium: { name: "The Strategic Growth Atrium", story: "One plant has been promoted to Chief Growth Officer. Its superior performance is attributed to remaining silent during planning. The benches are for admiring growth; sitting is interpreted as a development objective.", actions: [{ label: "Inspect the promotion", answer: "The fern grew four millimeters without a stand-up. Management has requisitioned a root-cause analysis and a smaller pot." }, { label: "Review the seating policy", answer: "The benches are permanently available for the idea of taking a break. Physical occupancy requires a compelling business case." }, { label: "Request natural light", answer: "The skylight is a forecast. Facilities has installed a plaque confirming that brighter days remain on the roadmap." }] },
+  breakroom: { name: "The Compulsory Optional Restoration Suite", story: "A coffee machine occupies the ninth cell as an independent cost center. The mugs say WE VALUE YOUR INPUT. None has a handle. A biscuit is being withheld pending clarification of whether crumbs count as deliverables.", actions: [{ label: "Request a coffee", answer: "The machine dispenses a cup of hot water and a statement of intent. The bean dependency is in procurement. It has been in procurement since the founding." }, { label: "Inspect the biscuit", answer: "It is a display biscuit. Consuming company culture is encouraged in principle, but this would compromise the exhibit." }, { label: "Read the fridge notice", answer: "PLEASE LABEL ALL ITEMS WITH NAME, DATE, COST CENTER, AND SUCCESSION PLAN. An unlabeled yogurt has been appointed interim facilities director." }] }
+};
+
 // web/office-estate.ts
 var OfficeEstate = class extends RelocationCoordinator {
 };
+var estateRecords = { notice: "", history: [] };
+var key = "slopbuzz:estate:v1";
 var initial = foundingEstate;
 try {
-  const token = new URL(location.href).searchParams.get("estate");
-  if (token) initial = parseLayoutToken(token);
-  else {
+  const url = new URL(location.href), token = url.searchParams.get("estate");
+  let saved;
+  try {
+    const raw = sessionStorage.getItem(key);
+    if (raw) saved = readEstateSession(raw);
+  } catch {
+    estateRecords.notice = "Facilities could not read its saved minutes. This arrangement remains available for the current visit.";
+  }
+  if (token !== null) {
+    try {
+      initial = parseLayoutToken(token);
+      if (saved && layoutToken(saved.current) === token) estateRecords.history = saved.history;
+    } catch {
+      estateRecords.notice = "This relocation memo is malformed or belongs to an unfamiliar edition. The founding estate is open; counting and inspections remain available.";
+    }
+  } else if (url.searchParams.has("tour")) initial = foundingEstate;
+  else if (saved) {
+    initial = saved.current;
+    estateRecords.history = saved.history;
+  } else {
     const bytes = crypto.getRandomValues(new Uint8Array(16));
     initial = estate([...bytes].map((b) => b.toString(16).padStart(2, "0")).join(""), 0);
   }
 } catch {
 }
 var officeEstate = new OfficeEstate(initial);
+officeEstate.subscribe((event) => {
+  if (event.kind !== "committed") return;
+  estateRecords.history.push(estateMemo(event.relocation.from, event.relocation.to));
+  estateRecords.history = estateRecords.history.slice(-10);
+  try {
+    sessionStorage.setItem(key, writeEstateSession(officeEstate.current, estateRecords.history));
+  } catch {
+    estateRecords.notice = "Facilities cannot save this visit in tab storage. The current arrangement and its minutes remain available until this page closes.";
+  }
+  try {
+    const url = new URL(location.href);
+    url.searchParams.set("estate", layoutToken(officeEstate.current));
+    history.replaceState(history.state, "", url);
+  } catch {
+  }
+});
 
 // web/office-model.ts
 var roomForEvent = (e) => {
@@ -460,9 +537,11 @@ function tourSeed(text2) {
   for (let i = 0; i < text2.length; i++) h = Math.imul(h ^ text2.charCodeAt(i), 16777619);
   return h >>> 0;
 }
-function officeShare(scope2, mandate, room, prop2, authority = "factor-resonance-v1", action) {
+function officeShare(scope2, mandate, room, prop2, authority = "factor-resonance-v1", action, estate2) {
+  if (estate2) parseLayoutToken(estate2);
   const url = new URL("demo/", scope2);
   url.search = new URLSearchParams({ limit: mandate, authority, tour: officeVersion, room, ...prop2 ? { prop: prop2 } : {}, ...action === 0 || action === 1 ? { action: String(action) } : {} }).toString();
+  if (estate2) url.searchParams.set("estate", estate2);
   url.hash = "office-tour";
   return url.href;
 }
@@ -553,7 +632,7 @@ function validDiscovery(x) {
   if (!x || !decimal(x.mandate) || !text(x.strategy) || !text(x.catalogVersion) || x.seedPolicy !== seedPolicy || typeof x.discoveredAt !== "string" || !Number.isFinite(Date.parse(x.discoveredAt))) return false;
   const c = x.companion, a = x.assignment, f = a?.factors;
   if (!c || !["single", "pair"].includes(c.kind) || !Array.isArray(c.components) || !c.components.every(text) || !["Common", "Uncommon", "Rare", "Legendary", "Mythic"].includes(c.rarity) || !Number.isSafeInteger(c.weight) || c.weight < 1 || c.weight > 1e9) return false;
-  if (!["id", "emoji", "name", "category", "personality", "backstory", "energy", "goal"].every((key) => text(c[key]))) return false;
+  if (!["id", "emoji", "name", "category", "personality", "backstory", "energy", "goal"].every((key2) => text(c[key2]))) return false;
   if (!a || !decimal(a.ordinal) || a.ordinal === "0" || BigInt(a.ordinal) > BigInt(x.mandate) || !["Fizz", "Buzz", "FizzBuzz"].includes(a.flavor) || a.companionId !== c.id || !Number.isSafeInteger(a.ticket) || a.ticket < 0 || a.ticket >= 1e9) return false;
   const n = BigInt(a.ordinal), flavor = n % 15n === 0n ? "FizzBuzz" : n % 3n === 0n ? "Fizz" : n % 5n === 0n ? "Buzz" : "";
   return flavor === a.flavor && !!f && text(f.factors) && decimal(f.cofactor) && typeof f.complete === "boolean" && Number.isInteger(f.divisions) && f.divisions >= 0 && Number.isInteger(f.divisionBudget) && f.divisionBudget >= f.divisions && Number.isInteger(f.trialPrimeCeiling);
@@ -670,8 +749,8 @@ function officeCacheKey(base, url) {
 // web/office-pack.ts
 var officePackKey = (base = scope, url = releaseAsset("office-world.js")) => officeCacheKey(base, url);
 async function saveOfficePack() {
-  const url = releaseAsset("office-world.js"), key = officePackKey();
-  if (!key) throw new Error("This deployment does not publish a versioned offline building.");
+  const url = releaseAsset("office-world.js"), key2 = officePackKey();
+  if (!key2) throw new Error("This deployment does not publish a versioned offline building.");
   const manifestReply = await fetch(releaseAsset("office-pack.json"));
   if (!manifestReply.ok) throw new Error("The building manifest could not be obtained.");
   const manifest = parseOfficeManifest(await manifestReply.json());
@@ -679,7 +758,7 @@ async function saveOfficePack() {
   if (!reply.ok) throw new Error("The building could not be downloaded.");
   const bytes = await reply.arrayBuffer();
   await verifyOfficePackage(manifest, bytes);
-  const cache = await caches.open(key);
+  const cache = await caches.open(key2);
   await cache.put(url, new Response(bytes, { headers: { "Content-Type": "text/javascript; charset=UTF-8", "Cache-Control": "public, max-age=31536000, immutable" } }));
   return bytes.byteLength;
 }
@@ -873,6 +952,7 @@ var OfficeTourDesk = class {
       this.syncRenderer();
     });
     this.motion.addEventListener("change", () => {
+      if (!this.motion.checked) officeEstate.finish();
       this.syncRenderer();
       this.playbackLabels();
     });
@@ -1013,7 +1093,7 @@ var OfficeTourDesk = class {
       let readiness;
       this.canvas.removeAttribute("data-rendered");
       this.canvas.dataset.module = releaseAsset("office-world.js").href;
-      this.renderer = module.createOffice({ canvas: this.canvas, state: this.sceneState(), onRoom: (id) => this.select(id), onProp: (room, prop2) => {
+      this.renderer = module.createOffice({ canvas: this.canvas, state: this.sceneState(), onRoom: (id) => this.select(id), onAmenity: () => document.dispatchEvent(new CustomEvent("office-amenity", { detail: "office" })), onProp: (room, prop2) => {
         this.select(room);
         const p = roomById(room)?.props.find((x) => x.id === prop2);
         if (p) this.inspectProp(p);
@@ -1108,6 +1188,8 @@ var OfficeTourDesk = class {
     byId("office-follow-route").checked = value;
   }
   renderAddress() {
+    this.root.dataset.room = this.room;
+    document.dispatchEvent(new CustomEvent("office-location", { detail: { view: "office" } }));
     byId("office-room-label").textContent = "Department " + String(rooms.findIndex((r) => r.id === this.room) + 1).padStart(2, "0") + " \xB7 Address " + officeEstate.current.placements.find((p) => p.room === this.room).address;
   }
   renderRoom() {
@@ -1215,9 +1297,9 @@ var OfficeTourDesk = class {
     byId("office-companion-story").hidden = !d;
   }
   updateRoute() {
-    const file = this.archive.current(), route = routeFor(file), key = (file?.ordinal || "") + "|" + route.map((s) => s.room + ":" + s.source).join("|") + "|" + this.completedZero;
-    if (key === this.routeKey) return;
-    this.routeKey = key;
+    const file = this.archive.current(), route = routeFor(file), key2 = (file?.ordinal || "") + "|" + route.map((s) => s.room + ":" + s.source).join("|") + "|" + this.completedZero;
+    if (key2 === this.routeKey) return;
+    this.routeKey = key2;
     this.routeIndex = -1;
     byId("office-route-status").textContent = file ? "Recorded route summary for " + file.ordinal + " \xB7 " + file.text + ". " + (this.archive.mode !== "mandate" ? "This is retained playback. " : "") + "The moving file illustrates these stops; it does not measure execution time." : this.completedZero ? "Zero\u2019s mandate is complete. No numerical file was needed. The estate\u2019s overhead remains fully funded." : "Run a mandate to supply a recorded file. Every room is open for fictional inspection.";
     byId("office-route").replaceChildren(...route.map((s, i) => {
@@ -1261,14 +1343,18 @@ var OfficeTourDesk = class {
     return { room: this.room, route: routeFor(file), ordinal: file?.ordinal || "", text: file?.text || "", emoji: d?.companion.emoji, companionName: d?.companion.name, paused: this.paused, followRoute: byId("office-follow-route").checked, reducedMotion: !this.motion.checked, quality: byId("office-quality").value, seed: tourSeed(this.archive.mandate), layout: officeEstate.displayed, relocation: officeEstate.relocation };
   }
   syncRenderer() {
-    this.renderer?.update(this.sceneState());
+    try {
+      this.renderer?.update(this.sceneState());
+    } catch {
+      this.fallback();
+    }
   }
   activity() {
     const rect = byId("office-stage").getBoundingClientRect();
     this.renderer?.active(this.opened && rect.height > 0 && rect.bottom > -100 && rect.top < innerHeight + 100 && !document.hidden);
   }
   shareLink() {
-    byId("office-share-link").value = officeShare(scope, this.archive.mandate, this.room, this.selectedProp?.id, byId("companion-strategy").value || "factor-resonance-v1", this.selectedAction);
+    byId("office-share-link").value = officeShare(scope, this.archive.mandate, this.room, this.selectedProp?.id, byId("companion-strategy").value || "factor-resonance-v1", this.selectedAction, layoutToken(officeEstate.current));
   }
   async soundPreference() {
     const enabled = byId("office-sound").checked;
@@ -1440,9 +1526,9 @@ var OfficeShotDirector = class {
   key = "";
   path = [];
   route(step, layout) {
-    const key = layoutToken(layout) + "|" + step.origin?.room + "|" + step.origin?.station + "|" + step.shot.room + "|" + step.shot.anchor;
-    if (key !== this.key) {
-      this.key = key;
+    const key2 = layoutToken(layout) + "|" + step.origin?.room + "|" + step.origin?.station + "|" + step.shot.room + "|" + step.shot.anchor;
+    if (key2 !== this.key) {
+      this.key = key2;
       this.path = step.origin ? routes(layout).route(step.origin, { room: step.shot.room, station: step.shot.anchor }) : [addresses(layout).resolve({ room: step.shot.room, station: step.shot.anchor })];
     }
     return this.path;
@@ -1472,6 +1558,10 @@ var OfficeSupervisionDesk = class {
     this.authority = authority;
     officeEstate.subscribe((event) => {
       this.updateScene();
+      if (event.kind === "committed") {
+        const label = element("supervision-current").querySelector("strong"), step = this.activeStep || this.lastStep;
+        if (label && step) label.textContent = label.textContent.replace(/ · Address [A-D][1-3]$/, " \xB7 Address " + officeEstate.current.placements.find((p) => p.room === step.shot.room).address);
+      }
       if (event.kind !== "progress") {
         this.syncControls();
         this.authority.wake();
@@ -1725,7 +1815,11 @@ var OfficeSupervisionDesk = class {
     return { room: step?.shot.room || "reception", route: [], ordinal: this.folio?.ordinal || "", text: this.published ? this.folio?.text || "" : "PENDING", emoji: this.companion?.companion.emoji, companionName: this.companion?.companion.name, paused: true, reducedMotion: this.media.matches, quality: "standard", seed: tourSeed(this.mandate), layout: officeEstate.displayed, relocation: officeEstate.relocation };
   }
   updateScene(step = this.activeStep || this.lastStep) {
-    this.renderer?.update(this.sceneState(step));
+    try {
+      this.renderer?.update(this.sceneState(step));
+    } catch {
+      this.graphicsFailure();
+    }
   }
   visible() {
     if (!this.enabled || document.hidden || document.querySelector("dialog[open]")) return false;
@@ -1813,12 +1907,14 @@ var OfficeSupervisionDesk = class {
   }
   show(step, index, total) {
     this.activeStep = step;
+    this.pane.dataset.room = step.shot.room;
+    document.dispatchEvent(new CustomEvent("office-location", { detail: { view: "supervision" } }));
     this.pane.dataset.kind = step.event.kind;
     this.pane.dataset.ordinal = step.ordinal;
     this.pane.dataset.action = step.action;
     this.pane.dataset.state = "running";
     const status = element("supervision-current");
-    status.replaceChildren(node("strong", index + 1 + " / " + total + " \xB7 " + step.event.office), document.createTextNode(step.event.finding));
+    status.replaceChildren(node("strong", index + 1 + " / " + total + " \xB7 " + step.event.office + " \xB7 Address " + officeEstate.current.placements.find((p) => p.room === step.shot.room).address), document.createTextNode(step.event.finding));
     element("supervision-caption").scrollTop = 0;
     const source = step.source === "rehearsal" ? "Read-only personnel specimen. Numerical output is retained." : step.source === "disclosure" ? "Observed result or cache receipt. Fresh production work is not inferred." : this.mode === "replay" ? "Retained Java evidence. No business operation is being repeated." : "Recorded Java evidence. The operation has already completed; its UI disclosure is being choreographed.";
     element("supervision-source").textContent = source + (this.envelope?.omitted ? " The source dossier omitted " + this.envelope.omitted + " entries; absent work is not reconstructed." : "");
@@ -1862,12 +1958,12 @@ var OfficeSupervisionDesk = class {
           finish(false);
           return;
         }
-        const key = layoutToken(officeEstate.current);
-        if (key !== layoutKey) {
+        const key2 = layoutToken(officeEstate.current);
+        if (key2 !== layoutKey) {
           const arrival = director.duration(step, officeEstate.current);
           clock.elapsed = rebaseObservation(clock.elapsed, step.arriveMs, arrival);
           step.arriveMs = arrival;
-          layoutKey = key;
+          layoutKey = key2;
           this.updateScene(step);
         }
         this.activity();
@@ -1947,7 +2043,7 @@ function visible() {
 function tick(now) {
   frame = 0;
   if (!officeEstate.moving) return;
-  if (reduced.matches) {
+  if (reduced.matches || document.getElementById("office-motion")?.checked === false) {
     officeEstate.finish();
     return;
   }
@@ -1970,15 +2066,18 @@ function requestReorganization() {
 }
 
 // web/office-reorganization.ts
+var announcement = node("p");
+announcement.className = "estate-announcement";
+announcement.setAttribute("role", "status");
+announcement.setAttribute("aria-live", "polite");
+announcement.setAttribute("aria-atomic", "true");
+document.body.append(announcement);
+var announce = (text2) => {
+  if (announcement.textContent !== text2) announcement.textContent = text2;
+};
 var ReorganizationPanel = class {
-  button = node("button", "Announce Another Reorganization");
-  status = node("p");
-  details = node("details");
-  table = node("table");
-  skip = node("button", "Waive the Moving Ceremony");
-  progress = node("progress");
-  phase = "";
   constructor(container) {
+    this.container = container;
     container.classList.add("reorganization-panel");
     this.button.type = "button";
     this.button.className = "button button-secondary";
@@ -1988,14 +2087,63 @@ var ReorganizationPanel = class {
         requestReorganization();
       } catch (error) {
         this.status.textContent = error instanceof Error ? error.message : "Facilities has deferred certainty.";
+        announce(this.status.textContent);
       }
     });
     this.status.className = "field-help";
-    this.status.setAttribute("role", "status");
-    this.status.setAttribute("aria-live", "polite");
+    this.notice.className = "field-help";
     this.details.append(node("summary", "Inspect the current workplace arrangement"));
+    this.map.className = "estate-map";
+    this.map.setAttribute("aria-label", "Current estate floorplan");
     this.table.className = "estate-addresses";
-    this.details.append(this.table);
+    this.scroll.className = "estate-minutes";
+    this.scroll.tabIndex = 0;
+    this.scroll.setAttribute("role", "region");
+    this.scroll.setAttribute("aria-label", "Minutes of Spatial Achievement");
+    this.scroll.append(this.empty, this.minutes);
+    this.details.addEventListener("toggle", () => {
+      if (this.details.open && this.firstOpen) {
+        this.firstOpen = false;
+        this.scroll.scrollTop = this.scroll.scrollHeight;
+      }
+    });
+    this.perk.hidden = true;
+    this.perk.className = "estate-perk";
+    const share = node("input");
+    share.type = "url";
+    share.hidden = true;
+    share.readOnly = true;
+    share.setAttribute("aria-label", "Reorganization visit link");
+    const copy = node("button", "Copy This Approved Chaos");
+    copy.type = "button";
+    copy.addEventListener("click", async () => {
+      const input = document.getElementById("limit"), authority = document.getElementById("companion-strategy");
+      let mandate = "15";
+      try {
+        mandate = String(parseMandate(input.value));
+      } catch {
+      }
+      const room = document.getElementById(this.view === "office" ? "office-experience" : "supervision-pane")?.dataset.room || "reception";
+      const visit = this.view === "office" ? document.getElementById("office-share-link").value : officeShare(scope, mandate, room, void 0, authority.value, void 0, layoutToken(officeEstate.current));
+      const currentVisit = new URL(visit);
+      currentVisit.searchParams.set("limit", mandate);
+      currentVisit.searchParams.set("authority", authority.value);
+      currentVisit.searchParams.set("estate", layoutToken(officeEstate.current));
+      share.value = currentVisit.href;
+      share.hidden = false;
+      try {
+        await navigator.clipboard.writeText(currentVisit.href);
+        announce("Approved chaos copied. The link reproduces this estate and prefills a mandate; it never starts counting automatically.");
+      } catch {
+        share.focus();
+        share.select();
+        announce("Copy the selected visit link using your browser copy command.");
+      }
+    });
+    const sharing = node("div");
+    sharing.className = "estate-controls estate-sharing";
+    sharing.append(copy, share);
+    this.details.append(sharing, this.map, this.perk, this.table, node(this.view === "office" ? "h3" : "h4", "Minutes of Spatial Achievement"), node("p", "The latest ten transformations are retained in this tab. These distances describe illustrated desk-to-desk paper routes in scene units; they are not service response times."), this.scroll);
     this.skip.type = "button";
     this.skip.addEventListener("click", () => {
       this.button.focus({ preventScroll: true });
@@ -2003,13 +2151,47 @@ var ReorganizationPanel = class {
     });
     this.progress.max = 1;
     this.progress.setAttribute("aria-label", "Facilities relocation progress");
-    container.append(this.button, this.skip, this.progress, this.status, this.details);
+    const controls = node("div");
+    controls.className = "estate-controls";
+    controls.append(this.button, this.skip, this.progress);
+    container.append(node("p", "Facilities improves the same eight departments by putting them somewhere else. Each announcement alternates a 2\xD74 estate with a 3\xD73 estate, sometimes making room for a thoroughly conditional perk. Disclosure waits during the move; Java does no additional work."), controls, this.status, this.notice, this.details);
     officeEstate.subscribe((event) => {
       this.transaction();
       if (event.kind === "committed" || event.kind === "cancelled") this.render();
+      if (event.kind === "committed") announce("Facilities declares victory. " + estateLabel(officeEstate.current) + ". Proceedings may resume at the interrupted decision.");
+    });
+    document.addEventListener("office-location", (event) => {
+      const detail = event.detail;
+      if (detail.view === this.view) this.highlight();
+    });
+    document.addEventListener("office-amenity", (event) => {
+      if (event.detail === this.view) {
+        this.details.open = true;
+        this.inspectAmenity(this.details.querySelector("summary"));
+      }
     });
     this.render();
     this.transaction();
+  }
+  container;
+  button = node("button", "Announce Another Reorganization");
+  status = node("p");
+  notice = node("p");
+  details = node("details");
+  table = node("table");
+  skip = node("button", "Waive the Moving Ceremony");
+  progress = node("progress");
+  phase = "";
+  map = node("ol");
+  minutes = node("ol");
+  scroll = node("div");
+  memoNodes = /* @__PURE__ */ new Map();
+  empty = node("p", "No transformations are recorded yet. The company is coping with the unsettling adequacy of its existing furniture.");
+  firstOpen = true;
+  perk = node("section");
+  perkTrigger;
+  get view() {
+    return this.container.id.startsWith("supervision") ? "supervision" : "office";
   }
   setReading(_reading) {
     this.button.title = "Authorize a new arrangement of the same responsibilities. Current proceedings wait for Facilities.";
@@ -2025,17 +2207,65 @@ var ReorganizationPanel = class {
       return;
     }
     this.progress.value = r.progress;
-    this.button.parentElement.dataset.relocationPhase = r.phase;
+    this.container.dataset.relocationPhase = r.phase;
     if (this.phase !== r.phase) {
       this.phase = r.phase;
-      this.status.textContent = { packing: "Packing every department. Responsibilities are being carefully separated from accountability.", moving: "All eight offices are in transit. The moving boxes have been granted acting management authority.", unpacking: "Unpacking the approved future. These addresses remain provisional until Facilities declares victory.", returning: "Returning to the interrupted decision. No work has been repeated; no responsibility has been reduced." }[r.phase];
+      const text2 = { packing: "Packing every department. Responsibilities are being carefully separated from accountability.", moving: "All eight offices are in transit. The moving boxes have been granted acting management authority.", unpacking: "Unpacking the approved future. These addresses remain provisional until Facilities declares victory.", returning: "Returning to the interrupted decision. No work has been repeated; no responsibility has been reduced." }[r.phase];
+      this.status.textContent = text2;
+      announce(text2);
     }
+  }
+  highlight() {
+    const room = document.getElementById(this.view === "office" ? "office-experience" : "supervision-pane")?.dataset.room || "reception";
+    for (const cell of this.map.children) {
+      if (cell.dataset.room === room) cell.setAttribute("aria-current", "location");
+      else cell.removeAttribute("aria-current");
+    }
+  }
+  inspectAmenity(trigger) {
+    const l = officeEstate.current;
+    if (!l.amenity) return;
+    this.perkTrigger = trigger;
+    const specimen = amenities[l.amenity.kind], title2 = node(this.view === "office" ? "h3" : "h4", specimen.name + " \xB7 " + estateLabel(l) + " / " + l.amenity.address), answer = node("p");
+    title2.tabIndex = -1;
+    const actions = node("div");
+    actions.className = "estate-controls";
+    for (const action of specimen.actions) {
+      const button = node("button", action.label);
+      button.type = "button";
+      button.addEventListener("click", () => answer.textContent = action.answer);
+      actions.append(button);
+    }
+    const close = node("button", "Close amenity inspection");
+    close.type = "button";
+    close.addEventListener("click", () => {
+      this.perk.hidden = true;
+      (this.perkTrigger?.isConnected ? this.perkTrigger : this.details.querySelector("summary"))?.focus({ preventScroll: true });
+    });
+    this.perk.replaceChildren(title2, node("p", "Fictional Facilities specimen. This perk has no role in the recorded numerical proceedings."), node("p", specimen.story), actions, answer, close);
+    this.perk.hidden = false;
+    title2.focus({ preventScroll: true });
+    this.perk.scrollIntoView({ block: "nearest", behavior: "instant" });
+  }
+  appendMemo(m) {
+    const li = node("li");
+    li.append(node(this.view === "office" ? "h4" : "h5", "Transformation " + m.to.edition + ": " + m.title), node("p", m.rationale), node("p", m.finding + " Mean illustrated commute: " + m.before.toFixed(1) + " \u2192 " + m.after.toFixed(1) + " scene units."));
+    const moves = node("ul");
+    for (const p of m.to.placements) {
+      const name = rooms.find((r) => r.id === p.room).short;
+      moves.append(node("li", name + ": " + qualifiedAddress(m.from, p.room) + " \u2192 " + qualifiedAddress(m.to, p.room)));
+    }
+    li.append(moves);
+    this.minutes.append(li);
+    this.memoNodes.set(m.to.edition, li);
   }
   render() {
     const l = officeEstate.current;
-    delete this.button.parentElement.dataset.relocationPhase;
-    this.status.textContent = "Estate edition " + l.edition + " \xB7 " + l.rows + " \xD7 " + l.columns + (l.amenity ? " \xB7 " + l.amenity.kind + " at " + l.amenity.address : " \xB7 all available space is committed to seriousness");
-    this.status.parentElement.dataset.estateEdition = String(l.edition);
+    delete this.container.dataset.relocationPhase;
+    this.status.textContent = estateLabel(l) + (l.amenity ? " \xB7 " + l.amenity.kind + " at " + l.amenity.address : " \xB7 all available space is committed to seriousness");
+    this.container.dataset.estateEdition = String(l.edition);
+    this.notice.textContent = estateRecords.notice;
+    this.notice.hidden = !estateRecords.notice;
     const head = node("thead"), row = node("tr");
     for (const name of ["Department", "Address", "Partition policy"]) {
       const th = node("th", name);
@@ -2043,18 +2273,45 @@ var ReorganizationPanel = class {
       row.append(th);
     }
     head.append(row);
-    const body = node("tbody");
-    for (const p of [...l.placements].sort((a, b) => a.slot - b.slot)) {
-      const tr = node("tr"), theme = partitionStyles.find((s) => s.id === p.partition);
-      tr.append(node("td", rooms.find((r) => r.id === p.room).short), node("td", p.address), node("td", theme ? theme.name + " \xB7 " + theme.claim : "Founding architectural certainty"));
-      body.append(tr);
+    const body = node("tbody"), cells = [];
+    for (let slot = 0; slot < l.rows * l.columns; slot++) {
+      const p = l.placements.find((p2) => p2.slot === slot), cell = node("li");
+      if (p) {
+        cell.dataset.room = p.room;
+        const theme = partitionStyles.find((s) => s.id === p.partition), name = rooms.find((r) => r.id === p.room).short;
+        cell.append(node("strong", p.address), node("span", name));
+        const tr = node("tr");
+        tr.append(node("td", name), node("td", p.address), node("td", theme ? theme.name + " \xB7 " + theme.claim : "Founding architectural certainty"));
+        body.append(tr);
+      } else if (l.amenity) {
+        const a = l.amenity, button = node("button", "Inspect " + a.kind + " at " + a.address);
+        button.type = "button";
+        button.addEventListener("click", () => this.inspectAmenity(button));
+        cell.append(node("strong", a.address), button);
+        const tr = node("tr");
+        tr.append(node("td", a.kind === "atrium" ? "Atrium: Chief Growth Officer in residence" : "Breakroom: mandatory optional restoration"), node("td", a.address), node("td", "The company is accommodating the appearance of a perk."));
+        body.append(tr);
+      }
+      cells.push(cell);
     }
-    if (l.amenity) {
-      const tr = node("tr");
-      tr.append(node("td", l.amenity.kind === "atrium" ? "Atrium: Chief Growth Officer in residence" : "Breakroom: mandatory optional restoration"), node("td", l.amenity.address), node("td", "The company is accommodating the appearance of a perk."));
-      body.append(tr);
+    if (this.map.contains(document.activeElement)) {
+      this.details.querySelector("summary")?.focus({ preventScroll: true });
     }
+    this.map.style.setProperty("--estate-columns", String(l.columns));
+    this.map.replaceChildren(...cells);
+    this.map.setAttribute("aria-label", "Current estate floorplan: " + estateLabel(l));
+    this.highlight();
     this.table.replaceChildren(node("caption", "Current department addresses"), head, body);
+    this.empty.hidden = estateRecords.history.length > 0;
+    const following = this.scroll.scrollHeight - this.scroll.clientHeight - this.scroll.scrollTop < 24, ids = new Set(estateRecords.history.map((m) => m.to.edition));
+    for (const [id, el] of this.memoNodes) if (!ids.has(id)) {
+      el.remove();
+      this.memoNodes.delete(id);
+    }
+    for (const memo of estateRecords.history) if (!this.memoNodes.has(memo.to.edition)) this.appendMemo(memo);
+    if (!estateRecords.history.length) this.minutes.setAttribute("aria-label", "No transformations have been recorded in this tab.");
+    else this.minutes.removeAttribute("aria-label");
+    if (following) requestAnimationFrame(() => this.scroll.scrollTop = this.scroll.scrollHeight);
   }
 };
 
@@ -2186,7 +2443,7 @@ function explainedPath(path) {
 }
 function annotate(response, info) {
   const headers = new Headers(response.headers);
-  const safe = Object.fromEntries(["mode", "engine", "storage", "cache", "revision", "protocol", "narrative"].filter((key) => info[key] !== void 0).map((key) => [key, info[key]]));
+  const safe = Object.fromEntries(["mode", "engine", "storage", "cache", "revision", "protocol", "narrative"].filter((key2) => info[key2] !== void 0).map((key2) => [key2, info[key2]]));
   headers.set("X-SlopBuzz-Execution-Runtime", JSON.stringify(safe).replace(/[^\x20-\x7e]/g, (char) => "\\u" + char.charCodeAt(0).toString(16).padStart(4, "0")));
   return new Response(response.body, { status: response.status, headers });
 }
@@ -2394,8 +2651,8 @@ var CompanionDesk = class {
       const starts = /* @__PURE__ */ new Set();
       for (const [ordinal, text2] of this.visible) if (/^(Fizz|Buzz|FizzBuzz)$/.test(text2)) starts.add(((BigInt(ordinal) - 1n) / 100n * 100n + 1n).toString());
       for (const start of starts) {
-        const key = mandate + "|" + policy + "|" + start;
-        let batch = this.batches.get(key);
+        const key2 = mandate + "|" + policy + "|" + start;
+        let batch = this.batches.get(key2);
         if (!batch) {
           batch = (async () => {
             const reply = await request("/companions/window?start=" + start + "&count=100&strategy=" + policy + "&seed=" + mandate);
@@ -2404,9 +2661,9 @@ var CompanionDesk = class {
             if (data.schema !== "slopbuzz-companion-window/v2" || data.seedPolicy !== seedPolicy || data.mandateSeed !== mandate || data.catalogVersion !== this.version || data.strategy !== policy || data.start !== start || data.count !== 100 || !Array.isArray(data.assignments)) throw new Error("Assignment evidence belongs to a different charter.");
             return data.assignments;
           })();
-          this.batches.set(key, batch);
+          this.batches.set(key2, batch);
           batch.catch(() => {
-            if (this.batches.get(key) === batch) this.batches.delete(key);
+            if (this.batches.get(key2) === batch) this.batches.delete(key2);
           });
         }
         const assignments = await batch;
@@ -2429,7 +2686,7 @@ var CompanionDesk = class {
     }
   }
   render() {
-    const rows = [...this.visible.keys()].map((key) => this.assigned.get(key)).filter((a) => !!a).slice(-100);
+    const rows = [...this.visible.keys()].map((key2) => this.assigned.get(key2)).filter((a) => !!a).slice(-100);
     const signature = rows.map((a) => a.ordinal + ":" + a.companionId).join("|");
     if (signature === this.lastSignature) return;
     if ((!this.following || this.list.contains(document.activeElement) || this.dialog.open) && this.list.childElementCount) {
@@ -2541,7 +2798,7 @@ function setText(id, value) {
 // web/onboarding.ts
 function parseDossier(value) {
   const data = value;
-  if (!data || data.schema !== "slopbuzz-onboarding/v1" || typeof data.caseId !== "string" || !["MANDATE", "REHEARSAL"].includes(data.purpose) || !Number.isInteger(data.candidate) || !["APPROVED", "REJECTED"].includes(data.status) || !Array.isArray(data.steps) || data.steps.length !== 7 || data.steps.some((step) => !step || !["APPROVED", "REJECTED", "NOT_REACHED"].includes(step.state) || ["office", "rule", "received", "finding", "document"].some((key) => typeof step[key] !== "string"))) throw new Error("The personnel record has an unsupported format.");
+  if (!data || data.schema !== "slopbuzz-onboarding/v1" || typeof data.caseId !== "string" || !["MANDATE", "REHEARSAL"].includes(data.purpose) || !Number.isInteger(data.candidate) || !["APPROVED", "REJECTED"].includes(data.status) || !Array.isArray(data.steps) || data.steps.length !== 7 || data.steps.some((step) => !step || !["APPROVED", "REJECTED", "NOT_REACHED"].includes(step.state) || ["office", "rule", "received", "finding", "document"].some((key2) => typeof step[key2] !== "string"))) throw new Error("The personnel record has an unsupported format.");
   if (data.status === "APPROVED" && (data.candidate !== 1 || data.startingOrdinal !== 1 || data.steps.some((step) => step.state !== "APPROVED")) || data.status === "REJECTED" && (data.startingOrdinal !== null || !data.steps.some((step) => step.state === "REJECTED"))) throw new Error("The personnel verdict contradicts its recorded decisions.");
   return data;
 }
@@ -3415,11 +3672,11 @@ var ChronicleLanguage = class {
   constructor(random2 = Math.random) {
     this.random = random2;
   }
-  pick(key, options) {
-    let bag = this.bags.get(key);
+  pick(key2, options) {
+    let bag = this.bags.get(key2);
     if (!bag) {
       bag = { remaining: [] };
-      this.bags.set(key, bag);
+      this.bags.set(key2, bag);
     }
     if (!bag.remaining.length) {
       bag.remaining = options.map((_, index2) => index2);
@@ -3873,11 +4130,11 @@ var ExecutiveChronicle = class {
     return article;
   }
   trim() {
-    for (const [key, article] of this.rendered) {
+    for (const [key2, article] of this.rendered) {
       if (this.rendered.size <= 24) break;
       if (article.contains(document.activeElement)) continue;
       article.remove();
-      this.rendered.delete(key);
+      this.rendered.delete(key2);
       this.collapsed++;
     }
     let notice = this.entries.querySelector(".chronicle-archive-note");
@@ -3906,11 +4163,11 @@ var ExecutiveChronicle = class {
   }
   rehearsal(data, count) {
     this.pauseIfReading();
-    const key = `rehearsal-${data.caseId}`;
-    let article = this.entries.querySelector(`[data-rehearsal="${CSS.escape(key)}"]`);
+    const key2 = `rehearsal-${data.caseId}`;
+    let article = this.entries.querySelector(`[data-rehearsal="${CSS.escape(key2)}"]`);
     if (!article) {
       article = node2("article", void 0, "chronicle-note");
-      article.dataset.rehearsal = key;
+      article.dataset.rehearsal = key2;
       this.entries.append(article);
     }
     let prose = this.rehearsals.get(data);

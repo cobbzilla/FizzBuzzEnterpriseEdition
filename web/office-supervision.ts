@@ -30,7 +30,8 @@ export class OfficeSupervisionDesk {
  private folio?:Folio;private published=false;private companion?:Discovery;private mandate='15';private mode='mandate';private observed=0;private blocked='';
 
  constructor(private readonly authority:ReadingAuthority){
-  officeEstate.subscribe(event=>{this.updateScene();if(event.kind!=='progress'){this.syncControls();this.authority.wake();}});
+  officeEstate.subscribe(event=>{this.updateScene();if(event.kind==='committed'){const label=element('supervision-current').querySelector('strong'),step=this.activeStep||this.lastStep;if(label&&step)label.textContent=label.textContent!.replace(/ · Address [A-D][1-3]$/,' · Address '+officeEstate.current.placements.find(p=>p.room===step.shot.room)!.address);}
+   if(event.kind!=='progress'){this.syncControls();this.authority.wake();}});
   this.checkbox.addEventListener('change',()=>this.applyMode(true));
   element('supervision-autonomy').addEventListener('click',()=>{this.disable();this.checkbox.focus();});
   element('supervision-pause').addEventListener('click',()=>{if(this.authority.reading())this.authority.pause(!this.authority.paused());});
@@ -107,7 +108,7 @@ export class OfficeSupervisionDesk {
  complete(){if(this.enabled){this.pane.dataset.state='complete';this.current('Observation is complete. The company is still withholding trust.');}this.syncControls();}
  private current(text:string){element('supervision-current').textContent=text;}
  private sceneState(step=this.activeStep||this.lastStep):OfficeSceneState{return {room:step?.shot.room||'reception',route:[],ordinal:this.folio?.ordinal||'',text:this.published?this.folio?.text||'':'PENDING',emoji:this.companion?.companion.emoji,companionName:this.companion?.companion.name,paused:true,reducedMotion:this.media.matches,quality:'standard',seed:tourSeed(this.mandate),layout:officeEstate.displayed,relocation:officeEstate.relocation};}
- private updateScene(step=this.activeStep||this.lastStep){this.renderer?.update(this.sceneState(step));}
+ private updateScene(step=this.activeStep||this.lastStep){try{this.renderer?.update(this.sceneState(step));}catch{this.graphicsFailure();}}
  private visible(){
   if(!this.enabled||document.hidden||document.querySelector('dialog[open]'))return false;
   const rect=element('supervision-stage').getBoundingClientRect(),bottom=innerHeight-(document.querySelector('#discovery-register')?.getBoundingClientRect().height||0);
@@ -133,9 +134,9 @@ export class OfficeSupervisionDesk {
   const loading=element('supervision-loading');loading.hidden=false;const retry=node('button','Requisition another graphics attempt');retry.type='button';retry.addEventListener('click',()=>{this.fallback=false;this.ready=false;this.module=undefined;this.canvas.removeAttribute('data-rendered');loading.replaceChildren(node('p','Facilities is arranging another graphics interview…'));element('supervision-title').focus({preventScroll:true});void this.ensureScene();});loading.replaceChildren(node('p','The 3D display is unavailable. Executive observation continues through the supplied evidence below. The numbers remain employable.'),retry);
  }
  private show(step:ObservedOfficeStep,index:number,total:number){
-  this.activeStep=step;
+  this.activeStep=step;this.pane.dataset.room=step.shot.room;document.dispatchEvent(new CustomEvent('office-location',{detail:{view:'supervision'}}));
   this.pane.dataset.kind=step.event.kind;this.pane.dataset.ordinal=step.ordinal;this.pane.dataset.action=step.action;this.pane.dataset.state='running';
-  const status=element('supervision-current');status.replaceChildren(node('strong',(index+1)+' / '+total+' · '+step.event.office),document.createTextNode(step.event.finding));
+  const status=element('supervision-current');status.replaceChildren(node('strong',(index+1)+' / '+total+' · '+step.event.office+' · Address '+officeEstate.current.placements.find(p=>p.room===step.shot.room)!.address),document.createTextNode(step.event.finding));
   element('supervision-caption').scrollTop=0;
   const source=step.source==='rehearsal'?'Read-only personnel specimen. Numerical output is retained.':step.source==='disclosure'?'Observed result or cache receipt. Fresh production work is not inferred.':this.mode==='replay'?'Retained Java evidence. No business operation is being repeated.':'Recorded Java evidence. The operation has already completed; its UI disclosure is being choreographed.';
   element('supervision-source').textContent=source+(this.envelope?.omitted?' The source dossier omitted '+this.envelope.omitted+' entries; absent work is not reconstructed.':'');

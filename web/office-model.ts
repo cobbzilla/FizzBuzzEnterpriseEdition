@@ -1,3 +1,4 @@
+import {parseLayoutToken} from './office-layout.ts';
 import {roomById,officeVersion,type RoomId} from './office-content.ts';
 import type {ExecutionEvent,Folio} from './chronicle';
 import type {Discovery} from './discovery-model';
@@ -28,5 +29,5 @@ export class OfficeArchive {
  evidence(room:RoomId){const file=this.current();const actual=(file?.cache==='HIT'?[]:file?.events||[]).filter(e=>roomForEvent(e)===room);const global=(file?.globals||this.globals).filter(e=>roomForEvent(e)===room);return [...global,...actual].slice(0,60);}
 }
 export function tourSeed(text:string){let h=2166136261;for(let i=0;i<text.length;i++)h=Math.imul(h^text.charCodeAt(i),16777619);return h>>>0;}
-export function officeShare(scope:string,mandate:string,room:RoomId,prop?:string,authority='factor-resonance-v1',action?:number){const url=new URL('demo/',scope);url.search=new URLSearchParams({limit:mandate,authority,tour:officeVersion,room,...(prop?{prop}: {}),...(action===0||action===1?{action:String(action)}:{})}).toString();url.hash='office-tour';return url.href;}
+export function officeShare(scope:string,mandate:string,room:RoomId,prop?:string,authority='factor-resonance-v1',action?:number,estate?:string){if(estate)parseLayoutToken(estate);const url=new URL('demo/',scope);url.search=new URLSearchParams({limit:mandate,authority,tour:officeVersion,room,...(prop?{prop}: {}),...(action===0||action===1?{action:String(action)}:{})}).toString();if(estate)url.searchParams.set('estate',estate);url.hash='office-tour';return url.href;}
 export function parseTourLink(search:string){const p=new URLSearchParams(search);if(p.get('tour')!==officeVersion)return;const room=roomById(p.get('room')||'reception');if(!room)return;const prop=room.props.find(x=>x.id===p.get('prop'));const action=p.get('action');return {room:room.id,prop:prop?.id,action:prop&&(action==='0'||action==='1')?Number(action):undefined};}

@@ -28,7 +28,7 @@
     "test:premises": "node --test scripts/premises.test.ts",
     "test:office": "node --test scripts/office-tour.test.ts",
     "test:supervision": "node --test scripts/office-supervision.test.ts",
-    "test:layout": "node --test scripts/office-layout.test.ts scripts/office-partition.test.ts scripts/office-relocation.test.ts"
+    "test:layout": "node --test scripts/office-layout.test.ts scripts/office-partition.test.ts scripts/office-relocation.test.ts scripts/office-estate-records.test.ts"
   },
   "dependencies": {
     "@babylonjs/core": "9.33.2",
