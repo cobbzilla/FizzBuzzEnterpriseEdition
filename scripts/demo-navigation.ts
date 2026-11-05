@@ -1,7 +1,7 @@
 import {expect,type Page} from '@playwright/test';
 /** User-facing navigation shared by deployed and preview release checks. */
 export function demoNavigator(page:Page){
- const desk=async(name:string)=>{if(await page.locator('body').getAttribute('data-desk')!==name)await page.locator('[data-desk-link="'+name+'"]').click();};
+ const desk=async(name:string)=>{await expect(page.locator('body')).toHaveAttribute('data-desk',/^(authorize|observe|experiment|facilities|evidence)$/);if(await page.locator('body').getAttribute('data-desk')!==name)await page.locator('[data-desk-link="'+name+'"]').click();};
  return {
   desk,
   watch:async(view:string)=>{await desk('observe');await page.selectOption('#watch-view',view);},

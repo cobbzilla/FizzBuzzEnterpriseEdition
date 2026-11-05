@@ -35,8 +35,8 @@ test('an archive inspection survives new output and Latest restores chronologica
 
 test('scrolling up pauses automatic following and reaching the bottom resumes it',async({page})=>{
  await page.goto('/demo/');await demoAction(page,'selectOption','#display-speed','225');await demoAction(page,'fill','#limit','100');await demoAction(page,'click','#run-button');await expect(page.locator('#chronicle-ordinal option[value="3"]')).toHaveCount(1);await bottom(page);
- const scroll=page.locator('#chronicle-scroll');await scroll.hover();await page.mouse.wheel(0,-260);
- await expect.poll(()=>scroll.evaluate(e=>e.scrollHeight-e.clientHeight-e.scrollTop>100)).toBe(true);
+ const scroll=page.locator('#chronicle-scroll');
+ await expect.poll(async()=>{await scroll.hover();await page.mouse.wheel(0,-260);await scroll.evaluate(()=>new Promise<void>(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>resolve()))));return scroll.evaluate(e=>e.scrollHeight-e.clientHeight-e.scrollTop>100);}).toBe(true);
  await scroll.evaluate(()=>new Promise<void>(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>resolve()))));
  const before={top:await scroll.evaluate(e=>e.scrollTop),text:await page.locator('#chronicle-entries').textContent()};await expect(page.locator('#follow-chronicle')).toBeChecked();
  await demoAction(page,'selectOption','#display-speed','0');await expect(page.locator('#run-status')).toContainText('Mandate complete');
