@@ -242,6 +242,13 @@ different limits, retain your five rarest disclosed friends in the shared footer
 and open a saved biography to copy its reproducible encounter link. Referrals
 can be inspected without running the entire mandate. See [ADR 0029](docs/ADR-0029-mandate-seeded-discoveries.md).
 
+On mobile, an empty register is hidden and an occupied register starts as a compact
+expandable bar. Discoveries from an unfinished run are provisional. Authorize warns
+when another run is in progress: a replacement withdraws that run's new companions
+with an appropriately undignified departure animation, restoring older finds it
+displaced. Completed finds and other tabs' discoveries remain. Reduced motion uses
+an immediate withdrawal and accessible notice. See [ADR 0037](docs/ADR-0037-provisional-companion-appointments.md).
+
 
 The **Serious Business Office** opens from the homepage invitation or the demo's
 visitor panel. Its Babylon.js cutaway has eight departments, 32 curiosities and
