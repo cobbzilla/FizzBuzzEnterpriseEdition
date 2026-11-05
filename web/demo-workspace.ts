@@ -75,15 +75,13 @@ export class DemoWorkspace {
   new MutationObserver(()=>{byId('personnel-record-summary').textContent=byId('personnel-origin').textContent;}).observe(byId('personnel-origin'),{childList:true,characterData:true,subtree:true});
   new MutationObserver(()=>{if(document.querySelector('dialog[open]'))this.run.pause();}).observe(document.body,{subtree:true,attributes:true,attributeFilter:['open']});
   document.addEventListener('visibilitychange',()=>{if(document.hidden)this.run.pause();});
-  addEventListener('popstate',()=>{const desk=readDesk(new URL(location.href));if(desk!==this.desk)this.show(desk,false);});
+  addEventListener('popstate',()=>{const desk=readDesk(new URL(location.href));if(desk!==this.desk)this.show(desk,false);else this.retainDesk(desk);});
   const resize=new ResizeObserver(()=>this.fit());resize.observe(document.querySelector('.site-header')!);resize.observe(byId('discovery-register'));
   resize.observe(document.querySelector('.authorization-actions')!);
   addEventListener('resize',()=>{if(!this.manualView&&this.committed){this.watch.value=initialWatchView(matchMedia('(max-width: 700px), (max-height: 500px)').matches,this.live().hovering);this.layout();}else this.fit();});
   const hash=location.hash;if(hash.startsWith('#precedent'))this.select('evidence-view').value='precedent';if(hash.startsWith('#personnel'))this.select('evidence-view').value='personnel';if(hash.startsWith('#premises'))this.select('experiment-view').value='premises';
   this.restoreDraft();this.draftSummary();this.sections('experiment');this.sections('evidence');
-  const entry=new URL(location.href),desk=readDesk(entry);
-  if(desk!=='authorize'&&entry.searchParams.get('desk')!==desk){entry.searchParams.set('desk',desk);history.replaceState(history.state,'',entry);}
-  this.show(desk,false,false);
+  this.show(readDesk(new URL(location.href)),false,false);
  }
  get observing(){return this.desk==='observe';}
  private input(id:string){return byId<HTMLInputElement>(id);}
@@ -107,6 +105,12 @@ export class DemoWorkspace {
   this.clearCompanions();this.saveDraft();this.navigate('observe');this.layout();
  }
  navigate(desk:DemoDesk){this.show(desk,true);}
+ private retainDesk(desk:DemoDesk){
+  // Legacy fragments also arrive within an already mounted document. Keep the
+  // selected desk when a native skip link replaces that fragment with #main.
+  const entry=new URL(location.href);
+  if(desk!=='authorize'&&entry.searchParams.get('desk')!==desk){entry.searchParams.set('desk',desk);history.replaceState(history.state,'',entry);}
+ }
  private show(desk:DemoDesk,push:boolean,focus=true){
   const before=this.desk;
   if(before!==desk)this.scroll.set(before,scrollY);
@@ -116,6 +120,7 @@ export class DemoWorkspace {
   for(const key of desks)byId('desk-'+key).hidden=key!==desk;
   const url=deskURL(new URL(location.href),desk);
   if(push&&readDesk(new URL(location.href))!==desk)history.pushState({...history.state},'',url);
+  this.retainDesk(desk);
   document.querySelectorAll<HTMLAnchorElement>('[data-desk-link]').forEach(link=>{const key=link.dataset.deskLink as DemoDesk;link.href=deskURL(new URL(location.href),key).href;if(key===desk)link.setAttribute('aria-current','page');else link.removeAttribute('aria-current');});
   this.layout();
   if(focus){const heading=byId('desk-'+desk).querySelector<HTMLElement>('h1')!;heading.focus({preventScroll:true});window.scrollTo({top:desk==='observe'?0:this.scroll.get(desk)||0,behavior:'instant'});}

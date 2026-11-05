@@ -4458,8 +4458,9 @@ var DemoWorkspace = class {
       if (document.hidden) this.run.pause();
     });
     addEventListener("popstate", () => {
-      const desk2 = readDesk(new URL(location.href));
-      if (desk2 !== this.desk) this.show(desk2, false);
+      const desk = readDesk(new URL(location.href));
+      if (desk !== this.desk) this.show(desk, false);
+      else this.retainDesk(desk);
     });
     const resize = new ResizeObserver(() => this.fit());
     resize.observe(document.querySelector(".site-header"));
@@ -4479,12 +4480,7 @@ var DemoWorkspace = class {
     this.draftSummary();
     this.sections("experiment");
     this.sections("evidence");
-    const entry = new URL(location.href), desk = readDesk(entry);
-    if (desk !== "authorize" && entry.searchParams.get("desk") !== desk) {
-      entry.searchParams.set("desk", desk);
-      history.replaceState(history.state, "", entry);
-    }
-    this.show(desk, false, false);
+    this.show(readDesk(new URL(location.href)), false, false);
   }
   run;
   desk = "authorize";
@@ -4568,6 +4564,13 @@ var DemoWorkspace = class {
   navigate(desk) {
     this.show(desk, true);
   }
+  retainDesk(desk) {
+    const entry = new URL(location.href);
+    if (desk !== "authorize" && entry.searchParams.get("desk") !== desk) {
+      entry.searchParams.set("desk", desk);
+      history.replaceState(history.state, "", entry);
+    }
+  }
   show(desk, push, focus = true) {
     const before = this.desk;
     if (before !== desk) this.scroll.set(before, scrollY);
@@ -4581,6 +4584,7 @@ var DemoWorkspace = class {
     for (const key2 of desks2) byId2("desk-" + key2).hidden = key2 !== desk;
     const url = deskURL(new URL(location.href), desk);
     if (push && readDesk(new URL(location.href)) !== desk) history.pushState({ ...history.state }, "", url);
+    this.retainDesk(desk);
     document.querySelectorAll("[data-desk-link]").forEach((link) => {
       const key2 = link.dataset.deskLink;
       link.href = deskURL(new URL(location.href), key2).href;

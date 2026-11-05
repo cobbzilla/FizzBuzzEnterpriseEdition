@@ -12,7 +12,11 @@ test('five addressable departments separate authorization from observation witho
  expect(await page.getByRole('navigation',{name:'Demo departments'}).getByRole('link').allTextContents()).toEqual(['Authorize','Observe','Experiment','Facilities','Evidence']);
  await department(page,'observe');await expect(page.locator('#observe-empty')).toBeVisible();await expect(page.locator('#observe-title')).toBeFocused();expect((await custody(page)).journalEntries).toBe(0);
  await department(page,'authorize');await run(page);await expect(page.locator('#run-status')).toContainText('Mandate complete');await expect(page.locator('#display-speed')).toHaveValue('0');await expect(page.locator('#observe-title')).toBeFocused();await expect(page.locator('#output')).toHaveText('1\n2\nFizz\n4\nBuzz\nFizz\n7\n8\nFizz\nBuzz\n11\nFizz\n13\n14\nFizzBuzz\n');expect((await custody(page)).journalEntries).toBe(15);
- for(const [hash,desk]of [['#precedent-case','evidence'],['#premises-result','experiment'],['#office-tour','facilities']]){await page.goto('/demo/'+hash);await expect(page.locator('body')).toHaveAttribute('data-desk',desk);await page.getByRole('link',{name:'Skip to main content'}).focus();await page.keyboard.press('Enter');await page.evaluate(()=>new Promise<void>(r=>requestAnimationFrame(()=>requestAnimationFrame(()=>r()))));await expect(page.locator('main')).toBeFocused();await expect(page.locator('body')).toHaveAttribute('data-desk',desk);}
+ for(const sameDocument of [false,true])for(const [hash,desk]of [['#precedent-case','evidence'],['#premises-result','experiment'],['#office-tour','facilities']]){
+  if(sameDocument)await ready(page);
+  await page.goto('/demo/'+hash);await expect(page.locator('body')).toHaveAttribute('data-desk',desk);await page.getByRole('link',{name:'Skip to main content'}).focus();await page.keyboard.press('Enter');
+  await expect(page).toHaveURL(url=>url.hash==='#main'&&url.searchParams.get('desk')===desk);await expect(page.locator('main')).toBeFocused();await expect(page.locator('body')).toHaveAttribute('data-desk',desk);
+ }
  expect((await custody(page)).journalEntries).toBe(15);expect(errors).toEqual([]);
 });
 test('draft changes, navigation, browser history and resume retain one paused mandate',async({page})=>{
