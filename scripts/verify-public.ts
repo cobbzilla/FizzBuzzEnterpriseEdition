@@ -116,7 +116,7 @@ export async function verifyPublic(origin: string, revision: string) {
    await page.locator('.office-options summary').click();await page.click('#office-offline');await expect(page.locator('#office-offline-status')).toContainText('saved for offline');await page.click('#office-close');
    await context.setOffline(true);
    await page.goto(origin + '/demo/');
-   await expect(page.locator('#health-value')).toHaveText('LIVE');await page.click('#office-enter');await expect(page.locator('#office-canvas')).toHaveAttribute('data-rendered','true');await page.click('#office-close');
+   await expect(page.locator('#health-value')).toHaveText('LIVE');await demo.desk('facilities');await page.click('#office-enter');await expect(page.locator('#office-canvas')).toHaveAttribute('data-rendered','true');await page.click('#office-close');
    await expect(page.locator('#health-value')).toHaveText('LIVE');
    await demo.run('16');
    await demo.experiment('personnel');await page.selectOption('#experiment-speed','0');await page.click('[data-personnel-scenario="missing-induction"]');await expect(page.locator('#experiment-personnel-verdict')).toHaveText('Application rejected');await expect(page.locator('#experiment-personnel-status')).toContainText('Probation Review');assert.equal((await page.locator('#output').textContent())?.trim().split('\n').at(-1),'16');
