@@ -11,6 +11,9 @@ async function audit(page: Page) {
 test.beforeEach(({}, info) => {test.skip(info.project.metadata.engine === 'js', 'DOM accessibility is covered once per browser; lifecycle tests cover both Java engines.');});
 for (const route of routes) {
   test(`accessible shared reception and reflow: /${route}`, async({page, browserName})=>{
+    // Two exhaustive axe scans of all 3,200 archive rows are CPU-bound. Keep
+    // page-readiness limits and the full accessibility/reflow assertions.
+    if(route === 'department-of-improbable-appointments/')test.setTimeout(180000);
     await page.goto(`/${route}`);
     if(route === 'bestiary/')await expect(page.locator('#bestiary-status')).toContainText('3200 companions');
     if(route === 'department-of-improbable-appointments/')await expect(page.locator('#rarity-status')).toContainText('All 3,200');
