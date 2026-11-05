@@ -15,7 +15,7 @@ test('a focused chronicle has fixed height, scrolls and follows its latest entry
 });
 
 test('One is narrated as soon as it appears without waiting through seven HR pauses',async({page})=>{
- await page.goto('/demo/');await expect(page.locator('#health-value')).toHaveText('LIVE');await demoAction(page,'fill','#limit','3');await demoAction(page,'click','#run-button');
+ await page.goto('/demo/');await expect(page.locator('#health-value')).toHaveText('LIVE');await page.uncheck('#authorize-executive-hovering');await demoAction(page,'fill','#limit','3');await demoAction(page,'click','#run-button');
  await expect(page.locator('#output')).toHaveText('1\n',{timeout:2000});await expect(page.locator('#chronicle-current')).toContainText('One has reported for duty');
  await expect(page.locator('#chronicle-entries [data-ordinal="3"]')).toHaveCount(0);await demoAction(page,'click','#pause-reading');
  const before=await page.locator('#chronicle-entries').textContent();await page.waitForTimeout(300);expect(await page.locator('#chronicle-entries').textContent()).toBe(before);
