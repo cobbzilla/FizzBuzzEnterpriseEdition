@@ -4485,6 +4485,7 @@ var DemoWorkspace = class {
   run;
   desk = "authorize";
   watch = byId2("watch-view");
+  mainLinks = document.querySelectorAll('a[href="#main"]');
   stage = byId2("mandate-output");
   policyIds = ["display-speed", "emoji-companions", "companion-strategy", "require-companion-roll-call", "executive-hovering"];
   activeMandate = "";
@@ -4570,6 +4571,8 @@ var DemoWorkspace = class {
       entry.searchParams.set("desk", desk);
       history.replaceState(history.state, "", entry);
     }
+    entry.hash = "main";
+    for (const link of this.mainLinks) link.href = entry.href;
   }
   show(desk, push, focus = true) {
     const before = this.desk;
