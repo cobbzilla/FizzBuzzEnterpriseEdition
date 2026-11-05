@@ -192,6 +192,21 @@ Public hosting uses B2 and a Cloudflare Worker Custom Domain. Run `pnpm publish:
 from the merged branch; see the [public publishing runbook](docs/B2_PUBLISHING.md)
 for credentials, automatic DNS/TLS, and release verification.
 
+If an older offline release hides a newly deployed interface, open `/reset/`
+on the site, or choose **Refresh application** in the footer. This uncached
+recovery page unregisters this installation’s service workers, removes its
+cached releases and optional scenery, resets this tab’s mandate/estate
+preferences, installs a fresh offline copy, and redirects to the homepage.
+This recovery needs a network connection. Saved companions, curiosity
+discoveries, IndexedDB audit history and other applications’ caches remain.
+The same recovery route works on the static deployment and Java server.
+
+For an intentional clean slate, `/full-reset/` also erases all browser-side
+companions, discoveries, audit databases, preferences and cookies. Close other
+site tabs if they still hold the audit repository, then use **Retry application
+refresh**. Shared Java-server records are never deleted by either route. Both
+routes install the latest interface before returning to the homepage.
+
 The [Glyph Procurement Directorate](docs/ADR-0022-glyph-procurement.md) requires
 position-specific receiving certificates for every Fizz/Buzz character. Inspect
 its bill of materials in the website’s Operations section or through

@@ -147,6 +147,9 @@ test('an installed update waits for the current release to close',async({page,co
     await writeFile(`${directory}/sw.js`,worker.replace(/(var|const) cacheName = ([^;]+);/, '$1 cacheName = $2 + "-successor";'));
     await page.evaluate(async()=>{await (await navigator.serviceWorker.ready).update();});
     await expect.poll(()=>page.evaluate(async()=>!!(await navigator.serviceWorker.getRegistration())?.waiting)).toBe(true);
+    await page.evaluate(async()=>{(await navigator.serviceWorker.getRegistration())?.waiting?.postMessage({kind:'slopbuzz-reset-activate'});});
+    await page.waitForTimeout(100);
+    expect(await page.evaluate(async()=>!!(await navigator.serviceWorker.getRegistration())?.waiting)).toBe(true);
     // The old controller remains authoritative while this tab can submit requests.
     await demoAction(page,'selectOption','#display-speed','0');await demoAction(page,'click','#run-button');await expect(page.locator('#run-status')).toContainText('Mandate complete');
     await page.close();

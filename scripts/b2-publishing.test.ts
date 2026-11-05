@@ -57,6 +57,28 @@ test('invalid paths, writes, missing files and upstream failure never become suc
  assert.equal((await serve(new Request('https://example.org/'), env, forbiddenFetch)).status, 502);
 });
 
+test('recovery pages and scripts always reach the origin without conditional caching',async()=>{
+ for(const path of ['/reset/','/reset/index.html','/reset/reset.js','/full-reset/','/full-reset/index.html']){
+  const response=await serve(new Request('https://example.org'+path,{headers:{'If-None-Match':'stale','If-Modified-Since':'Wed, 01 Jan 2020 00:00:00 GMT'}}),env,async(_,options)=>{
+   assert.equal(options?.cache,'no-store');assert.equal(new Headers(options?.headers).get('If-None-Match'),null);assert.equal(new Headers(options?.headers).get('If-Modified-Since'),null);
+   return new Response('fresh');
+  });
+  assert.equal(response.status,200);assert.equal(response.headers.get('Cache-Control'),'no-store');assert.equal(metadata(path.slice(1)).cache,'no-store');
+ }
+ const redirect=await serve(new Request('https://example.org/reset'),env);
+ assert.equal(redirect.status,308);assert.equal(redirect.headers.get('Location'),'https://example.org/reset/');assert.equal(redirect.headers.get('Cache-Control'),'no-store');
+});
+
+test('full reset requests native data clearing only for an intentional document navigation',async()=>{
+ const navigation={'Sec-Fetch-Mode':'navigate','Sec-Fetch-Dest':'document'};
+ for(const headers of [{},navigation,{...navigation,'Sec-Purpose':'prefetch'}]){
+  const response=await serve(new Request('https://example.org/full-reset/',{headers}),env,async()=>new Response('full reset'));
+  assert.equal(response.headers.get('Clear-Site-Data'),headers===navigation?'"cache", "cookies"':null);
+ }
+ const preserving=await serve(new Request('https://example.org/reset/',{headers:navigation}),env,async()=>new Response('refresh'));
+ assert.equal(preserving.headers.get('Clear-Site-Data'),null);
+});
+
 test('HEAD, range and conditional requests preserve semantics; immutable assets retain their policy', async () => {
  const result = await serve(new Request('https://example.org/assets/0123456789abcdef/runtime-worker.js', {method: 'HEAD', headers: {Range: 'bytes=0-2'}}), env, async (_, options) => {
   assert.equal(options?.method, 'HEAD');

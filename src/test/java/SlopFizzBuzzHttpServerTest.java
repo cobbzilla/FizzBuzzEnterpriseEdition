@@ -183,6 +183,19 @@ public class SlopFizzBuzzHttpServerTest {
         assertTrue(history.body.contains("aria-current=\"page\""));
     }
 
+    @Test
+    public void recoveryIsAnIndependentUncachedPageOnTheJavaServer() throws Exception {
+        for (final String path : new String[] {"/reset", "/reset/", "/reset/index.html", "/reset/reset.js", "/full-reset", "/full-reset/", "/full-reset/index.html"}) {
+            final Reply recovery = request("GET", path);
+            assertEquals(200, recovery.status);
+            assertEquals("no-store", recovery.cacheControl);
+            assertFalse(recovery.body.contains("runtime-config.json"));
+            assertFalse(recovery.body.contains("/assets/rare-finds.js"));
+        }
+        assertTrue(request("GET", "/reset/").body.contains("id=\"reset-status\""));
+        assertTrue(request("GET", "/reset/").body.contains("aria-label=\"Primary navigation\""));
+    }
+
 	@Test
 	public void publicImprovementLedgerUsesThePackagedJournal() throws Exception {
 		final Reply page = request("GET", "/changelog");

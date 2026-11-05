@@ -722,3 +722,7 @@ html:has(.demo-page[data-desk=authorize]) { scroll-padding-bottom: calc(var(--di
  .watch-workspace[data-watch-view=office] .supervision-pane, .watch-workspace[data-watch-view=overview][data-office=true] .supervision-pane { grid-row: 1; }
  .watch-workspace[data-watch-view=office] #companion-spotlight, .watch-workspace[data-watch-view=overview][data-office=true] #companion-spotlight { grid-row: 2; }
 }
+/* The recovery page stays readable without the normal runtime bootstrap. */
+.reset-page main {padding-block:3rem;}
+.reset-page main .panel {max-width:50rem;margin-inline:auto;}
+.reset-page #reset-status {min-height:3em;}

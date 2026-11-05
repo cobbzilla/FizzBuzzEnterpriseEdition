@@ -87,11 +87,14 @@ final class StaticSiteHandler implements HttpHandler {
 		loaded.put("/continuity-register", new Asset(registerHtml.getBytes(StandardCharsets.UTF_8),
 				"text/html; charset=UTF-8", false));
 		loaded.put("/continuity-register/", loaded.get("/continuity-register"));
-        for (final String[] page : new String[][] {{"department-of-improbable-appointments", "rarity-register"}, {"bestiary", "bestiary"}, {"demo", "demo"}, {"about", "about"}, {"company-history", "about"}, {"accessibility", "accessibility"}, {"validation", "validation"}, {"response", "response"}}) {
+        for (final String[] page : new String[][] {{"department-of-improbable-appointments", "rarity-register"}, {"bestiary", "bestiary"}, {"demo", "demo"}, {"about", "about"}, {"company-history", "about"}, {"accessibility", "accessibility"}, {"validation", "validation"}, {"response", "response"}, {"reset", "reset"}, {"full-reset", "full-reset"}}) {
             final Asset document = asset("/web/" + page[1] + ".html", "text/html; charset=UTF-8", false);
             loaded.put("/" + page[0], document);
             loaded.put("/" + page[0] + "/", document);
         }
+        loaded.put("/reset/index.html", loaded.get("/reset/"));
+        loaded.put("/full-reset/index.html", loaded.get("/full-reset/"));
+        loaded.put("/reset/reset.js", asset("/web/reset.js", "text/javascript; charset=UTF-8", false));
         for (final String script : new String[] {"demo", "validation", "response", "bestiary", "rarity-register", "rare-finds", "office-world"}) {
             loaded.put("/assets/" + script + ".js", asset("/web/" + script + ".js", "text/javascript; charset=UTF-8", false));
         }
@@ -103,6 +106,7 @@ final class StaticSiteHandler implements HttpHandler {
 	public void handle(final HttpExchange exchange) throws IOException {
 		try {
 			final Asset asset = this.assets.get(exchange.getRequestURI().getPath());
+			final boolean recovery = exchange.getRequestURI().getPath().matches("/(?:full-)?reset(?:/.*)?");
 			if (asset == null) {
 				respondText(exchange, 404, "Unknown desk\n");
 				return;
@@ -116,13 +120,20 @@ final class StaticSiteHandler implements HttpHandler {
 			exchange.getResponseHeaders().set("Content-Type", asset.contentType);
 			final boolean fingerprinted = asset.cacheable &&
 					("v=" + asset.fingerprint).equals(exchange.getRequestURI().getRawQuery());
-			exchange.getResponseHeaders().set("Cache-Control", fingerprinted
+			exchange.getResponseHeaders().set("Cache-Control", recovery ? "no-store" : fingerprinted
 					? "public, max-age=31536000, immutable" : "no-cache");
+            if (exchange.getRequestURI().getPath().matches("/full-reset(?:/index\\.html|/)?") && "GET".equals(method)
+                    && "navigate".equals(exchange.getRequestHeaders().getFirst("Sec-Fetch-Mode"))
+                    && "document".equals(exchange.getRequestHeaders().getFirst("Sec-Fetch-Dest"))
+                    && exchange.getRequestHeaders().getFirst("Sec-Purpose") == null
+                    && exchange.getRequestHeaders().getFirst("Purpose") == null) {
+                exchange.getResponseHeaders().set("Clear-Site-Data", "\"cache\", \"cookies\"");
+            }
 			exchange.getResponseHeaders().set("ETag", asset.etag);
 			exchange.getResponseHeaders().set("Content-Security-Policy", CSP);
 			exchange.getResponseHeaders().set("X-Content-Type-Options", "nosniff");
 			exchange.getResponseHeaders().set("Referrer-Policy", "strict-origin-when-cross-origin");
-			if (matchesEtags(exchange.getRequestHeaders().getFirst("If-None-Match"), asset.etag)) {
+			if (!recovery && matchesEtags(exchange.getRequestHeaders().getFirst("If-None-Match"), asset.etag)) {
 				exchange.sendResponseHeaders(304, -1);
 				return;
 			}

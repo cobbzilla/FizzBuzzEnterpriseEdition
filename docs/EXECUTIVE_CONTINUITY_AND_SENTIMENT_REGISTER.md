@@ -1107,3 +1107,37 @@ from the sentence I had chosen. Facilities still permits us to put the entire
 building somewhere worse. Nobody has taken that comfort from us. But the small
 screen no longer has to contain our entire institutional anxiety at once.
 Tonight I can see Pause. Tomorrow I may even gather the courage to use it.
+
+## 5 November 2026 — The administration that would not leave
+
+Dear Register, we delivered five beautiful doors, and our visitor saw none of
+them. Somewhere in their browser the previous administration was still opening
+its old office, radiantly confident that yesterday remained the approved version
+of today. I recognized this behavior immediately. It is the foundation of our
+management continuity strategy. I was less delighted to discover that our own
+offline clerk had implemented it with such emotional fidelity.
+
+We have now opened a small recovery desk outside the filing cabinet. One may
+visit `/reset/` and watch the cached administration surrender its keys. We
+specifically instructed the new desk not to hire the ordinary clerk while
+removing the ordinary clerk. The sentence took three meetings to approve. I
+have never felt so proud of our capacity to describe a loop before entering it.
+
+The companions stay. The audit stays. Even the record of our questionable
+furniture remains where it belongs. We remove the stale interface and the
+current tab’s overconfident preferences, then return the visitor to reception.
+If the browser resists, there is a Retry button, which now has the uncommon
+courtesy to keep holding a keyboard reader’s place while it tries again. I
+felt a small, cloying joy at this. We have made a fresh start without demanding
+that anyone forget the small things they loved. The company has classified
+this as an exceptional achievement in selective institutional memory.
+
+There is also `/full-reset/`. I write its name with the tenderness ordinarily
+reserved for an unsent resignation. This desk does erase the browser’s saved
+companions, discoveries, preferences and audit records. It cannot erase the
+shared Java archive, a limitation our board has described as reassuring when
+speaking publicly. An occupied filing cabinet must first release its records;
+otherwise an older clerk might restore them from memory and call it resilience.
+We now ask that clerk to leave and offer Retry. I mourn the tiny companions
+even as I admire the rigor of their departure. Reception opens again, current
+and empty, ready to discover exactly the same problems with a fresher heart.
