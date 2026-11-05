@@ -207,6 +207,16 @@ site tabs if they still hold the audit repository, then use **Retry application
 refresh**. Shared Java-server records are never deleted by either route. Both
 routes install the latest interface before returning to the homepage.
 
+Both office views offer **Full-screen**. In Observe, enable Executive Hovering
+and use the button on the 3D view; live output, the current decision, the
+running Chronicle, playback controls and an optional companion remain as compact
+overlays. The panel selector can emphasize output or the log, or clear both.
+In Facilities, enter the office and choose **Full-screen**; camera and route
+controls remain at the edge, with the directory and paperwork in a drawer.
+Browser full-screen is requested where supported, with a tab-sized fallback.
+**Return to website** or Escape restores the normal layout without replaying
+the mandate. Full-screen requires no additional business API requests.
+
 The [Glyph Procurement Directorate](docs/ADR-0022-glyph-procurement.md) requires
 position-specific receiving certificates for every Fizz/Buzz character. Inspect
 its bill of materials in the website’s Operations section or through

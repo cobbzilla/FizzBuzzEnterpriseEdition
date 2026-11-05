@@ -1,5 +1,5 @@
 import {demoNavigator} from './demo-navigation.ts';
-import {chromium} from '@playwright/test';
+import {chromium,expect} from '@playwright/test';
 import {execFileSync} from 'node:child_process';
 import assert from 'node:assert/strict';
 const revision=execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim();
@@ -28,6 +28,7 @@ try {
  await page.selectOption('#premises-scenario','bell');await page.click('#premises-submit');await page.waitForFunction(()=>document.querySelector('#premises-status')?.textContent?.includes('U+0007'));
  await demoNavigator(page).evidence('chronicle');assert.ok(await page.locator('#chronicle-scroll').evaluate(element=>element.scrollHeight>element.clientHeight));
  assert.equal(await page.locator('#runtime-status, #offline-status').count(),0);
+ await demoNavigator(page).options(()=>page.check('#executive-hovering'));await demoNavigator(page).watch('office');await expect(page.locator('#supervision-canvas')).toHaveAttribute('data-rendered','true');await page.click('#supervision-fullscreen');await expect(page.locator('#office-fullscreen #output')).toBeVisible();await expect(page.locator('#office-fullscreen #chronicle-scroll')).toBeVisible();await page.click('#office-fullscreen-exit');await expect(page.locator('#supervision-fullscreen')).toBeFocused();await demoNavigator(page).options(()=>page.uncheck('#executive-hovering'));
  for(const port of [18088,18089]) {
   for(const route of ['demo','bestiary','department-of-improbable-appointments','about','company-history','accessibility','api','validation']) {
    await page.goto(`http://localhost:${port}/${route}/`);
@@ -36,6 +37,7 @@ try {
    assert.equal(await page.locator('main h1:visible').count(),1);
    if(route==='bestiary')await page.waitForFunction(()=>document.querySelector('#bestiary-status')?.textContent?.includes('3200 companions'));
    if(route==='department-of-improbable-appointments')await page.waitForFunction(()=>document.querySelector('#rarity-rows')?.children.length===3200);
+   if(route==='demo'){await demoNavigator(page).desk('facilities');await page.click('#office-enter');await expect(page.locator('#office-canvas')).toHaveAttribute('data-rendered','true');await page.click('#office-fullscreen-enter');await expect(page.locator('#office-fullscreen #office-canvas')).toBeVisible();await page.click('#office-fullscreen-exit');await expect(page.locator('#office-fullscreen-enter')).toBeFocused();}
   }
  }
  console.log(`Deployed static runtime verified at ${revision}`);

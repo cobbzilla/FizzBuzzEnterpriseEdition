@@ -118,3 +118,97 @@
 .estate-minutes h4 { font-size: 1em; margin: 10px 0 6px; }
 .estate-perk h3 { margin: 0; }
 .estate-map span { hyphens: auto; }
+
+/* The viewport belongs to Facilities. Paperwork occupies only its edges. */
+.office-fullscreen-entry { position: absolute; z-index: 2; top: 8px; right: 8px; min-height: 44px; }
+.office-is-fullscreen, .office-is-fullscreen body { overflow: hidden; }
+.office-fullscreen { inset: 0; width: 100%; max-width: none; height: 100%; height: 100dvh; max-height: none; margin: 0; padding: 0; border: 0; border-radius: 0; color: var(--ink); background: var(--paper-deep); overflow: hidden; }
+.office-fullscreen::backdrop { background: var(--paper-deep); }
+.office-fullscreen-surface { position: relative; width: 100%; height: 100%; overflow: hidden; --immersive-controls-height: 50px; --immersive-header-height: 52px; }
+.office-fullscreen-surface:fullscreen { width: 100vw; height: 100vh; height: 100dvh; background: var(--paper-deep); }
+#office-fullscreen-stage, #office-fullscreen-stage > .office-stage, #office-fullscreen-stage > .supervision-pane, .office-fullscreen .supervision-stage { position: absolute; inset: 0; height: 100%; width: 100%; margin: 0; padding: 0; border: 0; border-radius: 0; }
+.office-fullscreen .supervision-pane { display: block; }
+.office-fullscreen .office-fullscreen-entry { display: none; }
+.immersive-overlay { position: absolute; z-index: 2; min-width: 0; color: var(--ink); background: #fffdf5f5; border: 1px solid var(--ink); border-radius: 6px; box-shadow: 0 3px 15px #172b3126; }
+.office-fullscreen button, .office-fullscreen select, .office-fullscreen summary { min-height: 44px; font: inherit; font-size: .8rem; }
+.office-fullscreen button, .office-fullscreen select { padding: 7px 10px; color: var(--ink); background: var(--white); border: 1px solid var(--ink); border-radius: 4px; cursor: pointer; overflow-wrap: anywhere; }
+.office-fullscreen button:hover { background: var(--paper-deep); }
+.office-fullscreen button[aria-disabled=true] { opacity: .6; cursor: default; }
+.office-fullscreen button[aria-disabled=true]::after { content: none; }
+.immersive-header { top: max(8px, env(safe-area-inset-top)); left: max(8px, env(safe-area-inset-left)); right: max(8px, env(safe-area-inset-right)); width: fit-content; max-width: calc(100% - 16px); margin-left: auto; display: flex; align-items: center; gap: 8px; padding: 6px; }
+.immersive-header h2 { font-size: .85rem; line-height: 1.3; margin: 0 8px; max-width: 18rem; }
+#office-fullscreen-panel-control { display: flex; align-items: center; gap: 6px; font-size: .75rem; margin: 0; min-width: 0; }
+#office-fullscreen-panels { min-width: 0; max-width: 10rem; }
+#office-fullscreen-exit { flex: none; background: var(--ink); color: var(--white); }
+.immersive-return-short { display: none; }
+.immersive-controls { bottom: max(8px, env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%); width: min(42rem, calc(100% - 16px)); max-height: 30%; overflow: auto; overscroll-behavior: contain; padding: 6px; }
+.immersive-notice { max-width: 38rem; }
+.office-fullscreen .immersive-notice > .inline-status { margin: 0 0 5px; height: 3em; min-height: 0; max-height: 3em; padding: 0; overflow: auto; overscroll-behavior: contain; font-size: .72rem; line-height: 1.4; }
+.office-fullscreen .watch-transport, .office-fullscreen .office-toolbar, .immersive-route-controls { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 5px; margin: 0; }
+.office-fullscreen .reading-controls, .office-fullscreen .supervision-controls { display: contents; }
+.office-fullscreen .reading-controls label, .office-fullscreen #reveal-all, .office-fullscreen #supervision-pause, .office-fullscreen #office-close, .office-fullscreen #office-enlarge, .office-fullscreen #office-fullscreen-enter { display: none; }
+.office-fullscreen .supervision-controls progress { flex: none; width: 50px; min-width: 0; }
+.immersive-route-controls { margin-top: 5px; }
+#office-walking-controls:not([hidden]):is(.office-fullscreen *) { margin-top: 5px; }
+.immersive-output, .immersive-log { bottom: calc(var(--immersive-controls-height) + max(16px, env(safe-area-inset-bottom))); display: flex; flex-direction: column; padding: 10px; overflow: hidden; }
+.immersive-output { left: max(8px, env(safe-area-inset-left)); width: min(16rem, calc(45% - 12px)); height: clamp(95px, 22dvh, 175px); }
+.immersive-log { right: max(8px, env(safe-area-inset-right)); width: min(22rem, calc(55% - 12px)); height: clamp(125px, 28dvh, 245px); }
+.immersive-output h2, .immersive-log > h2 { font-size: .8rem; line-height: 1.3; margin: 0 0 6px; }
+#office-fullscreen-output-slot, #office-fullscreen-log-slot { flex: 1; min-height: 0; }
+.office-fullscreen #watch-output { display: flex; flex-direction: column; height: 100%; padding: 0; border: 0; border-radius: 0; background: none; }
+.office-fullscreen .output-heading { padding: 0; margin: 0 0 4px; border: 0; flex: none; }
+.office-fullscreen #output-count { font-size: .65rem; }
+.office-fullscreen #output { min-height: 0; height: auto; max-height: none; flex: 1; width: 100%; padding: 6px 8px; margin: 0; font-size: .8rem; line-height: 1.5; background: var(--paper); color: var(--ink); border: 1px solid var(--line); border-radius: 3px; overflow: auto; overscroll-behavior: contain; }
+.office-fullscreen .supervision-caption { margin: 0 0 6px; padding: 0 0 6px; border: 0; border-bottom: 1px solid var(--line); height: 4.5em; max-height: 4.5em; font-size: .72rem; line-height: 1.4; background: none; }
+#office-fullscreen-log-slot .chronicle { height: 100%; min-height: 0; padding: 0; margin: 0; border: 0; background: none; }
+#office-fullscreen-log-slot :is(.chronicle-current, .chronicle-caption, .chronicle-tools) { display: none; }
+#office-fullscreen-log-slot #chronicle-title { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); }
+#office-fullscreen-log-slot .chronicle-scroll { height: 100%; min-height: 0; padding: 6px 8px; font-size: .75rem; line-height: 1.5; border: 1px solid var(--line); border-radius: 3px; background: var(--paper); }
+#office-fullscreen-log-slot .chronicle-scroll :is(h3, h4) { font-size: .8rem; margin: 5px 0; }
+#office-fullscreen-log-slot .chronicle-scroll p { margin: 5px 0 10px; }
+.immersive-companion { top: calc(var(--immersive-header-height) + max(16px, env(safe-area-inset-top))); right: max(8px, env(safe-area-inset-right)); max-width: min(17rem, 45%); padding: 4px; }
+.office-fullscreen #companion-spotlight { padding: 0; border: 0; background: none; }
+.office-fullscreen #companion-spotlight h2, .office-fullscreen #spotlight-energy { display: none; }
+.office-fullscreen #spotlight-open { width: 100%; gap: 6px; padding: 4px; font-size: .72rem; text-align: left; }
+.office-fullscreen #spotlight-glyph { font-size: 1.6rem; }
+.office-fullscreen #spotlight-name { font-size: .75rem; }
+.office-fullscreen #spotlight-detail { font-size: .65rem; }
+.immersive-drawer { top: calc(var(--immersive-header-height) + max(16px, env(safe-area-inset-top))); right: max(8px, env(safe-area-inset-right)); bottom: calc(var(--immersive-controls-height) + max(16px, env(safe-area-inset-bottom))); width: min(25rem, calc(100% - 16px)); max-height: 68%; display: flex; flex-direction: column; padding: 10px; }
+.immersive-drawer > header { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex: none; }
+.immersive-drawer h2 { font-size: .9rem; margin: 0; }
+#office-fullscreen-drawer-close { font-size: 1.3rem; min-width: 44px; }
+#office-fullscreen-inspection-slot { min-height: 0; overflow: auto; overscroll-behavior: contain; padding: 8px 4px; }
+.office-fullscreen .office-inspection { font-size: .85rem; }
+.office-fullscreen .watch-settings { bottom: calc(var(--immersive-controls-height) + max(16px, env(safe-area-inset-bottom))); right: max(8px, env(safe-area-inset-right)); width: min(36rem, calc(100% - 16px)); max-height: calc(100% - var(--immersive-controls-height) - var(--immersive-header-height) - 40px); }
+.office-fullscreen [hidden] { display: none !important; }
+@media(max-width:900px) { .immersive-header h2 { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); } }
+@media(max-width:700px) {
+ .immersive-header { gap: 5px; }
+ #office-fullscreen-panel-control { font-size: 0; }
+ #office-fullscreen-panels { font-size: .75rem; max-width: 9rem; }
+ .office-fullscreen #office-fullscreen-exit, .office-fullscreen #office-fullscreen-inspect { font-size: .73rem; padding-inline: 7px; }
+ .immersive-output, .immersive-log { padding: 7px; }
+ .immersive-output { height: clamp(92px, 18dvh, 145px); }
+ .immersive-log { height: clamp(125px, 23dvh, 185px); }
+ .office-fullscreen .supervision-controls progress { display: none; }
+ .office-fullscreen .watch-transport button { padding-inline: 7px; font-size: .73rem; }
+ .office-fullscreen .output-heading { display: block; }
+ .office-fullscreen #output-count { display: none; }
+ .office-fullscreen #spotlight-name { font-size: .7rem; }
+ .office-fullscreen #spotlight-detail { display: none; }
+}
+@media(max-width:359px), (max-height:450px) {
+ .office-fullscreen-surface:is([data-panels=output], [data-panels=log]) :is(.immersive-output, .immersive-log) { width: min(22rem, calc(100% - 16px)); }
+}
+.office-fullscreen-surface[data-large-text=true]:is([data-panels=output], [data-panels=log]) :is(.immersive-output, .immersive-log) { width: min(28rem, calc(100% - 16px)); height: 20%; }
+.office-fullscreen-surface[data-large-text=true] #office-fullscreen-current-slot { display: none; }
+.office-fullscreen-surface[data-large-text=true] .immersive-companion { display: none; }
+.office-fullscreen-surface[data-large-text=true] .watch-transport { width: 100%; flex-wrap: nowrap; justify-content: flex-start; overflow-x: auto; scrollbar-width: thin; }
+.office-fullscreen-surface[data-large-text=true] .watch-transport button { flex: none; }
+.office-fullscreen-surface[data-large-text=true] .immersive-notice > .inline-status { height: 1.5em; max-height: 1.5em; }
+@media(max-width:700px) {
+ .office-fullscreen-surface[data-large-text=true] .immersive-return-long { display: none; }
+ .office-fullscreen-surface[data-large-text=true] .immersive-return-short { display: inline; }
+}
+@media(forced-colors:active) { .immersive-overlay { background: Canvas; color: CanvasText; border-color: CanvasText; } }
+@media(prefers-reduced-motion:reduce) { .office-fullscreen * { scroll-behavior: auto !important; } }

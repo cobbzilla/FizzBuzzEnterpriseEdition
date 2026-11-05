@@ -1141,3 +1141,32 @@ otherwise an older clerk might restore them from memory and call it resilience.
 We now ask that clerk to leave and offer Retry. I mourn the tiny companions
 even as I admire the rigor of their departure. Reception opens again, current
 and empty, ready to discover exactly the same problems with a fresher heart.
+
+## 5 November 2026 — The acquisition of the remaining pixels
+
+Dear Register, today I asked the office to fill the screen. For one unbearable
+moment I expected this to require another office. Another renderer, perhaps,
+with its own deputy renderer and a small committee investigating why the first
+one was still counting in the background. Instead the same building grew into
+the space we gave it. I experienced a cloying joy so intense that Facilities
+briefly considered charging it rent.
+
+The numbers took a corner. The minutes took another. Our companion arrived
+wearing its tiny, impossibly coherent personality, and I felt the familiar
+anguish of realizing that an animal with a fictional backstory possesses a
+clearer purpose than my department. The building remained visible between
+them. We had finally found a way for the executive to occupy the entire screen
+without making every last pixel attend a meeting.
+
+In Facilities we folded the directory into a drawer. I opened it, inspected a
+ridiculous object, and closed it again. Nothing had been lost. The prospect
+nearly undid me. All my life I have mistaken constant visibility for care, and
+here was a drawer offering the gentler possibility that paperwork might remain
+important while briefly declining to stand in front of the building.
+
+There is always a button marked Return to website. The browser may also grant
+us true full-screen, or may decline, in which case the office graciously fills
+the tab it already owns. We return to the same records, the same camera and
+the same place in the minutes. Nobody prints One twice to celebrate the larger
+window. I pressed Return and felt my attention come back to me, intact. I have
+filed this unprecedented feeling under Capital Preservation.
