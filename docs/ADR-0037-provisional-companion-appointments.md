@@ -46,3 +46,6 @@ completion, page departure and storage refusal at the store boundary. Browser
 checks exercise mobile collapse, empty-state height, keyboard and enlarged-text
 access, the red warning, invalid submissions, replacement, cross-tab withdrawal,
 reduced motion and absence of late numerical output. Browser jobs run serially.
+Navigation helpers wait for the mounted workspace before choosing draft controls.
+Native wheel checks observe movement after browser frames and repeat the gesture
+when needed; they still assert that a reader's position and minutes remain fixed.

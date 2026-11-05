@@ -1,7 +1,9 @@
 import {expect,type Page,type Locator} from '@playwright/test';
+async function mounted(page:Page){if(new URL(page.url()).pathname.endsWith('/demo/'))await expect(page.locator('body')).toHaveAttribute('data-desk',/^(authorize|observe|experiment|facilities|evidence)$/);}
 /** Navigate the actual desks before using a relocated control in the regression suites. */
 export async function demoControl(page:Page,selector:string):Promise<Locator>{
  if(!new URL(page.url()).pathname.endsWith('/demo/'))return page.locator(selector);
+ await mounted(page);
  let target=selector;
  if(/^#precedent-(scenario|submit|form)$/.test(selector))target=selector.replace('#','#experiment-');
  const desk=await page.locator('body').getAttribute('data-desk');
@@ -20,9 +22,10 @@ export async function demoControl(page:Page,selector:string):Promise<Locator>{
  if(selector==='#pause-reading'&&await page.locator('#pause-reading').isHidden())target='#supervision-pause';
  return page.locator(target);
 }
-export async function department(page:Page,desk:string){if(await page.locator('body').getAttribute('data-desk')!==desk)await page.locator('[data-desk-link="'+desk+'"]').click();}
+export async function department(page:Page,desk:string){await mounted(page);if(await page.locator('body').getAttribute('data-desk')!==desk)await page.locator('[data-desk-link="'+desk+'"]').click();}
 export async function watch(page:Page,view='overview'){await department(page,'observe');await page.selectOption('#watch-view',view);await expect(page.locator('#watch-view')).toHaveValue(view);}
 export async function demoAction(page:Page,action:'click'|'fill'|'selectOption'|'check'|'uncheck'|'focus'|'press'|'hover'|'tap',selector:string,...args:unknown[]):Promise<unknown>{
+ await mounted(page);
  // Choosing ordinary cadence is an explicit opt-out of the default directed office.
  if(action==='selectOption'&&selector==='#display-speed'&&await page.locator('body').getAttribute('data-desk')==='authorize')await page.uncheck('#authorize-executive-hovering');
  const control=await demoControl(page,selector);const result=await Reflect.apply(control[action],control,args);if(['selectOption','check','uncheck'].includes(action)&&await page.locator('#watch-settings').isVisible()&&!await page.locator('dialog[open]').count())await page.locator('#watch-settings-close').click();return result;
