@@ -5,6 +5,7 @@ import type {Discovery} from './discovery-model';
 import type {Folio} from './chronicle';
 import {officeEstate} from './office-estate';
 import {requestReorganization} from './office-relocation';
+import {officeFullscreen} from './office-fullscreen';
 
 export interface RunPresentation {
  pause():void;resume():void;
@@ -22,6 +23,8 @@ export class DemoWorkspace {
  private preferredAuthority=new URL(location.href).searchParams.get('authority')||'';
  private scroll=new Map<DemoDesk,number>();
  constructor(private readonly run:RunPresentation){
+  const immersive=officeFullscreen();immersive.placeChronicle=target=>this.run.placeChronicle(target);
+  byId('supervision-fullscreen').addEventListener('click',()=>immersive.open('observe',byId('supervision-fullscreen')));
   document.querySelectorAll<HTMLAnchorElement>('[data-desk-link]').forEach(link=>link.addEventListener('click',event=>{
    if(event.metaKey||event.ctrlKey||event.shiftKey||event.altKey)return;
    event.preventDefault();this.navigate(link.dataset.deskLink as DemoDesk);
@@ -56,7 +59,7 @@ export class DemoWorkspace {
   officeEstate.subscribe(()=>{byId('watch-waive').hidden=!officeEstate.moving;});
   byId('spotlight-open').addEventListener('click',()=>{if(this.discovery)companionDialog().open(this.discovery,byId('spotlight-open'));});
   byId('companion-dialog').addEventListener('close',()=>{if(this.pendingDiscovery)this.remember(this.pendingDiscovery);});
-  byId('spotlight-open').addEventListener('blur',()=>queueMicrotask(()=>{if(this.pendingDiscovery&&!document.querySelector('dialog[open]'))this.remember(this.pendingDiscovery);}));
+  byId('spotlight-open').addEventListener('blur',()=>queueMicrotask(()=>{if(this.pendingDiscovery&&!document.querySelector('dialog[open]:not(#office-fullscreen)'))this.remember(this.pendingDiscovery);}));
   for(const id of this.policyIds){
    byId('authorize-'+id).addEventListener('change',()=>{this.draftSummary();this.saveDraft();});
    byId(id).addEventListener('change',()=>{if(!this.committed&&!this.applying)this.copyLiveToDraft();this.layout();});
@@ -74,7 +77,7 @@ export class DemoWorkspace {
    const trigger=byId('personnel-documents');trigger.dispatchEvent(new MouseEvent('click')); 
   }));
   new MutationObserver(()=>{byId('personnel-record-summary').textContent=byId('personnel-origin').textContent;}).observe(byId('personnel-origin'),{childList:true,characterData:true,subtree:true});
-  new MutationObserver(()=>{if(document.querySelector('dialog[open]'))this.run.pause();}).observe(document.body,{subtree:true,attributes:true,attributeFilter:['open']});
+  new MutationObserver(()=>{if(document.querySelector('dialog[open]:not(#office-fullscreen)'))this.run.pause();}).observe(document.body,{subtree:true,attributes:true,attributeFilter:['open']});
   document.addEventListener('visibilitychange',()=>{if(document.hidden)this.run.pause();});
   addEventListener('popstate',()=>{const desk=readDesk(new URL(location.href));if(desk!==this.desk)this.show(desk,false);else this.retainDesk(desk);});
   const resize=new ResizeObserver(()=>this.fit());resize.observe(document.querySelector('.site-header')!);resize.observe(byId('discovery-register'));
@@ -116,6 +119,7 @@ export class DemoWorkspace {
   entry.hash='main';for(const link of this.mainLinks)link.href=entry.href;
  }
  private show(desk:DemoDesk,push:boolean,focus=true){
+  if(officeFullscreen().mode)officeFullscreen().close(false);
   const before=this.desk;
   if(before!==desk)this.scroll.set(before,scrollY);
   if(desk!=='observe')this.run.pause();
@@ -139,7 +143,7 @@ export class DemoWorkspace {
  }
  private settings(open:boolean){byId('watch-settings').hidden=!open;byId('watch-settings-toggle').setAttribute('aria-expanded',String(open));}
  private placeChronicle(watch:boolean){
-  this.run.placeChronicle(byId(watch?'watch-chronicle-slot':'evidence-chronicle-slot'));
+  this.run.placeChronicle(byId(officeFullscreen().mode==='observe'?'office-fullscreen-log-slot':watch?'watch-chronicle-slot':'evidence-chronicle-slot'));
  }
  private layout(){
   const policy=this.live(),view=watchView(this.watch.value,policy.hovering,policy.companions&&policy.roll);

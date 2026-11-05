@@ -81,7 +81,7 @@
             <section id="watch-output" class="watch-card" aria-labelledby="output-title"><div class="output-heading"><h2 id="output-title">Official output</h2><span id="output-count">0 lines</span></div><pre class="terminal" id="output" tabindex="0" role="region" aria-label="FizzBuzz output">Awaiting a duly authorized number.</pre></section>
             <section class="supervision-pane" id="supervision-pane" hidden="" aria-labelledby="supervision-title"><h2 id="supervision-title" class="workspace-sr" tabindex="-1">Executive observation</h2>
 
-                <div class="supervision-stage" id="supervision-stage"><canvas id="supervision-canvas" tabindex="-1" role="img" aria-label="Recorded numerical proceedings in the three-dimensional office" aria-describedby="supervision-help"></canvas><div id="supervision-loading" class="supervision-loading" tabindex="0" role="region" aria-label="Office display availability" aria-live="polite"><p>The executive is locating something to supervise.</p></div></div>
+                <div class="supervision-stage" id="supervision-stage"><canvas id="supervision-canvas" tabindex="-1" role="img" aria-label="Recorded numerical proceedings in the three-dimensional office" aria-describedby="supervision-help"></canvas><button type="button" id="supervision-fullscreen" class="office-fullscreen-entry" aria-haspopup="dialog" aria-controls="office-fullscreen">Full-screen</button><div id="supervision-loading" class="supervision-loading" tabindex="0" role="region" aria-label="Office display availability" aria-live="polite"><p>The executive is locating something to supervise.</p></div></div>
 
                 <div class="supervision-caption" id="supervision-caption" tabindex="0" role="region" aria-label="Current observed decision"><p id="supervision-current" role="status" aria-live="polite" aria-atomic="true">Run a mandate. No employee has yet been deprived of autonomy.</p></div>
 
@@ -189,6 +189,7 @@
               <div class="office-toolbar" role="group" aria-label="Office visit controls">
                 <button type="button" id="office-close" class="button button-secondary">Close office</button>
                 <button type="button" id="office-enlarge" class="button button-secondary" aria-controls="office-modal">Enlarge office</button>
+                <button type="button" id="office-fullscreen-enter" class="button button-secondary" aria-haspopup="dialog" aria-controls="office-fullscreen">Full-screen</button>
                 <button type="button" id="office-overview" class="button button-secondary">Whole estate</button>
                 <button type="button" id="office-walk" class="button button-secondary" aria-pressed="false">Walk in this room</button>
                 <button type="button" id="office-zoom-in" class="button button-secondary" aria-label="Zoom into the office">+</button><button type="button" id="office-zoom-out" class="button button-secondary" aria-label="Zoom out of the office">−</button>
@@ -197,7 +198,7 @@
               <div class="office-layout">
                 <div class="office-world-column">
                   <div class="office-stage" id="office-stage"><canvas id="office-canvas" tabindex="0" role="img" aria-label="Interactive three-dimensional office. The room directory provides the same inspections." aria-describedby="office-camera-help"></canvas><div class="office-loading" id="office-loading"><p>Facilities is locating the building…</p></div></div>
-                  <p class="field-help" id="office-camera-help">Drag to rotate the cutaway; use the zoom buttons or pinch. Choose a room below to inspect it. Walking supports W, A, S, D while this view has focus, or the movement buttons. Escape leaves the enlarged view or releases the walking camera.</p>
+                  <p class="field-help" id="office-camera-help">Drag to rotate the cutaway; use the zoom buttons or pinch. Choose a room below to inspect it. Walking supports W, A, S, D while this view has focus, or the movement buttons. Escape returns from a full-screen or enlarged view, or releases the walking camera on the page.</p>
                   <div id="office-reorganization"></div>
                   <div class="office-playback" role="group" aria-label="Recorded file route playback"><button type="button" id="office-choose-mandate">Choose a mandate</button><button type="button" id="office-pause" aria-pressed="false">Pause route</button><button type="button" id="office-replay">Replay route</button><button type="button" id="office-next">Next recorded stop</button><label><input type="checkbox" id="office-follow"> Follow new files</label><label><input type="checkbox" id="office-follow-route"> Follow the route camera</label></div>
                   <p class="office-route-caption" id="office-route-status">Run a mandate to supply a recorded file. Every room is already open for fictional inspection.</p>
@@ -285,6 +286,24 @@
 
   </dialog>
   <dialog id="office-modal" class="office-modal" aria-labelledby="office-modal-title"><div class="office-modal-tools"><strong id="office-modal-title">The Serious Business Office · Visitor access</strong><button type="button" id="office-modal-close" aria-label="Close enlarged office"><span aria-hidden="true">×</span></button></div><div id="office-modal-slot"></div></dialog>
+  <dialog id="office-fullscreen" class="office-fullscreen" aria-labelledby="office-fullscreen-title">
+    <div id="office-fullscreen-surface" class="office-fullscreen-surface">
+      <div id="office-fullscreen-stage"></div>
+      <header id="office-fullscreen-header" class="immersive-header immersive-overlay">
+        <h2 id="office-fullscreen-title">Executive Occupation of the Entire Screen</h2>
+        <label id="office-fullscreen-panel-control" for="office-fullscreen-panels">Panels <select id="office-fullscreen-panels"><option value="both">Output + log</option><option value="output">Output</option><option value="log">Running log</option><option value="none">Hide panels</option></select></label>
+        <button id="office-fullscreen-inspect" type="button" aria-expanded="false" aria-controls="office-fullscreen-drawer">Directory &amp; paperwork</button>
+        <button id="office-fullscreen-exit" type="button" aria-label="Exit full-screen and return to website"><span class="immersive-return-long">Return to website</span><span class="immersive-return-short" aria-hidden="true">Exit</span></button>
+      </header>
+      <p id="office-fullscreen-status" class="workspace-sr" role="status" aria-live="polite"></p>
+      <aside id="office-fullscreen-output" class="immersive-output immersive-overlay" aria-label="Live official output"><div id="office-fullscreen-output-slot"></div></aside>
+      <aside id="office-fullscreen-log" class="immersive-log immersive-overlay" aria-labelledby="office-fullscreen-log-title"><h2 id="office-fullscreen-log-title">Running log</h2><div id="office-fullscreen-current-slot"></div><div id="office-fullscreen-log-slot"></div></aside>
+      <aside id="office-fullscreen-companion" class="immersive-companion immersive-overlay" aria-label="Latest companion"></aside>
+      <section id="office-fullscreen-drawer" class="immersive-drawer immersive-overlay" aria-labelledby="office-fullscreen-drawer-title" hidden><header><h2 id="office-fullscreen-drawer-title">Directory &amp; paperwork</h2><button id="office-fullscreen-drawer-close" type="button" aria-label="Close office directory">×</button></header><div id="office-fullscreen-inspection-slot"></div></section>
+      <div id="office-fullscreen-controls" class="immersive-controls immersive-overlay" role="group" aria-label="Full-screen office controls"><div id="office-fullscreen-notice" class="immersive-notice"></div></div>
+      <div id="office-fullscreen-settings"></div>
+    </div>
+  </dialog>
   <!--SITE_FOOTER-->
 </body>
 </html>

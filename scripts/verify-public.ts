@@ -71,6 +71,9 @@ export async function verifyPublic(origin: string, revision: string) {
    assert.deepEqual((await page.locator('#output').textContent())?.trim().split('\n'), expected);
    await expect(page.locator('#companion-list li')).toHaveCount(7);
    await expect(page.locator('#discovery-list li')).toHaveCount(5);
+   await demo.options(()=>page.check('#executive-hovering'));await demo.watch('office');await expect(page.locator('#supervision-canvas')).toHaveAttribute('data-rendered','true');await page.click('#supervision-fullscreen');
+   await expect(page.locator('#office-fullscreen #output')).toBeVisible();await expect(page.locator('#office-fullscreen #chronicle-scroll')).toBeVisible();assert.deepEqual((await page.locator('#output').textContent())?.trim().split('\n'),expected);
+   await page.click('#office-fullscreen-exit');await expect(page.locator('#office-fullscreen')).not.toBeVisible();await expect(page.locator('#supervision-fullscreen')).toBeFocused();await demo.options(()=>page.uncheck('#executive-hovering'));
    await demo.watch('companions');
    const bioOpener=page.locator('#companion-list button').first(),bio=page.locator('#companion-dialog');
    await bioOpener.click();await expect(bio.getByRole('button',{name:'Close companion file'})).toBeVisible();assert.equal(new URL(await page.locator('#companion-share-link').inputValue()).searchParams.get('limit'),'15');await bio.getByRole('button',{name:'Close companion file'}).click();await expect(bio).not.toBeVisible();await expect(bioOpener).toBeFocused();
@@ -113,11 +116,12 @@ export async function verifyPublic(origin: string, revision: string) {
     if ((route === 'about'||route === 'company-history')) await expect(page.getByRole('heading',{name:'Confounding the courage to convene'})).toBeVisible();
    }
    await page.goto(origin+'/demo/#office-tour');await expect(page.locator('#health-value')).toHaveText('LIVE');await demo.desk('facilities');await page.click('#office-enter');await expect(page.locator('#office-canvas')).toHaveAttribute('data-renderer','babylon');await expect(page.locator('#office-canvas')).toHaveAttribute('data-rendered','true');
+   await page.click('#office-fullscreen-enter');await expect(page.locator('#office-fullscreen #office-canvas')).toBeVisible();await page.click('#office-fullscreen-inspect');await expect(page.locator('#office-fullscreen #office-directory')).toBeVisible();await page.click('#office-fullscreen-exit');await expect(page.locator('#office-fullscreen-enter')).toBeFocused();
    await page.locator('#office-directory').getByRole('button',{name:/Executive$/}).click();await page.locator('#office-props').getByRole('button',{name:'The Exit Strategy',exact:true}).click();await page.locator('#office-story-actions').getByRole('button',{name:'Inspect the strategy'}).click();await expect(page.locator('#office-story-answer')).toContainText('cupboard');
    await page.locator('.office-options summary').click();await page.click('#office-offline');await expect(page.locator('#office-offline-status')).toContainText('saved for offline');await page.click('#office-close');
    await context.setOffline(true);
    await page.goto(origin + '/demo/');
-   await expect(page.locator('#health-value')).toHaveText('LIVE');await demo.desk('facilities');await page.click('#office-enter');await expect(page.locator('#office-canvas')).toHaveAttribute('data-rendered','true');await page.click('#office-close');
+   await expect(page.locator('#health-value')).toHaveText('LIVE');await demo.desk('facilities');await page.click('#office-enter');await expect(page.locator('#office-canvas')).toHaveAttribute('data-rendered','true');await page.click('#office-fullscreen-enter');await expect(page.locator('#office-fullscreen #office-canvas')).toBeVisible();await page.click('#office-fullscreen-exit');await expect(page.locator('#office-fullscreen-enter')).toBeFocused();await page.click('#office-close');
    await expect(page.locator('#health-value')).toHaveText('LIVE');
    await demo.run('16');
    await demo.experiment('personnel');await page.selectOption('#experiment-speed','0');await page.click('[data-personnel-scenario="missing-induction"]');await expect(page.locator('#experiment-personnel-verdict')).toHaveText('Application rejected');await expect(page.locator('#experiment-personnel-status')).toContainText('Probation Review');assert.equal((await page.locator('#output').textContent())?.trim().split('\n').at(-1),'16');

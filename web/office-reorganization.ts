@@ -8,7 +8,7 @@ import {estateLabel,qualifiedAddress,amenities,type EstateMemo} from './office-e
 import {rooms,type RoomId} from './office-content';
 import {node} from './companion-story';
 const announcement=node('p');announcement.className='estate-announcement';announcement.setAttribute('role','status');announcement.setAttribute('aria-live','polite');announcement.setAttribute('aria-atomic','true');document.body.append(announcement);
-const announce=(text:string)=>{const parent=document.querySelector('#office-modal[open]')||document.body;if(announcement.parentElement!==parent)parent.append(announcement);if(announcement.textContent!==text)announcement.textContent=text;};
+const announce=(text:string)=>{const parent=document.querySelector('#office-fullscreen[open] #office-fullscreen-surface, #office-modal[open]')||document.body;if(announcement.parentElement!==parent)parent.append(announcement);if(announcement.textContent!==text)announcement.textContent=text;};
 /** Both offices report the same transaction, with a semantic alternative to the model. */
 export class ReorganizationPanel {
  private readonly button=node('button','Announce Another Reorganization');private readonly status=node('p');private readonly notice=node('p');private readonly details=node('details');private readonly table=node('table');

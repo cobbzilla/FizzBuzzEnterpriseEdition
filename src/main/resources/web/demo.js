@@ -735,6 +735,199 @@ function companionDialog() {
   return controller;
 }
 
+// web/dom.ts
+var byId = (id) => {
+  const node3 = document.getElementById(id);
+  if (!node3) throw new Error(`Missing element ${id}`);
+  return node3;
+};
+function setText(id, value) {
+  byId(id).textContent = String(value);
+}
+
+// web/office-fullscreen.ts
+var OfficeFullscreen = class {
+  dialog = byId("office-fullscreen");
+  surface = byId("office-fullscreen-surface");
+  panels = byId("office-fullscreen-panels");
+  exit = byId("office-fullscreen-exit");
+  restorations = [];
+  invoker;
+  native = false;
+  serial = 0;
+  position = { x: 0, y: 0 };
+  mode;
+  placeChronicle;
+  constructor() {
+    this.exit.addEventListener("click", () => this.close());
+    this.dialog.addEventListener("cancel", (event) => {
+      event.preventDefault();
+      this.close();
+    });
+    this.dialog.addEventListener("close", () => {
+      if (!this.dialog.open) this.close();
+    });
+    this.panels.addEventListener("change", () => this.layout());
+    addEventListener("resize", () => {
+      if (this.mode) this.adapt();
+    });
+    document.addEventListener("demo-watch-layout", () => {
+      if (this.mode === "observe") this.layout();
+    });
+    byId("office-fullscreen-inspect").addEventListener("click", () => this.inspection(byId("office-fullscreen-drawer").hidden === true));
+    byId("office-fullscreen-drawer-close").addEventListener("click", () => this.inspection(false, true));
+    byId("office-fullscreen-drawer").addEventListener("keydown", (event) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        event.stopPropagation();
+        this.inspection(false, true);
+      }
+    });
+    document.addEventListener("fullscreenchange", () => {
+      if (!this.mode) return;
+      if (document.fullscreenElement === this.surface) this.native = true;
+      else if (this.native) this.close();
+    });
+    document.addEventListener("demo-presentation-change", () => {
+      if (this.mode !== "observe") return;
+      if (!byId("executive-hovering").checked) this.close();
+      else this.layout();
+    });
+    const resize = new ResizeObserver(() => {
+      this.surface.style.setProperty("--immersive-controls-height", Math.ceil(byId("office-fullscreen-controls").getBoundingClientRect().height) + "px");
+      this.surface.style.setProperty("--immersive-header-height", Math.ceil(byId("office-fullscreen-header").getBoundingClientRect().height) + "px");
+    });
+    resize.observe(byId("office-fullscreen-controls"));
+    resize.observe(byId("office-fullscreen-header"));
+    addEventListener("pagehide", () => this.close(false), { once: true });
+  }
+  open(mode, invoker) {
+    if (this.mode) return;
+    if (mode === "observe" && !byId("executive-hovering").checked) return;
+    byId("office-modal").close();
+    this.mode = mode;
+    const serial = ++this.serial;
+    this.invoker = invoker;
+    this.position = { x: scrollX, y: scrollY };
+    this.surface.dataset.view = mode;
+    document.documentElement.classList.add("office-is-fullscreen");
+    byId("office-fullscreen-title").textContent = mode === "observe" ? "Executive Occupation of the Entire Screen" : "The Serious Business Office \xB7 Full estate access";
+    byId("office-fullscreen-panel-control").hidden = mode !== "observe";
+    byId("office-fullscreen-inspect").hidden = mode !== "facilities";
+    this.adapt();
+    this.panels.value = this.surface.dataset.largeText === "true" ? "none" : innerWidth < 360 || innerHeight < 450 ? "log" : "both";
+    if (mode === "observe") {
+      this.move(byId("supervision-pane"), "office-fullscreen-stage");
+      this.move(byId("watch-output"), "office-fullscreen-output-slot");
+      this.move(byId("supervision-caption"), "office-fullscreen-current-slot");
+      this.move(byId("chronicle-scroll").closest(".chronicle"), "office-fullscreen-log-slot", true);
+      this.move(document.querySelector(".watch-transport"), "office-fullscreen-controls");
+      this.move(byId("watch-settings"), "office-fullscreen-settings");
+      this.move(byId("companion-spotlight"), "office-fullscreen-companion");
+    } else {
+      this.move(byId("office-stage"), "office-fullscreen-stage");
+      this.move(document.querySelector(".office-toolbar"), "office-fullscreen-controls");
+      this.move(byId("office-walking-controls"), "office-fullscreen-controls");
+      const playback = document.createElement("div");
+      playback.className = "immersive-route-controls";
+      byId("office-fullscreen-controls").append(playback);
+      this.restorations.push(() => playback.remove());
+      this.move(byId("office-pause"), playback);
+      this.move(byId("office-next"), playback);
+      for (const element4 of [byId("office-camera-help"), document.querySelector(".office-inspection"), document.querySelector(".office-playback"), byId("office-route-status"), byId("office-route"), byId("office-reorganization"), document.querySelector(".office-options")]) this.move(element4, "office-fullscreen-inspection-slot");
+    }
+    const notice = byId(mode === "observe" ? "run-status" : "office-status");
+    this.move(notice, "office-fullscreen-notice");
+    for (const id of ["companion-dialog", "personnel-dialog"]) this.move(byId(id), this.surface);
+    this.inspection(false);
+    this.layout();
+    this.dialog.showModal();
+    this.exit.focus({ preventScroll: true });
+    this.changed();
+    byId("office-fullscreen-status").textContent = "The office fills this tab. Return to website restores your previous view.";
+    if (document.fullscreenEnabled && this.surface.requestFullscreen) {
+      try {
+        void this.surface.requestFullscreen({ navigationUI: "hide" }).then(() => {
+          if (serial !== this.serial || !this.mode) {
+            if (document.fullscreenElement === this.surface) void document.exitFullscreen().catch(() => {
+            });
+          } else {
+            this.native = true;
+            byId("office-fullscreen-status").textContent = "Browser full-screen is active. Escape or Return to website leaves the office view.";
+          }
+        }).catch(() => {
+          if (serial === this.serial && this.mode) byId("office-fullscreen-status").textContent = "Browser full-screen is unavailable. The office still fills this tab; all controls remain available.";
+        });
+      } catch {
+      }
+    }
+  }
+  close(restoreFocus = true) {
+    if (!this.mode) return;
+    const observed = this.mode === "observe";
+    this.mode = void 0;
+    this.serial++;
+    this.native = false;
+    for (const child of this.surface.querySelectorAll("dialog[open]")) child.close();
+    this.dialog.close();
+    for (const restore of this.restorations.reverse()) restore();
+    this.restorations = [];
+    document.documentElement.classList.remove("office-is-fullscreen");
+    const nativeExit = document.fullscreenElement === this.surface ? document.exitFullscreen().catch(() => {
+    }) : Promise.resolve();
+    this.changed();
+    if (restoreFocus) {
+      const invoker = this.invoker, position = this.position, serial = this.serial;
+      void nativeExit.then(() => requestAnimationFrame(() => {
+        if (serial !== this.serial || this.mode) return;
+        const target = invoker?.getClientRects().length ? invoker : observed && byId("executive-hovering").getClientRects().length ? byId("executive-hovering") : observed ? byId("watch-settings-toggle") : byId("office-enter");
+        target.focus({ preventScroll: true });
+        window.scrollTo({ left: position.x, top: position.y, behavior: "instant" });
+      }));
+    }
+  }
+  inspection(open, focus = false) {
+    byId("office-fullscreen-drawer").hidden = !open;
+    byId("office-fullscreen-inspect").setAttribute("aria-expanded", String(open));
+    if (focus) byId("office-fullscreen-inspect").focus({ preventScroll: true });
+  }
+  move(element4, destination, chronicle2 = false) {
+    const target = typeof destination === "string" ? byId(destination) : destination;
+    const marker = document.createComment("Retained office presentation slot");
+    element4.before(marker);
+    if (chronicle2 && this.placeChronicle) this.placeChronicle(target);
+    else target.append(element4);
+    this.restorations.push(() => {
+      if (chronicle2 && this.placeChronicle) {
+        this.placeChronicle(marker.parentElement);
+        marker.remove();
+      } else marker.replaceWith(element4);
+    });
+  }
+  layout() {
+    const panels = this.panels.value;
+    byId("office-fullscreen-output").hidden = this.mode !== "observe" || !["both", "output"].includes(panels);
+    byId("office-fullscreen-log").hidden = this.mode !== "observe" || !["both", "log"].includes(panels);
+    byId("office-fullscreen-companion").hidden = this.mode !== "observe" || panels === "none" || !byId("emoji-companions").checked || !byId("require-companion-roll-call").checked;
+    this.surface.dataset.panels = panels;
+  }
+  adapt() {
+    const large = parseFloat(getComputedStyle(document.documentElement).fontSize) > 20;
+    this.surface.dataset.largeText = String(large);
+    const names = large ? ["Both", "Output", "Log", "Hide"] : ["Output + log", "Output", "Running log", "Hide panels"];
+    [...this.panels.options].forEach((option, index) => {
+      if (option.textContent !== names[index]) option.textContent = names[index];
+    });
+  }
+  changed() {
+    document.dispatchEvent(new Event("office-fullscreen-change"));
+  }
+};
+var presentation;
+function officeFullscreen() {
+  return presentation ||= new OfficeFullscreen();
+}
+
 // web/office-pack-contract.ts
 function parseOfficeManifest(x) {
   const m = x;
@@ -771,7 +964,7 @@ async function saveOfficePack() {
 }
 
 // web/office-tour.ts
-var byId = (id) => document.getElementById(id);
+var byId2 = (id) => document.getElementById(id);
 var curiosityKey = "slopbuzz:office-curiosities:v1";
 var OfficeTourDesk = class {
   archive = new OfficeArchive();
@@ -795,13 +988,13 @@ var OfficeTourDesk = class {
   persistence = true;
   audio;
   walking = false;
-  root = byId("office-experience");
-  canvas = byId("office-canvas");
-  dialog = byId("office-modal");
-  enter = byId("office-enter");
-  fileSelect = byId("office-file");
-  motion = byId("office-motion");
-  follow = byId("office-follow");
+  root = byId2("office-experience");
+  canvas = byId2("office-canvas");
+  dialog = byId2("office-modal");
+  enter = byId2("office-enter");
+  fileSelect = byId2("office-file");
+  motion = byId2("office-motion");
+  follow = byId2("office-follow");
   media = matchMedia("(prefers-reduced-motion: reduce)");
   directory = /* @__PURE__ */ new Map();
   constructor() {
@@ -834,17 +1027,25 @@ var OfficeTourDesk = class {
       b.setAttribute("aria-pressed", String(room.id === this.room));
       b.addEventListener("click", () => this.select(room.id));
       this.directory.set(room.id, b);
-      byId("office-directory").append(b);
+      byId2("office-directory").append(b);
     });
     this.enter.addEventListener("click", () => void this.open());
-    byId("office-close").addEventListener("click", () => this.close());
-    byId("office-choose-mandate").addEventListener("click", () => {
-      const input = byId("limit");
+    byId2("office-close").addEventListener("click", () => this.close());
+    byId2("office-choose-mandate").addEventListener("click", () => {
+      const input = byId2("limit");
       this.close(input);
       input.scrollIntoView({ block: "center", behavior: this.media.matches ? "instant" : "smooth" });
     });
-    byId("office-enlarge").addEventListener("click", () => this.enlarged ? this.dialog.close() : this.enlarge());
-    byId("office-modal-close").addEventListener("click", () => this.dialog.close());
+    byId2("office-enlarge").addEventListener("click", () => this.enlarged ? this.dialog.close() : this.enlarge());
+    byId2("office-modal-close").addEventListener("click", () => this.dialog.close());
+    byId2("office-fullscreen-enter").addEventListener("click", () => officeFullscreen().open("facilities", byId2("office-fullscreen-enter")));
+    document.addEventListener("office-fullscreen-change", () => {
+      this.activity();
+      requestAnimationFrame(() => this.renderer?.resize());
+    });
+    document.addEventListener("office-amenity", (event) => {
+      if (event.detail === "office" && officeFullscreen().mode === "facilities") officeFullscreen().inspection(true);
+    });
     let backdrop = false;
     const outside = (e) => {
       const b = this.dialog.getBoundingClientRect();
@@ -864,17 +1065,17 @@ var OfficeTourDesk = class {
     this.dialog.addEventListener("close", () => {
       backdrop = false;
       this.enlarged = false;
-      byId("office-home-slot").append(this.root);
-      byId("office-enlarge").textContent = "Enlarge office";
+      byId2("office-home-slot").append(this.root);
+      byId2("office-enlarge").textContent = "Enlarge office";
       this.renderer?.resize();
-      if (this.opened) byId("office-enlarge").focus();
+      if (this.opened) byId2("office-enlarge").focus();
       else (this.exitFocus || this.enter).focus();
     });
-    byId("office-overview").addEventListener("click", () => {
+    byId2("office-overview").addEventListener("click", () => {
       this.renderer?.overview();
       this.routeCamera(false);
     });
-    byId("office-walk").addEventListener("click", () => {
+    byId2("office-walk").addEventListener("click", () => {
       if (!this.renderer) return;
       if (this.walking) {
         this.renderer.overview();
@@ -882,37 +1083,37 @@ var OfficeTourDesk = class {
       }
       this.retainFile();
       this.renderer.walk(this.room);
-      byId("office-stage").scrollIntoView({ block: "nearest", behavior: "instant" });
+      byId2("office-stage").scrollIntoView({ block: "nearest", behavior: "instant" });
       this.activity();
       this.canvas.focus({ preventScroll: true });
     });
-    byId("office-zoom-in").addEventListener("click", () => this.renderer?.zoom(-1));
-    byId("office-zoom-out").addEventListener("click", () => this.renderer?.zoom(1));
+    byId2("office-zoom-in").addEventListener("click", () => this.renderer?.zoom(-1));
+    byId2("office-zoom-out").addEventListener("click", () => this.renderer?.zoom(1));
     document.querySelectorAll("[data-office-move]").forEach((b) => b.addEventListener("click", () => {
-      byId("office-stage").scrollIntoView({ block: "nearest", behavior: "instant" });
+      byId2("office-stage").scrollIntoView({ block: "nearest", behavior: "instant" });
       this.activity();
       this.renderer?.move(b.dataset.officeMove);
     }));
     this.canvas.addEventListener("keydown", (e) => {
       if (e.key === "Escape" && !this.dialog.open) {
         this.renderer?.overview();
-        byId("office-walk").focus();
+        byId2("office-walk").focus();
       }
     });
-    byId("office-pause").addEventListener("click", () => {
+    byId2("office-pause").addEventListener("click", () => {
       if (!this.motion.checked || !this.renderer) return;
       this.paused = !this.paused;
       this.syncRenderer();
       this.playbackLabels();
     });
-    byId("office-replay").addEventListener("click", () => {
+    byId2("office-replay").addEventListener("click", () => {
       if (!routeFor(this.archive.current()).length) return;
       this.seekRoute(0);
       this.paused = !this.renderer || !this.motion.checked;
       this.syncRenderer();
       this.playbackLabels();
     });
-    byId("office-next").addEventListener("click", () => {
+    byId2("office-next").addEventListener("click", () => {
       const route = routeFor(this.archive.current());
       if (!route.length) {
         this.status("A mandate must disclose a file before its recorded route can be stepped through.");
@@ -932,8 +1133,8 @@ var OfficeTourDesk = class {
       this.offeredCompanions.clear();
       this.updateFiles();
     });
-    byId("office-evidence").addEventListener("focusin", () => this.retainFile());
-    byId("office-evidence").addEventListener("wheel", () => this.retainFile(), { passive: true });
+    byId2("office-evidence").addEventListener("focusin", () => this.retainFile());
+    byId2("office-evidence").addEventListener("wheel", () => this.retainFile(), { passive: true });
     this.fileSelect.addEventListener("change", () => {
       const value = this.fileSelect.value;
       this.archive.choose(value, this.offeredFiles.get(value), this.offeredCompanions.get(value));
@@ -951,8 +1152,8 @@ var OfficeTourDesk = class {
         this.syncRenderer();
       } else this.retainFile();
     });
-    byId("office-follow-route").addEventListener("change", () => {
-      if (byId("office-follow-route").checked && this.routeIndex >= 0) {
+    byId2("office-follow-route").addEventListener("change", () => {
+      if (byId2("office-follow-route").checked && this.routeIndex >= 0) {
         const route = routeFor(this.archive.current());
         if (route[this.routeIndex]) this.select(route[this.routeIndex].room, false);
       }
@@ -968,35 +1169,35 @@ var OfficeTourDesk = class {
       this.syncRenderer();
       this.playbackLabels();
     });
-    byId("office-quality").addEventListener("change", () => this.syncRenderer());
-    byId("office-sound").addEventListener("change", () => void this.soundPreference());
-    byId("office-offline").addEventListener("click", () => void this.saveOffline());
+    byId2("office-quality").addEventListener("change", () => this.syncRenderer());
+    byId2("office-sound").addEventListener("change", () => void this.soundPreference());
+    byId2("office-offline").addEventListener("click", () => void this.saveOffline());
     if (!officePackKey()) {
-      byId("office-offline").hidden = true;
-      byId("office-offline-status").textContent = "The building and its documents are served by this site.";
+      byId2("office-offline").hidden = true;
+      byId2("office-offline-status").textContent = "The building and its documents are served by this site.";
     }
-    byId("office-share-copy").addEventListener("click", async () => {
-      const input = byId("office-share-link");
+    byId2("office-share-copy").addEventListener("click", async () => {
+      const input = byId2("office-share-link");
       try {
         await navigator.clipboard.writeText(input.value);
-        byId("office-share-status").textContent = "Visit link copied. It opens this room and prefills the mandate; counting starts when the recipient asks.";
+        byId2("office-share-status").textContent = "Visit link copied. It opens this room and prefills the mandate; counting starts when the recipient asks.";
       } catch {
         input.focus();
         input.select();
-        byId("office-share-status").textContent = "Copy the selected visit link with your browser\u2019s copy command.";
+        byId2("office-share-status").textContent = "Copy the selected visit link with your browser\u2019s copy command.";
       }
     });
-    byId("office-companion-story").addEventListener("click", () => {
+    byId2("office-companion-story").addEventListener("click", () => {
       const d = this.archive.companions.get(this.archive.current()?.ordinal || "");
-      if (d) companionDialog().open(d, byId("office-companion-story"));
+      if (d) companionDialog().open(d, byId2("office-companion-story"));
     });
     const observer = new IntersectionObserver(() => this.activity(), { rootMargin: "100px" });
-    observer.observe(byId("office-stage"));
-    new ResizeObserver(() => this.renderer?.resize()).observe(byId("office-stage"));
+    observer.observe(byId2("office-stage"));
+    new ResizeObserver(() => this.renderer?.resize()).observe(byId2("office-stage"));
     document.addEventListener("visibilitychange", () => {
       this.activity();
       if (document.hidden) void this.audio?.suspend();
-      else if (byId("office-sound").checked) void this.audio?.resume();
+      else if (byId2("office-sound").checked) void this.audio?.resume();
     });
     addEventListener("pagehide", () => {
       this.renderer?.dispose();
@@ -1072,7 +1273,7 @@ var OfficeTourDesk = class {
     }
   }
   status(text2) {
-    byId("office-status").textContent = text2;
+    byId2("office-status").textContent = text2;
   }
   async open(scroll = true, focus = scroll) {
     this.opened = true;
@@ -1082,14 +1283,14 @@ var OfficeTourDesk = class {
     this.renderEvidence();
     this.updateRoute();
     this.updateFiles();
-    if (focus) byId("office-close").focus({ preventScroll: true });
+    if (focus) byId2(officeFullscreen().mode === "facilities" ? "office-fullscreen-exit" : "office-close").focus({ preventScroll: true });
     if (scroll) this.root.scrollIntoView({ behavior: this.media.matches ? "instant" : "smooth", block: "start" });
     if (this.renderer) {
       this.activity();
       this.renderer.resize();
       return;
     }
-    const loading = byId("office-loading");
+    const loading = byId2("office-loading");
     this.graphicsAvailable(false);
     loading.hidden = false;
     loading.replaceChildren(node("p", "Facilities is locating the building. The room directory and all inspections are already open."));
@@ -1107,16 +1308,16 @@ var OfficeTourDesk = class {
       }, onStep: (index) => {
         this.routeIndex = index;
         this.highlightRoute();
-        if (byId("office-follow-route").checked && index >= 0) {
+        if (byId2("office-follow-route").checked && index >= 0) {
           const r = routeFor(this.archive.current())[index];
           if (r) this.select(r.room, false);
         }
         this.tone();
       }, onView: (view) => {
         this.walking = view === "walk";
-        byId("office-walk").setAttribute("aria-pressed", String(this.walking));
-        byId("office-walk").textContent = this.walking ? "Return to cutaway" : "Walk in this room";
-        byId("office-walking-controls").hidden = !this.walking;
+        byId2("office-walk").setAttribute("aria-pressed", String(this.walking));
+        byId2("office-walk").textContent = this.walking ? "Return to cutaway" : "Walk in this room";
+        byId2("office-walking-controls").hidden = !this.walking;
       }, onReady: () => {
         clearTimeout(readiness);
         loading.hidden = true;
@@ -1141,7 +1342,7 @@ var OfficeTourDesk = class {
     this.canvas.dataset.renderer = "directory";
     this.graphicsAvailable(false);
     this.playbackLabels();
-    const loading = byId("office-loading");
+    const loading = byId2("office-loading");
     loading.hidden = false;
     const retry = node("button", "Try the 3D display again");
     retry.type = "button";
@@ -1150,12 +1351,13 @@ var OfficeTourDesk = class {
     this.status("The office directory is open. The graphics display is unavailable on this visit.");
   }
   graphicsAvailable(value) {
-    for (const id of ["office-overview", "office-walk", "office-zoom-in", "office-zoom-out"]) byId(id).disabled = !value;
+    for (const id of ["office-overview", "office-walk", "office-zoom-in", "office-zoom-out"]) byId2(id).disabled = !value;
     this.canvas.tabIndex = value ? 0 : -1;
     if (value) this.canvas.removeAttribute("aria-hidden");
     else this.canvas.setAttribute("aria-hidden", "true");
   }
   close(target = this.enter) {
+    if (officeFullscreen().mode === "facilities") officeFullscreen().close(false);
     officeEstate.finish();
     this.exitFocus = target;
     this.opened = false;
@@ -1169,14 +1371,17 @@ var OfficeTourDesk = class {
   }
   enlarge() {
     this.enlarged = true;
-    byId("office-modal-slot").append(this.root);
+    byId2("office-modal-slot").append(this.root);
     this.dialog.showModal();
-    byId("office-enlarge").textContent = "Return to page";
+    byId2("office-enlarge").textContent = "Return to page";
     this.renderer?.resize();
-    byId("office-modal-close").focus();
+    byId2("office-modal-close").focus();
   }
   select(id, user = true) {
-    if (user) this.retainFile();
+    if (user) {
+      this.retainFile();
+      if (officeFullscreen().mode === "facilities") officeFullscreen().inspection(true);
+    }
     this.room = id;
     this.selectedProp = void 0;
     this.selectedAction = void 0;
@@ -1192,21 +1397,21 @@ var OfficeTourDesk = class {
     this.routeCamera(false);
   }
   routeCamera(value) {
-    byId("office-follow-route").checked = value;
+    byId2("office-follow-route").checked = value;
   }
   renderAddress() {
     this.root.dataset.room = this.room;
     document.dispatchEvent(new CustomEvent("office-location", { detail: { view: "office" } }));
-    byId("office-room-label").textContent = "Department " + String(rooms.findIndex((r) => r.id === this.room) + 1).padStart(2, "0") + " \xB7 Address " + officeEstate.current.placements.find((p) => p.room === this.room).address;
+    byId2("office-room-label").textContent = "Department " + String(rooms.findIndex((r) => r.id === this.room) + 1).padStart(2, "0") + " \xB7 Address " + officeEstate.current.placements.find((p) => p.room === this.room).address;
   }
   renderRoom() {
     const room = roomById(this.room);
     for (const [id, b] of this.directory) b.setAttribute("aria-pressed", String(id === this.room));
     this.renderAddress();
-    byId("office-room-title").textContent = room.name;
-    byId("office-room-subtitle").textContent = room.subtitle;
+    byId2("office-room-title").textContent = room.name;
+    byId2("office-room-subtitle").textContent = room.subtitle;
     const selected = this.selectedProp;
-    byId("office-props").replaceChildren(...room.props.map((p) => {
+    byId2("office-props").replaceChildren(...room.props.map((p) => {
       const b = node("button", p.name);
       b.type = "button";
       b.setAttribute("aria-pressed", String(p.id === selected?.id));
@@ -1215,10 +1420,10 @@ var OfficeTourDesk = class {
     }));
     if (selected) this.inspectProp(selected);
     else {
-      byId("office-story-title").textContent = "Welcome to " + room.short;
-      byId("office-story-text").textContent = "Select a named curiosity or click its object in the building. Facilities encourages looking closely while accepting no responsibility for what you notice.";
-      byId("office-story-answer").textContent = "";
-      byId("office-story-actions").replaceChildren();
+      byId2("office-story-title").textContent = "Welcome to " + room.short;
+      byId2("office-story-text").textContent = "Select a named curiosity or click its object in the building. Facilities encourages looking closely while accepting no responsibility for what you notice.";
+      byId2("office-story-answer").textContent = "";
+      byId2("office-story-actions").replaceChildren();
     }
     this.curiosityLabel();
     this.renderEvidence();
@@ -1236,16 +1441,17 @@ var OfficeTourDesk = class {
     } catch {
       this.persistence = false;
     }
-    byId("office-story-title").textContent = p.name;
-    byId("office-story-text").textContent = p.story;
-    byId("office-story-answer").textContent = "";
-    byId("office-story-actions").replaceChildren(...p.actions.map((a, index) => {
+    if (officeFullscreen().mode === "facilities") officeFullscreen().inspection(true);
+    byId2("office-story-title").textContent = p.name;
+    byId2("office-story-text").textContent = p.story;
+    byId2("office-story-answer").textContent = "";
+    byId2("office-story-actions").replaceChildren(...p.actions.map((a, index) => {
       const b = node("button", a.label);
       b.type = "button";
       b.addEventListener("click", () => this.respond(index));
       return b;
     }));
-    for (const b of byId("office-props").querySelectorAll("button")) b.setAttribute("aria-pressed", String(b.textContent === p.name));
+    for (const b of byId2("office-props").querySelectorAll("button")) b.setAttribute("aria-pressed", String(b.textContent === p.name));
     this.curiosityLabel();
     this.shareLink();
   }
@@ -1253,13 +1459,13 @@ var OfficeTourDesk = class {
     const action = this.selectedProp?.actions[index];
     if (!action) return;
     this.selectedAction = index;
-    byId("office-story-answer").textContent = action.answer;
+    byId2("office-story-answer").textContent = action.answer;
     this.renderer?.react(this.selectedProp.id, index);
     this.tone();
     this.shareLink();
   }
   curiosityLabel() {
-    byId("office-curiosities").textContent = this.visited.size + " of 32 curiosities discovered." + (this.visited.size === 32 ? " Facilities appoints you Senior Visitor (Acting)." : "") + (this.persistence ? " Remembered in this browser." : " Storage is unavailable; this visit remembers them temporarily.");
+    byId2("office-curiosities").textContent = this.visited.size + " of 32 curiosities discovered." + (this.visited.size === 32 ? " Facilities appoints you Senior Visitor (Acting)." : "") + (this.persistence ? " Remembered in this browser." : " Storage is unavailable; this visit remembers them temporarily.");
   }
   updateFiles() {
     if (document.activeElement === this.fileSelect) return;
@@ -1284,8 +1490,8 @@ var OfficeTourDesk = class {
     let source = file ? "File " + file.ordinal + " \xB7 disclosed text \u201C" + file.text + "\u201D. " + (file.cache === "HIT" ? "Institutional memory returned prior text; fresh production decisions are not inferred." : file.recorded ? "Only supplied execution records are shown." : "The complete production dossier was unavailable; supplied records remain identifiable.") : "No numerical file has been disclosed. These rooms are open for fictional inspection.";
     if (this.room === "executive") source += " The executive room is tour scenery, not an additional production approval.";
     if (file?.sourceOmitted || file?.omitted) source += " The source dossier or finite tour view omitted some records; the route is a summary.";
-    byId("office-evidence-source").textContent = source;
-    byId("office-evidence").replaceChildren(...events.map((e) => {
+    byId2("office-evidence-source").textContent = source;
+    byId2("office-evidence").replaceChildren(...events.map((e) => {
       const li = node("li");
       li.append(node("strong", e.office), node("p", e.finding));
       if (e.document) {
@@ -1295,21 +1501,21 @@ var OfficeTourDesk = class {
       }
       return li;
     }));
-    if (!events.length) byId("office-evidence").append(node("li", file ? "No supplied decision for this department accompanies this file. Its furnishings and conversations are fictional tour content." : "Run a mandate to supply actual proceedings."));
+    if (!events.length) byId2("office-evidence").append(node("li", file ? "No supplied decision for this department accompanies this file. Its furnishings and conversations are fictional tour content." : "Run a mandate to supply actual proceedings."));
     this.renderCompanion();
   }
   renderCompanion() {
     const d = this.archive.companions.get(this.archive.current()?.ordinal || "");
-    byId("office-companion").textContent = d ? "Appointed companion: " + d.companion.name + " \xB7 " + d.companion.rarity + ". This is a disclosed companion assignment, separate from the numerical output." : "";
-    byId("office-companion-story").hidden = !d;
+    byId2("office-companion").textContent = d ? "Appointed companion: " + d.companion.name + " \xB7 " + d.companion.rarity + ". This is a disclosed companion assignment, separate from the numerical output." : "";
+    byId2("office-companion-story").hidden = !d;
   }
   updateRoute() {
     const file = this.archive.current(), route = routeFor(file), key2 = (file?.ordinal || "") + "|" + route.map((s) => s.room + ":" + s.source).join("|") + "|" + this.completedZero;
     if (key2 === this.routeKey) return;
     this.routeKey = key2;
     this.routeIndex = -1;
-    byId("office-route-status").textContent = file ? "Recorded route summary for " + file.ordinal + " \xB7 " + file.text + ". " + (this.archive.mode !== "mandate" ? "This is retained playback. " : "") + "The moving file illustrates these stops; it does not measure execution time." : this.completedZero ? "Zero\u2019s mandate is complete. No numerical file was needed. The estate\u2019s overhead remains fully funded." : "Run a mandate to supply a recorded file. Every room is open for fictional inspection.";
-    byId("office-route").replaceChildren(...route.map((s, i) => {
+    byId2("office-route-status").textContent = file ? "Recorded route summary for " + file.ordinal + " \xB7 " + file.text + ". " + (this.archive.mode !== "mandate" ? "This is retained playback. " : "") + "The moving file illustrates these stops; it does not measure execution time." : this.completedZero ? "Zero\u2019s mandate is complete. No numerical file was needed. The estate\u2019s overhead remains fully funded." : "Run a mandate to supply a recorded file. Every room is open for fictional inspection.";
+    byId2("office-route").replaceChildren(...route.map((s, i) => {
       const li = node("li"), b = node("button", i + 1 + ". " + roomById(s.room).short + " \xB7 " + s.source);
       b.type = "button";
       b.title = s.finding;
@@ -1336,18 +1542,18 @@ var OfficeTourDesk = class {
     this.highlightRoute();
   }
   highlightRoute() {
-    [...byId("office-route").querySelectorAll("button")].forEach((b, i) => b.setAttribute("aria-pressed", String(i === this.routeIndex)));
+    [...byId2("office-route").querySelectorAll("button")].forEach((b, i) => b.setAttribute("aria-pressed", String(i === this.routeIndex)));
   }
   playbackLabels() {
     const empty = routeFor(this.archive.current()).length === 0;
-    for (const id of ["office-replay", "office-next"]) byId(id).setAttribute("aria-disabled", String(empty));
-    byId("office-pause").setAttribute("aria-disabled", String(!this.motion.checked || !this.renderer));
-    byId("office-pause").textContent = !this.renderer ? "Use recorded stops" : !this.motion.checked ? "Animation off" : this.paused ? "Resume route" : "Pause route";
-    byId("office-pause").setAttribute("aria-pressed", String(this.paused));
+    for (const id of ["office-replay", "office-next"]) byId2(id).setAttribute("aria-disabled", String(empty));
+    byId2("office-pause").setAttribute("aria-disabled", String(!this.motion.checked || !this.renderer));
+    byId2("office-pause").textContent = !this.renderer ? "Use recorded stops" : !this.motion.checked ? "Animation off" : this.paused ? "Resume route" : "Pause route";
+    byId2("office-pause").setAttribute("aria-pressed", String(this.paused));
   }
   sceneState() {
     const file = this.archive.current(), d = file ? this.archive.companions.get(file.ordinal) : void 0;
-    return { room: this.room, route: routeFor(file), ordinal: file?.ordinal || "", text: file?.text || "", emoji: d?.companion.emoji, companionName: d?.companion.name, paused: this.paused, followRoute: byId("office-follow-route").checked, reducedMotion: !this.motion.checked, quality: byId("office-quality").value, seed: tourSeed(this.archive.mandate), layout: officeEstate.displayed, relocation: officeEstate.relocation };
+    return { room: this.room, route: routeFor(file), ordinal: file?.ordinal || "", text: file?.text || "", emoji: d?.companion.emoji, companionName: d?.companion.name, paused: this.paused, followRoute: byId2("office-follow-route").checked, reducedMotion: !this.motion.checked, quality: byId2("office-quality").value, seed: tourSeed(this.archive.mandate), layout: officeEstate.displayed, relocation: officeEstate.relocation };
   }
   syncRenderer() {
     try {
@@ -1357,14 +1563,14 @@ var OfficeTourDesk = class {
     }
   }
   activity() {
-    const rect = byId("office-stage").getBoundingClientRect();
+    const rect = byId2("office-stage").getBoundingClientRect();
     this.renderer?.active(this.opened && rect.height > 0 && rect.bottom > -100 && rect.top < innerHeight + 100 && !document.hidden);
   }
   shareLink() {
-    byId("office-share-link").value = officeShare(scope, this.archive.mandate, this.room, this.selectedProp?.id, byId("companion-strategy").value || "factor-resonance-v1", this.selectedAction, layoutToken(officeEstate.current));
+    byId2("office-share-link").value = officeShare(scope, this.archive.mandate, this.room, this.selectedProp?.id, byId2("companion-strategy").value || "factor-resonance-v1", this.selectedAction, layoutToken(officeEstate.current));
   }
   async soundPreference() {
-    const enabled = byId("office-sound").checked;
+    const enabled = byId2("office-sound").checked;
     try {
       if (enabled) {
         this.audio ||= new AudioContext();
@@ -1372,12 +1578,12 @@ var OfficeTourDesk = class {
         this.tone();
       } else await this.audio?.suspend();
     } catch {
-      byId("office-sound").checked = false;
+      byId2("office-sound").checked = false;
       this.status("Office sounds are unavailable. All tour dialogue remains readable.");
     }
   }
   tone() {
-    if (!byId("office-sound").checked || this.audio?.state !== "running" || document.hidden) return;
+    if (!byId2("office-sound").checked || this.audio?.state !== "running" || document.hidden) return;
     const oscillator = this.audio.createOscillator(), gain = this.audio.createGain(), now = this.audio.currentTime;
     oscillator.type = "sine";
     oscillator.frequency.setValueAtTime(440 + this.routeIndex % 3 * 110, now);
@@ -1389,15 +1595,15 @@ var OfficeTourDesk = class {
     oscillator.stop(now + 0.1);
   }
   async saveOffline() {
-    const b = byId("office-offline");
+    const b = byId2("office-offline");
     if (b.getAttribute("aria-disabled") === "true") return;
     b.setAttribute("aria-disabled", "true");
-    byId("office-offline-status").textContent = "Facilities is saving this release\u2019s 3D building\u2026";
+    byId2("office-offline-status").textContent = "Facilities is saving this release\u2019s 3D building\u2026";
     try {
       await saveOfficePack();
-      byId("office-offline-status").textContent = "The 3D office is saved for offline visits with this installed release.";
+      byId2("office-offline-status").textContent = "The 3D office is saved for offline visits with this installed release.";
     } catch (error) {
-      byId("office-offline-status").textContent = "The offline building could not be saved: " + error.message + " You can keep exploring online.";
+      byId2("office-offline-status").textContent = "The offline building could not be saved: " + error.message + " You can keep exploring online.";
     } finally {
       b.setAttribute("aria-disabled", "false");
     }
@@ -1584,7 +1790,7 @@ var OfficeSupervisionDesk = class {
     });
     element("supervision-next").addEventListener("click", () => {
       if (!this.authority.reading() || !this.authority.paused() || officeEstate.moving) return;
-      element("mandate-output").scrollIntoView({ block: "start", behavior: "instant" });
+      if (!element("office-fullscreen").open) element("mandate-output").scrollIntoView({ block: "start", behavior: "instant" });
       this.credits = 1;
       this.authority.wake();
     });
@@ -1609,6 +1815,10 @@ var OfficeSupervisionDesk = class {
     document.addEventListener("visibilitychange", () => this.activity());
     document.addEventListener("demo-desk-change", () => this.activity());
     document.addEventListener("demo-watch-layout", () => {
+      this.activity();
+      requestAnimationFrame(() => this.renderer?.resize());
+    });
+    document.addEventListener("office-fullscreen-change", () => {
       this.activity();
       requestAnimationFrame(() => this.renderer?.resize());
     });
@@ -1830,7 +2040,7 @@ var OfficeSupervisionDesk = class {
     }
   }
   visible() {
-    if (!this.enabled || document.hidden || document.querySelector("dialog[open]")) return false;
+    if (!this.enabled || document.hidden || document.querySelector("dialog[open]:not(#office-fullscreen)")) return false;
     if (document.body.classList.contains("demo-page")) return document.body.dataset.desk === "observe";
     const rect = element("supervision-stage").getBoundingClientRect(), bottom = innerHeight - (document.querySelector("#discovery-register")?.getBoundingClientRect().height || 0);
     return rect.width > 0 && Math.min(rect.bottom, bottom) - Math.max(rect.top, 0) >= Math.min(60, rect.height * 0.2);
@@ -2044,8 +2254,7 @@ var reduced = matchMedia("(prefers-reduced-motion: reduce)");
 var frame = 0;
 function visible() {
   if (document.hidden) return false;
-  const dialog = document.querySelector("dialog[open]");
-  if (dialog && dialog.id !== "office-modal") return false;
+  if (document.querySelector("dialog[open]:not(#office-modal):not(#office-fullscreen)")) return false;
   return ["office-stage", "supervision-stage"].some((id) => {
     const el = document.getElementById(id);
     if (!el || el.closest("[hidden]")) return false;
@@ -2086,7 +2295,7 @@ announcement.setAttribute("aria-live", "polite");
 announcement.setAttribute("aria-atomic", "true");
 document.body.append(announcement);
 var announce = (text2) => {
-  const parent = document.querySelector("#office-modal[open]") || document.body;
+  const parent = document.querySelector("#office-fullscreen[open] #office-fullscreen-surface, #office-modal[open]") || document.body;
   if (announcement.parentElement !== parent) parent.append(announcement);
   if (announcement.textContent !== text2) announcement.textContent = text2;
 };
@@ -2824,16 +3033,6 @@ function trackUsage(detail) {
   window.dispatchEvent(new CustomEvent("slopbuzz:usage", { detail }));
 }
 
-// web/dom.ts
-var byId2 = (id) => {
-  const node3 = document.getElementById(id);
-  if (!node3) throw new Error(`Missing element ${id}`);
-  return node3;
-};
-function setText(id, value) {
-  byId2(id).textContent = String(value);
-}
-
 // web/onboarding.ts
 function parseDossier(value) {
   const data = value;
@@ -2875,7 +3074,7 @@ var PersonnelProceedings = class {
   actions;
   prefix;
   el(id) {
-    return byId2(this.prefix + id);
+    return byId(this.prefix + id);
   }
   text(id, value) {
     this.el(id).textContent = String(value);
@@ -3082,7 +3281,7 @@ var PrecedentView = class {
   }
   prefix;
   el(id) {
-    return byId2(this.prefix + id);
+    return byId(this.prefix + id);
   }
   text(id, value) {
     this.el(id).textContent = String(value);
@@ -3856,13 +4055,13 @@ var PremisesDesk = class {
   busy = false;
   serial = 0;
   constructor() {
-    byId2("premises-form").addEventListener("submit", (event) => {
+    byId("premises-form").addEventListener("submit", (event) => {
       event.preventDefault();
       if (!this.busy) void this.inspect();
     });
   }
   async inspect() {
-    const ordinal = byId2("premises-ordinal"), scenario = byId2("premises-scenario").value;
+    const ordinal = byId("premises-ordinal"), scenario = byId("premises-scenario").value;
     if (!/^[1-9][0-9]*$/.test(ordinal.value)) {
       ordinal.setAttribute("aria-invalid", "true");
       setText("premises-error", "Enter a positive whole number with no leading zeros.");
@@ -3874,8 +4073,8 @@ var PremisesDesk = class {
     const requestedOrdinal = ordinal.value;
     const serial = ++this.serial;
     this.busy = true;
-    byId2("premises-submit").setAttribute("aria-disabled", "true");
-    byId2("premises-result").setAttribute("aria-busy", "true");
+    byId("premises-submit").setAttribute("aria-disabled", "true");
+    byId("premises-result").setAttribute("aria-busy", "true");
     setText("premises-status", "The property offices are inspecting a read-only specimen\u2026");
     try {
       const response = await request(`/premises/rehearsal?scenario=${encodeURIComponent(scenario)}&ordinal=${requestedOrdinal}`);
@@ -3883,7 +4082,7 @@ var PremisesDesk = class {
       const data = parsePremises(await response.json());
       if (data.purpose !== "REHEARSAL" || data.ordinal !== requestedOrdinal) throw new Error("The specimen belongs to another premises request.");
       if (serial !== this.serial) return;
-      byId2("premises-result").replaceChildren(premisesCard(data, true));
+      byId("premises-result").replaceChildren(premisesCard(data, true));
       const refusal = data.steps.find((s) => s.state === "REJECTED");
       setText("premises-status", refusal ? `Occupancy refused by ${refusal.office}. ${refusal.finding}` : data.tenants.length ? `Inspection identified and removed ${data.tenants.map((t) => `${t.name}, ${t.codePoint}`).join("; ")}. Reinspection passed; specimen lease issued and closed.` : "Vacant premises approved. Specimen lease issued and closed.");
     } catch (error) {
@@ -3891,8 +4090,8 @@ var PremisesDesk = class {
     } finally {
       if (serial === this.serial) {
         this.busy = false;
-        byId2("premises-submit").setAttribute("aria-disabled", "false");
-        byId2("premises-result").setAttribute("aria-busy", "false");
+        byId("premises-submit").setAttribute("aria-disabled", "false");
+        byId("premises-result").setAttribute("aria-busy", "false");
       }
     }
   }
@@ -3992,10 +4191,10 @@ var ExecutiveChronicle = class {
   pendingNotes = [];
   pinned = true;
   pinAfterResize = false;
-  body = byId2("chronicle-scroll");
-  entries = byId2("chronicle-entries");
-  follow = byId2("follow-chronicle");
-  selector = byId2("chronicle-ordinal");
+  body = byId("chronicle-scroll");
+  entries = byId("chronicle-entries");
+  follow = byId("follow-chronicle");
+  selector = byId("chronicle-ordinal");
   constructor() {
     const pause = () => {
       if (this.body.scrollHeight - this.body.clientHeight <= 4) return;
@@ -4050,7 +4249,7 @@ var ExecutiveChronicle = class {
         this.pinAfterResize = false;
         this.followBottom();
       }
-      const panel = byId2("mandate-output");
+      const panel = byId("mandate-output");
       panel.dataset.viewportFit = String(innerHeight > 600 && panel.getBoundingClientRect().height <= innerHeight - 24 - (document.querySelector("#discovery-register")?.getBoundingClientRect().height || 0));
     };
     let frame2 = 0;
@@ -4065,8 +4264,8 @@ var ExecutiveChronicle = class {
     if (discoveries) resize.observe(discoveries);
     resize.observe(this.body);
     resize.observe(this.entries);
-    resize.observe(byId2("mandate-output"));
-    resize.observe(byId2("mandate-output").querySelector(".output-dock"));
+    resize.observe(byId("mandate-output"));
+    resize.observe(byId("mandate-output").querySelector(".output-dock"));
     window.addEventListener("resize", () => {
       this.pinAfterResize = this.isFollowing();
       schedule();
@@ -4341,6 +4540,9 @@ function deskURL(source, desk) {
 var DemoWorkspace = class {
   constructor(run) {
     this.run = run;
+    const immersive = officeFullscreen();
+    immersive.placeChronicle = (target) => this.run.placeChronicle(target);
+    byId("supervision-fullscreen").addEventListener("click", () => immersive.open("observe", byId("supervision-fullscreen")));
     document.querySelectorAll("[data-desk-link]").forEach((link) => link.addEventListener("click", (event) => {
       if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
       event.preventDefault();
@@ -4353,88 +4555,88 @@ var DemoWorkspace = class {
       this.layout();
     });
     document.addEventListener("demo-presentation-change", () => this.layout());
-    byId2("authorize-require-companion-roll-call").removeAttribute("aria-controls");
-    byId2("authorize-executive-hovering").removeAttribute("aria-controls");
-    byId2("experiment-view").addEventListener("change", () => this.sections("experiment"));
-    byId2("evidence-view").addEventListener("change", () => this.sections("evidence"));
-    byId2("resume-current").addEventListener("click", () => {
+    byId("authorize-require-companion-roll-call").removeAttribute("aria-controls");
+    byId("authorize-executive-hovering").removeAttribute("aria-controls");
+    byId("experiment-view").addEventListener("change", () => this.sections("experiment"));
+    byId("evidence-view").addEventListener("change", () => this.sections("evidence"));
+    byId("resume-current").addEventListener("click", () => {
       this.navigate("observe");
       this.run.resume();
     });
-    byId2("office-choose-mandate").addEventListener("click", () => {
+    byId("office-choose-mandate").addEventListener("click", () => {
       this.navigate("authorize");
-      byId2("limit").focus();
+      byId("limit").focus();
     });
-    byId2("watch-settings-toggle").addEventListener("click", () => this.settings(byId2("watch-settings").hidden === true));
-    byId2("watch-settings-close").addEventListener("click", () => {
+    byId("watch-settings-toggle").addEventListener("click", () => this.settings(byId("watch-settings").hidden === true));
+    byId("watch-settings-close").addEventListener("click", () => {
       this.settings(false);
-      byId2("watch-settings-toggle").focus();
+      byId("watch-settings-toggle").focus();
     });
-    byId2("watch-settings").addEventListener("keydown", (event) => {
+    byId("watch-settings").addEventListener("keydown", (event) => {
       if (event.key === "Escape") {
         event.stopPropagation();
         this.settings(false);
-        byId2("watch-settings-toggle").focus();
+        byId("watch-settings-toggle").focus();
       }
     });
-    byId2("watch-reorganize").addEventListener("click", () => {
+    byId("watch-reorganize").addEventListener("click", () => {
       this.settings(false);
       requestReorganization();
-      byId2("watch-waive").focus({ preventScroll: true });
+      byId("watch-waive").focus({ preventScroll: true });
     });
-    byId2("watch-waive").addEventListener("click", () => {
+    byId("watch-waive").addEventListener("click", () => {
       officeEstate.finish();
-      byId2("watch-settings-toggle").focus({ preventScroll: true });
+      byId("watch-settings-toggle").focus({ preventScroll: true });
     });
-    byId2("watch-settings-toggle").before(byId2("watch-waive"));
-    byId2("watch-settings").append(byId2("reveal-all"), byId2("follow-output").closest("label"));
+    byId("watch-settings-toggle").before(byId("watch-waive"));
+    byId("watch-settings").append(byId("reveal-all"), byId("follow-output").closest("label"));
     const ticker = document.createElement("span");
     ticker.id = "watch-latest";
-    byId2("observed-mandate").after(ticker);
-    byId2("watch-waive").textContent = "Waive";
-    byId2("watch-waive").setAttribute("aria-label", "Waive the Moving Ceremony");
-    byId2("supervision-next").textContent = "Next";
-    byId2("supervision-next").setAttribute("aria-label", "Next recorded decision");
-    byId2("stop-reading").textContent = "Stop";
-    byId2("companion-spotlight").tabIndex = 0;
-    byId2("companion-spotlight").setAttribute("role", "region");
-    byId2("run-status").tabIndex = 0;
-    byId2("run-status").addEventListener("focus", () => this.run.pause());
-    byId2("supervision-current").removeAttribute("role");
-    byId2("supervision-current").setAttribute("aria-live", "off");
-    byId2("company-menu").addEventListener("click", () => this.companyMenu(document.body.dataset.companyMenu !== "open"));
+    byId("observed-mandate").after(ticker);
+    byId("watch-waive").textContent = "Waive";
+    byId("watch-waive").setAttribute("aria-label", "Waive the Moving Ceremony");
+    byId("supervision-next").textContent = "Next";
+    byId("supervision-next").setAttribute("aria-label", "Next recorded decision");
+    byId("stop-reading").textContent = "Stop";
+    byId("companion-spotlight").tabIndex = 0;
+    byId("companion-spotlight").setAttribute("role", "region");
+    byId("run-status").tabIndex = 0;
+    byId("run-status").addEventListener("focus", () => this.run.pause());
+    byId("supervision-current").removeAttribute("role");
+    byId("supervision-current").setAttribute("aria-live", "off");
+    byId("company-menu").addEventListener("click", () => this.companyMenu(document.body.dataset.companyMenu !== "open"));
     document.addEventListener("keydown", (event) => {
       if (event.key === "Escape" && document.body.dataset.companyMenu === "open") {
         this.companyMenu(false);
-        byId2("company-menu").focus();
+        byId("company-menu").focus();
       }
     });
     officeEstate.subscribe(() => {
-      byId2("watch-waive").hidden = !officeEstate.moving;
+      byId("watch-waive").hidden = !officeEstate.moving;
     });
-    byId2("spotlight-open").addEventListener("click", () => {
-      if (this.discovery) companionDialog().open(this.discovery, byId2("spotlight-open"));
+    byId("spotlight-open").addEventListener("click", () => {
+      if (this.discovery) companionDialog().open(this.discovery, byId("spotlight-open"));
     });
-    byId2("companion-dialog").addEventListener("close", () => {
+    byId("companion-dialog").addEventListener("close", () => {
       if (this.pendingDiscovery) this.remember(this.pendingDiscovery);
     });
-    byId2("spotlight-open").addEventListener("blur", () => queueMicrotask(() => {
-      if (this.pendingDiscovery && !document.querySelector("dialog[open]")) this.remember(this.pendingDiscovery);
+    byId("spotlight-open").addEventListener("blur", () => queueMicrotask(() => {
+      if (this.pendingDiscovery && !document.querySelector("dialog[open]:not(#office-fullscreen)")) this.remember(this.pendingDiscovery);
     }));
     for (const id of this.policyIds) {
-      byId2("authorize-" + id).addEventListener("change", () => {
+      byId("authorize-" + id).addEventListener("change", () => {
         this.draftSummary();
         this.saveDraft();
       });
-      byId2(id).addEventListener("change", () => {
+      byId(id).addEventListener("change", () => {
         if (!this.committed && !this.applying) this.copyLiveToDraft();
         this.layout();
       });
     }
-    byId2("limit").addEventListener("input", () => this.draftSummary());
-    const registry = byId2("companion-strategy");
+    byId("limit").addEventListener("input", () => this.draftSummary());
+    const registry = byId("companion-strategy");
     new MutationObserver(() => {
-      const draft = byId2("authorize-companion-strategy"), selected = draft.value;
+      const draft = byId("authorize-companion-strategy"), selected = draft.value;
       draft.replaceChildren(...[...registry.options].map((option) => option.cloneNode(true)));
       const wanted = this.preferredAuthority || selected;
       if ([...draft.options].some((option) => option.value === wanted)) {
@@ -4445,14 +4647,14 @@ var DemoWorkspace = class {
       this.draftSummary();
     }).observe(registry, { childList: true, attributes: true, attributeFilter: ["disabled"] });
     document.querySelectorAll("[data-open-personnel]").forEach((button) => button.addEventListener("click", () => {
-      const trigger = byId2("personnel-documents");
+      const trigger = byId("personnel-documents");
       trigger.dispatchEvent(new MouseEvent("click"));
     }));
     new MutationObserver(() => {
-      byId2("personnel-record-summary").textContent = byId2("personnel-origin").textContent;
-    }).observe(byId2("personnel-origin"), { childList: true, characterData: true, subtree: true });
+      byId("personnel-record-summary").textContent = byId("personnel-origin").textContent;
+    }).observe(byId("personnel-origin"), { childList: true, characterData: true, subtree: true });
     new MutationObserver(() => {
-      if (document.querySelector("dialog[open]")) this.run.pause();
+      if (document.querySelector("dialog[open]:not(#office-fullscreen)")) this.run.pause();
     }).observe(document.body, { subtree: true, attributes: true, attributeFilter: ["open"] });
     document.addEventListener("visibilitychange", () => {
       if (document.hidden) this.run.pause();
@@ -4464,7 +4666,7 @@ var DemoWorkspace = class {
     });
     const resize = new ResizeObserver(() => this.fit());
     resize.observe(document.querySelector(".site-header"));
-    resize.observe(byId2("discovery-register"));
+    resize.observe(byId("discovery-register"));
     resize.observe(document.querySelector(".authorization-actions"));
     addEventListener("resize", () => {
       if (!this.manualView && this.committed) {
@@ -4484,9 +4686,9 @@ var DemoWorkspace = class {
   }
   run;
   desk = "authorize";
-  watch = byId2("watch-view");
+  watch = byId("watch-view");
   mainLinks = document.querySelectorAll('a[href="#main"]');
-  stage = byId2("mandate-output");
+  stage = byId("mandate-output");
   policyIds = ["display-speed", "emoji-companions", "companion-strategy", "require-companion-roll-call", "executive-hovering"];
   activeMandate = "";
   discovery;
@@ -4500,10 +4702,10 @@ var DemoWorkspace = class {
     return this.desk === "observe";
   }
   input(id) {
-    return byId2(id);
+    return byId(id);
   }
   select(id) {
-    return byId2(id);
+    return byId(id);
   }
   policy(prefix = "") {
     return { cadence: this.select(prefix + "display-speed").value, companions: this.input(prefix + "emoji-companions").checked, authority: this.select(prefix + "companion-strategy").value, roll: this.input(prefix + "require-companion-roll-call").checked, hovering: this.input(prefix + "executive-hovering").checked };
@@ -4513,7 +4715,7 @@ var DemoWorkspace = class {
   }
   copyLiveToDraft() {
     for (const id of this.policyIds) {
-      const source = byId2(id), draft = byId2("authorize-" + id);
+      const source = byId(id), draft = byId("authorize-" + id);
       if (source instanceof HTMLInputElement) draft.checked = source.checked;
       else if (source.value !== "executive-hovering") draft.value = source.value;
     }
@@ -4551,12 +4753,12 @@ var DemoWorkspace = class {
     this.pendingDiscovery = void 0;
     this.committed = true;
     this.manualView = false;
-    byId2("watch-latest").textContent = "";
+    byId("watch-latest").textContent = "";
     this.watch.value = initialWatchView(matchMedia("(max-width: 700px), (max-height: 500px)").matches, policy.hovering);
-    byId2("observed-mandate").textContent = mandate.length > 28 ? mandate.slice(0, 12) + "\u2026 \xB7 " + mandate.length + "-digit mandate" : "Mandate " + mandate;
-    byId2("observe-empty").hidden = true;
+    byId("observed-mandate").textContent = mandate.length > 28 ? mandate.slice(0, 12) + "\u2026 \xB7 " + mandate.length + "-digit mandate" : "Mandate " + mandate;
+    byId("observe-empty").hidden = true;
     this.stage.hidden = false;
-    byId2("resume-current").hidden = false;
+    byId("resume-current").hidden = false;
     this.clearCompanions();
     this.saveDraft();
     this.navigate("observe");
@@ -4575,6 +4777,7 @@ var DemoWorkspace = class {
     for (const link of this.mainLinks) link.href = entry.href;
   }
   show(desk, push, focus = true) {
+    if (officeFullscreen().mode) officeFullscreen().close(false);
     const before = this.desk;
     if (before !== desk) this.scroll.set(before, scrollY);
     if (desk !== "observe") this.run.pause();
@@ -4582,9 +4785,9 @@ var DemoWorkspace = class {
     this.desk = desk;
     document.body.dataset.desk = desk;
     this.companyMenu(false);
-    byId2("company-menu").hidden = desk !== "observe";
+    byId("company-menu").hidden = desk !== "observe";
     this.settings(false);
-    for (const key2 of desks2) byId2("desk-" + key2).hidden = key2 !== desk;
+    for (const key2 of desks2) byId("desk-" + key2).hidden = key2 !== desk;
     const url = deskURL(new URL(location.href), desk);
     if (push && readDesk(new URL(location.href)) !== desk) history.pushState({ ...history.state }, "", url);
     this.retainDesk(desk);
@@ -4596,7 +4799,7 @@ var DemoWorkspace = class {
     });
     this.layout();
     if (focus) {
-      const heading = byId2("desk-" + desk).querySelector("h1");
+      const heading = byId("desk-" + desk).querySelector("h1");
       heading.focus({ preventScroll: true });
       window.scrollTo({ top: desk === "observe" ? 0 : this.scroll.get(desk) || 0, behavior: "instant" });
     }
@@ -4614,11 +4817,11 @@ var DemoWorkspace = class {
     if (kind === "evidence" && this.desk === "evidence") this.placeChronicle(false);
   }
   settings(open) {
-    byId2("watch-settings").hidden = !open;
-    byId2("watch-settings-toggle").setAttribute("aria-expanded", String(open));
+    byId("watch-settings").hidden = !open;
+    byId("watch-settings-toggle").setAttribute("aria-expanded", String(open));
   }
   placeChronicle(watch) {
-    this.run.placeChronicle(byId2(watch ? "watch-chronicle-slot" : "evidence-chronicle-slot"));
+    this.run.placeChronicle(byId(officeFullscreen().mode === "observe" ? "office-fullscreen-log-slot" : watch ? "watch-chronicle-slot" : "evidence-chronicle-slot"));
   }
   layout() {
     const policy = this.live(), view = watchView(this.watch.value, policy.hovering, policy.companions && policy.roll);
@@ -4637,19 +4840,19 @@ var DemoWorkspace = class {
   }
   companyMenu(open) {
     document.body.dataset.companyMenu = open ? "open" : "closed";
-    byId2("company-menu").setAttribute("aria-expanded", String(open));
+    byId("company-menu").setAttribute("aria-expanded", String(open));
   }
   fit() {
     document.body.dataset.expandedText = String(parseFloat(getComputedStyle(document.documentElement).fontSize) > 20);
     document.documentElement.style.setProperty("--authorization-height", Math.ceil(document.querySelector(".authorization-actions").getBoundingClientRect().height) + "px");
     if (!this.observing) return;
-    const top = byId2("desk-observe").getBoundingClientRect().top, bottom = byId2("discovery-register").getBoundingClientRect().height;
-    byId2("desk-observe").style.setProperty("--observe-height", Math.max(120, innerHeight - top - bottom - 8) + "px");
+    const top = byId("desk-observe").getBoundingClientRect().top, bottom = byId("discovery-register").getBoundingClientRect().height;
+    byId("desk-observe").style.setProperty("--observe-height", Math.max(120, innerHeight - top - bottom - 8) + "px");
   }
   disclosed(folio) {
     if (!folio) return;
-    const host = byId2("watch-prose"), text2 = folio.narrative?.slice(0, 2) || folio.events.slice(0, 2).map((event) => event.office + ": " + event.finding);
-    byId2("watch-latest").textContent = " \xB7 " + folio.ordinal + ": " + folio.text;
+    const host = byId("watch-prose"), text2 = folio.narrative?.slice(0, 2) || folio.events.slice(0, 2).map((event) => event.office + ": " + event.finding);
+    byId("watch-latest").textContent = " \xB7 " + folio.ordinal + ": " + folio.text;
     if (host.contains(document.activeElement) || host.scrollTop > 8) return;
     const title2 = document.createElement("strong");
     title2.textContent = "Ordinal " + folio.ordinal + " \xB7 " + folio.text;
@@ -4662,33 +4865,33 @@ var DemoWorkspace = class {
   clearCompanions() {
     this.discovery = void 0;
     this.pendingDiscovery = void 0;
-    byId2("spotlight-glyph").textContent = "\u25C7";
-    byId2("spotlight-name").textContent = this.live().companions ? "Awaiting a companion" : "Appointments suspended";
-    byId2("spotlight-detail").textContent = "No disclosed friend has reported for duty.";
-    byId2("spotlight-energy").textContent = "";
-    byId2("spotlight-open").disabled = true;
+    byId("spotlight-glyph").textContent = "\u25C7";
+    byId("spotlight-name").textContent = this.live().companions ? "Awaiting a companion" : "Appointments suspended";
+    byId("spotlight-detail").textContent = "No disclosed friend has reported for duty.";
+    byId("spotlight-energy").textContent = "";
+    byId("spotlight-open").disabled = true;
   }
   remember(discovery) {
     if (discovery.mandate !== this.activeMandate || this.discovery && BigInt(discovery.assignment.ordinal) < BigInt(this.discovery.assignment.ordinal)) return;
-    if (document.activeElement === byId2("spotlight-open") || byId2("companion-dialog").open) {
+    if (document.activeElement === byId("spotlight-open") || byId("companion-dialog").open) {
       this.pendingDiscovery = discovery;
       return;
     }
     this.pendingDiscovery = void 0;
     this.discovery = discovery;
     const c = discovery.companion;
-    byId2("spotlight-glyph").textContent = c.emoji;
-    byId2("spotlight-name").textContent = c.name;
-    byId2("spotlight-detail").textContent = discovery.assignment.ordinal + " \xB7 " + discovery.assignment.flavor + " \xB7 " + c.rarity;
-    byId2("spotlight-energy").textContent = c.energy;
-    byId2("spotlight-open").disabled = false;
+    byId("spotlight-glyph").textContent = c.emoji;
+    byId("spotlight-name").textContent = c.name;
+    byId("spotlight-detail").textContent = discovery.assignment.ordinal + " \xB7 " + discovery.assignment.flavor + " \xB7 " + c.rarity;
+    byId("spotlight-energy").textContent = c.energy;
+    byId("spotlight-open").disabled = false;
   }
   draftSummary() {
     const p = this.policy("authorize-");
-    byId2("authorization-summary").textContent = (this.input("limit").value || "Unspecified") + " numbers \xB7 " + (p.companions ? "companions commissioned" : "no companion appointments") + " \xB7 " + (p.hovering ? "executive supervision authorized" : "ordinary disclosure");
+    byId("authorization-summary").textContent = (this.input("limit").value || "Unspecified") + " numbers \xB7 " + (p.companions ? "companions commissioned" : "no companion appointments") + " \xB7 " + (p.hovering ? "executive supervision authorized" : "ordinary disclosure");
     const cadence = this.select("authorize-display-speed");
     cadence.disabled = p.hovering;
-    byId2("authorize-pace-help").textContent = p.hovering ? "Executive Hovering governs every recorded decision; ordinary cadence resumes when supervision is withdrawn." : "Choose the ceremonial reading pace. Executive Fiat introduces no delay.";
+    byId("authorize-pace-help").textContent = p.hovering ? "Executive Hovering governs every recorded decision; ordinary cadence resumes when supervision is withdrawn." : "Choose the ceremonial reading pace. Executive Fiat introduces no delay.";
   }
   saveDraft() {
     try {
@@ -4731,14 +4934,14 @@ var PersonnelExperiment = class {
       this.view.step();
       this.controls();
     } }, "experiment-");
-    byId2("experiment-pause").addEventListener("click", () => {
+    byId("experiment-pause").addEventListener("click", () => {
       if (this.reading) {
         this.paused = !this.paused;
         this.wake?.();
         this.controls();
       }
     });
-    byId2("experiment-stop").addEventListener("click", () => {
+    byId("experiment-stop").addEventListener("click", () => {
       this.serial++;
       this.reading = false;
       this.wake?.();
@@ -4763,11 +4966,11 @@ var PersonnelExperiment = class {
     this.controls();
   }
   status(text2) {
-    byId2("experiment-status").textContent = text2;
+    byId("experiment-status").textContent = text2;
   }
   controls() {
-    for (const id of ["experiment-pause", "experiment-stop"]) byId2(id).setAttribute("aria-disabled", String(!this.reading));
-    byId2("experiment-pause").textContent = this.paused ? "Resume rehearsal" : "Pause rehearsal";
+    for (const id of ["experiment-pause", "experiment-stop"]) byId(id).setAttribute("aria-disabled", String(!this.reading));
+    byId("experiment-pause").textContent = this.paused ? "Resume rehearsal" : "Pause rehearsal";
   }
   wait(ms) {
     return new Promise((resolve) => {
@@ -4808,13 +5011,13 @@ var PersonnelExperiment = class {
     this.wake?.();
     this.reading = true;
     this.stepping = false;
-    this.paused = byId2("desk-experiment").hidden === true;
+    this.paused = byId("desk-experiment").hidden === true;
     this.controls();
     this.status(replay ? "Replaying the retained specimen. No Java operation will be repeated." : "Reading completed personnel proceedings. Production output remains intact.");
     await this.view.read(data, { current: () => serial === this.serial, waitWhilePaused: async () => {
       while (this.paused && serial === this.serial) await this.wait();
     }, delay: async () => {
-      const delay = Number(byId2("experiment-speed").value);
+      const delay = Number(byId("experiment-speed").value);
       if (delay) await this.wait(delay);
     } }, replay ? "Replay of read-only rehearsal" : void 0);
     if (serial !== this.serial) return;
@@ -4826,16 +5029,16 @@ var PersonnelExperiment = class {
 };
 
 // web/demo.ts
-var runForm = byId2("run-form");
-var limitInput = byId2("limit");
-var speedControl = byId2("display-speed");
-var runButton = byId2("run-button");
+var runForm = byId("run-form");
+var limitInput = byId("limit");
+var speedControl = byId("display-speed");
+var runButton = byId("run-button");
 var mandateSequence = 0;
-var pauseButton = byId2("pause-reading");
-var revealButton = byId2("reveal-all");
-var stopButton = byId2("stop-reading");
+var pauseButton = byId("pause-reading");
+var revealButton = byId("reveal-all");
+var stopButton = byId("stop-reading");
 var streaming = false;
-var followOutput = byId2("follow-output");
+var followOutput = byId("follow-output");
 var reading = false;
 var paused = false;
 var revealAll = false;
@@ -4858,7 +5061,7 @@ officeEstate.subscribe((event) => {
     wakeReading?.();
   }
 });
-var reorganizationPanels = [new ReorganizationPanel(byId2("supervision-reorganization")), new ReorganizationPanel(byId2("office-reorganization"))];
+var reorganizationPanels = [new ReorganizationPanel(byId("supervision-reorganization")), new ReorganizationPanel(byId("office-reorganization"))];
 var companions = new CompanionDesk({ remember: (discovery) => {
   office.remember(discovery);
   supervision.remember(discovery);
@@ -4919,7 +5122,7 @@ function setReadingPaused(value) {
   if (!reading) return;
   if (paused === value) return;
   paused = value;
-  const office2 = supervision.enabled ? byId2("supervision-current").querySelector("strong")?.textContent : void 0;
+  const office2 = supervision.enabled ? byId("supervision-current").querySelector("strong")?.textContent : void 0;
   setText("run-status", office2 ? "Observation " + (paused ? "paused" : "resumed") + " \xB7 " + office2 : paused ? "Ceremonial reading paused. Resume or reveal the complete output when ready." : "Ceremonial reading resumed.");
   readingControls();
   wakeReading?.();
@@ -4934,11 +5137,11 @@ revealButton.addEventListener("click", () => {
 });
 speedControl.addEventListener("change", () => wakeReading?.());
 function followLatest() {
-  if (followOutput.checked) byId2("output").scrollTop = byId2("output").scrollHeight;
+  if (followOutput.checked) byId("output").scrollTop = byId("output").scrollHeight;
 }
 followOutput.addEventListener("change", followLatest);
 readingControls();
-var autocorrect = byId2("numeric-autocorrect");
+var autocorrect = byId("numeric-autocorrect");
 var warnedValue = "";
 var warningIndex = -1;
 function inspectMagnitude() {
@@ -4957,7 +5160,7 @@ function inspectMagnitude() {
   } catch {
     limit = null;
   }
-  const warning = byId2("magnitude-warning");
+  const warning = byId("magnitude-warning");
   warning.hidden = typeof limit !== "bigint";
   if (typeof limit === "bigint" && limitInput.value !== warnedValue) {
     const selected = chooseMagnitudeWarning(warningIndex);
@@ -5002,7 +5205,7 @@ stopButton.addEventListener("click", () => {
   readingControls();
   supervision.interrupt();
   runButton.removeAttribute("aria-disabled");
-  byId2("output").removeAttribute("aria-busy");
+  byId("output").removeAttribute("aria-busy");
   personnel.stopReading();
   chronicle.note("The ceremonial disclosure was adjourned. Already printed numbers and their minutes remain available; this does not reverse completed business operations.", "Proceedings adjourned");
   setText("run-status", "Proceedings stopped. Already disclosed lines remain visible.");
@@ -5037,7 +5240,7 @@ function waitForPace(milliseconds) {
 async function revealOutput(text2, sequence, serviceMillis) {
   readingControls();
   const lines2 = text2 ? text2.trimEnd().split(/\r?\n/) : [];
-  const output = byId2("output");
+  const output = byId("output");
   output.textContent = lines2.length ? "" : "The zero-number mandate produces no lines.";
   setText("output-count", `0 of ${lines2.length} lines`);
   setText("run-status", supervision.enabled ? `Java answered in ${serviceMillis} ms. Executive observation now controls disclosure.` : `Service answered in ${serviceMillis} milliseconds. The ceremonial reading is in progress.`);
@@ -5084,7 +5287,7 @@ async function streamMandate(limit, sequence, started) {
   paused = false;
   revealAll = false;
   readingControls();
-  const output = byId2("output");
+  const output = byId("output");
   output.textContent = "";
   function append(lines2) {
     discloseLines(String(addOrdinals(disclosed, 1)), lines2);
@@ -5189,10 +5392,10 @@ async function runMandate(event) {
   office.begin(currentLimit);
   runButton.setAttribute("aria-disabled", "true");
   precedent.waiting(typeof limit === "bigint" || limit > 1e3);
-  byId2("output").setAttribute("aria-busy", "true");
+  byId("output").setAttribute("aria-busy", "true");
   setText("run-status", supervision.enabled && String(limit).length > 24 ? `The committee is considering a ${String(limit).length}-digit mandate\u2026` : `The committee is considering ${limit} numbers\u2026`);
   setText("trace-result", "Awaiting a receipt");
-  byId2("output").textContent = "Awaiting a duly authorized number.";
+  byId("output").textContent = "Awaiting a duly authorized number.";
   setText("output-count", "0 lines");
   void loadForecast(limit, sequence).catch(() => {
     if (sequence === mandateSequence) setText("forecast-units", "Unavailable");
@@ -5218,7 +5421,7 @@ async function runMandate(event) {
     setText("cache-result", answer.headers.get("X-SlopBuzz-Cache") || "UNKNOWN");
     setText("trace-result", answer.headers.get("X-SlopBuzz-Trace-Id") || "UNAVAILABLE");
     runButton.removeAttribute("aria-disabled");
-    byId2("output").removeAttribute("aria-busy");
+    byId("output").removeAttribute("aria-busy");
     reading = true;
     paused = !workspace.observing;
     revealAll = false;
@@ -5248,7 +5451,7 @@ async function runMandate(event) {
   } finally {
     if (sequence === mandateSequence) {
       runButton.removeAttribute("aria-disabled");
-      byId2("output").removeAttribute("aria-busy");
+      byId("output").removeAttribute("aria-busy");
     }
   }
 }
@@ -5263,11 +5466,11 @@ function beginPersonnelActivity(mode) {
   paused = false;
   revealAll = false;
   runButton.removeAttribute("aria-disabled");
-  byId2("output").removeAttribute("aria-busy");
+  byId("output").removeAttribute("aria-busy");
   readingControls();
   if (supervision.enabled && mode !== "inspection") {
-    byId2("supervision-title").focus({ preventScroll: true });
-    byId2("mandate-output").scrollIntoView({ block: "start", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth" });
+    byId("supervision-title").focus({ preventScroll: true });
+    byId("mandate-output").scrollIntoView({ block: "start", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth" });
   }
   return sequence;
 }
@@ -5282,7 +5485,7 @@ async function replayPersonnel() {
   office.begin(saved.limit, "replay");
   supervision.begin(saved.limit, "replay");
   setText("run-status", "Replaying the retained numerical output and its corporate minutes. No mandate was submitted.");
-  const output = byId2("output");
+  const output = byId("output");
   output.textContent = "";
   if (!saved.folios.length && saved.packet) {
     supervision.receive(saved.packet, "1", 0);

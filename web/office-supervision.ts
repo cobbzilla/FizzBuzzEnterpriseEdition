@@ -35,7 +35,7 @@ export class OfficeSupervisionDesk {
   this.checkbox.addEventListener('change',()=>this.applyMode(true));
   element('supervision-autonomy').addEventListener('click',()=>{this.disable();this.checkbox.focus();});
   element('supervision-pause').addEventListener('click',()=>{if(this.authority.reading())this.authority.pause(!this.authority.paused());});
-  element('supervision-next').addEventListener('click',()=>{if(!this.authority.reading()||!this.authority.paused()||officeEstate.moving)return;element('mandate-output').scrollIntoView({block:'start',behavior:'instant'});this.credits=1;this.authority.wake();});
+  element('supervision-next').addEventListener('click',()=>{if(!this.authority.reading()||!this.authority.paused()||officeEstate.moving)return;if(!element<HTMLDialogElement>('office-fullscreen').open)element('mandate-output').scrollIntoView({block:'start',behavior:'instant'});this.credits=1;this.authority.wake();});
   element('supervision-evidence').addEventListener('toggle',()=>{if((element('supervision-evidence') as HTMLDetailsElement).open&&this.authority.reading())this.authority.pause(true);});
   element('supervision-caption').addEventListener('focusin',()=>{if(this.authority.reading())this.authority.pause(true);});
   element('supervision-caption').addEventListener('wheel',()=>{if(this.authority.reading())this.authority.pause(true);},{passive:true});
@@ -45,6 +45,7 @@ export class OfficeSupervisionDesk {
   document.addEventListener('visibilitychange',()=>this.activity());
   document.addEventListener('demo-desk-change',()=>this.activity());
   document.addEventListener('demo-watch-layout',()=>{this.activity();requestAnimationFrame(()=>this.renderer?.resize());});
+  document.addEventListener('office-fullscreen-change',()=>{this.activity();requestAnimationFrame(()=>this.renderer?.resize());});
   this.media.addEventListener('change',()=>this.updateScene());
   addEventListener('pagehide',()=>{this.interrupt();this.renderer?.dispose();clearTimeout(this.readiness);},{once:true});
   this.applyMode(false);
@@ -112,7 +113,7 @@ export class OfficeSupervisionDesk {
  private sceneState(step=this.activeStep||this.lastStep):OfficeSceneState{return {room:step?.shot.room||'reception',route:[],ordinal:this.folio?.ordinal||'',text:this.published?this.folio?.text||'':'PENDING',emoji:this.companion?.companion.emoji,companionName:this.companion?.companion.name,paused:true,reducedMotion:this.media.matches,quality:'standard',seed:tourSeed(this.mandate),layout:officeEstate.displayed,relocation:officeEstate.relocation};}
  private updateScene(step=this.activeStep||this.lastStep){try{this.renderer?.update(this.sceneState(step));}catch{this.graphicsFailure();}}
  private visible(){
-  if(!this.enabled||document.hidden||document.querySelector('dialog[open]'))return false;
+  if(!this.enabled||document.hidden||document.querySelector('dialog[open]:not(#office-fullscreen)'))return false;
   if(document.body.classList.contains('demo-page'))return document.body.dataset.desk==='observe';
   const rect=element('supervision-stage').getBoundingClientRect(),bottom=innerHeight-(document.querySelector('#discovery-register')?.getBoundingClientRect().height||0);
   return rect.width>0&&Math.min(rect.bottom,bottom)-Math.max(rect.top,0)>=Math.min(60,rect.height*.2);
