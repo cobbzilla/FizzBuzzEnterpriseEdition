@@ -14,6 +14,7 @@ export interface RunPresentation {
 export class DemoWorkspace {
  private desk:DemoDesk='authorize';
  private readonly watch=byId<HTMLSelectElement>('watch-view');
+ private readonly mainLinks=document.querySelectorAll<HTMLAnchorElement>('a[href="#main"]');
  private readonly stage=byId('mandate-output');
  private readonly policyIds=['display-speed','emoji-companions','companion-strategy','require-companion-roll-call','executive-hovering'];
  private activeMandate='';private discovery?:Discovery;private pendingDiscovery?:Discovery;
@@ -110,6 +111,9 @@ export class DemoWorkspace {
   // selected desk when a native skip link replaces that fragment with #main.
   const entry=new URL(location.href);
   if(desk!=='authorize'&&entry.searchParams.get('desk')!==desk){entry.searchParams.set('desk',desk);history.replaceState(history.state,'',entry);}
+  // Bind native fragment links to the actual history URL, including its desk,
+  // so cached navigation cannot resolve them against an earlier document URL.
+  entry.hash='main';for(const link of this.mainLinks)link.href=entry.href;
  }
  private show(desk:DemoDesk,push:boolean,focus=true){
   const before=this.desk;
