@@ -32,7 +32,7 @@ export class RelocationCoordinator {
  }
  advance(now:number,allow:boolean,id=this.pending?.id){
   if(!this.pending||id!==this.pending.id)return;if(!Number.isFinite(now))throw new Error('A relocation requires a finite clock.');
-  const delta=this.last===undefined||!this.allowed?0:Math.max(0,Math.min(100,now-this.last));this.last=now;this.allowed=allow;
+  const delta=this.last===undefined||!this.allowed?0:Math.max(0,now-this.last);this.last=now;this.allowed=allow;
   if(!allow)return;this.pending.elapsed=Math.min(relocationDuration,this.pending.elapsed+delta);
   if(this.pending.elapsed>=relocationDuration){this.finish();return;}
   if(delta)this.notify('progress',this.relocation!);

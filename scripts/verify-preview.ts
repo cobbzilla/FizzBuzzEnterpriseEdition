@@ -18,7 +18,7 @@ try {
  await page.waitForFunction(()=>document.querySelector('#health-value')?.textContent === 'LIVE',null,{timeout:60000});
  const release=await page.request.get('http://localhost:18088/release.json').then(r=>r.json());assert.equal(release.revision,revision);assert.equal(release.dirty,false);
  const evidence=await page.request.get('http://localhost:18088/validation/report.json').then(r=>r.json());assert.equal(evidence.revision,revision);assert.equal(evidence.status,'PASSED');assert.equal(evidence.browserLifecycle.status,'PASSED');
- await page.selectOption('#authorize-display-speed','0');await page.click('#run-button');
+ await page.uncheck('#authorize-executive-hovering');await page.selectOption('#authorize-display-speed','0');await page.click('#run-button');
  await page.waitForFunction(()=>document.querySelector('#run-status')?.textContent?.includes('Mandate complete'));
  assert.equal((await page.locator('#output').textContent())?.split('\n').filter(Boolean).length,15);
  assert.ok((await page.locator('#chronicle-entries').textContent())?.includes('One has reported for duty'));

@@ -118,7 +118,7 @@ async function reset() {
       status.textContent = "Erasing saved companions, preferences and local audit history\u2026";
       await forgetSavedData();
     } else try {
-      for (const key of ["slopbuzz:authorization-draft:v1", "slopbuzz:estate:v1"]) sessionStorage.removeItem(key);
+      for (const key of ["slopbuzz:authorization-draft:v1", "slopbuzz:authorization-draft:v2", "slopbuzz:estate:v1"]) sessionStorage.removeItem(key);
     } catch {
     }
     if (reinstall) {

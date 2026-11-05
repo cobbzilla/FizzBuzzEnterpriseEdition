@@ -6,9 +6,9 @@ import type {Folio} from './chronicle';
 import {officeEstate} from './office-estate';
 import {requestReorganization} from './office-relocation';
 import {officeFullscreen} from './office-fullscreen';
+import {playbackIcon} from './playback-controls';
 
 export interface RunPresentation {
- pause():void;resume():void;
  placeChronicle(target:HTMLElement):void;
 }
 /** One mounted workspace owns navigation; it never submits or remounts a run. */
@@ -38,7 +38,7 @@ export class DemoWorkspace {
   byId('authorize-executive-hovering').removeAttribute('aria-controls');
   byId<HTMLSelectElement>('experiment-view').addEventListener('change',()=>this.sections('experiment'));
   byId<HTMLSelectElement>('evidence-view').addEventListener('change',()=>this.sections('evidence'));
-  byId('resume-current').addEventListener('click',()=>{this.navigate('observe');this.run.resume();});
+  byId('resume-current').addEventListener('click',()=>this.navigate('observe'));
   byId('office-choose-mandate').addEventListener('click',()=>{this.navigate('authorize');byId('limit').focus();});
   byId('watch-settings-toggle').addEventListener('click',()=>this.settings(byId('watch-settings').hidden===true));
   byId('watch-settings-close').addEventListener('click',()=>{this.settings(false);byId('watch-settings-toggle').focus();});
@@ -48,11 +48,13 @@ export class DemoWorkspace {
   byId('watch-settings-toggle').before(byId('watch-waive'));
   byId('watch-settings').append(byId('reveal-all'),byId('follow-output').closest('label')!);
   const ticker=document.createElement('span');ticker.id='watch-latest';byId('observed-mandate').after(ticker);
-  byId('watch-waive').textContent='Waive';byId('watch-waive').setAttribute('aria-label','Waive the Moving Ceremony');
-  byId('supervision-next').textContent='Next';byId('supervision-next').setAttribute('aria-label','Next recorded decision');
-  byId('stop-reading').textContent='Stop';
+  playbackIcon(byId<HTMLButtonElement>('watch-waive'),'waive','Waive the Moving Ceremony');
+  playbackIcon(byId<HTMLButtonElement>('supervision-next'),'next','Next recorded decision');
+  playbackIcon(byId<HTMLButtonElement>('stop-reading'),'stop','Stop proceedings');
+  playbackIcon(byId<HTMLButtonElement>('watch-settings-toggle'),'options','Options');
+  playbackIcon(document.querySelector<HTMLButtonElement>('.watch-transport [data-evidence]')!,'evidence','Evidence');
   byId('companion-spotlight').tabIndex=0;byId('companion-spotlight').setAttribute('role','region');
-  byId('run-status').tabIndex=0;byId('run-status').addEventListener('focus',()=>this.run.pause());
+  byId('run-status').tabIndex=0;
   byId('supervision-current').removeAttribute('role');byId('supervision-current').setAttribute('aria-live','off');
   byId('company-menu').addEventListener('click',()=>this.companyMenu(document.body.dataset.companyMenu!=='open'));
   document.addEventListener('keydown',event=>{if(event.key==='Escape'&&document.body.dataset.companyMenu==='open'){this.companyMenu(false);byId('company-menu').focus();}});
@@ -77,12 +79,11 @@ export class DemoWorkspace {
    const trigger=byId('personnel-documents');trigger.dispatchEvent(new MouseEvent('click')); 
   }));
   new MutationObserver(()=>{byId('personnel-record-summary').textContent=byId('personnel-origin').textContent;}).observe(byId('personnel-origin'),{childList:true,characterData:true,subtree:true});
-  new MutationObserver(()=>{if(document.querySelector('dialog[open]:not(#office-fullscreen)'))this.run.pause();}).observe(document.body,{subtree:true,attributes:true,attributeFilter:['open']});
-  document.addEventListener('visibilitychange',()=>{if(document.hidden)this.run.pause();});
   addEventListener('popstate',()=>{const desk=readDesk(new URL(location.href));if(desk!==this.desk)this.show(desk,false);else this.retainDesk(desk);});
   const resize=new ResizeObserver(()=>this.fit());resize.observe(document.querySelector('.site-header')!);resize.observe(byId('discovery-register'));
   resize.observe(document.querySelector('.authorization-actions')!);
   addEventListener('resize',()=>{if(!this.manualView&&this.committed){this.watch.value=initialWatchView(matchMedia('(max-width: 700px), (max-height: 500px)').matches,this.live().hovering);this.layout();}else this.fit();});
+  visualViewport?.addEventListener('resize',()=>this.fit());
   const hash=location.hash;if(hash.startsWith('#precedent'))this.select('evidence-view').value='precedent';if(hash.startsWith('#personnel'))this.select('evidence-view').value='personnel';if(hash.startsWith('#premises'))this.select('experiment-view').value='premises';
   this.restoreDraft();this.draftSummary();this.sections('experiment');this.sections('evidence');
   this.show(readDesk(new URL(location.href)),false,false);
@@ -122,7 +123,6 @@ export class DemoWorkspace {
   if(officeFullscreen().mode)officeFullscreen().close(false);
   const before=this.desk;
   if(before!==desk)this.scroll.set(before,scrollY);
-  if(desk!=='observe')this.run.pause();
   if(before==='observe'&&desk!=='observe')this.placeChronicle(false);
   this.desk=desk;document.body.dataset.desk=desk;this.companyMenu(false);byId('company-menu').hidden=desk!=='observe';this.settings(false);
   for(const key of desks)byId('desk-'+key).hidden=key!==desk;
@@ -155,7 +155,17 @@ export class DemoWorkspace {
   document.dispatchEvent(new Event('demo-watch-layout'));
  }
  private companyMenu(open:boolean){document.body.dataset.companyMenu=open?'open':'closed';byId('company-menu').setAttribute('aria-expanded',String(open));}
- private fit(){document.body.dataset.expandedText=String(parseFloat(getComputedStyle(document.documentElement).fontSize)>20);document.documentElement.style.setProperty('--authorization-height',Math.ceil(document.querySelector('.authorization-actions')!.getBoundingClientRect().height)+'px');if(!this.observing)return;const top=byId('desk-observe').getBoundingClientRect().top,bottom=byId('discovery-register').getBoundingClientRect().height;byId('desk-observe').style.setProperty('--observe-height',Math.max(120,innerHeight-top-bottom-8)+'px');}
+ private fit(){
+  document.body.dataset.expandedText=String(parseFloat(getComputedStyle(document.documentElement).fontSize)>20);
+  const style=document.documentElement.style;
+  style.setProperty('--authorization-height',Math.ceil(document.querySelector('.authorization-actions')!.getBoundingClientRect().height)+'px');
+  // The footer changes density with the desk. Reserve its new height before paint.
+  const bottom=Math.ceil(byId('discovery-register').getBoundingClientRect().height);
+  style.setProperty('--discovery-height',bottom+'px');
+  if(!this.observing)return;
+  const top=Math.max(0,byId('desk-observe').getBoundingClientRect().top+scrollY),viewport=visualViewport?.height||innerHeight;
+  byId('desk-observe').style.setProperty('--observe-height',Math.max(120,viewport-top-bottom-8)+'px');
+ }
  disclosed(folio:Folio|undefined){
   if(!folio)return;const host=byId('watch-prose'),text=folio.narrative?.slice(0,2)||folio.events.slice(0,2).map(event=>event.office+': '+event.finding);
   byId('watch-latest').textContent=' · '+folio.ordinal+': '+folio.text;
@@ -172,11 +182,12 @@ export class DemoWorkspace {
   byId('spotlight-glyph').textContent=c.emoji;byId('spotlight-name').textContent=c.name;byId('spotlight-detail').textContent=discovery.assignment.ordinal+' · '+discovery.assignment.flavor+' · '+c.rarity;byId('spotlight-energy').textContent=c.energy;byId<HTMLButtonElement>('spotlight-open').disabled=false;
  }
  private draftSummary(){const p=this.policy('authorize-');byId('authorization-summary').textContent=(this.input('limit').value||'Unspecified')+' numbers · '+(p.companions?'companions commissioned':'no companion appointments')+' · '+(p.hovering?'executive supervision authorized':'ordinary disclosure');const cadence=this.select('authorize-display-speed');cadence.disabled=p.hovering;byId('authorize-pace-help').textContent=p.hovering?'Executive Hovering governs every recorded decision; ordinary cadence resumes when supervision is withdrawn.':'Choose the ceremonial reading pace. Executive Fiat introduces no delay.';}
- private saveDraft(){try{sessionStorage.setItem('slopbuzz:authorization-draft:v1',JSON.stringify(this.policy('authorize-')));}catch{/* A configuration remains usable without storage. */}}
+ private saveDraft(){try{sessionStorage.setItem('slopbuzz:authorization-draft:v2',JSON.stringify(this.policy('authorize-')));}catch{/* A configuration remains usable without storage. */}}
  private restoreDraft(){
   try{
-   const p=JSON.parse(sessionStorage.getItem('slopbuzz:authorization-draft:v1')||'null') as PresentationPolicy|null;if(!p)return;
-   for(const [id,value]of [['emoji-companions',p.companions],['require-companion-roll-call',p.roll],['executive-hovering',p.hovering]] as const)if(typeof value==='boolean')this.input('authorize-'+id).checked=value;
+   const current=sessionStorage.getItem('slopbuzz:authorization-draft:v2');
+   const p=JSON.parse(current||sessionStorage.getItem('slopbuzz:authorization-draft:v1')||'null') as PresentationPolicy|null;if(!p)return;
+   for(const [id,value]of [['emoji-companions',p.companions],['require-companion-roll-call',p.roll],['executive-hovering',current?p.hovering:true]] as const)if(typeof value==='boolean')this.input('authorize-'+id).checked=value;
    if(['1800','800','225','0'].includes(p.cadence))this.select('authorize-display-speed').value=p.cadence;
    if(!this.preferredAuthority&&typeof p.authority==='string')this.preferredAuthority=p.authority;
   }catch{/* Invalid preferences are discarded, never executed. */}

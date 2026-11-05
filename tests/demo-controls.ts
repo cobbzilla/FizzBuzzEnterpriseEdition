@@ -22,4 +22,8 @@ export async function demoControl(page:Page,selector:string):Promise<Locator>{
 }
 export async function department(page:Page,desk:string){if(await page.locator('body').getAttribute('data-desk')!==desk)await page.locator('[data-desk-link="'+desk+'"]').click();}
 export async function watch(page:Page,view='overview'){await department(page,'observe');await page.selectOption('#watch-view',view);await expect(page.locator('#watch-view')).toHaveValue(view);}
-export async function demoAction(page:Page,action:'click'|'fill'|'selectOption'|'check'|'uncheck'|'focus'|'press'|'hover'|'tap',selector:string,...args:unknown[]):Promise<unknown>{const control=await demoControl(page,selector);const result=await Reflect.apply(control[action],control,args);if(['selectOption','check','uncheck'].includes(action)&&await page.locator('#watch-settings').isVisible()&&!await page.locator('dialog[open]').count())await page.locator('#watch-settings-close').click();return result;}
+export async function demoAction(page:Page,action:'click'|'fill'|'selectOption'|'check'|'uncheck'|'focus'|'press'|'hover'|'tap',selector:string,...args:unknown[]):Promise<unknown>{
+ // Choosing ordinary cadence is an explicit opt-out of the default directed office.
+ if(action==='selectOption'&&selector==='#display-speed'&&await page.locator('body').getAttribute('data-desk')==='authorize')await page.uncheck('#authorize-executive-hovering');
+ const control=await demoControl(page,selector);const result=await Reflect.apply(control[action],control,args);if(['selectOption','check','uncheck'].includes(action)&&await page.locator('#watch-settings').isVisible()&&!await page.locator('dialog[open]').count())await page.locator('#watch-settings-close').click();return result;
+}

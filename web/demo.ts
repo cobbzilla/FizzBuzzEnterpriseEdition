@@ -14,6 +14,7 @@ import {PrecedentView} from './precedent';
 import {PremisesDesk} from './premises';
 import {DemoWorkspace} from './demo-workspace';
 import {PersonnelExperiment} from './personnel-experiment';
+import {playbackIcon} from './playback-controls';
 const runForm = byId<HTMLFormElement>('run-form');
 const limitInput = byId<HTMLInputElement>('limit');
 const speedControl = byId<HTMLSelectElement>('display-speed');
@@ -47,7 +48,7 @@ let lastPlayback:{kind:'mandate';folios:Folio[];limit:string;personnel?:Personne
 let inspection:{folios:Folio[];index:number}|undefined;
 const personnel=new PersonnelProceedings({rehearse:()=>{},replay:()=>void replayPersonnel(),step:stepPersonnel},'');
 new PersonnelExperiment();
-workspace=new DemoWorkspace({pause:()=>setReadingPaused(true),resume:()=>setReadingPaused(false),placeChronicle:target=>chronicle.place(target)});
+workspace=new DemoWorkspace({placeChronicle:target=>chronicle.place(target)});
 function discloseLines(start:string,lines:readonly string[]){companions.disclose(start,lines);const folios=chronicle.disclose(start,lines);office.disclose(currentLimit,folios);workspace?.disclosed(folios.at(-1));lastPlayback={kind:'mandate',folios:chronicle.records,limit:currentLimit,personnel:personnel.record,packet:receivedPacket};personnel.setPlaybackAvailable(true);}
 const immediate=()=>revealAll||(!supervision.enabled&&Number(speedControl.value)===0);
 async function observeLine(folio:Folio,sequence:number,publish:()=>void){
@@ -63,8 +64,8 @@ function readingControls() {
   revealButton.textContent = activityMode==='replay'?'Reveal completed proceedings':streaming ? 'Waive disclosure delays' : 'Reveal complete output';
   pauseButton.setAttribute('aria-disabled', String(!reading));
   revealButton.setAttribute('aria-disabled', String(!reading));
-  pauseButton.textContent = paused ? 'Resume' : 'Pause';
-  pauseButton.setAttribute('aria-label',paused?'Resume reading':'Pause reading');
+  playbackIcon(pauseButton,paused?'play':'pause',paused?'Resume reading':'Pause reading');
+  pauseButton.setAttribute('aria-pressed',String(paused));
   if(supervision.enabled)revealButton.textContent='Restore autonomy and reveal output';
   supervision.syncControls();
 }
@@ -289,7 +290,7 @@ async function runMandate(event: Event) {
     setText('trace-result', answer.headers.get('X-SlopBuzz-Trace-Id') || 'UNAVAILABLE');
     runButton.removeAttribute('aria-disabled');
     byId('output').removeAttribute('aria-busy');
-    reading=true;paused=!workspace!.observing;revealAll=false;readingControls();
+    reading=true;paused=false;revealAll=false;readingControls();
     const record=personnel.responseRecord(answer);
     if(record){personnel.prepare(record);personnel.disclose(7);}
     lastPlayback={kind:'mandate',folios:[],limit:currentLimit,personnel:record,packet};personnel.setPlaybackAvailable(true);

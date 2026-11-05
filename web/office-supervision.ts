@@ -8,6 +8,8 @@ import {hoveringLabel,hoveringCadence,observationEnvelope,planOfficeSteps,planFo
 import type {ExecutionPacket,Folio,ExecutionEvent} from './chronicle';
 import type {OfficeRenderer,OfficeSceneState} from './office-renderer';
 import type {Discovery} from './discovery-model';
+import {playbackIcon} from './playback-controls';
+import {PresentationScheduler} from './presentation-scheduler';
 
 const element=<T extends HTMLElement=HTMLElement>(id:string)=>document.getElementById(id) as T;
 interface ReadingAuthority {reading():boolean;paused():boolean;pause(value:boolean):void;wake():void;notice(text:string):void}
@@ -23,11 +25,13 @@ export class OfficeSupervisionDesk {
  private readonly normalPaceHelp=element('pace-help').textContent||'';
  private renderer?:OfficeRenderer;private module?:Promise<typeof import('./office-world')>;private loading?:Promise<void>;
  private ready=false;private fallback=false;private sceneActive=false;private readiness?:ReturnType<typeof setTimeout>;
- private epoch=0;private serial=0;private frame=0;private cancelFrame?:()=>void;private credits=0;
+ private epoch=0;private serial=0;private cancelFrame?:()=>void;private credits=0;
+ private readonly scheduler=new PresentationScheduler(()=>this.visible());
  private envelope?:ObservationEnvelope;private prefixDone=false;private suffixDone=false;private lastStep?:ObservedOfficeStep;
  private activeStep?:ObservedOfficeStep;
+ private latestCue?:OfficeCue;
  private packet?:ExecutionPacket;private readonly packetContexts=new WeakMap<ExecutionPacket,{start:string;count:number}>();
- private folio?:Folio;private published=false;private companion?:Discovery;private mandate='15';private mode='mandate';private observed=0;private blocked='';
+ private folio?:Folio;private published=false;private companion?:Discovery;private mandate='15';private mode='mandate';private observed=0;
 
  constructor(private readonly authority:ReadingAuthority){
   officeEstate.subscribe(event=>{this.updateScene();if(event.kind==='committed'){const label=element('supervision-current').querySelector('strong'),step=this.activeStep||this.lastStep;if(label&&step)label.textContent=label.textContent!.replace(/ · Address [A-D][1-3]$/,' · Address '+officeEstate.current.placements.find(p=>p.room===step.shot.room)!.address);}
@@ -36,10 +40,6 @@ export class OfficeSupervisionDesk {
   element('supervision-autonomy').addEventListener('click',()=>{this.disable();this.checkbox.focus();});
   element('supervision-pause').addEventListener('click',()=>{if(this.authority.reading())this.authority.pause(!this.authority.paused());});
   element('supervision-next').addEventListener('click',()=>{if(!this.authority.reading()||!this.authority.paused()||officeEstate.moving)return;if(!element<HTMLDialogElement>('office-fullscreen').open)element('mandate-output').scrollIntoView({block:'start',behavior:'instant'});this.credits=1;this.authority.wake();});
-  element('supervision-evidence').addEventListener('toggle',()=>{if((element('supervision-evidence') as HTMLDetailsElement).open&&this.authority.reading())this.authority.pause(true);});
-  element('supervision-caption').addEventListener('focusin',()=>{if(this.authority.reading())this.authority.pause(true);});
-  element('supervision-caption').addEventListener('wheel',()=>{if(this.authority.reading())this.authority.pause(true);},{passive:true});
-  element('supervision-caption').addEventListener('touchstart',()=>{if(this.authority.reading())this.authority.pause(true);},{passive:true});
   const resize=new ResizeObserver(()=>{this.renderer?.resize();this.activity();});resize.observe(element('supervision-stage'));
   new IntersectionObserver(()=>this.activity(),{threshold:[0,.15]}).observe(element('supervision-stage'));
   document.addEventListener('visibilitychange',()=>this.activity());
@@ -74,16 +74,15 @@ export class OfficeSupervisionDesk {
  }
  syncControls(){
   const reading=this.authority.reading(),paused=this.authority.paused();
-  const button=element<HTMLButtonElement>('supervision-pause');button.textContent=paused?'Resume':'Pause';button.setAttribute('aria-disabled',String(!reading));button.setAttribute('aria-pressed',String(paused));
+  const button=element<HTMLButtonElement>('supervision-pause');playbackIcon(button,paused?'play':'pause',paused?'Resume':'Pause');button.setAttribute('aria-disabled',String(!reading));button.setAttribute('aria-pressed',String(paused));
   element('supervision-next').setAttribute('aria-disabled',String(!reading||!paused||officeEstate.moving));
   if(officeEstate.moving&&reading)this.authority.notice('Facilities has suspended disclosure while all eight departments reconsider their addresses. Your pause and current decision are retained.');
-  else if(this.enabled&&reading&&!paused&&!this.visible())this.authority.notice('Executive observation is waiting for attention. Return to the office view to continue.');
  }
  begin(mandate:string,mode='mandate'){
-  this.interrupt();this.mandate=mandate;this.mode=mode;this.envelope=undefined;this.packet=undefined;this.prefixDone=false;this.suffixDone=false;this.lastStep=undefined;this.activeStep=undefined;this.folio=undefined;this.published=false;this.companion=undefined;this.observed=0;this.blocked='';
+  this.interrupt();this.mandate=mandate;this.mode=mode;this.envelope=undefined;this.packet=undefined;this.prefixDone=false;this.suffixDone=false;this.lastStep=undefined;this.activeStep=undefined;this.folio=undefined;this.published=false;this.companion=undefined;this.observed=0;
   this.pane.dataset.observedSteps='0';this.pane.dataset.state='waiting';this.current('Reception is accepting the mandate. The executive is withholding trust.');this.renderer?.direct(null);this.updateScene();this.syncControls();
  }
- interrupt(){officeEstate.finish();this.epoch++;this.credits=0;this.cancelFrame?.();this.cancelFrame=undefined;cancelAnimationFrame(this.frame);this.frame=0;this.pane.dataset.state='stopped';}
+ interrupt(){officeEstate.finish();this.epoch++;this.credits=0;this.latestCue=undefined;this.cancelFrame?.();this.cancelFrame=undefined;this.scheduler.cancel();this.pane.dataset.state='stopped';}
  receive(packet:ExecutionPacket,start:string,count:number){this.packet=packet;this.packetContexts.set(packet,{start,count});this.envelope=observationEnvelope(packet,start,count);this.prefixDone=false;this.suffixDone=false;this.serial++;}
  async prelude(current:()=>boolean){
   if(!this.enabled||this.prefixDone||!this.envelope)return;this.prefixDone=true;this.folio=undefined;this.companion=undefined;this.published=false;
@@ -114,13 +113,12 @@ export class OfficeSupervisionDesk {
  private updateScene(step=this.activeStep||this.lastStep){try{this.renderer?.update(this.sceneState(step));}catch{this.graphicsFailure();}}
  private visible(){
   if(!this.enabled||document.hidden||document.querySelector('dialog[open]:not(#office-fullscreen)'))return false;
-  if(document.body.classList.contains('demo-page'))return document.body.dataset.desk==='observe';
+  if(document.body.classList.contains('demo-page')&&document.body.dataset.desk!=='observe')return false;
   const rect=element('supervision-stage').getBoundingClientRect(),bottom=innerHeight-(document.querySelector('#discovery-register')?.getBoundingClientRect().height||0);
   return rect.width>0&&Math.min(rect.bottom,bottom)-Math.max(rect.top,0)>=Math.min(60,rect.height*.2);
  }
- private activity(){const rect=this.canvas.getBoundingClientRect(),active=this.visible()&&rect.width>0&&rect.height>0;if(active!==this.sceneActive){this.sceneActive=active;this.renderer?.active(active);}}
+ private activity(){const rect=this.canvas.getBoundingClientRect(),active=this.visible()&&rect.width>0&&rect.height>0;if(active!==this.sceneActive){this.sceneActive=active;this.renderer?.active(active);}this.scheduler.refresh();}
  private armReadiness(){clearTimeout(this.readiness);this.readiness=setTimeout(()=>{if(this.ready||!this.enabled)return;if(this.sceneActive)this.graphicsFailure();else this.armReadiness();},20000);}
- private presentationReady(){return this.ready||this.fallback||!this.canvas.getClientRects().length;}
  private async ensureScene(){
   if(this.renderer){this.activity();this.renderer.resize();return;}if(this.fallback)return;if(this.loading)return this.loading;
   this.loading=(async()=>{
@@ -128,7 +126,7 @@ export class OfficeSupervisionDesk {
     this.module ||= import(releaseAsset('office-world.js').href) as Promise<typeof import('./office-world')>;
     const module=await this.module;if(!this.enabled)return;
     this.canvas.hidden=false;this.canvas.dataset.module=releaseAsset('office-world.js').href;this.canvas.dataset.renderer='babylon';
-    this.renderer=module.createOffice({canvas:this.canvas,state:this.sceneState(),interactive:false,onRoom:()=>{},onProp:()=>{},onStep:()=>{},onView:()=>{},onReady:()=>{this.ready=true;clearTimeout(this.readiness);const loading=element('supervision-loading'),focused=loading.contains(document.activeElement);loading.hidden=true;if(focused)element('supervision-title').focus({preventScroll:true});},onProblem:()=>this.graphicsFailure()});
+    this.renderer=module.createOffice({canvas:this.canvas,state:this.sceneState(),interactive:false,onRoom:()=>{},onProp:()=>{},onStep:()=>{},onView:()=>{},onReady:()=>{this.ready=true;if(this.latestCue)this.renderer?.direct(this.latestCue);clearTimeout(this.readiness);const loading=element('supervision-loading'),focused=loading.contains(document.activeElement);loading.hidden=true;if(focused)element('supervision-title').focus({preventScroll:true});},onProblem:()=>this.graphicsFailure()});
     this.sceneActive=!this.visible();this.activity();this.renderer.resize();this.armReadiness();
    }catch{this.module=undefined;this.graphicsFailure();}
   })().finally(()=>{this.loading=undefined;});return this.loading;
@@ -161,30 +159,28 @@ export class OfficeSupervisionDesk {
   return new Promise(resolve=>{
    const director=new OfficeShotDirector();step={...step,arriveMs:director.duration(step,officeEstate.current)};let layoutKey=layoutToken(officeEstate.current);
    const clock=new ObservationClock(step);let shown=false,published=false,manual=false,settled=false;
-   const finish=(ok:boolean)=>{if(settled)return;settled=true;cancelAnimationFrame(this.frame);this.frame=0;if(this.cancelFrame===cancel)this.cancelFrame=undefined;resolve(ok);};
+   const finish=(ok:boolean)=>{if(settled)return;settled=true;this.scheduler.cancel();if(this.cancelFrame===cancel)this.cancelFrame=undefined;resolve(ok);};
    const cancel=()=>finish(false);this.cancelFrame=cancel;
    const frame=(now:number)=>{
     if(epoch!==this.epoch||!this.enabled||!current()){finish(false);return;}
     const key=layoutToken(officeEstate.current);if(key!==layoutKey){const arrival=director.duration(step,officeEstate.current);clock.elapsed=rebaseObservation(clock.elapsed,step.arriveMs,arrival);step.arriveMs=arrival;layoutKey=key;this.updateScene(step);}
-    this.activity();const moving=officeEstate.moving,visible=this.visible(),paused=this.authority.paused();
-    const waiting=moving?'facilities':!visible?'attention':paused?'paused':'';
-    if(waiting!==this.blocked){const previous=this.blocked;this.blocked=waiting;if(this.authority.reading()){if(waiting==='attention')this.authority.notice('Executive observation is waiting for attention. Return to the office view to continue.');else if(previous==='attention'&&!waiting)this.authority.notice('Executive observation resumed. The office controls disclosure.');}}
+    this.activity();const moving=officeEstate.moving,paused=this.authority.paused();
     if(!shown){
-     if(!moving&&this.presentationReady()&&visible&&(!paused||this.credits>0)){shown=true;this.show(step,index,total);}
-     else{this.frame=requestAnimationFrame(frame);return;}
+     if(!moving&&(!paused||this.credits>0)){shown=true;this.show(step,index,total);}
+     else{this.scheduler.request(frame);return;}
     }
-    if(!moving&&paused&&this.credits>0&&visible){this.credits=0;manual=true;}
-    const allow=!moving&&visible&&this.presentationReady()&&(!paused||manual);
-    const cue:OfficeCue=clock.tick(now,allow,manual);this.renderer?.direct(cue);
+    if(!moving&&paused&&this.credits>0){this.credits=0;manual=true;}
+    const allow=!moving&&(!paused||manual);
+    const cue:OfficeCue=clock.tick(now,allow,manual);this.latestCue=cue;if(this.ready)this.renderer?.direct(cue);
     if(this.pane.dataset.phase!==cue.phase){this.pane.dataset.phase=cue.phase;element<HTMLProgressElement>('supervision-progress').title=cue.phase==='arrival'?'Arriving at the next office':cue.phase==='work'?'The supplied decision is being illustrated':'A mandatory opportunity for executive contemplation';}
     if(step.publication&&!published&&clock.elapsed>=step.arriveMs+step.workMs){published=true;publish?.();}
     if(cue.complete){
      // Preserve one rendered final frame before moving to the next recorded decision.
-     const acknowledge=()=>{if(epoch!==this.epoch||!current()){finish(false);return;}this.activity();if(officeEstate.moving||!this.visible()){this.frame=requestAnimationFrame(acknowledge);return;}this.observed++;this.pane.dataset.observedSteps=String(this.observed);this.pane.dataset.state='held';element<HTMLProgressElement>('supervision-progress').value=index+1;finish(true);};
-     this.frame=requestAnimationFrame(acknowledge);
-    }else this.frame=requestAnimationFrame(frame);
+     const acknowledge=()=>{if(epoch!==this.epoch||!current()){finish(false);return;}this.activity();if(officeEstate.moving){this.scheduler.request(acknowledge);return;}this.observed++;this.pane.dataset.observedSteps=String(this.observed);this.pane.dataset.state='held';element<HTMLProgressElement>('supervision-progress').value=index+1;finish(true);};
+     this.scheduler.request(acknowledge);
+    }else this.scheduler.request(frame);
    };
-   this.frame=requestAnimationFrame(frame);
+   this.scheduler.request(frame);
   });
  }
 }

@@ -48,9 +48,18 @@ export async function verifyPublic(origin: string, revision: string) {
    const stylesheet = new URL(await page.locator('link[rel=stylesheet]').first().getAttribute('href') || '', page.url());
    assert.equal(stylesheet.pathname, '/' + config.assets + 'site.css', 'Page must use its release-specific stylesheet');
    assert.deepEqual(await page.getByRole('navigation',{name:'Demo departments'}).getByRole('link').allTextContents(),['Authorize','Observe','Experiment','Facilities','Evidence']);
-   await expect(page.locator('#authorize-require-companion-roll-call')).toBeChecked();await expect(page.locator('#authorize-executive-hovering')).not.toBeChecked();
+   await expect(page.locator('#authorize-require-companion-roll-call')).toBeChecked();await expect(page.locator('#authorize-executive-hovering')).toBeChecked();
    await demo.run();await expect(page.locator('#observe-title')).toBeFocused();
    await demo.options(()=>page.check('#executive-hovering'));await expect(page.locator('#display-speed')).toBeDisabled();await expect(page.locator('#display-speed')).toHaveValue('executive-hovering');await demo.watch('office');await expect(page.locator('#supervision-canvas')).toHaveAttribute('data-rendered','true');
+   await page.setViewportSize({width:390,height:667});
+   await expect.poll(()=>page.evaluate(()=>{
+    const output=document.querySelector<HTMLElement>('#output')!,style=getComputedStyle(output);
+    return document.documentElement.scrollHeight<=innerHeight+1&&output.clientHeight-parseFloat(style.paddingTop)-parseFloat(style.paddingBottom)>=parseFloat(style.lineHeight)*2-1;
+   })).toBe(true);
+   for(const id of ['stop-reading','supervision-pause','supervision-next','watch-settings-toggle']){
+    const button=page.locator('#'+id);assert.equal((await button.textContent())?.trim(),'');await expect(button.locator('svg')).toHaveAttribute('aria-hidden','true');assert.ok(await button.getAttribute('aria-label'));
+   }
+   await page.setViewportSize({width:1100,height:800});
    await demo.options(()=>page.click('#supervision-autonomy'));await expect(page.locator('#display-speed')).toHaveValue('0');await expect(page.locator('#display-speed option[value="executive-hovering"]')).toHaveCount(0);await demo.watch('commentary');
    await expect(page.locator('#personnel-verdict')).toHaveText('Approved to start at 1');
    await expect(page.locator('#chronicle-entries')).toContainText('One has reported for duty');

@@ -310,7 +310,7 @@ var RelocationCoordinator = class {
   advance(now, allow, id = this.pending?.id) {
     if (!this.pending || id !== this.pending.id) return;
     if (!Number.isFinite(now)) throw new Error("A relocation requires a finite clock.");
-    const delta = this.last === void 0 || !this.allowed ? 0 : Math.max(0, Math.min(100, now - this.last));
+    const delta = this.last === void 0 || !this.allowed ? 0 : Math.max(0, now - this.last);
     this.last = now;
     this.allowed = allow;
     if (!allow) return;
@@ -1720,13 +1720,15 @@ function cueAt(step, elapsed) {
 var ObservationClock = class {
   elapsed = 0;
   last;
+  allowed = false;
   step;
   constructor(step) {
     this.step = step;
   }
   tick(now, allow, manual = false) {
-    const delta = this.last === void 0 ? 0 : Math.max(0, Math.min(100, now - this.last));
+    const delta = this.last === void 0 || !this.allowed ? 0 : Math.max(0, now - this.last);
     this.last = now;
+    this.allowed = allow;
     if (allow) this.elapsed = manual ? stepDuration(this.step) : Math.min(stepDuration(this.step), this.elapsed + delta);
     return cueAt(this.step, this.elapsed);
   }
@@ -1764,6 +1766,85 @@ function rebaseObservation(elapsed, oldArrival, newArrival) {
   return elapsed < oldArrival && oldArrival > 0 ? elapsed / oldArrival * newArrival : Math.max(0, elapsed - oldArrival) + newArrival;
 }
 
+// web/playback-controls.ts
+var paths = {
+  pause: "M9 5v14M15 5v14",
+  play: "M8 5l11 7-11 7V5Z",
+  stop: "M6 6h12v12H6Z",
+  next: "M5 5l10 7-10 7V5ZM19 5v14",
+  options: "M3 7h3m6 0h9M3 17h9m6 0h3M12 7a3 3 0 1 1-6 0 3 3 0 0 1 6 0ZM18 17a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z",
+  evidence: "M14 3H5v18h8M14 3l5 5h-5V3ZM8 8h3M8 12h3M8 16h3M20 17a3 3 0 1 1-6 0 3 3 0 0 1 6 0ZM20 20l2 2",
+  waive: "M3 5l8 7-8 7V5ZM12 5l8 7-8 7V5ZM22 5v14"
+};
+function playbackIcon(button, icon, label) {
+  button.setAttribute("aria-label", label);
+  button.title = label;
+  button.classList.add("playback-icon");
+  if (button.dataset.icon === icon) return;
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.setAttribute("viewBox", "0 0 24 24");
+  svg.setAttribute("aria-hidden", "true");
+  svg.setAttribute("focusable", "false");
+  svg.setAttribute("fill", "none");
+  svg.setAttribute("stroke", "currentColor");
+  svg.setAttribute("stroke-width", "2");
+  svg.setAttribute("stroke-linecap", "round");
+  svg.setAttribute("stroke-linejoin", "round");
+  const path = document.createElementNS(svg.namespaceURI, "path");
+  path.setAttribute("d", paths[icon]);
+  svg.append(path);
+  button.dataset.icon = icon;
+  button.replaceChildren(svg);
+}
+
+// web/presentation-scheduler.ts
+var PresentationScheduler = class {
+  constructor(visible2) {
+    this.visible = visible2;
+  }
+  visible;
+  frame;
+  timer;
+  callback;
+  painting = false;
+  request(callback) {
+    this.cancel();
+    this.callback = callback;
+    this.arm();
+  }
+  cancel() {
+    this.clear();
+    this.callback = void 0;
+  }
+  refresh() {
+    if (this.callback && this.painting !== this.canPaint()) {
+      this.clear();
+      this.arm();
+    }
+  }
+  canPaint() {
+    return !document.hidden && this.visible();
+  }
+  clear() {
+    if (this.frame !== void 0) cancelAnimationFrame(this.frame);
+    clearTimeout(this.timer);
+    this.frame = void 0;
+    this.timer = void 0;
+  }
+  arm() {
+    this.painting = this.canPaint();
+    const run = (now) => {
+      this.frame = void 0;
+      this.timer = void 0;
+      const callback = this.callback;
+      this.callback = void 0;
+      callback?.(now);
+    };
+    if (this.painting) this.frame = requestAnimationFrame(run);
+    else this.timer = setTimeout(() => run(performance.now()), 50);
+  }
+};
+
 // web/office-supervision.ts
 var element = (id) => document.getElementById(id);
 var OfficeSupervisionDesk = class {
@@ -1794,18 +1875,6 @@ var OfficeSupervisionDesk = class {
       this.credits = 1;
       this.authority.wake();
     });
-    element("supervision-evidence").addEventListener("toggle", () => {
-      if (element("supervision-evidence").open && this.authority.reading()) this.authority.pause(true);
-    });
-    element("supervision-caption").addEventListener("focusin", () => {
-      if (this.authority.reading()) this.authority.pause(true);
-    });
-    element("supervision-caption").addEventListener("wheel", () => {
-      if (this.authority.reading()) this.authority.pause(true);
-    }, { passive: true });
-    element("supervision-caption").addEventListener("touchstart", () => {
-      if (this.authority.reading()) this.authority.pause(true);
-    }, { passive: true });
     const resize = new ResizeObserver(() => {
       this.renderer?.resize();
       this.activity();
@@ -1847,14 +1916,15 @@ var OfficeSupervisionDesk = class {
   readiness;
   epoch = 0;
   serial = 0;
-  frame = 0;
   cancelFrame;
   credits = 0;
+  scheduler = new PresentationScheduler(() => this.visible());
   envelope;
   prefixDone = false;
   suffixDone = false;
   lastStep;
   activeStep;
+  latestCue;
   packet;
   packetContexts = /* @__PURE__ */ new WeakMap();
   folio;
@@ -1863,7 +1933,6 @@ var OfficeSupervisionDesk = class {
   mandate = "15";
   mode = "mandate";
   observed = 0;
-  blocked = "";
   get enabled() {
     return this.checkbox.checked;
   }
@@ -1917,12 +1986,11 @@ var OfficeSupervisionDesk = class {
   syncControls() {
     const reading2 = this.authority.reading(), paused2 = this.authority.paused();
     const button = element("supervision-pause");
-    button.textContent = paused2 ? "Resume" : "Pause";
+    playbackIcon(button, paused2 ? "play" : "pause", paused2 ? "Resume" : "Pause");
     button.setAttribute("aria-disabled", String(!reading2));
     button.setAttribute("aria-pressed", String(paused2));
     element("supervision-next").setAttribute("aria-disabled", String(!reading2 || !paused2 || officeEstate.moving));
     if (officeEstate.moving && reading2) this.authority.notice("Facilities has suspended disclosure while all eight departments reconsider their addresses. Your pause and current decision are retained.");
-    else if (this.enabled && reading2 && !paused2 && !this.visible()) this.authority.notice("Executive observation is waiting for attention. Return to the office view to continue.");
   }
   begin(mandate, mode = "mandate") {
     this.interrupt();
@@ -1938,7 +2006,6 @@ var OfficeSupervisionDesk = class {
     this.published = false;
     this.companion = void 0;
     this.observed = 0;
-    this.blocked = "";
     this.pane.dataset.observedSteps = "0";
     this.pane.dataset.state = "waiting";
     this.current("Reception is accepting the mandate. The executive is withholding trust.");
@@ -1950,10 +2017,10 @@ var OfficeSupervisionDesk = class {
     officeEstate.finish();
     this.epoch++;
     this.credits = 0;
+    this.latestCue = void 0;
     this.cancelFrame?.();
     this.cancelFrame = void 0;
-    cancelAnimationFrame(this.frame);
-    this.frame = 0;
+    this.scheduler.cancel();
     this.pane.dataset.state = "stopped";
   }
   receive(packet, start, count) {
@@ -2041,7 +2108,7 @@ var OfficeSupervisionDesk = class {
   }
   visible() {
     if (!this.enabled || document.hidden || document.querySelector("dialog[open]:not(#office-fullscreen)")) return false;
-    if (document.body.classList.contains("demo-page")) return document.body.dataset.desk === "observe";
+    if (document.body.classList.contains("demo-page") && document.body.dataset.desk !== "observe") return false;
     const rect = element("supervision-stage").getBoundingClientRect(), bottom = innerHeight - (document.querySelector("#discovery-register")?.getBoundingClientRect().height || 0);
     return rect.width > 0 && Math.min(rect.bottom, bottom) - Math.max(rect.top, 0) >= Math.min(60, rect.height * 0.2);
   }
@@ -2051,6 +2118,7 @@ var OfficeSupervisionDesk = class {
       this.sceneActive = active;
       this.renderer?.active(active);
     }
+    this.scheduler.refresh();
   }
   armReadiness() {
     clearTimeout(this.readiness);
@@ -2059,9 +2127,6 @@ var OfficeSupervisionDesk = class {
       if (this.sceneActive) this.graphicsFailure();
       else this.armReadiness();
     }, 2e4);
-  }
-  presentationReady() {
-    return this.ready || this.fallback || !this.canvas.getClientRects().length;
   }
   async ensureScene() {
     if (this.renderer) {
@@ -2085,6 +2150,7 @@ var OfficeSupervisionDesk = class {
         }, onView: () => {
         }, onReady: () => {
           this.ready = true;
+          if (this.latestCue) this.renderer?.direct(this.latestCue);
           clearTimeout(this.readiness);
           const loading = element("supervision-loading"), focused = loading.contains(document.activeElement);
           loading.hidden = true;
@@ -2169,14 +2235,13 @@ var OfficeSupervisionDesk = class {
       const finish = (ok) => {
         if (settled) return;
         settled = true;
-        cancelAnimationFrame(this.frame);
-        this.frame = 0;
+        this.scheduler.cancel();
         if (this.cancelFrame === cancel) this.cancelFrame = void 0;
         resolve(ok);
       };
       const cancel = () => finish(false);
       this.cancelFrame = cancel;
-      const frame2 = (now) => {
+      const frame = (now) => {
         if (epoch !== this.epoch || !this.enabled || !current()) {
           finish(false);
           return;
@@ -2190,32 +2255,24 @@ var OfficeSupervisionDesk = class {
           this.updateScene(step);
         }
         this.activity();
-        const moving = officeEstate.moving, visible2 = this.visible(), paused2 = this.authority.paused();
-        const waiting = moving ? "facilities" : !visible2 ? "attention" : paused2 ? "paused" : "";
-        if (waiting !== this.blocked) {
-          const previous = this.blocked;
-          this.blocked = waiting;
-          if (this.authority.reading()) {
-            if (waiting === "attention") this.authority.notice("Executive observation is waiting for attention. Return to the office view to continue.");
-            else if (previous === "attention" && !waiting) this.authority.notice("Executive observation resumed. The office controls disclosure.");
-          }
-        }
+        const moving = officeEstate.moving, paused2 = this.authority.paused();
         if (!shown) {
-          if (!moving && this.presentationReady() && visible2 && (!paused2 || this.credits > 0)) {
+          if (!moving && (!paused2 || this.credits > 0)) {
             shown = true;
             this.show(step, index, total);
           } else {
-            this.frame = requestAnimationFrame(frame2);
+            this.scheduler.request(frame);
             return;
           }
         }
-        if (!moving && paused2 && this.credits > 0 && visible2) {
+        if (!moving && paused2 && this.credits > 0) {
           this.credits = 0;
           manual = true;
         }
-        const allow = !moving && visible2 && this.presentationReady() && (!paused2 || manual);
+        const allow = !moving && (!paused2 || manual);
         const cue = clock.tick(now, allow, manual);
-        this.renderer?.direct(cue);
+        this.latestCue = cue;
+        if (this.ready) this.renderer?.direct(cue);
         if (this.pane.dataset.phase !== cue.phase) {
           this.pane.dataset.phase = cue.phase;
           element("supervision-progress").title = cue.phase === "arrival" ? "Arriving at the next office" : cue.phase === "work" ? "The supplied decision is being illustrated" : "A mandatory opportunity for executive contemplation";
@@ -2231,8 +2288,8 @@ var OfficeSupervisionDesk = class {
               return;
             }
             this.activity();
-            if (officeEstate.moving || !this.visible()) {
-              this.frame = requestAnimationFrame(acknowledge);
+            if (officeEstate.moving) {
+              this.scheduler.request(acknowledge);
               return;
             }
             this.observed++;
@@ -2241,17 +2298,16 @@ var OfficeSupervisionDesk = class {
             element("supervision-progress").value = index + 1;
             finish(true);
           };
-          this.frame = requestAnimationFrame(acknowledge);
-        } else this.frame = requestAnimationFrame(frame2);
+          this.scheduler.request(acknowledge);
+        } else this.scheduler.request(frame);
       };
-      this.frame = requestAnimationFrame(frame2);
+      this.scheduler.request(frame);
     });
   }
 };
 
 // web/office-relocation.ts
 var reduced = matchMedia("(prefers-reduced-motion: reduce)");
-var frame = 0;
 function visible() {
   if (document.hidden) return false;
   if (document.querySelector("dialog[open]:not(#office-modal):not(#office-fullscreen)")) return false;
@@ -2262,24 +2318,26 @@ function visible() {
     return r.width > 0 && Math.min(r.bottom, innerHeight) - Math.max(r.top, 0) > Math.min(60, r.height * 0.2);
   });
 }
+var scheduler = new PresentationScheduler(visible);
 function tick(now) {
-  frame = 0;
   if (!officeEstate.moving) return;
   if (reduced.matches || document.getElementById("office-motion")?.checked === false) {
     officeEstate.finish();
     return;
   }
-  officeEstate.advance(now, visible());
-  if (officeEstate.moving) frame = requestAnimationFrame(tick);
+  officeEstate.advance(now, true);
+  if (officeEstate.moving) scheduler.request(tick);
 }
 officeEstate.subscribe((event) => {
-  if (event.kind === "staged" && !frame) frame = requestAnimationFrame(tick);
+  if (event.kind === "staged") scheduler.request(tick);
+  else if (event.kind === "committed" || event.kind === "cancelled") scheduler.cancel();
 });
+for (const event of ["visibilitychange", "demo-desk-change", "demo-watch-layout", "office-fullscreen-change"]) document.addEventListener(event, () => scheduler.refresh());
 reduced.addEventListener("change", () => {
   if (reduced.matches) officeEstate.finish();
 });
 addEventListener("pagehide", () => {
-  cancelAnimationFrame(frame);
+  scheduler.cancel();
   officeEstate.finish();
 }, { once: true });
 function requestReorganization() {
@@ -4252,10 +4310,10 @@ var ExecutiveChronicle = class {
       const panel = byId("mandate-output");
       panel.dataset.viewportFit = String(innerHeight > 600 && panel.getBoundingClientRect().height <= innerHeight - 24 - (document.querySelector("#discovery-register")?.getBoundingClientRect().height || 0));
     };
-    let frame2 = 0;
+    let frame = 0;
     const schedule = () => {
-      if (!frame2) frame2 = requestAnimationFrame(() => {
-        frame2 = 0;
+      if (!frame) frame = requestAnimationFrame(() => {
+        frame = 0;
         layout();
       });
     };
@@ -4559,10 +4617,7 @@ var DemoWorkspace = class {
     byId("authorize-executive-hovering").removeAttribute("aria-controls");
     byId("experiment-view").addEventListener("change", () => this.sections("experiment"));
     byId("evidence-view").addEventListener("change", () => this.sections("evidence"));
-    byId("resume-current").addEventListener("click", () => {
-      this.navigate("observe");
-      this.run.resume();
-    });
+    byId("resume-current").addEventListener("click", () => this.navigate("observe"));
     byId("office-choose-mandate").addEventListener("click", () => {
       this.navigate("authorize");
       byId("limit").focus();
@@ -4593,15 +4648,14 @@ var DemoWorkspace = class {
     const ticker = document.createElement("span");
     ticker.id = "watch-latest";
     byId("observed-mandate").after(ticker);
-    byId("watch-waive").textContent = "Waive";
-    byId("watch-waive").setAttribute("aria-label", "Waive the Moving Ceremony");
-    byId("supervision-next").textContent = "Next";
-    byId("supervision-next").setAttribute("aria-label", "Next recorded decision");
-    byId("stop-reading").textContent = "Stop";
+    playbackIcon(byId("watch-waive"), "waive", "Waive the Moving Ceremony");
+    playbackIcon(byId("supervision-next"), "next", "Next recorded decision");
+    playbackIcon(byId("stop-reading"), "stop", "Stop proceedings");
+    playbackIcon(byId("watch-settings-toggle"), "options", "Options");
+    playbackIcon(document.querySelector(".watch-transport [data-evidence]"), "evidence", "Evidence");
     byId("companion-spotlight").tabIndex = 0;
     byId("companion-spotlight").setAttribute("role", "region");
     byId("run-status").tabIndex = 0;
-    byId("run-status").addEventListener("focus", () => this.run.pause());
     byId("supervision-current").removeAttribute("role");
     byId("supervision-current").setAttribute("aria-live", "off");
     byId("company-menu").addEventListener("click", () => this.companyMenu(document.body.dataset.companyMenu !== "open"));
@@ -4653,12 +4707,6 @@ var DemoWorkspace = class {
     new MutationObserver(() => {
       byId("personnel-record-summary").textContent = byId("personnel-origin").textContent;
     }).observe(byId("personnel-origin"), { childList: true, characterData: true, subtree: true });
-    new MutationObserver(() => {
-      if (document.querySelector("dialog[open]:not(#office-fullscreen)")) this.run.pause();
-    }).observe(document.body, { subtree: true, attributes: true, attributeFilter: ["open"] });
-    document.addEventListener("visibilitychange", () => {
-      if (document.hidden) this.run.pause();
-    });
     addEventListener("popstate", () => {
       const desk = readDesk(new URL(location.href));
       if (desk !== this.desk) this.show(desk, false);
@@ -4674,6 +4722,7 @@ var DemoWorkspace = class {
         this.layout();
       } else this.fit();
     });
+    visualViewport?.addEventListener("resize", () => this.fit());
     const hash2 = location.hash;
     if (hash2.startsWith("#precedent")) this.select("evidence-view").value = "precedent";
     if (hash2.startsWith("#personnel")) this.select("evidence-view").value = "personnel";
@@ -4780,7 +4829,6 @@ var DemoWorkspace = class {
     if (officeFullscreen().mode) officeFullscreen().close(false);
     const before = this.desk;
     if (before !== desk) this.scroll.set(before, scrollY);
-    if (desk !== "observe") this.run.pause();
     if (before === "observe" && desk !== "observe") this.placeChronicle(false);
     this.desk = desk;
     document.body.dataset.desk = desk;
@@ -4844,10 +4892,13 @@ var DemoWorkspace = class {
   }
   fit() {
     document.body.dataset.expandedText = String(parseFloat(getComputedStyle(document.documentElement).fontSize) > 20);
-    document.documentElement.style.setProperty("--authorization-height", Math.ceil(document.querySelector(".authorization-actions").getBoundingClientRect().height) + "px");
+    const style = document.documentElement.style;
+    style.setProperty("--authorization-height", Math.ceil(document.querySelector(".authorization-actions").getBoundingClientRect().height) + "px");
+    const bottom = Math.ceil(byId("discovery-register").getBoundingClientRect().height);
+    style.setProperty("--discovery-height", bottom + "px");
     if (!this.observing) return;
-    const top = byId("desk-observe").getBoundingClientRect().top, bottom = byId("discovery-register").getBoundingClientRect().height;
-    byId("desk-observe").style.setProperty("--observe-height", Math.max(120, innerHeight - top - bottom - 8) + "px");
+    const top = Math.max(0, byId("desk-observe").getBoundingClientRect().top + scrollY), viewport = visualViewport?.height || innerHeight;
+    byId("desk-observe").style.setProperty("--observe-height", Math.max(120, viewport - top - bottom - 8) + "px");
   }
   disclosed(folio) {
     if (!folio) return;
@@ -4895,15 +4946,16 @@ var DemoWorkspace = class {
   }
   saveDraft() {
     try {
-      sessionStorage.setItem("slopbuzz:authorization-draft:v1", JSON.stringify(this.policy("authorize-")));
+      sessionStorage.setItem("slopbuzz:authorization-draft:v2", JSON.stringify(this.policy("authorize-")));
     } catch {
     }
   }
   restoreDraft() {
     try {
-      const p = JSON.parse(sessionStorage.getItem("slopbuzz:authorization-draft:v1") || "null");
+      const current = sessionStorage.getItem("slopbuzz:authorization-draft:v2");
+      const p = JSON.parse(current || sessionStorage.getItem("slopbuzz:authorization-draft:v1") || "null");
       if (!p) return;
-      for (const [id, value] of [["emoji-companions", p.companions], ["require-companion-roll-call", p.roll], ["executive-hovering", p.hovering]]) if (typeof value === "boolean") this.input("authorize-" + id).checked = value;
+      for (const [id, value] of [["emoji-companions", p.companions], ["require-companion-roll-call", p.roll], ["executive-hovering", current ? p.hovering : true]]) if (typeof value === "boolean") this.input("authorize-" + id).checked = value;
       if (["1800", "800", "225", "0"].includes(p.cadence)) this.select("authorize-display-speed").value = p.cadence;
       if (!this.preferredAuthority && typeof p.authority === "string") this.preferredAuthority = p.authority;
     } catch {
@@ -4948,20 +5000,6 @@ var PersonnelExperiment = class {
       this.view.stopReading();
       this.status("Rehearsal adjourned. The numerical mandate and its production papers remain intact.");
       this.controls();
-    });
-    document.addEventListener("demo-desk-change", (event) => {
-      if (event.detail.desk !== "experiment" && this.reading) {
-        this.paused = true;
-        this.wake?.();
-        this.controls();
-      }
-    });
-    document.addEventListener("visibilitychange", () => {
-      if (document.hidden && this.reading) {
-        this.paused = true;
-        this.wake?.();
-        this.controls();
-      }
     });
     this.controls();
   }
@@ -5011,7 +5049,7 @@ var PersonnelExperiment = class {
     this.wake?.();
     this.reading = true;
     this.stepping = false;
-    this.paused = byId("desk-experiment").hidden === true;
+    this.paused = false;
     this.controls();
     this.status(replay ? "Replaying the retained specimen. No Java operation will be repeated." : "Reading completed personnel proceedings. Production output remains intact.");
     await this.view.read(data, { current: () => serial === this.serial, waitWhilePaused: async () => {
@@ -5078,7 +5116,7 @@ var inspection;
 var personnel = new PersonnelProceedings({ rehearse: () => {
 }, replay: () => void replayPersonnel(), step: stepPersonnel }, "");
 new PersonnelExperiment();
-workspace = new DemoWorkspace({ pause: () => setReadingPaused(true), resume: () => setReadingPaused(false), placeChronicle: (target) => chronicle.place(target) });
+workspace = new DemoWorkspace({ placeChronicle: (target) => chronicle.place(target) });
 function discloseLines(start, lines2) {
   companions.disclose(start, lines2);
   const folios = chronicle.disclose(start, lines2);
@@ -5113,8 +5151,8 @@ function readingControls() {
   revealButton.textContent = activityMode === "replay" ? "Reveal completed proceedings" : streaming ? "Waive disclosure delays" : "Reveal complete output";
   pauseButton.setAttribute("aria-disabled", String(!reading));
   revealButton.setAttribute("aria-disabled", String(!reading));
-  pauseButton.textContent = paused ? "Resume" : "Pause";
-  pauseButton.setAttribute("aria-label", paused ? "Resume reading" : "Pause reading");
+  playbackIcon(pauseButton, paused ? "play" : "pause", paused ? "Resume reading" : "Pause reading");
+  pauseButton.setAttribute("aria-pressed", String(paused));
   if (supervision.enabled) revealButton.textContent = "Restore autonomy and reveal output";
   supervision.syncControls();
 }
@@ -5423,7 +5461,7 @@ async function runMandate(event) {
     runButton.removeAttribute("aria-disabled");
     byId("output").removeAttribute("aria-busy");
     reading = true;
-    paused = !workspace.observing;
+    paused = false;
     revealAll = false;
     readingControls();
     const record = personnel.responseRecord(answer);
