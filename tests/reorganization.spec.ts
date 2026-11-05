@@ -14,11 +14,16 @@ async function relocate(page:Page){await page.locator('#office-reorganization bu
 async function audit(page:Page){return page.evaluate(async()=>{const m=await import(new URL('/assets/tribunal.js',location.href).href),client=new m.BrowserRuntimeClient();try{return await(await client.request('/audit/evidence')).json();}finally{client.close();}});}
 
 test('the company alternates 2x4 and 3x3, moves every department and preserves numerical custody',async({page})=>{
+ // This exhausts sixteen full scene rebuilds. Keep every per-edition readiness,
+ // placement and resource assertion while budgeting the combined stress run.
+ test.setTimeout(180000);
  await reception(page);await open(page);const before=await audit(page);let previous=await scene(page);expect(previous.estate.cratesAllocated).toBe(8);const materialCeilings=new Map<number,number>();
  for(let edition=1;edition<=16;edition++){
+  await test.step(`Complete estate edition ${edition}`,async()=>{
   await relocate(page);await expect(page.locator('#office-reorganization')).toHaveAttribute('data-estate-edition',String(edition));const current=await scene(page),expected=estate(seed(0),edition);expect(current.estate.rows).toBe(edition%2?3:2);expect(current.estate.columns).toBe(edition%2?3:4);expect(current.rooms).toBe(8);expect(current.estate.cratesAllocated).toBe(8);expect(current.fileActors).toBe(0);
   for(const p of current.estate.departments){const old=previous.estate.departments.find(o=>o.room===p.room)!,target=expected.placements.find(o=>o.room===p.room)!;expect(Math.hypot(p.x-old.x,p.z-old.z)).toBeGreaterThan(.5);expect(p.x).toBeCloseTo(target.position.x,5);expect(p.z).toBeCloseTo(target.position.z,5);expect(p.partition).toBe(target.partition);}
   expect(current.estate.amenity?.kind).toBe(expected.amenity?.kind);expect(current.meshes).toBeLessThan(200);if(edition>=4){const parity=edition%2;if(!materialCeilings.has(parity))materialCeilings.set(parity,current.estate.materials+1);expect(current.estate.materials).toBeLessThanOrEqual(materialCeilings.get(parity)!);}previous=current;
+  });
  }
  const after=await audit(page);expect(after.journalEntries).toBe(before.journalEntries);expect(after.headDigest).toBe(before.headDigest);await expect(page.locator('#output')).toHaveText('Awaiting a duly authorized number.');
 });
