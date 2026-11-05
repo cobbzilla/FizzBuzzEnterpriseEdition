@@ -26,6 +26,7 @@ const stopButton = byId<HTMLButtonElement>('stop-reading');
 let streaming = false;
 const followOutput = byId<HTMLInputElement>('follow-output');
 let reading = false;
+let productionActive=false;
 let paused = false;
 let revealAll = false;
 let wakeReading: (() => void) | undefined;
@@ -59,6 +60,7 @@ async function observeLine(folio:Folio,sequence:number,publish:()=>void){
  if(sequence!==mandateSequence)return false;release();return true;
 }
 function readingControls() {
+  workspace?.runActivity(productionActive||reading);
   for(const panel of reorganizationPanels)panel.setReading(reading);
   stopButton.setAttribute('aria-disabled', String(!reading));
   revealButton.textContent = activityMode==='replay'?'Reveal completed proceedings':streaming ? 'Waive disclosure delays' : 'Reveal complete output';
@@ -88,6 +90,7 @@ speedControl.addEventListener('change', () => wakeReading?.());
 function followLatest() { if (followOutput.checked) byId('output').scrollTop = byId('output').scrollHeight; }
 followOutput.addEventListener('change', followLatest);
 readingControls();
+function finishProduction(){productionActive=false;companions.completeRun();}
 
 
 const autocorrect = byId<HTMLInputElement>('numeric-autocorrect');
@@ -121,7 +124,7 @@ function validateLimit() {
 }
 stopButton.addEventListener('click',()=>{
  if(!reading)return;
- (officeEstate.finish(),++mandateSequence);reading=false;streaming=false;paused=false;wakeReading?.();readingControls();
+ (officeEstate.finish(),++mandateSequence);reading=false;streaming=false;paused=false;finishProduction();wakeReading?.();readingControls();
  supervision.interrupt();
  runButton.removeAttribute('aria-disabled');byId('output').removeAttribute('aria-busy');
  personnel.stopReading();
@@ -187,7 +190,7 @@ async function revealOutput(text: string, sequence: number, serviceMillis: numbe
   if(supervision.enabled)await supervision.finishPacket(()=>sequence===mandateSequence);
   if (sequence === mandateSequence) {
     setText('output-count', `${lines.length} ${lines.length === 1 ? 'line' : 'lines'}`);
-    reading = false; readingControls();
+    reading = false; finishProduction();readingControls();
     chronicle.finish(lines.length===0);office.complete(lines.length===0);
     supervision.complete();
     setText('run-status', `Mandate complete. The service answered in ${serviceMillis} milliseconds; ${serviceMillis < 1000 ? 'under' : 'above'} the one-second target. All ${lines.length} lines are visible.`);
@@ -249,7 +252,7 @@ async function streamMandate(limit: MandateInteger, sequence: number, started: n
   await new Promise(resolve=>setTimeout(resolve,0));
  }
  if(sequence===mandateSequence) {
-  reading=false;streaming=false;readingControls();
+  reading=false;streaming=false;finishProduction();readingControls();
   chronicle.finish();
   supervision.complete();
   setText('run-status',`Mandate complete. ${disclosed} lines disclosed; the latest ${output.childNodes.length} remain visible. Extended proceedings are transient.`);
@@ -258,14 +261,13 @@ async function streamMandate(limit: MandateInteger, sequence: number, started: n
 
 async function runMandate(event: Event) {
   event.preventDefault();
-  if (runButton.getAttribute('aria-disabled') === 'true') return;
   const limit = validateLimit();
   if (limit === null) return;
-  workspace!.commitDraft(String(limit));
   const sequence = ++mandateSequence;
-  companions.reset(String(limit));
+  if(productionActive)companions.withdrawRun();
+  workspace!.commitDraft(String(limit));
+  companions.beginRun(String(limit));productionActive=true;
   wakeReading?.(); reading = false; streaming=false;activityMode='mandate';manualStep=false;inspection=undefined;lastPlayback=undefined;receivedPacket=undefined;currentLimit=String(limit);supervision.begin(currentLimit);readingControls();personnel.setPlaybackAvailable(false);personnel.loading();chronicle.begin(currentLimit);office.begin(currentLimit);
-  runButton.setAttribute('aria-disabled', 'true');
   precedent.waiting(typeof limit==='bigint'||limit>1000);
   byId('output').setAttribute('aria-busy', 'true');
   setText('run-status', supervision.enabled&&String(limit).length>24?`The committee is considering a ${String(limit).length}-digit mandate…`:`The committee is considering ${limit} numbers…`);
@@ -300,7 +302,7 @@ async function runMandate(event: Event) {
   } catch (error) {
     trackUsage({event:'slopbuzz_demo_run',outcome:'failure',runtime_mode:config.mode,duration_ms:performance.now()-started});
     if (sequence === mandateSequence) {
-      reading=false;streaming=false;readingControls();
+      reading=false;streaming=false;finishProduction();readingControls();
       supervision.interrupt();
       personnel.setBusy(false);
       if(!personnel.record)personnel.clear('The request failed before any personnel record could be inspected.','Evidence unavailable');
@@ -318,6 +320,7 @@ async function runMandate(event: Event) {
 }
 
 function beginPersonnelActivity(mode:'replay'|'inspection'){
+ finishProduction();
  const sequence=++mandateSequence;wakeReading?.();supervision.interrupt();activityMode=mode;manualStep=mode==='inspection';reading=mode!=='inspection';streaming=false;paused=false;revealAll=false;
  runButton.removeAttribute('aria-disabled');byId('output').removeAttribute('aria-busy');readingControls();
  if(supervision.enabled&&mode!=='inspection'){byId('supervision-title').focus({preventScroll:true});byId('mandate-output').scrollIntoView({block:'start',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});}

@@ -56,6 +56,7 @@ export async function verifyPublic(origin: string, revision: string) {
     const output=document.querySelector<HTMLElement>('#output')!,style=getComputedStyle(output);
     return document.documentElement.scrollHeight<=innerHeight+1&&output.clientHeight-parseFloat(style.paddingTop)-parseFloat(style.paddingBottom)>=parseFloat(style.lineHeight)*2-1;
    })).toBe(true);
+   await expect(page.locator('#discovery-list li')).toHaveCount(5);await expect(page.locator('#discovery-toggle')).toHaveAttribute('aria-expanded','false');assert.ok((await page.locator('#discovery-register').boundingBox())!.height<=48);await page.click('#discovery-toggle');await expect(page.locator('#discovery-list')).toBeVisible();await page.click('#discovery-toggle');await expect(page.locator('#discovery-list')).toBeHidden();
    for(const id of ['stop-reading','supervision-pause','supervision-next','watch-settings-toggle']){
     const button=page.locator('#'+id);assert.equal((await button.textContent())?.trim(),'');await expect(button.locator('svg')).toHaveAttribute('aria-hidden','true');assert.ok(await button.getAttribute('aria-label'));
    }
@@ -142,6 +143,7 @@ export async function verifyPublic(origin: string, revision: string) {
    await page.goto(origin+'/demo/');await page.locator('#authorize-companion-help a').click();await expect(page).toHaveURL(/\/bestiary\/$/);await expect(page.locator('#bestiary-status')).toContainText('3200 companions');await page.selectOption('#bestiary-kind','single');await page.fill('#bestiary-search','unicorn');await expect(page.locator('#bestiary-results article')).toHaveCount(1);
    await page.goto(origin + '/api/');
    await expect(page.locator('#api-total')).toContainText('ratified operations');
+   await page.goto(origin+'/demo/');await expect(page.locator('#health-value')).toHaveText('LIVE');await page.uncheck('#authorize-executive-hovering');await page.selectOption('#authorize-display-speed','225');await page.fill('#limit','1000');await page.click('#run-button');await demo.desk('authorize');await expect(page.locator('#mandate-collision-warning')).toBeVisible();await demo.run('0');await demo.desk('authorize');await expect(page.locator('#mandate-collision-warning')).toBeHidden();await expect(page.locator('#output')).toContainText('produces no lines');
    const savedFinds=await page.evaluate(()=>localStorage.getItem('slopbuzz:extraordinary-appointments:v1'));
    await context.setOffline(false);await page.goto(origin+'/reset/');await expect(page).toHaveURL(origin+'/',{timeout:90000});await expect(page.getByRole('link',{name:'Live demo',exact:true})).toBeVisible();
    assert.equal(await page.evaluate(()=>localStorage.getItem('slopbuzz:extraordinary-appointments:v1')),savedFinds);

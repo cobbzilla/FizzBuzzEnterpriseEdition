@@ -20,6 +20,7 @@ test('the emitted portable Java sources match the canonical TypeScript constant'
 
 // A distinct little register is intentionally independent of the numerical audit database.
 import {rarestDiscoveries,decodeDiscoveries,encodeDiscoveries,discoveryLink,validDiscovery,type Discovery} from '../web/discovery-model.ts';
+import {createDiscoveryStore,provisionalDiscoveryPrefix} from '../web/discovery-store.ts';
 function find(index:number,mandate='9007199254740993'):Discovery{return {companion:entries[index],assignment:{ordinal:'3',flavor:'Fizz',companionId:entries[index].id,ticket:42,factors:{factors:'3',cofactor:'1',complete:true,divisions:1,divisionBudget:128,trialPrimeCeiling:97}},mandate,strategy:'factor-resonance-v1',catalogVersion,seedPolicy:'mandate-v1',discoveredAt:'2026-11-03T00:00:00.000Z'};}
 test('rarest five distinct findings converge across order, repeated encounters and concurrent tabs',()=>{
  const candidates=entries.map((_,i)=>find(i)),all=rarestDiscoveries(candidates),left=rarestDiscoveries(candidates.slice(0,1600)),right=rarestDiscoveries(candidates.slice(1600));assert.equal(all.length,5);assert.equal(all[0].companion.name,'unicorn');assert.deepEqual(all.map(d=>d.companion.weight),[1,2,3,4,5]);assert.deepEqual(rarestDiscoveries(left,right),all);assert.deepEqual(rarestDiscoveries(right,left,all,all),all);
@@ -30,3 +31,25 @@ test('discovery persistence retains full dossiers and rejects malformed or incom
  for(const patch of [{mandate:'2'},{mandate:'-1'},{seedPolicy:'future'},{companion:{...d.companion,weight:0}},{assignment:{...d.assignment,flavor:'Buzz'}},{assignment:{...d.assignment,ticket:1e9}},{discoveredAt:'yesterday'}])assert.equal(validDiscovery({...d,...patch}),false);
 });
 test('share links retain exact magnitude and deployment base without executing a mandate',()=>{const d=find(0,'1'+'0'.repeat(1000)),url=new URL(discoveryLink(d,'https://example.com/enterprise/'));assert.equal(url.pathname,'/enterprise/demo/');assert.equal(url.searchParams.get('limit'),d.mandate);assert.equal(url.searchParams.get('ordinal'),'3');assert.equal(url.searchParams.get('companion'),d.companion.id);assert.equal(url.searchParams.get('seedPolicy'),'mandate-v1');});
+
+class RegisterStorage implements Storage {
+ private data=new Map<string,string>();get length(){return this.data.size;}key(index:number){return [...this.data.keys()][index]??null;}getItem(key:string){return this.data.get(key)??null;}setItem(key:string,value:string){this.data.set(key,value);}removeItem(key:string){this.data.delete(key);}clear(){this.data.clear();}
+}
+test('withdrawing one run restores the five completed finds it displaced in every reading tab',()=>{
+ const storage=new RegisterStorage(),owner=createDiscoveryStore(storage),reader=createDiscoveryStore(storage),baseline=rarestDiscoveries(entries.filter(c=>c.rarity==='Common').slice(0,5).map(c=>find(entries.indexOf(c)))),rarities=entries.filter(c=>c.rarity==='Mythic').slice(0,5).map(c=>find(entries.indexOf(c)));
+ owner.remember(baseline);reader.reconcile();const run=owner.beginRun();run.remember(rarities);reader.reconcile();assert.deepEqual(reader.snapshot(),rarestDiscoveries(rarities));let departed:readonly Discovery[]=[];reader.subscribe(change=>departed=change.departed);
+ run.withdraw();reader.reconcile(true);assert.deepEqual(owner.snapshot(),baseline);assert.deepEqual(reader.snapshot(),baseline);assert.equal(departed.length,5);reader.remember([baseline[0]]);owner.reconcile();assert.deepEqual(owner.snapshot(),baseline);assert.ok(![...Array(storage.length)].some((_,i)=>storage.key(i)?.startsWith(provisionalDiscoveryPrefix)));
+});
+test('one run cannot withdraw another run’s finds or a previously completed encounter',()=>{
+ const storage=new RegisterStorage(),a=createDiscoveryStore(storage),b=createDiscoveryStore(storage),known=find(0);a.remember([known]);const first=a.beginRun(),second=b.beginRun();first.remember([known,find(100)]);second.remember([find(100)]);first.withdraw();b.reconcile(true);assert.equal(b.snapshot().length,2);second.complete();a.reconcile();assert.equal(a.snapshot().length,2);assert.ok(a.snapshot().some(d=>d.companion.id===known.companion.id));
+});
+test('late companion replies are admitted after completion and permanently refused after withdrawal',()=>{
+ const store=createDiscoveryStore(new RegisterStorage()),aborted=store.beginRun();aborted.remember([find(0)]);aborted.withdraw();aborted.remember([find(1)]);aborted.complete();assert.equal(store.snapshot().length,0);
+ const complete=store.beginRun();complete.remember([find(2)]);complete.complete();complete.remember([find(3)]);complete.withdraw();assert.equal(store.snapshot().length,2);
+});
+test('ordinary page departure settles owned receipts while keeping other pages’ runs provisional',()=>{
+ const storage=new RegisterStorage(),a=createDiscoveryStore(storage),b=createDiscoveryStore(storage),first=a.beginRun(),second=b.beginRun();first.remember([find(0)]);second.remember([find(1)]);a.settleAll();second.withdraw();a.reconcile(true);assert.deepEqual(a.snapshot(),[find(0)]);
+});
+test('session-only finds retain withdrawal and completion semantics when storage is unavailable',()=>{
+ const store=createDiscoveryStore();store.remember([find(0)]);const run=store.beginRun();run.remember([find(1)]);assert.equal(store.snapshot().length,2);assert.equal(store.persistent(),false);run.withdraw();assert.deepEqual(store.snapshot(),[find(0)]);
+});

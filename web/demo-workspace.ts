@@ -89,6 +89,12 @@ export class DemoWorkspace {
   this.show(readDesk(new URL(location.href)),false,false);
  }
  get observing(){return this.desk==='observe';}
+ runActivity(active:boolean){
+  const warning=byId('mandate-collision-warning');
+  if(warning.hidden===!active)return;
+  warning.hidden=!active;
+  byId('run-button').setAttribute('aria-describedby',active?'mandate-collision-copy':'authorization-summary');
+ }
  private input(id:string){return byId<HTMLInputElement>(id);}
  private select(id:string){return byId<HTMLSelectElement>(id);}
  private policy(prefix=''):PresentationPolicy{return {cadence:this.select(prefix+'display-speed').value,companions:this.input(prefix+'emoji-companions').checked,authority:this.select(prefix+'companion-strategy').value,roll:this.input(prefix+'require-companion-roll-call').checked,hovering:this.input(prefix+'executive-hovering').checked};}
@@ -131,7 +137,12 @@ export class DemoWorkspace {
   this.retainDesk(desk);
   document.querySelectorAll<HTMLAnchorElement>('[data-desk-link]').forEach(link=>{const key=link.dataset.deskLink as DemoDesk;link.href=deskURL(new URL(location.href),key).href;if(key===desk)link.setAttribute('aria-current','page');else link.removeAttribute('aria-current');});
   this.layout();
-  if(focus){const heading=byId('desk-'+desk).querySelector<HTMLElement>('h1')!;heading.focus({preventScroll:true});window.scrollTo({top:desk==='observe'?0:this.scroll.get(desk)||0,behavior:'instant'});}
+  if(focus){
+   const heading=byId('desk-'+desk).querySelector<HTMLElement>('h1')!;heading.focus({preventScroll:true});
+   const collision=desk==='authorize'&&!byId('mandate-collision-warning').hidden;
+   const warningTop=collision&&matchMedia('(max-width:700px), (max-height:600px)').matches?Math.max(0,(heading.closest('.desk-heading')||heading).getBoundingClientRect().top+scrollY-12):0;
+   window.scrollTo({top:collision?warningTop:desk==='observe'?0:this.scroll.get(desk)||0,behavior:'instant'});
+  }
   document.dispatchEvent(new CustomEvent('demo-desk-change',{detail:{desk}}));
   requestAnimationFrame(()=>this.fit());
  }

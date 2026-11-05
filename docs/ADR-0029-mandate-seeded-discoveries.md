@@ -41,3 +41,10 @@ verifies all provenance before opening its story. Such inspection does not
 print numbers or fabricate a discovery. Only actual disclosed output enters
 the register. Browser storage is local, editable and clearable; it is a souvenir,
 not evidence of competitive achievement or numerical audit custody.
+
+[ADR 0037](ADR-0037-provisional-companion-appointments.md) adds run-owned
+provisional receipts: completed history retains this format, while replacing an
+unfinished run withdraws only its receipt and restores displaced older finds.
+Withdrawal also invalidates obsolete focused chips, with focus recovery; ordinary
+new discoveries still respect the reader's deferred-update choice. The mobile
+register is hidden when empty and starts collapsed when populated.

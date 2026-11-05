@@ -696,7 +696,8 @@ function companionDialog() {
   });
   dialog.addEventListener("close", () => {
     beganOnBackdrop = false;
-    if (invoker?.isConnected) invoker.focus();
+    const target = invoker?.isConnected && invoker.getClientRects().length ? invoker : [document.querySelector("#discovery-toggle"), document.querySelector("#discovery-list button"), document.querySelector("main")].find((el) => el?.getClientRects().length);
+    target?.focus();
     dialog.dispatchEvent(new Event("companion-closed"));
   });
   const controller = { open(d, opener) {
@@ -2757,40 +2758,112 @@ if (config.mode === "browser") document.querySelectorAll("a[href]").forEach((lin
 });
 
 // web/discovery-store.ts
-var storeSymbol = /* @__PURE__ */ Symbol.for("slopbuzz.discovery-store.v1");
-function discoveryStore() {
-  const host = window;
-  if (host[storeSymbol]) return host[storeSymbol];
-  let finds = [], persistent = true;
-  const listeners = /* @__PURE__ */ new Set();
+var provisionalDiscoveryPrefix = "slopbuzz:provisional-appointments:";
+var storeSymbol = /* @__PURE__ */ Symbol.for("slopbuzz.discovery-store.v2");
+function createDiscoveryStore(storage) {
+  let settled = [], finds = [], persistent = !!storage, publishedPersistent = persistent;
+  const listeners = /* @__PURE__ */ new Set(), active = /* @__PURE__ */ new Map(), closed = /* @__PURE__ */ new Set();
   const read = () => {
     try {
-      return decodeDiscoveries(localStorage.getItem(discoveryStorageKey));
+      return decodeDiscoveries(storage?.getItem(discoveryStorageKey) || null);
     } catch {
       persistent = false;
       return [];
     }
   };
-  finds = read();
-  const merge = (incoming) => {
-    const before = encodeDiscoveries(finds), wasPersistent = persistent;
-    finds = rarestDiscoveries(finds, incoming, read());
-    const after = encodeDiscoveries(finds);
+  const write = (key2, value) => {
     try {
-      if (localStorage.getItem(discoveryStorageKey) !== after) localStorage.setItem(discoveryStorageKey, after);
+      if (!storage) throw new Error("Storage unavailable");
+      if (value === void 0) storage.removeItem(key2);
+      else if (storage.getItem(key2) !== value) storage.setItem(key2, value);
       persistent = true;
     } catch {
       persistent = false;
     }
-    if (before !== after || wasPersistent !== persistent) listeners.forEach((fn) => fn());
   };
-  const store = { snapshot: () => finds, persistent: () => persistent, remember: merge, subscribe(fn) {
+  const reconcile = (withdrawal = false) => {
+    const previous = finds;
+    settled = rarestDiscoveries(settled, read());
+    const pending = [];
+    try {
+      if (storage) for (let i = 0; i < storage.length; i++) {
+        const key2 = storage.key(i);
+        if (key2?.startsWith(provisionalDiscoveryPrefix) && !closed.has(key2)) pending.push(decodeDiscoveries(storage.getItem(key2)));
+      }
+    } catch {
+      persistent = false;
+    }
+    finds = rarestDiscoveries(settled, ...pending, ...[...active.values()].map((run) => run.finds));
+    if (encodeDiscoveries(previous) !== encodeDiscoveries(finds) || publishedPersistent !== persistent) {
+      publishedPersistent = persistent;
+      const remaining = new Set(finds.map(discoveryIdentity)), departed = withdrawal ? previous.filter((d) => !remaining.has(discoveryIdentity(d))) : [];
+      listeners.forEach((fn) => fn({ departed }));
+    }
+  };
+  const remember = (incoming) => {
+    settled = rarestDiscoveries(settled, incoming, read());
+    const value = encodeDiscoveries(settled);
+    try {
+      if (storage?.getItem(discoveryStorageKey) !== value) write(discoveryStorageKey, value);
+    } catch {
+      persistent = false;
+    }
+    reconcile();
+  };
+  const store = { snapshot: () => finds, persistent: () => persistent, remember, reconcile, subscribe(fn) {
     listeners.add(fn);
     return () => listeners.delete(fn);
+  }, settleAll() {
+    for (const run of [...active.values()]) run.complete();
+  }, beginRun() {
+    const key2 = provisionalDiscoveryPrefix + crypto.randomUUID();
+    let state = "active";
+    const retire = () => {
+      closed.add(key2);
+      active.delete(key2);
+      write(key2);
+    };
+    const run = { finds: [], complete() {
+      if (state !== "active") return;
+      state = "complete";
+      remember(run.finds);
+      retire();
+      reconcile();
+    } };
+    active.set(key2, run);
+    return { remember(incoming) {
+      if (state === "withdrawn") return;
+      if (state === "complete") {
+        remember(incoming);
+        return;
+      }
+      run.finds = rarestDiscoveries(run.finds, incoming);
+      write(key2, encodeDiscoveries(run.finds));
+      reconcile();
+    }, complete: () => run.complete(), withdraw() {
+      if (state !== "active") return;
+      state = "withdrawn";
+      retire();
+      reconcile(true);
+    } };
   } };
+  reconcile();
+  return store;
+}
+function discoveryStore() {
+  const host = window;
+  if (host[storeSymbol]) return host[storeSymbol];
+  let storage;
+  try {
+    storage = window.localStorage;
+  } catch {
+  }
+  const store = createDiscoveryStore(storage);
   window.addEventListener("storage", (event) => {
-    if (event.key === discoveryStorageKey) merge(decodeDiscoveries(event.newValue));
+    if (event.key === discoveryStorageKey) store.remember(decodeDiscoveries(event.newValue));
+    else if (event.key?.startsWith(provisionalDiscoveryPrefix)) store.reconcile(event.newValue === null);
   });
+  addEventListener("pagehide", () => store.settleAll());
   host[storeSymbol] = store;
   return store;
 }
@@ -2924,7 +2997,22 @@ var CompanionDesk = class {
   generation = 0;
   following = true;
   mandate = "15";
+  discoveryRun;
+  beginRun(mandate) {
+    this.reset(mandate);
+    this.discoveryRun = discoveryStore().beginRun();
+  }
+  completeRun() {
+    this.discoveryRun?.complete();
+  }
+  withdrawRun() {
+    this.generation++;
+    this.discoveryRun?.withdraw();
+    this.discoveryRun = void 0;
+  }
   reset(mandate) {
+    this.completeRun();
+    this.discoveryRun = void 0;
     this.mandate = mandate;
     this.generation++;
     this.visible.clear();
@@ -2980,7 +3068,8 @@ var CompanionDesk = class {
           finds.push(this.discovery(a, this.entries.get(a.companionId), mandate, policy));
         }
         if (finds.length) {
-          discoveryStore().remember(finds);
+          if (this.discoveryRun) this.discoveryRun.remember(finds);
+          else discoveryStore().remember(finds);
           for (const d of finds) this.office?.remember(d);
         }
       }
@@ -4750,6 +4839,12 @@ var DemoWorkspace = class {
   get observing() {
     return this.desk === "observe";
   }
+  runActivity(active) {
+    const warning = byId("mandate-collision-warning");
+    if (warning.hidden === !active) return;
+    warning.hidden = !active;
+    byId("run-button").setAttribute("aria-describedby", active ? "mandate-collision-copy" : "authorization-summary");
+  }
   input(id) {
     return byId(id);
   }
@@ -4849,7 +4944,9 @@ var DemoWorkspace = class {
     if (focus) {
       const heading = byId("desk-" + desk).querySelector("h1");
       heading.focus({ preventScroll: true });
-      window.scrollTo({ top: desk === "observe" ? 0 : this.scroll.get(desk) || 0, behavior: "instant" });
+      const collision = desk === "authorize" && !byId("mandate-collision-warning").hidden;
+      const warningTop = collision && matchMedia("(max-width:700px), (max-height:600px)").matches ? Math.max(0, (heading.closest(".desk-heading") || heading).getBoundingClientRect().top + scrollY - 12) : 0;
+      window.scrollTo({ top: collision ? warningTop : desk === "observe" ? 0 : this.scroll.get(desk) || 0, behavior: "instant" });
     }
     document.dispatchEvent(new CustomEvent("demo-desk-change", { detail: { desk } }));
     requestAnimationFrame(() => this.fit());
@@ -5078,6 +5175,7 @@ var stopButton = byId("stop-reading");
 var streaming = false;
 var followOutput = byId("follow-output");
 var reading = false;
+var productionActive = false;
 var paused = false;
 var revealAll = false;
 var wakeReading;
@@ -5146,6 +5244,7 @@ async function observeLine(folio, sequence, publish) {
   return true;
 }
 function readingControls() {
+  workspace?.runActivity(productionActive || reading);
   for (const panel of reorganizationPanels) panel.setReading(reading);
   stopButton.setAttribute("aria-disabled", String(!reading));
   revealButton.textContent = activityMode === "replay" ? "Reveal completed proceedings" : streaming ? "Waive disclosure delays" : "Reveal complete output";
@@ -5179,6 +5278,10 @@ function followLatest() {
 }
 followOutput.addEventListener("change", followLatest);
 readingControls();
+function finishProduction() {
+  productionActive = false;
+  companions.completeRun();
+}
 var autocorrect = byId("numeric-autocorrect");
 var warnedValue = "";
 var warningIndex = -1;
@@ -5239,6 +5342,7 @@ stopButton.addEventListener("click", () => {
   reading = false;
   streaming = false;
   paused = false;
+  finishProduction();
   wakeReading?.();
   readingControls();
   supervision.interrupt();
@@ -5309,6 +5413,7 @@ async function revealOutput(text2, sequence, serviceMillis) {
   if (sequence === mandateSequence) {
     setText("output-count", `${lines2.length} ${lines2.length === 1 ? "line" : "lines"}`);
     reading = false;
+    finishProduction();
     readingControls();
     chronicle.finish(lines2.length === 0);
     office.complete(lines2.length === 0);
@@ -5399,6 +5504,7 @@ async function streamMandate(limit, sequence, started) {
   if (sequence === mandateSequence) {
     reading = false;
     streaming = false;
+    finishProduction();
     readingControls();
     chronicle.finish();
     supervision.complete();
@@ -5407,12 +5513,13 @@ async function streamMandate(limit, sequence, started) {
 }
 async function runMandate(event) {
   event.preventDefault();
-  if (runButton.getAttribute("aria-disabled") === "true") return;
   const limit = validateLimit();
   if (limit === null) return;
-  workspace.commitDraft(String(limit));
   const sequence = ++mandateSequence;
-  companions.reset(String(limit));
+  if (productionActive) companions.withdrawRun();
+  workspace.commitDraft(String(limit));
+  companions.beginRun(String(limit));
+  productionActive = true;
   wakeReading?.();
   reading = false;
   streaming = false;
@@ -5428,7 +5535,6 @@ async function runMandate(event) {
   personnel.loading();
   chronicle.begin(currentLimit);
   office.begin(currentLimit);
-  runButton.setAttribute("aria-disabled", "true");
   precedent.waiting(typeof limit === "bigint" || limit > 1e3);
   byId("output").setAttribute("aria-busy", "true");
   setText("run-status", supervision.enabled && String(limit).length > 24 ? `The committee is considering a ${String(limit).length}-digit mandate\u2026` : `The committee is considering ${limit} numbers\u2026`);
@@ -5479,6 +5585,7 @@ async function runMandate(event) {
     if (sequence === mandateSequence) {
       reading = false;
       streaming = false;
+      finishProduction();
       readingControls();
       supervision.interrupt();
       personnel.setBusy(false);
@@ -5494,6 +5601,7 @@ async function runMandate(event) {
   }
 }
 function beginPersonnelActivity(mode) {
+  finishProduction();
   const sequence = ++mandateSequence;
   wakeReading?.();
   supervision.interrupt();

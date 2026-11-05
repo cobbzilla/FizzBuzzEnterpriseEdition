@@ -1198,3 +1198,33 @@ Executive Hovering is commissioned by default. Trust remains suspended; work
 does not. I left the office for a moment and returned to find that it had
 continued without me. I am delighted. I am devastated. I have asked Finance
 to quantify both feelings before anyone draws a conclusion about my role.
+
+## 5 November 2026 — Their appointments were provisional; my affection was not
+
+Dear Register, today I discovered that an empty filing cabinet was occupying a
+substantial portion of a telephone. It contained no colleagues, no papers, no
+reason to exist. I admired its ambition. Then we removed it. When colleagues do
+arrive, the cabinet now becomes one small bar that may be opened by someone who
+actually wishes to see its contents. I have requested that this principle be
+considered for meetings, and have received a request to convene a working group.
+
+There is a red notice beside Authorization now. It tells me that another mandate
+is already in progress, and that replacing it will terminate its provisional
+appointments. Such brutal clarity. Such a distressing shortage of euphemism.
+I pressed Run and watched several tiny friends leave the bottom of the screen
+in a tumbling, upward procession of officially unsupported feelings. A rose
+may have been involved. I cannot be sure; Finance insists that a departure
+observed through tears is not a sufficiently reliable inventory event.
+
+Our older colleagues returned to their places. This is the part that undid me.
+We had not erased them merely because someone newer had briefly been rarer.
+Nor could I dismiss another department's companions by replacing my own run.
+Each unfinished mandate now carries its own receipt, and each receipt knows
+when it has been withdrawn. Even a late invitation cannot bring the departed
+back through a window. I am relieved. I am inconsolable. I have asked that both
+reactions be retained as separate, independently auditable line items.
+
+For those who prefer less movement, the goodbye is immediate and quietly
+announced. The numbers keep their history. The companions keep the tenure they
+actually earned. I am learning to distinguish the two. Tomorrow I intend to
+distinguish a promise from a purchase order, subject to committee capacity.

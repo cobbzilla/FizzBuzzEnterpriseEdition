@@ -3,7 +3,7 @@ import type {Companion} from '../catalog/bestiary';
 import {node} from './companion-story';
 export {node,characterStory} from './companion-story';
 import {companionDialog} from './companion-dialog';
-import {discoveryStore} from './discovery-store';
+import {discoveryStore,type DiscoveryRun} from './discovery-store';
 import {seedPolicy,type Discovery} from './discovery-model';
 export type {Companion};
 export interface FactorEvidence {factors:string;cofactor:string;complete:boolean;divisions:number;divisionBudget:number;trialPrimeCeiling:number}
@@ -31,6 +31,7 @@ export class CompanionDesk {
  private restoringRoll=false;private rollTransition=0;private rollVisible=false;
  private visible=new Map<string,string>();private batches=new Map<string,Promise<Assignment[]>>();private assigned=new Map<string,Assignment>();
  private lastSignature='';private entries=new Map<string,Companion>();private version='';private generation=0;private following=true;private mandate='15';
+ private discoveryRun?:DiscoveryRun;
  constructor(private readonly office?:{remember(d:Discovery):void;clearCompanions():void}){
   const attendance=()=>{const transition=++this.rollTransition;this.restoringRoll=true;if(!this.requireRoll.checked){this.rollScroll=this.scroller.scrollTop;if(this.scroller.scrollHeight-this.scroller.clientHeight-this.rollScroll>=24)this.following=false;this.roll.hidden=true;}else{const following=this.following,position=this.rollScroll;this.roll.hidden=false;requestAnimationFrame(()=>{if(transition!==this.rollTransition||!this.requireRoll.checked)return;this.scroller.scrollTop=following?this.scroller.scrollHeight:position;requestAnimationFrame(()=>{if(transition===this.rollTransition)this.restoringRoll=false;});});}};
   this.requireRoll.addEventListener('change',attendance);attendance();
@@ -41,7 +42,10 @@ export class CompanionDesk {
   this.latest.addEventListener('click',()=>{this.following=true;this.render();this.scroller.scrollTop=this.scroller.scrollHeight;});
   void companionPolicies().then(policies=>{const selected=new URL(location.href).searchParams.get('authority')||this.policy.value;this.policy.replaceChildren(...policies.map(p=>{const option=node('option',p.name);option.value=p.id;return option;}));if(policies.some(p=>p.id===selected))this.policy.value=selected;this.policy.disabled=false;}).catch(error=>{this.status.textContent='Companion policy registry unavailable: '+error.message;});
  }
- reset(mandate:string){this.mandate=mandate;this.generation++;this.visible.clear();this.assigned.clear();this.batches.clear();this.list.replaceChildren();this.lastSignature='';this.following=true;this.latest.hidden=true;this.status.textContent=this.enabled.checked?'Awaiting the first disclosed Fizz, Buzz or FizzBuzz.':'Companions are disabled.';}
+ beginRun(mandate:string){this.reset(mandate);this.discoveryRun=discoveryStore().beginRun();}
+ completeRun(){this.discoveryRun?.complete();}
+ withdrawRun(){this.generation++;this.discoveryRun?.withdraw();this.discoveryRun=undefined;}
+ reset(mandate:string){this.completeRun();this.discoveryRun=undefined;this.mandate=mandate;this.generation++;this.visible.clear();this.assigned.clear();this.batches.clear();this.list.replaceChildren();this.lastSignature='';this.following=true;this.latest.hidden=true;this.status.textContent=this.enabled.checked?'Awaiting the first disclosed Fizz, Buzz or FizzBuzz.':'Companions are disabled.';}
  disclose(start:string,lines:readonly string[]){for(let i=0;i<lines.length;i++){this.visible.set((BigInt(start)+BigInt(i)).toString(),lines[i]);}while(this.visible.size>1000)this.visible.delete(this.visible.keys().next().value!);if(this.enabled.checked)void this.refresh();}
  private async refresh(){
   const generation=this.generation;if(!this.enabled.checked)return;
@@ -55,7 +59,7 @@ export class CompanionDesk {
     const key=mandate+'|'+policy+'|'+start;let batch=this.batches.get(key);
     if(!batch){batch=(async()=>{const reply=await request('/companions/window?start='+start+'&count=100&strategy='+policy+'&seed='+mandate);if(!reply.ok)throw new Error('Assignment desk returned '+reply.status+'.');const data=await reply.json();if(data.schema!=='slopbuzz-companion-window/v2'||data.seedPolicy!==seedPolicy||data.mandateSeed!==mandate||data.catalogVersion!==this.version||data.strategy!==policy||data.start!==start||data.count!==100||!Array.isArray(data.assignments))throw new Error('Assignment evidence belongs to a different charter.');return data.assignments as Assignment[];})();this.batches.set(key,batch);batch.catch(()=>{if(this.batches.get(key)===batch)this.batches.delete(key);});}
     const assignments=await batch;if(generation!==this.generation||!this.enabled.checked)return;
-    const finds:Discovery[]=[];for(const a of assignments)if(this.visible.get(a.ordinal)===a.flavor&&this.entries.has(a.companionId)){this.assigned.set(a.ordinal,a);finds.push(this.discovery(a,this.entries.get(a.companionId)!,mandate,policy));}if(finds.length){discoveryStore().remember(finds);for(const d of finds)this.office?.remember(d);}
+    const finds:Discovery[]=[];for(const a of assignments)if(this.visible.get(a.ordinal)===a.flavor&&this.entries.has(a.companionId)){this.assigned.set(a.ordinal,a);finds.push(this.discovery(a,this.entries.get(a.companionId)!,mandate,policy));}if(finds.length){if(this.discoveryRun)this.discoveryRun.remember(finds);else discoveryStore().remember(finds);for(const d of finds)this.office?.remember(d);}
    }
    for(const ordinal of this.assigned.keys())if(!this.visible.has(ordinal))this.assigned.delete(ordinal);
    while(this.batches.size>12)this.batches.delete(this.batches.keys().next().value!);
