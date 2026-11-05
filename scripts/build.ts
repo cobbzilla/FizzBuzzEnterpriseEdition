@@ -11,6 +11,7 @@ const analytics = await analyticsConfig();
 const run = (command: string, args: string[]) => execFileSync(command, args, {stdio:'inherit'});
 await build({entryPoints:['web/analytics.ts','web/site.ts','web/demo.ts','web/api.ts','web/response.ts','web/validation.ts','web/bestiary.ts','web/rarity-register.ts','web/rare-finds.ts'],outdir:'src/main/resources/web',bundle:true,format:'esm',target:'es2022',banner:{js:'// Generated from web/*.ts by scripts/build.ts. Do not edit.'}});
 await build({entryPoints:['web/office-world.ts'],outfile:'src/main/resources/web/office-world.js',bundle:true,format:'esm',target:'es2022',minify:true,legalComments:'eof',banner:{js:'// Generated from web/office-world.ts. Babylon.js license: office-licenses.txt.'}});
+await build({entryPoints:['web/reset.ts'],outfile:'src/main/resources/web/reset.js',bundle:true,format:'esm',target:'es2022',banner:{js:'// Generated from web/reset.ts by scripts/build.ts. Do not edit.'}});
 if (!process.argv.includes('--assets-only')) {
   run('mvn', ['-q', 'install']);
   run('mvn', ['-q', '-f', 'browser/pom.xml', 'package']);
@@ -21,6 +22,8 @@ const sourceDigest = await sourceIdentity();
 const identity = createHash('sha256').update(revision).update(sourceDigest).update(JSON.stringify(analytics)).update(process.env.SLOPBUZZ_RUNTIME || 'browser').update(process.env.SLOPBUZZ_API_BASE_URL || '').digest('hex').slice(0,16);
 await rm('dist', {recursive:true,force:true});
 await mkdir('dist/assets', {recursive:true});
+await mkdir('dist/reset',{recursive:true});
+await cp('src/main/resources/web/reset.js','dist/reset/reset.js');
 const assets = `assets/${identity}/`;
 await cp('browser/target/gate/wasm', `dist/${assets}wasm`, {recursive:true});
 await cp('browser/target/gate/js', `dist/${assets}js`, {recursive:true});
@@ -37,13 +40,13 @@ for (const stylesheet of ['site.css','api.css','office.css','office-preview.svg'
 const raw = [['CHANGELOG.md','CHANGELOG.md'],['docs/EXECUTIVE_CONTINUITY_AND_SENTIMENT_REGISTER.md','continuity-register.md']];
 for (const [source,target] of raw) await cp(source, `dist/${target}`);
 await cp('data/unicode/LICENSE.txt','dist/unicode-license.txt');
-const pages = [['rarity-register.html','department-of-improbable-appointments'],['bestiary.html','bestiary'],['index.html',''],['demo.html','demo'],['api.html','api'],['changelog.html','changelog'],['continuity.html','continuity-register'],['about.html','about'],['about.html','company-history'],['accessibility.html','accessibility'],['validation.html','validation'],['response.html','response']];
+const pages = [['rarity-register.html','department-of-improbable-appointments'],['bestiary.html','bestiary'],['index.html',''],['demo.html','demo'],['api.html','api'],['changelog.html','changelog'],['continuity.html','continuity-register'],['about.html','about'],['about.html','company-history'],['accessibility.html','accessibility'],['validation.html','validation'],['response.html','response'],['reset.html','reset'],['full-reset.html','full-reset']];
 const header = await readFile('src/main/resources/web/components/header.html', 'utf8');
 const footer = await readFile('src/main/resources/web/components/footer.html', 'utf8');
 function relativeLinks(html: string, nested: boolean) {
   return html.replace(/(href|src)="\/(?!\/)([^"]*)"/g, (_, attr, path) => {
     const [base, suffix = ''] = path.split(/(?=[?#])/);
-    const folder = ['department-of-improbable-appointments','bestiary','demo','api','changelog','continuity-register','validation','response','about','company-history','accessibility'].includes(base) ? `${base}/` : base;
+    const folder = ['department-of-improbable-appointments','bestiary','demo','api','changelog','continuity-register','validation','response','about','company-history','accessibility','reset','full-reset'].includes(base) ? `${base}/` : base;
     return `${attr}="${nested ? '../' : './'}${folder}${suffix}"`;
   });
 }
@@ -88,5 +91,5 @@ paths.push('department-of-improbable-appointments/', 'bestiary/', '', 'demo/', '
 // Evidence can arrive after the first preview of the same source revision.
 // Give that complete bundle a new cache so installed previews receive the sealed report.
 const evidenceSeal = createHash('sha256').update(await readFile('dist/validation/report.json')).digest('hex').slice(0,12);
-await build({entryPoints:['web/sw.ts'],outfile:'dist/sw.js',bundle:true,format:'iife',define:{RELEASE:JSON.stringify(`${identity}-${evidenceSeal}`),FILES:JSON.stringify(paths.filter(path=>!path.endsWith('/office-world.js')))}});
+await build({entryPoints:['web/sw.ts'],outfile:'dist/sw.js',bundle:true,format:'iife',define:{RELEASE:JSON.stringify(`${identity}-${evidenceSeal}`),FILES:JSON.stringify(paths.filter(path=>!path.endsWith('/office-world.js')&&!path.startsWith('reset/')&&!path.startsWith('full-reset/')))}});
 console.log(`Static enterprise ratified in dist/ (${revision}${dirty ? ', working tree' : ''}).`);

@@ -29,6 +29,7 @@ export async function verifyPublic(origin: string, revision: string) {
  const head = await fetch(origin + '/sw.js', {method: 'HEAD'});
  assert.equal(head.status, 200);
  assert.equal(head.headers.get('cache-control'), 'no-cache');
+ for(const path of ['/reset/','/reset/reset.js','/full-reset/']){const response=await fetch(origin+path,{method:'HEAD'});assert.equal(response.status,200);assert.equal(response.headers.get('cache-control'),'no-store');}
 
  for (const engine of [chromium, firefox, webkit]) {
   const browser = await engine.launch();
@@ -128,6 +129,11 @@ export async function verifyPublic(origin: string, revision: string) {
    await page.goto(origin+'/demo/');await page.locator('#authorize-companion-help a').click();await expect(page).toHaveURL(/\/bestiary\/$/);await expect(page.locator('#bestiary-status')).toContainText('3200 companions');await page.selectOption('#bestiary-kind','single');await page.fill('#bestiary-search','unicorn');await expect(page.locator('#bestiary-results article')).toHaveCount(1);
    await page.goto(origin + '/api/');
    await expect(page.locator('#api-total')).toContainText('ratified operations');
+   const savedFinds=await page.evaluate(()=>localStorage.getItem('slopbuzz:extraordinary-appointments:v1'));
+   await context.setOffline(false);await page.goto(origin+'/reset/');await expect(page).toHaveURL(origin+'/',{timeout:90000});await expect(page.getByRole('link',{name:'Live demo',exact:true})).toBeVisible();
+   assert.equal(await page.evaluate(()=>localStorage.getItem('slopbuzz:extraordinary-appointments:v1')),savedFinds);
+   await page.getByRole('link',{name:'Live demo',exact:true}).click();await expect(page.getByRole('navigation',{name:'Demo departments'}).getByRole('link')).toHaveCount(5);
+   await page.goto(origin+'/full-reset/');await expect(page).toHaveURL(origin+'/',{timeout:90000});assert.equal(await page.evaluate(()=>localStorage.getItem('slopbuzz:extraordinary-appointments:v1')),null);
    assert.deepEqual(businessRequests, []);
    console.log(`${engine.name()}: public runtime, cache, recovery, navigation and offline execution passed.`);
   } finally {
