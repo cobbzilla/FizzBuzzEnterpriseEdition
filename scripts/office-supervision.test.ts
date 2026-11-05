@@ -27,7 +27,7 @@ test('every numerical line is released at its actual publication and its audit a
 });
 test('the ordinary fifteen-number mandate is genuinely a several-minute observation rather than a line timer',t=>{
  const steps=completeSample(),duration=steps.reduce((sum,s)=>sum+stepDuration(s),0);assert.ok(duration>180000);
- t.diagnostic('Authored foreground observation for fresh 15: '+Math.round(duration/1000)+' seconds, before reading pauses or background tabs.');
+ t.diagnostic('Authored observation for fresh 15: '+Math.round(duration/1000)+' seconds, before explicit reading pauses or Facilities holds.');
 });
 test('the two z obligations in each product and all four at fifteen have independent positions',()=>{
  const steps=completeSample().filter(s=>s.ordinal==='15');const allocations=steps.filter(s=>s.event.kind==='GLYPH_ACCEPTED');
@@ -90,13 +90,13 @@ test('all authored shots stay finite and within the estate for actual source rec
 });
 
 const clockStep=():ObservedOfficeStep=>planOfficeSteps([event('PUBLICATION')],{id:'clock',ordinal:'1',text:'1'})[0];
-test('background time never makes an observation jump to its conclusion',()=>{
- const clock=new ObservationClock(clockStep());clock.tick(0,true);clock.tick(20,true);clock.tick(1000000,false);assert.equal(clock.elapsed,20);clock.tick(1000016,true);assert.equal(clock.elapsed,36);
+test('an explicit pause never earns elapsed time, including the first resumed boundary',()=>{
+ const clock=new ObservationClock(clockStep());clock.tick(0,true);clock.tick(20,true);clock.tick(1000000,false);assert.equal(clock.elapsed,20);clock.tick(1000016,true);assert.equal(clock.elapsed,20);clock.tick(1000032,true);assert.equal(clock.elapsed,36);
 });
-test('a hidden-tab frame discontinuity earns at most one bounded foreground frame',()=>{
- const clock=new ObservationClock(clockStep());clock.tick(0,true);clock.tick(1000000,true);assert.equal(clock.elapsed,100);assert.equal(clock.tick(1000016,true).complete,false);
+test('a running clock accounts for elapsed time even when browser callbacks are delayed',()=>{
+ const step=clockStep(),clock=new ObservationClock(step);clock.tick(0,true);assert.equal(clock.tick(1000000,true).complete,true);assert.equal(clock.elapsed,stepDuration(step));
 });
-test('manual stepping can complete exactly one visible decision while a hidden view earns nothing',()=>{
+test('manual stepping can complete exactly one authorized decision while an explicit pause earns nothing',()=>{
  const step=clockStep(),clock=new ObservationClock(step);assert.equal(clock.tick(0,false,true).complete,false);const cue=clock.tick(20,true,true);assert.equal(cue.complete,true);assert.equal(clock.elapsed,stepDuration(step));assert.equal(clock.tick(50,true,true).work,1);
 });
 test('arrival, work, and reading hold are distinct, bounded, ordered phases',()=>{

@@ -21,13 +21,13 @@ test('five addressable departments separate authorization from observation witho
  await expect(page).toHaveURL(url=>url.hash==='#main'&&url.searchParams.get('desk')==='evidence');await expect(page.locator('main')).toBeFocused();await expect(page.locator('body')).toHaveAttribute('data-desk','evidence');
  expect((await custody(page)).journalEntries).toBe(15);expect(errors).toEqual([]);
 });
-test('draft changes, navigation, browser history and resume retain one paused mandate',async({page})=>{
- await ready(page);await page.fill('#limit','100');await page.selectOption('#authorize-display-speed','225');await page.click('#run-button');await expect(page.locator('#output-count')).toContainText('of 100');
+test('an explicit pause survives draft changes, navigation and browser history until the user resumes',async({page})=>{
+ await ready(page);await page.fill('#limit','100');await page.uncheck('#authorize-executive-hovering');await page.selectOption('#authorize-display-speed','225');await page.click('#run-button');await expect(page.locator('#output-count')).toContainText('of 100');await page.click('#pause-reading');
  await department(page,'authorize');const held=await page.locator('#output').textContent(),before=await custody(page);await page.fill('#limit','999');await page.selectOption('#authorize-companion-strategy','ordinal-constellation-v1');await page.waitForTimeout(500);expect(await page.locator('#output').textContent()).toBe(held);await expect(page.locator('#companion-strategy')).toHaveValue('factor-resonance-v1');
- await page.goBack();await expect(page.locator('body')).toHaveAttribute('data-desk','observe');await expect(page.locator('#pause-reading')).toHaveText('Resume');expect((await custody(page)).headDigest).toBe(before.headDigest);
- await department(page,'authorize');await page.click('#resume-current');await expect(page.locator('#observed-mandate')).toHaveText('Mandate 100');await expect(page.locator('#pause-reading')).toHaveText('Pause');await page.click('#stop-reading');
+ await page.goBack();await expect(page.locator('body')).toHaveAttribute('data-desk','observe');await expect(page.locator('#pause-reading')).toHaveAttribute('aria-label','Resume reading');expect((await custody(page)).headDigest).toBe(before.headDigest);
+ await department(page,'authorize');await page.click('#resume-current');await expect(page.locator('#observed-mandate')).toHaveText('Mandate 100');await expect(page.locator('#pause-reading')).toHaveAttribute('aria-pressed','true');await page.click('#pause-reading');await expect(page.locator('#pause-reading')).toHaveAttribute('aria-label','Pause reading');await page.click('#stop-reading');
 });
-test('all Watch arrangements share the same evidence and companion biography pauses the presentation',async({page})=>{
+test('all Watch arrangements and companion biographies share the same retained evidence',async({page})=>{
  await ready(page);await run(page);await expect(page.locator('#companion-list li')).toHaveCount(7);const before=await custody(page);
  for(const view of ['output','companions','commentary','overview']){await page.selectOption('#watch-view',view);await expect(page.locator('#mandate-output')).toHaveAttribute('data-watch-view',view);}
  await expect(page.locator('#spotlight-open')).toBeEnabled();await page.click('#spotlight-open');await expect(page.locator('#companion-dialog')).toBeVisible();await page.keyboard.press('Escape');await expect(page.locator('#spotlight-open')).toBeFocused();

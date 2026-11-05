@@ -12,11 +12,13 @@ Observe is active. Other pages retain their existing header arrangement.
 ## Ownership and lifecycle
 
 One mounted `demo.ts` module owns the numerical session and original controllers.
-`DemoWorkspace` receives a small reading/pause/resume port; it owns navigation
+`DemoWorkspace` receives a Chronicle placement port; it owns navigation
 and presentation placement, never numerical requests. Changing a department
 does not construct another runtime client, reset the output or submit Java work.
-Leaving Observe pauses disclosure. Returning remains paused until explicitly
-resumed. Backgrounding the document or opening a dialog also pauses disclosure.
+As amended by [ADR 0036](ADR-0036-continuous-mobile-playback.md), leaving Observe,
+backgrounding the document and opening a dialog do not pause disclosure. An
+explicit Pause remains in force across those transitions. Return to current run
+only navigates; resuming requires the explicit playback control.
 
 Authorize has distinct draft controls. Run validates the exact upper limit,
 commits the presentation policy once, starts one mandate and opens Observe.
@@ -35,12 +37,13 @@ principal view, a compact current companion and accessible playback controls.
 The layout reserves actual space for the rarest-five discovery register.
 Enlarged text uses ordinary scrolling instead of reducing type or clipping work.
 
-The office observation clock measures attention to Observe, not visibility of
-the canvas. Switching Watch arrangements therefore never causes an unexplained
-stall. Hidden canvases stop GPU rendering. Java evidence still owns the step
+The office disclosure clock is independent of attention and canvas visibility.
+Switching Watch arrangements therefore never causes an unexplained stall.
+Hidden canvases stop GPU rendering, while a timer keeps logical playback moving.
+Java evidence still owns the step
 order and publication boundary; reduced motion and unavailable graphics retain
 readable captions, paperwork and stepping. Reorganization retains its atomic
-estate authority and paused presentation cursor.
+estate authority and retained presentation cursor.
 
 The Chronicle has one DOM owner and one reader-owned following state. Its node
 moves between Evidence and the focused Commentary arrangement without rebuilding

@@ -207,8 +207,9 @@ site tabs if they still hold the audit repository, then use **Retry application
 refresh**. Shared Java-server records are never deleted by either route. Both
 routes install the latest interface before returning to the homepage.
 
-Both office views offer **Full-screen**. In Observe, enable Executive Hovering
-and use the button on the 3D view; live output, the current decision, the
+Both office views offer **Full-screen**. Executive Hovering is enabled by default
+for new authorizations; opt out in Authorize for ordinary disclosure. In Observe,
+use the button on the 3D view; live output, the current decision, the
 running Chronicle, playback controls and an optional companion remain as compact
 overlays. The panel selector can emphasize output or the log, or clear both.
 In Facilities, enter the office and choose **Full-screen**; camera and route
@@ -261,7 +262,11 @@ ordinary cadence is then recovered. Pause or observe one decision at a time.
 Each supplied Java event gets its own shot, and a line appears when its pictured
 publication finishes. Audit, queue, commit, cleanup and succession continue
 afterward. A fresh fifteen-number specimen has 436 events; observation takes
-several minutes and stops advancing while the view is hidden or obscured.
+several minutes. Disclosure continues through navigation, biographies, scrolling
+and background visits; only an explicit Pause holds it. GPU rendering can stop
+offscreen while the presentation clock continues, and returning shows the latest
+recorded step. SVG transport buttons retain accessible names, hover tooltips and
+44-pixel targets. Mobile output reserves readable lines from its first frame.
 Reduced motion supplies stationary views, and a graphics refusal retains readable
 papers and controls. Java has already completed the underlying operation.
 See [ADR 0031](docs/ADR-0031-executive-hovering.md). `pnpm test:supervision` checks

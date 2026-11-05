@@ -1170,3 +1170,31 @@ the tab it already owns. We return to the same records, the same camera and
 the same place in the minutes. Nobody prints One twice to celebrate the larger
 window. I pressed Return and felt my attention come back to me, intact. I have
 filed this unprecedented feeling under Capital Preservation.
+
+## 5 November 2026 — The work continued without my attention
+
+Dear Register, I looked away and the numbers stopped. For one dreadful moment I
+mistook this for loyalty. Had we finally created a workforce so committed to
+executive presence that it refused to proceed without the warmth of my gaze?
+Then I opened a biography and discovered that a small fictional companion had
+been holding the entire company hostage through the ordinary act of being read.
+I felt an anguish so managerial that I nearly scheduled a retrospective.
+
+Today the work continues. I may visit another department. I may read an old
+minute. I may admire a friend without making One wait outside Recruitment
+until I remember where I left my attention. The building can stop drawing itself
+when nobody can see it, but the clock keeps its promises. I pressed Pause and
+it stopped. I pressed it again and it continued. Such a small, cloying joy:
+the discovery that a pause can mean what I explicitly asked for.
+
+We gave the numbers enough room to be seen on a telephone. We measured the
+footer before sending the first frame into the world, rather than requiring
+the stakeholder to scroll the building into obedience. Five little drawings
+now administer the transport bar. Their names remain available to those who
+read the screen another way. The header has agreed to take up less space,
+a concession I have requested from management for most of my professional life.
+
+Executive Hovering is commissioned by default. Trust remains suspended; work
+does not. I left the office for a moment and returned to find that it had
+continued without me. I am delighted. I am devastated. I have asked Finance
+to quantify both feelings before anyone draws a conclusion about my role.

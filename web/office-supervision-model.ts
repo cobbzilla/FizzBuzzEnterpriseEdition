@@ -122,13 +122,13 @@ export function cueAt(step:ObservedOfficeStep,elapsed:number):OfficeCue {
  return {step,travel:smooth(travel),work:smooth(work),hold,phase:travel<1?'arrival':work<1?'work':'hold',complete:elapsed>=stepDuration(step)};
 }
 
-/** Presentation time is earned by visible frames, not by time spent in a background tab. */
+/** Elapsed time advances until explicitly held; visibility only chooses the callback driver. */
 export class ObservationClock {
- elapsed=0;private last?:number;
+ elapsed=0;private last?:number;private allowed=false;
  readonly step:ObservedOfficeStep;
  constructor(step:ObservedOfficeStep){this.step=step;}
  tick(now:number,allow:boolean,manual=false):OfficeCue {
-  const delta=this.last===undefined?0:Math.max(0,Math.min(100,now-this.last));this.last=now;
+  const delta=this.last===undefined||!this.allowed?0:Math.max(0,now-this.last);this.last=now;this.allowed=allow;
   if(allow)this.elapsed=manual?stepDuration(this.step):Math.min(stepDuration(this.step),this.elapsed+delta);
   return cueAt(this.step,this.elapsed);
  }

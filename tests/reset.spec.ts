@@ -45,14 +45,14 @@ for(const base of ['/', '/portfolio/slopbuzz/'])test(`reset escapes a retired wo
   await page.evaluate(async scope=>{
    await caches.open('another-application-cache');
    await caches.open(`slopbuzz-release-${encodeURIComponent(scope+'another-app/')}-retained`);
-   sessionStorage.setItem('slopbuzz:authorization-draft:v1','old draft');sessionStorage.setItem('slopbuzz:estate:v1','old estate');sessionStorage.setItem('unrelated-preference','keep');
+   sessionStorage.setItem('slopbuzz:authorization-draft:v1','old draft');sessionStorage.setItem('slopbuzz:authorization-draft:v2','current draft');sessionStorage.setItem('slopbuzz:estate:v1','old estate');sessionStorage.setItem('unrelated-preference','keep');
   },scope);
   const older=await context.newPage();await older.goto(scope);await expect(older.locator('h1')).toHaveText('Previous interface');
   await page.goto(scope+'demo/');await expect(page.locator('h1')).toHaveText('Previous interface');
   await page.goto(scope+'reset/');await expect(page).toHaveURL(scope);await expect(page.getByRole('link',{name:'Live demo',exact:true})).toBeVisible();expect(older.isClosed()).toBe(false);
   expect(await page.evaluate(()=>new URL(navigator.serviceWorker.controller!.scriptURL).searchParams.has('recovery'))).toBe(true);
   expect(await page.evaluate(()=>localStorage.getItem('slopbuzz:extraordinary-appointments:v1'))).toBe(finds);
-  expect(await page.evaluate(()=>[sessionStorage.getItem('slopbuzz:authorization-draft:v1'),sessionStorage.getItem('slopbuzz:estate:v1'),sessionStorage.getItem('unrelated-preference')])).toEqual([null,null,'keep']);
+  expect(await page.evaluate(()=>[sessionStorage.getItem('slopbuzz:authorization-draft:v1'),sessionStorage.getItem('slopbuzz:authorization-draft:v2'),sessionStorage.getItem('slopbuzz:estate:v1'),sessionStorage.getItem('unrelated-preference')])).toEqual([null,null,null,'keep']);
   const names=await page.evaluate(()=>caches.keys());expect(names).toContain('another-application-cache');expect(names).toContain(`slopbuzz-release-${encodeURIComponent(scope+'another-app/')}-retained`);
   expect(await page.evaluate(async()=>(await navigator.serviceWorker.getRegistrations()).map(registration=>registration.scope))).toContain(scope+'another-app/');
   // The retired controller may outlive unregister while its old tab stays open;

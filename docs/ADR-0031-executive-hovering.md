@@ -37,8 +37,10 @@ unsafe floating-point ordinals for presentation.
 
 Pause, one-decision stepping, Stop, revealing output, mode changes, newer
 mandates, retained replay and personnel rehearsals share explicit cancellation
-and ownership rules. Each publication callback runs at most once. Off-screen,
-hidden-tab and obscured views stop advancing. Reduced motion uses stationary
+and ownership rules. Each publication callback runs at most once. As amended by
+[ADR 0036](ADR-0036-continuous-mobile-playback.md), off-screen, background and
+obscured views continue advancing unless explicitly paused. GPU visibility is
+independent of disclosure. Reduced motion uses stationary
 shots with the same readable sequence. A graphics failure keeps a semantic
 evidence presentation and the same functioning controls.
 

@@ -60,7 +60,7 @@ test('paced reading pauses, stops, replays and steps through existing evidence w
  await demoAction(page,'click','#experiment-personnel-documents');await demoAction(page,'click','#experiment-personnel-documents-toggle');await expect(page.locator('#experiment-personnel-documents-toggle')).toHaveAttribute('aria-expanded','true');
  await page.locator('#experiment-personnel-steps summary').first().click();await expect(page.locator('#experiment-personnel-documents-toggle')).toHaveAttribute('aria-expanded','false');
 });
-test('a numerical mandate retains its own record while a separate rehearsal is paused',async({page})=>{
+test('a numerical mandate retains its own record while a separate rehearsal continues',async({page})=>{
  await page.goto('/demo/');await demoAction(page,'click','[data-personnel-scenario="zero"]');await expect(page.locator('#experiment-personnel-status')).toContainText('Reading completed proceedings');
  await demoAction(page,'fill','#limit','2');await demoAction(page,'selectOption','#display-speed','0');await demoAction(page,'click','#run-button');await expect(page.locator('#run-status')).toContainText('Mandate complete');
  await expect(page.locator('#personnel-verdict')).toHaveText('Approved to start at 1');await expect(page.locator('#personnel-origin')).toContainText('Mandate record');

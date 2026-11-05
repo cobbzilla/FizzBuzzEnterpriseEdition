@@ -26,8 +26,9 @@ bottom, with its full directory, stories, route, preferences and arrangement
 records in a bounded drawer. Picking an object reveals its existing story.
 
 The full-screen presentation is an active office view, rather than a reason to
-pause observation or the moving ceremony. Other dialogs still pause business
-disclosure. Biography and personnel dialogs move within the native full-screen
+pause observation or the moving ceremony. As amended by ADR 0036, other dialogs
+also leave disclosure running; only the user's explicit Pause holds playback.
+Biography and personnel dialogs move within the native full-screen
 surface so they remain available above the building. The real run/tour status
 announcer also moves into the modal as a visible, bounded line above its controls.
 Resize observers resize the retained Babylon engines. Existing reduced-motion,
