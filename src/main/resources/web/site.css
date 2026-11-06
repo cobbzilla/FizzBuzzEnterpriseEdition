@@ -722,7 +722,7 @@ html:has(.demo-page[data-desk=authorize]) { scroll-padding-bottom: calc(var(--di
 .playback-icon svg { display: block; width: 22px; height: 22px; pointer-events: none; }
 .demo-page .watch-transport { flex-wrap: nowrap; gap: 6px; }
 .observe-desk:has([data-office=true]) .watch-transport #pause-reading.playback-icon { display: none; }
-#active-run-banner { position: sticky; top: 0; z-index: 35; display: flex; align-items: center; justify-content: space-between; width: 100%; height: 44px; gap: 12px; margin: 0; padding: 4px max(12px,env(safe-area-inset-left)) 4px max(12px,env(safe-area-inset-right)); border: 0; border-bottom: 1px solid var(--ink); border-radius: 0; background: var(--ink); color: var(--white); text-align: left; cursor: pointer; font: inherit; }
+#active-run-banner { position: sticky; top: 0; z-index: 35; display: flex; align-items: center; justify-content: space-between; width: 100%; min-height: 44px; height: auto; gap: 12px; margin: 0; padding: 4px max(12px,env(safe-area-inset-left)) 4px max(12px,env(safe-area-inset-right)); border: 0; border-bottom: 1px solid var(--ink); border-radius: 0; background: var(--ink); color: var(--white); text-align: left; cursor: pointer; font: inherit; }
 #active-run-banner:hover { background: #29434c; }
 #active-run-banner:focus-visible { outline-offset: -4px; }
 .active-run-copy { min-width: 0; display: flex; align-items: baseline; gap: 20px; overflow: hidden; }

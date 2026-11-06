@@ -219,7 +219,7 @@
 @media(forced-colors:active) { .immersive-overlay { background: Canvas; color: CanvasText; border-color: CanvasText; } }
 @media(prefers-reduced-motion:reduce) { .office-fullscreen * { scroll-behavior: auto !important; } }
 .office-fullscreen #active-run-banner { position: absolute; inset: 0 0 auto; z-index: 4; }
-.office-fullscreen-surface:has(> #active-run-banner:not([hidden])) { --immersive-run-height: 44px; }
+.office-fullscreen-surface:has(> #active-run-banner:not([hidden])) { --immersive-run-height: var(--immersive-banner-height,44px); }
 @media(min-width:901px) {
  .office-fullscreen-surface[data-view=observe] { --immersive-output-width: clamp(160px,20vw,280px); --immersive-log-width: clamp(180px,25vw,352px); }
  .office-fullscreen-surface[data-view=observe] :is(.immersive-output,.immersive-log) { bottom: max(8px,env(safe-area-inset-bottom)); }
