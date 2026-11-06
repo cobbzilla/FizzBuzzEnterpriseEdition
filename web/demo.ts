@@ -60,7 +60,7 @@ async function observeLine(folio:Folio,sequence:number,publish:()=>void){
  if(sequence!==mandateSequence)return false;release();return true;
 }
 function readingControls() {
-  workspace?.runActivity(productionActive||reading);
+  workspace?.runActivity(productionActive||reading,reading&&paused,activityMode);
   for(const panel of reorganizationPanels)panel.setReading(reading);
   stopButton.setAttribute('aria-disabled', String(!reading));
   revealButton.textContent = activityMode==='replay'?'Reveal completed proceedings':streaming ? 'Waive disclosure delays' : 'Reveal complete output';
@@ -321,6 +321,7 @@ async function runMandate(event: Event) {
 
 function beginPersonnelActivity(mode:'replay'|'inspection'){
  finishProduction();
+ workspace?.beginDisclosure();
  const sequence=++mandateSequence;wakeReading?.();supervision.interrupt();activityMode=mode;manualStep=mode==='inspection';reading=mode!=='inspection';streaming=false;paused=false;revealAll=false;
  runButton.removeAttribute('aria-disabled');byId('output').removeAttribute('aria-busy');readingControls();
  if(supervision.enabled&&mode!=='inspection'){byId('supervision-title').focus({preventScroll:true});byId('mandate-output').scrollIntoView({block:'start',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});}

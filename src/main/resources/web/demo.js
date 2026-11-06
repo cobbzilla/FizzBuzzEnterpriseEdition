@@ -746,6 +746,39 @@ function setText(id, value) {
   byId(id).textContent = String(value);
 }
 
+// web/playback-controls.ts
+var paths = {
+  pause: "M9 5v14M15 5v14",
+  play: "M8 5l11 7-11 7V5Z",
+  stop: "M6 6h12v12H6Z",
+  next: "M5 5l10 7-10 7V5ZM19 5v14",
+  options: "M3 7h3m6 0h9M3 17h9m6 0h3M12 7a3 3 0 1 1-6 0 3 3 0 0 1 6 0ZM18 17a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z",
+  evidence: "M14 3H5v18h8M14 3l5 5h-5V3ZM8 8h3M8 12h3M8 16h3M20 17a3 3 0 1 1-6 0 3 3 0 0 1 6 0ZM20 20l2 2",
+  waive: "M3 5l8 7-8 7V5ZM12 5l8 7-8 7V5ZM22 5v14",
+  fullscreen: "M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5",
+  restore: "M3 8h5V3m8 0v5h5M8 21v-5H3m18 0h-5v5"
+};
+function playbackIcon(button, icon, label) {
+  button.setAttribute("aria-label", label);
+  button.title = label;
+  button.classList.add("playback-icon");
+  if (button.dataset.icon === icon) return;
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.setAttribute("viewBox", "0 0 24 24");
+  svg.setAttribute("aria-hidden", "true");
+  svg.setAttribute("focusable", "false");
+  svg.setAttribute("fill", "none");
+  svg.setAttribute("stroke", "currentColor");
+  svg.setAttribute("stroke-width", "2");
+  svg.setAttribute("stroke-linecap", "round");
+  svg.setAttribute("stroke-linejoin", "round");
+  const path = document.createElementNS(svg.namespaceURI, "path");
+  path.setAttribute("d", paths[icon]);
+  svg.append(path);
+  button.dataset.icon = icon;
+  button.replaceChildren(svg);
+}
+
 // web/office-fullscreen.ts
 var OfficeFullscreen = class {
   dialog = byId("office-fullscreen");
@@ -760,6 +793,9 @@ var OfficeFullscreen = class {
   mode;
   placeChronicle;
   constructor() {
+    playbackIcon(byId("supervision-fullscreen"), "fullscreen", "Full-screen office observation");
+    playbackIcon(byId("office-fullscreen-enter"), "fullscreen", "Full-screen office view");
+    playbackIcon(this.exit, "restore", "Exit full-screen and return to website");
     this.exit.addEventListener("click", () => this.close());
     this.dialog.addEventListener("cancel", (event) => {
       event.preventDefault();
@@ -826,6 +862,7 @@ var OfficeFullscreen = class {
       this.move(byId("watch-settings"), "office-fullscreen-settings");
       this.move(byId("companion-spotlight"), "office-fullscreen-companion");
     } else {
+      this.move(byId("active-run-banner"), this.surface);
       this.move(byId("office-stage"), "office-fullscreen-stage");
       this.move(document.querySelector(".office-toolbar"), "office-fullscreen-controls");
       this.move(byId("office-walking-controls"), "office-fullscreen-controls");
@@ -1765,37 +1802,6 @@ var OfficeShotDirector = class {
 };
 function rebaseObservation(elapsed, oldArrival, newArrival) {
   return elapsed < oldArrival && oldArrival > 0 ? elapsed / oldArrival * newArrival : Math.max(0, elapsed - oldArrival) + newArrival;
-}
-
-// web/playback-controls.ts
-var paths = {
-  pause: "M9 5v14M15 5v14",
-  play: "M8 5l11 7-11 7V5Z",
-  stop: "M6 6h12v12H6Z",
-  next: "M5 5l10 7-10 7V5ZM19 5v14",
-  options: "M3 7h3m6 0h9M3 17h9m6 0h3M12 7a3 3 0 1 1-6 0 3 3 0 0 1 6 0ZM18 17a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z",
-  evidence: "M14 3H5v18h8M14 3l5 5h-5V3ZM8 8h3M8 12h3M8 16h3M20 17a3 3 0 1 1-6 0 3 3 0 0 1 6 0ZM20 20l2 2",
-  waive: "M3 5l8 7-8 7V5ZM12 5l8 7-8 7V5ZM22 5v14"
-};
-function playbackIcon(button, icon, label) {
-  button.setAttribute("aria-label", label);
-  button.title = label;
-  button.classList.add("playback-icon");
-  if (button.dataset.icon === icon) return;
-  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-  svg.setAttribute("viewBox", "0 0 24 24");
-  svg.setAttribute("aria-hidden", "true");
-  svg.setAttribute("focusable", "false");
-  svg.setAttribute("fill", "none");
-  svg.setAttribute("stroke", "currentColor");
-  svg.setAttribute("stroke-width", "2");
-  svg.setAttribute("stroke-linecap", "round");
-  svg.setAttribute("stroke-linejoin", "round");
-  const path = document.createElementNS(svg.namespaceURI, "path");
-  path.setAttribute("d", paths[icon]);
-  svg.append(path);
-  button.dataset.icon = icon;
-  button.replaceChildren(svg);
 }
 
 // web/presentation-scheduler.ts
@@ -4707,6 +4713,7 @@ var DemoWorkspace = class {
     byId("experiment-view").addEventListener("change", () => this.sections("experiment"));
     byId("evidence-view").addEventListener("change", () => this.sections("evidence"));
     byId("resume-current").addEventListener("click", () => this.navigate("observe"));
+    byId("active-run-banner").addEventListener("click", () => this.navigate("observe"));
     byId("office-choose-mandate").addEventListener("click", () => {
       this.navigate("authorize");
       byId("limit").focus();
@@ -4834,16 +4841,48 @@ var DemoWorkspace = class {
   committed = false;
   applying = false;
   manualView = false;
+  running = false;
+  held = false;
+  activity = "mandate";
+  latestValue;
+  bannerAnnouncement = "";
   preferredAuthority = new URL(location.href).searchParams.get("authority") || "";
   scroll = /* @__PURE__ */ new Map();
   get observing() {
     return this.desk === "observe";
   }
-  runActivity(active) {
+  runActivity(active, paused2 = false, mode = "mandate") {
+    this.running = active;
+    this.held = paused2;
+    this.activity = mode;
     const warning = byId("mandate-collision-warning");
-    if (warning.hidden === !active) return;
-    warning.hidden = !active;
-    byId("run-button").setAttribute("aria-describedby", active ? "mandate-collision-copy" : "authorization-summary");
+    if (warning.hidden !== !active) {
+      warning.hidden = !active;
+      byId("run-button").setAttribute("aria-describedby", active ? "mandate-collision-copy" : "authorization-summary");
+    }
+    this.updateRunBanner();
+  }
+  beginDisclosure() {
+    this.latestValue = void 0;
+    this.updateRunBanner();
+  }
+  updateRunBanner() {
+    const banner = byId("active-run-banner"), visible2 = this.running && !this.observing, focused = banner.contains(document.activeElement);
+    const state = this.held ? "Executive hold remains in force" : this.activity === "replay" ? "Retained proceedings under review" : "Authorized production continues";
+    const value = this.latestValue ? this.latestValue.text + " \xB7 certified ordinal " + this.latestValue.ordinal : "Awaiting the first certified value";
+    for (const [id, text2] of [["active-run-state", state], ["active-run-value", value]]) if (byId(id).textContent !== text2) byId(id).textContent = text2;
+    byId("active-run-value").title = value;
+    banner.dataset.latestOrdinal = this.latestValue?.ordinal || "";
+    banner.hidden = !visible2;
+    const announcement2 = visible2 ? state + ". Use the running mandate bar to return to Observe." : "";
+    if (announcement2 !== this.bannerAnnouncement) {
+      this.bannerAnnouncement = announcement2;
+      byId("active-run-announcement").textContent = announcement2;
+    }
+    if (!visible2 && focused) {
+      const target = byId("office-fullscreen").open ? byId("office-fullscreen-exit") : byId("desk-" + this.desk).querySelector("h1");
+      target?.focus({ preventScroll: true });
+    }
   }
   input(id) {
     return byId(id);
@@ -4898,6 +4937,7 @@ var DemoWorkspace = class {
     this.committed = true;
     this.manualView = false;
     byId("watch-latest").textContent = "";
+    this.beginDisclosure();
     this.watch.value = initialWatchView(matchMedia("(max-width: 700px), (max-height: 500px)").matches, policy.hovering);
     byId("observed-mandate").textContent = mandate.length > 28 ? mandate.slice(0, 12) + "\u2026 \xB7 " + mandate.length + "-digit mandate" : "Mandate " + mandate;
     byId("observe-empty").hidden = true;
@@ -4931,6 +4971,7 @@ var DemoWorkspace = class {
     byId("company-menu").hidden = desk !== "observe";
     this.settings(false);
     for (const key2 of desks2) byId("desk-" + key2).hidden = key2 !== desk;
+    this.updateRunBanner();
     const url = deskURL(new URL(location.href), desk);
     if (push && readDesk(new URL(location.href)) !== desk) history.pushState({ ...history.state }, "", url);
     this.retainDesk(desk);
@@ -4945,7 +4986,7 @@ var DemoWorkspace = class {
       const heading = byId("desk-" + desk).querySelector("h1");
       heading.focus({ preventScroll: true });
       const collision = desk === "authorize" && !byId("mandate-collision-warning").hidden;
-      const warningTop = collision && matchMedia("(max-width:700px), (max-height:600px)").matches ? Math.max(0, (heading.closest(".desk-heading") || heading).getBoundingClientRect().top + scrollY - 12) : 0;
+      const warningTop = collision && matchMedia("(max-width:700px), (max-height:600px)").matches ? Math.max(0, (heading.closest(".desk-heading") || heading).getBoundingClientRect().top + scrollY - byId("active-run-banner").getBoundingClientRect().height - 12) : 0;
       window.scrollTo({ top: collision ? warningTop : desk === "observe" ? 0 : this.scroll.get(desk) || 0, behavior: "instant" });
     }
     document.dispatchEvent(new CustomEvent("demo-desk-change", { detail: { desk } }));
@@ -4999,6 +5040,8 @@ var DemoWorkspace = class {
   }
   disclosed(folio) {
     if (!folio) return;
+    this.latestValue = { ordinal: folio.ordinal, text: folio.text };
+    this.updateRunBanner();
     const host = byId("watch-prose"), text2 = folio.narrative?.slice(0, 2) || folio.events.slice(0, 2).map((event) => event.office + ": " + event.finding);
     byId("watch-latest").textContent = " \xB7 " + folio.ordinal + ": " + folio.text;
     if (host.contains(document.activeElement) || host.scrollTop > 8) return;
@@ -5244,7 +5287,7 @@ async function observeLine(folio, sequence, publish) {
   return true;
 }
 function readingControls() {
-  workspace?.runActivity(productionActive || reading);
+  workspace?.runActivity(productionActive || reading, reading && paused, activityMode);
   for (const panel of reorganizationPanels) panel.setReading(reading);
   stopButton.setAttribute("aria-disabled", String(!reading));
   revealButton.textContent = activityMode === "replay" ? "Reveal completed proceedings" : streaming ? "Waive disclosure delays" : "Reveal complete output";
@@ -5602,6 +5645,7 @@ async function runMandate(event) {
 }
 function beginPersonnelActivity(mode) {
   finishProduction();
+  workspace?.beginDisclosure();
   const sequence = ++mandateSequence;
   wakeReading?.();
   supervision.interrupt();

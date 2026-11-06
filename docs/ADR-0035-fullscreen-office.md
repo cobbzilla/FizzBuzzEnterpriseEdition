@@ -25,6 +25,11 @@ viewport in every case. Facilities exposes camera and route controls at the
 bottom, with its full directory, stories, route, preferences and arrangement
 records in a bounded drawer. Picking an object reveals its existing story.
 
+[ADR 0038](ADR-0038-continuous-production-disclosure.md) aligns desktop output,
+log and transport controls to one bottom edge, replaces full-screen entry and
+exit labels with named SVG icons, compacts mobile controls, and carries the
+running-mandate bar into the Facilities presentation.
+
 The full-screen presentation is an active office view, rather than a reason to
 pause observation or the moving ceremony. As amended by ADR 0036, other dialogs
 also leave disclosure running; only the user's explicit Pause holds playback.

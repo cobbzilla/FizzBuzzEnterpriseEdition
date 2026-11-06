@@ -722,7 +722,24 @@ html:has(.demo-page[data-desk=authorize]) { scroll-padding-bottom: calc(var(--di
 .playback-icon svg { display: block; width: 22px; height: 22px; pointer-events: none; }
 .demo-page .watch-transport { flex-wrap: nowrap; gap: 6px; }
 .observe-desk:has([data-office=true]) .watch-transport #pause-reading.playback-icon { display: none; }
+#active-run-banner { position: sticky; top: 0; z-index: 35; display: flex; align-items: center; justify-content: space-between; width: 100%; height: 44px; gap: 12px; margin: 0; padding: 4px max(12px,env(safe-area-inset-left)) 4px max(12px,env(safe-area-inset-right)); border: 0; border-bottom: 1px solid var(--ink); border-radius: 0; background: var(--ink); color: var(--white); text-align: left; cursor: pointer; font: inherit; }
+#active-run-banner:hover { background: #29434c; }
+#active-run-banner:focus-visible { outline-offset: -4px; }
+.active-run-copy { min-width: 0; display: flex; align-items: baseline; gap: 20px; overflow: hidden; }
+.active-run-copy > * { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.3; }
+#active-run-state { font-size: .78rem; }
+#active-run-value { font-family: var(--mono,monospace); font-size: .82rem; font-weight: 750; color: #ffd6a3; }
+.active-run-action { display: flex; align-items: center; gap: 6px; flex: none; font-size: .75rem; font-weight: 750; }
+@media(max-width:700px), (max-height:500px) {
+ .demo-page .watch-transport { gap: 12px; min-height: 44px; padding-block: 4px; }
+ .demo-page .watch-transport button.playback-icon { position: relative; width: 36px; height: 36px; min-width: 36px; min-height: 36px; }
+ .demo-page .watch-transport button.playback-icon::before { content: ''; position: absolute; inset: -4px; }
+ .demo-page .watch-transport button.playback-icon svg { width: 18px; height: 18px; }
+}
 @media(max-width:700px) {
+ .active-run-copy { display: flex; flex-direction: column; align-items: stretch; gap: 1px; }
+ #active-run-state { font-size: .75rem; }
+ #active-run-value { font-size: .82rem; }
  .demo-page[data-desk=observe] .header-inner { min-height: 44px; padding-block: 0; }
  .demo-page[data-desk=observe] .brand img { width: 24px; height: 24px; }
  .demo-page[data-desk=observe] .demo-app { padding-top: 2px; }

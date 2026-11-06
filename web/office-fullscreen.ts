@@ -1,4 +1,5 @@
 import {byId} from './dom';
+import {playbackIcon} from './playback-controls';
 
 type OfficeView = 'observe' | 'facilities';
 type PanelView = 'both' | 'output' | 'log' | 'none';
@@ -18,6 +19,9 @@ class OfficeFullscreen {
   placeChronicle?: (target: HTMLElement) => void;
 
   constructor() {
+    playbackIcon(byId<HTMLButtonElement>('supervision-fullscreen'),'fullscreen','Full-screen office observation');
+    playbackIcon(byId<HTMLButtonElement>('office-fullscreen-enter'),'fullscreen','Full-screen office view');
+    playbackIcon(this.exit,'restore','Exit full-screen and return to website');
     this.exit.addEventListener('click', () => this.close());
     this.dialog.addEventListener('cancel', event => {event.preventDefault(); this.close();});
     this.dialog.addEventListener('close', () => {if (!this.dialog.open) this.close();});
@@ -73,6 +77,7 @@ class OfficeFullscreen {
       this.move(byId('watch-settings'), 'office-fullscreen-settings');
       this.move(byId('companion-spotlight'), 'office-fullscreen-companion');
     } else {
+      this.move(byId('active-run-banner'),this.surface);
       this.move(byId('office-stage'), 'office-fullscreen-stage');
       this.move(document.querySelector<HTMLElement>('.office-toolbar')!, 'office-fullscreen-controls');
       this.move(byId('office-walking-controls'), 'office-fullscreen-controls');

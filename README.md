@@ -207,7 +207,7 @@ site tabs if they still hold the audit repository, then use **Retry application
 refresh**. Shared Java-server records are never deleted by either route. Both
 routes install the latest interface before returning to the homepage.
 
-Both office views offer **Full-screen**. Executive Hovering is enabled by default
+Both office views offer a named **Full-screen** icon button. Executive Hovering is enabled by default
 for new authorizations; opt out in Authorize for ordinary disclosure. In Observe,
 use the button on the 3D view; live output, the current decision, the
 running Chronicle, playback controls and an optional companion remain as compact
@@ -215,8 +215,16 @@ overlays. The panel selector can emphasize output or the log, or clear both.
 In Facilities, enter the office and choose **Full-screen**; camera and route
 controls remain at the edge, with the directory and paperwork in a drawer.
 Browser full-screen is requested where supported, with a tab-sized fallback.
-**Return to website** or Escape restores the normal layout without replaying
-the mandate. Full-screen requires no additional business API requests.
+The exit icon or Escape restores the normal layout without replaying the
+mandate. Desktop output, log and controls share one bottom edge; mobile controls
+use smaller, more widely spaced icons with retained touch targets. Full-screen
+requires no additional business API requests.
+
+While a mandate is loading, running or explicitly paused, every other demo desk
+shows a compact bar at the top with its latest certified output value. Select
+it to return to Observe without changing the run or its pause state. Facilities
+keeps the bar available even in full-screen. See
+[ADR 0038](docs/ADR-0038-continuous-production-disclosure.md).
 
 The [Glyph Procurement Directorate](docs/ADR-0022-glyph-procurement.md) requires
 position-specific receiving certificates for every Fizz/Buzz character. Inspect
