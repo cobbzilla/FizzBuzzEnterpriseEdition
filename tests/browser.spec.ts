@@ -25,7 +25,10 @@ test('local UI, cache, receipts, docs, cadence and scrolling',async({page})=>{
   await expect(page.locator('#run-status')).toContainText('Mandate complete');
   await expect(page.locator('#cache-result')).toHaveText('MISS');
   expect(await page.locator('#output').evaluate(e=>e.scrollTop+e.clientHeight>=e.scrollHeight-2)).toBe(true);
-  await demoAction(page,'click','#run-button');await expect(page.locator('#cache-result')).toHaveText('HIT');
+  // Exercise both native activation paths: mouse for the first mandate, keyboard
+  // for cache reuse after navigating from Observe back to Authorize.
+  const cachedRun=await demoControl(page,'#run-button');await cachedRun.focus();await expect(cachedRun).toBeFocused();await page.keyboard.press('Enter');
+  await expect(page.locator('body')).toHaveAttribute('data-desk','observe');await expect(page.locator('#cache-result')).toHaveText('HIT');
   await page.goto('/#operations');await expect(page.locator('#health-value')).toHaveText('LIVE');
   await demoAction(page,'click','#canary-button');await expect(page.locator('#canary-value')).toHaveText('APPROVED');
   await demoAction(page,'click','#recovery-button');await expect(page.locator('#recovery-value')).toHaveText('COPY MATCHED');
