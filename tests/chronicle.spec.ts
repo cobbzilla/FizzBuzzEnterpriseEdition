@@ -3,7 +3,7 @@ import {test,expect,type Page} from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 test.beforeEach(async({page},info)=>{await page.route('**/runtime-config.json',async route=>{const response=await route.fetch();await route.fulfill({json:{...await response.json(),engine:info.project.metadata.engine}});});});
 async function invoke(page:Page,path:string){return page.evaluate(async path=>{const m=await import(new URL('/assets/tribunal.js',location.href).href);const client=new m.BrowserRuntimeClient();try{return await(await client.request(path)).json();}finally{client.close();}},path);}
-async function run(page:Page,limit:string){await demoAction(page,'fill','#limit',limit);await demoAction(page,'click','#run-button');await expect(page.locator('#run-status')).toContainText('Mandate complete');await watch(page,'commentary');}
+async function run(page:Page,limit:string){await demoAction(page,'fill','#limit',limit);await demoAction(page,'click','#run-button');await expect(page.locator('body')).toHaveAttribute('data-desk','observe');await expect(page.locator('#run-status')).toContainText('Mandate complete');await watch(page,'commentary');}
 async function bottom(page:Page){await watch(page,'commentary');await expect.poll(()=>page.locator('#chronicle-scroll').evaluate(e=>Math.abs(e.scrollTop+e.clientHeight-e.scrollHeight)<3)).toBe(true);}
 
 test('a focused chronicle has fixed height, scrolls and follows its latest entry',async({page})=>{
