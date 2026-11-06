@@ -1,4 +1,5 @@
 import {expect,type Page,type Locator} from '@playwright/test';
+import {demoNavigator} from '../scripts/demo-navigation';
 async function mounted(page:Page){if(new URL(page.url()).pathname.endsWith('/demo/'))await expect(page.locator('body')).toHaveAttribute('data-desk',/^(authorize|observe|experiment|facilities|evidence)$/);}
 /** Navigate the actual desks before using a relocated control in the regression suites. */
 export async function demoControl(page:Page,selector:string):Promise<Locator>{
@@ -22,7 +23,7 @@ export async function demoControl(page:Page,selector:string):Promise<Locator>{
  if(selector==='#pause-reading'&&await page.locator('#pause-reading').isHidden())target='#supervision-pause';
  return page.locator(target);
 }
-export async function department(page:Page,desk:string){await mounted(page);if(await page.locator('body').getAttribute('data-desk')!==desk)await page.locator('[data-desk-link="'+desk+'"]').click();}
+export async function department(page:Page,desk:string){await demoNavigator(page).desk(desk);}
 export async function watch(page:Page,view='overview'){await department(page,'observe');await page.selectOption('#watch-view',view);await expect(page.locator('#watch-view')).toHaveValue(view);}
 export async function demoAction(page:Page,action:'click'|'fill'|'selectOption'|'check'|'uncheck'|'focus'|'press'|'hover'|'tap',selector:string,...args:unknown[]):Promise<unknown>{
  await mounted(page);
