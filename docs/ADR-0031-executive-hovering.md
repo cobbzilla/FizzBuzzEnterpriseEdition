@@ -2,6 +2,11 @@
 
 Status: accepted, 3 November 2026.
 
+Amended by [ADR 0036](ADR-0036-continuous-mobile-playback.md), which enables
+Executive Hovering by default, and [ADR 0040](ADR-0040-adaptive-office-cadence.md),
+which keeps the four cadence choices enabled and applies them to office pacing.
+The initial defaults and selector lock described below record the original decision.
+
 The Companion Roll Call receives its own visibility preference, initially on.
 Hiding attendance minutes does not suspend companion allocation or discoveries.
 The separate existing allocation checkbox retains that authority.

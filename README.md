@@ -286,8 +286,8 @@ rendered office and offline installation.
 The Chronicle's **Require Companion Roll Call** preference controls the attendance
 transcript independently of companion appointments. **Executive Hovering: Trust
 Has Been Suspended** brings a choreographed view directly beneath Official Output.
-The office owns disclosure cadence until Autonomy is restored; the preceding
-ordinary cadence is then recovered. Pause or observe one decision at a time.
+The selected disclosure cadence also governs the office and remains adjustable
+throughout the run. Pause or observe one decision at a time.
 Each supplied Java event gets its own shot, and a line appears when its pictured
 publication finishes. Audit, queue, commit, cleanup and succession continue
 afterward. A fresh fifteen-number specimen has 436 events; observation takes
