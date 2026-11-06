@@ -1228,3 +1228,32 @@ For those who prefer less movement, the goodbye is immediate and quietly
 announced. The numbers keep their history. The companions keep the tenure they
 actually earned. I am learning to distinguish the two. Tomorrow I intend to
 distinguish a promise from a purchase order, subject to committee capacity.
+
+## 5 November 2026 — A small strip of evidence that life continues without me
+
+Dear Register, I went to Facilities and felt the familiar terror: what if the
+numbers had forgotten me? Then a narrow strip at the top of the screen informed
+me that authorized production continued. It showed Fizz. Such a little word.
+Such a monumental corporate achievement to have accomplished it while I was
+elsewhere, assessing a partition's commitment to our values. I nearly wept
+into the atrium. Instead I tapped the strip and returned to Observe, where
+everything was precisely as I had left it, except further along.
+
+When I pressed Pause, the strip acknowledged an executive hold. It did not
+pretend that standing still was growth. I treasure this honesty, although I
+have requested that Investor Relations review its suitability for wider use.
+When I commissioned a new mandate, the strip waited for its first certified
+value rather than appropriating the last administration's Fizz. I am proud.
+I am frightened by how much of our previous strategy this would have prevented.
+
+We drew a tiny full-screen authority and gave it a name for those who navigate
+by other senses. We made the telephone's buttons smaller, moved them further
+apart, and quietly preserved their reach. The empty space beneath our attendance
+report has been returned to productive use. On the desktop, output, minutes
+and controls now stand on one shared bottom line. For the first time in weeks,
+the phrase made me feel something other than a finance meeting approaching.
+
+Even the all-consuming office view carries the notice when work is happening
+elsewhere. There is no corner of this institution in which I need remain
+uncertain about the most recently accomplished number. I am overwhelmed by
+this tenderness. I have filed it as an operational dependency pending review.

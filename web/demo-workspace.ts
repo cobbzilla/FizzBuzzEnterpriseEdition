@@ -20,6 +20,7 @@ export class DemoWorkspace {
  private readonly policyIds=['display-speed','emoji-companions','companion-strategy','require-companion-roll-call','executive-hovering'];
  private activeMandate='';private discovery?:Discovery;private pendingDiscovery?:Discovery;
  private committed=false;private applying=false;private manualView=false;
+ private running=false;private held=false;private activity='mandate';private latestValue?:{ordinal:string;text:string};private bannerAnnouncement='';
  private preferredAuthority=new URL(location.href).searchParams.get('authority')||'';
  private scroll=new Map<DemoDesk,number>();
  constructor(private readonly run:RunPresentation){
@@ -39,6 +40,7 @@ export class DemoWorkspace {
   byId<HTMLSelectElement>('experiment-view').addEventListener('change',()=>this.sections('experiment'));
   byId<HTMLSelectElement>('evidence-view').addEventListener('change',()=>this.sections('evidence'));
   byId('resume-current').addEventListener('click',()=>this.navigate('observe'));
+  byId('active-run-banner').addEventListener('click',()=>this.navigate('observe'));
   byId('office-choose-mandate').addEventListener('click',()=>{this.navigate('authorize');byId('limit').focus();});
   byId('watch-settings-toggle').addEventListener('click',()=>this.settings(byId('watch-settings').hidden===true));
   byId('watch-settings-close').addEventListener('click',()=>{this.settings(false);byId('watch-settings-toggle').focus();});
@@ -89,11 +91,22 @@ export class DemoWorkspace {
   this.show(readDesk(new URL(location.href)),false,false);
  }
  get observing(){return this.desk==='observe';}
- runActivity(active:boolean){
+ runActivity(active:boolean,paused=false,mode='mandate'){
+  this.running=active;this.held=paused;this.activity=mode;
   const warning=byId('mandate-collision-warning');
-  if(warning.hidden===!active)return;
-  warning.hidden=!active;
-  byId('run-button').setAttribute('aria-describedby',active?'mandate-collision-copy':'authorization-summary');
+  if(warning.hidden!==!active){warning.hidden=!active;byId('run-button').setAttribute('aria-describedby',active?'mandate-collision-copy':'authorization-summary');}
+  this.updateRunBanner();
+ }
+ beginDisclosure(){this.latestValue=undefined;this.updateRunBanner();}
+ private updateRunBanner(){
+  const banner=byId<HTMLButtonElement>('active-run-banner'),visible=this.running&&!this.observing,focused=banner.contains(document.activeElement);
+  const state=this.held?'Executive hold remains in force':this.activity==='replay'?'Retained proceedings under review':'Authorized production continues';
+  const value=this.latestValue?this.latestValue.text+' · certified ordinal '+this.latestValue.ordinal:'Awaiting the first certified value';
+  for(const [id,text]of [['active-run-state',state],['active-run-value',value]])if(byId(id).textContent!==text)byId(id).textContent=text;
+  byId('active-run-value').title=value;banner.dataset.latestOrdinal=this.latestValue?.ordinal||'';banner.hidden=!visible;
+  const announcement=visible?state+'. Use the running mandate bar to return to Observe.':'';
+  if(announcement!==this.bannerAnnouncement){this.bannerAnnouncement=announcement;byId('active-run-announcement').textContent=announcement;}
+  if(!visible&&focused){const target=byId<HTMLDialogElement>('office-fullscreen').open?byId('office-fullscreen-exit'):byId('desk-'+this.desk).querySelector<HTMLElement>('h1');target?.focus({preventScroll:true});}
  }
  private input(id:string){return byId<HTMLInputElement>(id);}
  private select(id:string){return byId<HTMLSelectElement>(id);}
@@ -110,6 +123,7 @@ export class DemoWorkspace {
   if(policy.hovering){hover.checked=true;hover.dispatchEvent(new Event('change'));}this.applying=false;
   this.activeMandate=mandate;this.discovery=undefined;this.pendingDiscovery=undefined;this.committed=true;this.manualView=false;
   byId('watch-latest').textContent='';
+  this.beginDisclosure();
   this.watch.value=initialWatchView(matchMedia('(max-width: 700px), (max-height: 500px)').matches,policy.hovering);
   byId('observed-mandate').textContent=mandate.length>28?mandate.slice(0,12)+'… · '+mandate.length+'-digit mandate':'Mandate '+mandate;
   byId('observe-empty').hidden=true;this.stage.hidden=false;byId('resume-current').hidden=false;
@@ -132,6 +146,7 @@ export class DemoWorkspace {
   if(before==='observe'&&desk!=='observe')this.placeChronicle(false);
   this.desk=desk;document.body.dataset.desk=desk;this.companyMenu(false);byId('company-menu').hidden=desk!=='observe';this.settings(false);
   for(const key of desks)byId('desk-'+key).hidden=key!==desk;
+  this.updateRunBanner();
   const url=deskURL(new URL(location.href),desk);
   if(push&&readDesk(new URL(location.href))!==desk)history.pushState({...history.state},'',url);
   this.retainDesk(desk);
@@ -140,7 +155,7 @@ export class DemoWorkspace {
   if(focus){
    const heading=byId('desk-'+desk).querySelector<HTMLElement>('h1')!;heading.focus({preventScroll:true});
    const collision=desk==='authorize'&&!byId('mandate-collision-warning').hidden;
-   const warningTop=collision&&matchMedia('(max-width:700px), (max-height:600px)').matches?Math.max(0,(heading.closest('.desk-heading')||heading).getBoundingClientRect().top+scrollY-12):0;
+   const warningTop=collision&&matchMedia('(max-width:700px), (max-height:600px)').matches?Math.max(0,(heading.closest('.desk-heading')||heading).getBoundingClientRect().top+scrollY-byId('active-run-banner').getBoundingClientRect().height-12):0;
    window.scrollTo({top:collision?warningTop:desk==='observe'?0:this.scroll.get(desk)||0,behavior:'instant'});
   }
   document.dispatchEvent(new CustomEvent('demo-desk-change',{detail:{desk}}));
@@ -178,7 +193,7 @@ export class DemoWorkspace {
   byId('desk-observe').style.setProperty('--observe-height',Math.max(120,viewport-top-bottom-8)+'px');
  }
  disclosed(folio:Folio|undefined){
-  if(!folio)return;const host=byId('watch-prose'),text=folio.narrative?.slice(0,2)||folio.events.slice(0,2).map(event=>event.office+': '+event.finding);
+  if(!folio)return;this.latestValue={ordinal:folio.ordinal,text:folio.text};this.updateRunBanner();const host=byId('watch-prose'),text=folio.narrative?.slice(0,2)||folio.events.slice(0,2).map(event=>event.office+': '+event.finding);
   byId('watch-latest').textContent=' · '+folio.ordinal+': '+folio.text;
   // Preserve a reader's selected commentary; the complete chronicle has its own follow contract.
   if(host.contains(document.activeElement)||host.scrollTop>8)return;

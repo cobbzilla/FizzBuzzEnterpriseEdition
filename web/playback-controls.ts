@@ -1,4 +1,4 @@
-export type PlaybackIcon = 'pause' | 'play' | 'stop' | 'next' | 'options' | 'evidence' | 'waive';
+export type PlaybackIcon = 'pause' | 'play' | 'stop' | 'next' | 'options' | 'evidence' | 'waive' | 'fullscreen' | 'restore';
 const paths: Record<PlaybackIcon, string> = {
  pause: 'M9 5v14M15 5v14',
  play: 'M8 5l11 7-11 7V5Z',
@@ -6,7 +6,9 @@ const paths: Record<PlaybackIcon, string> = {
  next: 'M5 5l10 7-10 7V5ZM19 5v14',
  options: 'M3 7h3m6 0h9M3 17h9m6 0h3M12 7a3 3 0 1 1-6 0 3 3 0 0 1 6 0ZM18 17a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z',
  evidence: 'M14 3H5v18h8M14 3l5 5h-5V3ZM8 8h3M8 12h3M8 16h3M20 17a3 3 0 1 1-6 0 3 3 0 0 1 6 0ZM20 20l2 2',
- waive: 'M3 5l8 7-8 7V5ZM12 5l8 7-8 7V5ZM22 5v14'
+ waive: 'M3 5l8 7-8 7V5ZM12 5l8 7-8 7V5ZM22 5v14',
+ fullscreen: 'M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5',
+ restore: 'M3 8h5V3m8 0v5h5M8 21v-5H3m18 0h-5v5'
 };
 
 /** SVGs carry no competing text; the button keeps its live accessible name and tooltip. */
