@@ -833,9 +833,11 @@ var OfficeFullscreen = class {
     const resize = new ResizeObserver(() => {
       this.surface.style.setProperty("--immersive-controls-height", Math.ceil(byId("office-fullscreen-controls").getBoundingClientRect().height) + "px");
       this.surface.style.setProperty("--immersive-header-height", Math.ceil(byId("office-fullscreen-header").getBoundingClientRect().height) + "px");
+      this.surface.style.setProperty("--immersive-banner-height", Math.ceil(byId("active-run-banner").getBoundingClientRect().height) + "px");
     });
     resize.observe(byId("office-fullscreen-controls"));
     resize.observe(byId("office-fullscreen-header"));
+    resize.observe(byId("active-run-banner"));
     addEventListener("pagehide", () => this.close(false), { once: true });
   }
   open(mode, invoker) {
@@ -875,6 +877,12 @@ var OfficeFullscreen = class {
       for (const element4 of [byId("office-camera-help"), document.querySelector(".office-inspection"), document.querySelector(".office-playback"), byId("office-route-status"), byId("office-route"), byId("office-reorganization"), document.querySelector(".office-options")]) this.move(element4, "office-fullscreen-inspection-slot");
     }
     const notice = byId(mode === "observe" ? "run-status" : "office-status");
+    const previousTabIndex = notice.getAttribute("tabindex");
+    notice.tabIndex = 0;
+    this.restorations.push(() => {
+      if (previousTabIndex === null) notice.removeAttribute("tabindex");
+      else notice.setAttribute("tabindex", previousTabIndex);
+    });
     this.move(notice, "office-fullscreen-notice");
     for (const id of ["companion-dialog", "personnel-dialog"]) this.move(byId(id), this.surface);
     this.inspection(false);

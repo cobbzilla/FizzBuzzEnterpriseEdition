@@ -8,14 +8,18 @@ mandates and retained proceedings. Starting another mandate clears the value;
 pending responses cannot advertise a previous run's accomplishment. Completion,
 Stop and failure remove the bar. Navigation does not pause the mandate.
 
-The bar is a native button with a 44-pixel height, keyboard activation and a
+The bar is a native button with a compact 44-pixel minimum height, keyboard activation and a
 visible focus indicator. It returns to Observe through the existing workspace
 navigation contract, preserving output, current step, policy and explicit pause.
 A separate polite status announces lifecycle changes; the continuously changing
 value is not a live region. The compact label and value remain single lines
 with visual truncation and a complete accessible name. Facilities full-screen
 moves the same button into its dialog and reserves its height above the header.
-Closing the dialog restores it to its original position. No additional business
+Enlarged text grows the bar rather than clipping its lines, and a resize observer
+reserves its actual height inside Facilities full-screen. Bounded status notices
+are keyboard-focusable while in full-screen, so enlarged text remains scrollable;
+closing restores their previous focusability. Closing the dialog
+restores it to its original position. No additional business
 request, timer or duplicate running state is introduced.
 
 Full-screen entry and exit use decorative SVG icons with accessible names and
