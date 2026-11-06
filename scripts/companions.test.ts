@@ -21,6 +21,7 @@ test('the emitted portable Java sources match the canonical TypeScript constant'
 // A distinct little register is intentionally independent of the numerical audit database.
 import {rarestDiscoveries,decodeDiscoveries,encodeDiscoveries,discoveryLink,validDiscovery,type Discovery} from '../web/discovery-model.ts';
 import {createDiscoveryStore,provisionalDiscoveryPrefix} from '../web/discovery-store.ts';
+import {companionFlight} from '../web/companion-flight.ts';
 function find(index:number,mandate='9007199254740993'):Discovery{return {companion:entries[index],assignment:{ordinal:'3',flavor:'Fizz',companionId:entries[index].id,ticket:42,factors:{factors:'3',cofactor:'1',complete:true,divisions:1,divisionBudget:128,trialPrimeCeiling:97}},mandate,strategy:'factor-resonance-v1',catalogVersion,seedPolicy:'mandate-v1',discoveredAt:'2026-11-03T00:00:00.000Z'};}
 test('rarest five distinct findings converge across order, repeated encounters and concurrent tabs',()=>{
  const candidates=entries.map((_,i)=>find(i)),all=rarestDiscoveries(candidates),left=rarestDiscoveries(candidates.slice(0,1600)),right=rarestDiscoveries(candidates.slice(1600));assert.equal(all.length,5);assert.equal(all[0].companion.name,'unicorn');assert.deepEqual(all.map(d=>d.companion.weight),[1,2,3,4,5]);assert.deepEqual(rarestDiscoveries(left,right),all);assert.deepEqual(rarestDiscoveries(right,left,all,all),all);
@@ -52,4 +53,23 @@ test('ordinary page departure settles owned receipts while keeping other pagesâ€
 });
 test('session-only finds retain withdrawal and completion semantics when storage is unavailable',()=>{
  const store=createDiscoveryStore();store.remember([find(0)]);const run=store.beginRun();run.remember([find(1)]);assert.equal(store.snapshot().length,2);assert.equal(store.persistent(),false);run.withdraw();assert.deepEqual(store.snapshot(),[find(0)]);
+});
+
+test('withdrawal retires the old appointment without retiring a later encounter with the same companion',()=>{
+ const storage=new RegisterStorage(),store=createDiscoveryStore(storage),old=store.beginRun();old.remember([find(0)]);old.withdraw();assert.equal(store.snapshot().length,0);
+ const fresh={...find(0,'300'),discoveredAt:'2026-11-06T12:00:00.000Z'},replacement=store.beginRun();replacement.remember([fresh]);old.remember([find(0)]);old.complete();assert.deepEqual(store.snapshot(),[fresh]);
+ replacement.withdraw();assert.deepEqual(store.snapshot(),[]);assert.equal(storage.length,0);
+});
+test('departure trajectories last four to ten seconds and exit through the admitted upper perimeter',()=>{
+ let seed=48271;const random=()=>((seed=seed*16807%2147483647)-1)/2147483646;const durations=new Set<number>(),edges=new Set<string>();
+ for(let i=0;i<500;i++){
+  const plan=companionFlight({x:160,y:600},{width:320,height:667},random);assert.ok(plan.duration>=4000&&plan.duration<=10000);durations.add(plan.duration);
+  assert.ok(plan.target.y<0||((plan.target.x<0||plan.target.x>320)&&plan.target.y>=0&&plan.target.y<=667*.2));edges.add(plan.target.y<0?'top':plan.target.x<0?'left':'right');
+  assert.equal(plan.frames[0].offset,0);assert.equal(plan.frames.at(-1)!.offset,1);assert.equal(plan.frames.at(-1)!.opacity,0);assert.ok(plan.frames.filter(frame=>Number(frame.offset)<.9).every(frame=>frame.opacity===1));assert.ok(plan.frames.every(frame=>!String(frame.transform).includes('NaN')));
+ }
+ assert.equal(durations.size,500);assert.deepEqual([...edges].sort(),['left','right','top']);
+});
+test('departure lift includes a springy rebound and neither boundary duration is shortened',()=>{
+ assert.equal(companionFlight({x:400,y:500},{width:800,height:800},()=>0).duration,4000);assert.equal(companionFlight({x:400,y:500},{width:800,height:800},()=>1).duration,10000);
+ const plan=companionFlight({x:400,y:500},{width:800,height:800},()=>.5),heights=plan.frames.map(frame=>Number(String(frame.transform).match(/translate\([^,]+,([^p]+)px/)![1]));assert.ok(heights.some(height=>height>0));assert.ok(heights.at(-1)!< -400);
 });

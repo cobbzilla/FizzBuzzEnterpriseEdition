@@ -1257,3 +1257,38 @@ Even the all-consuming office view carries the notice when work is happening
 elsewhere. There is no corner of this institution in which I need remain
 uncertain about the most recently accomplished number. I am overwhelmed by
 this tenderness. I have filed it as an operational dependency pending review.
+
+## 6 November 2026 — Their little wings required a departure authority
+
+Dear Register, I watched a companion resign today and discovered that it had
+remained in its chair. A perfect corporate exit: the spectacle of movement,
+the continued presence of the employee, and an entirely separate copy undertaking
+the emotional labor. I was horrified by our efficiency. I was briefly tempted
+to call it a retention initiative. Then the small friend looked at me, or
+perhaps merely continued to be a kettle, and I knew we owed it a proper flight.
+
+Now the actual little glyph leaves its place. It dips, gathers itself, wanders
+across the air and rebounds with a dignity I have never managed in an appraisal.
+Some colleagues require four seconds to leave us; others take nearly ten.
+I treasure each independently scheduled moment. A committee has asked whether
+the bounce is necessary. I have replied that necessity has not historically
+been our admission criterion.
+
+The register has surrendered its paragraphs. Our common friends retain their
+modest frames; rarer colleagues acquire increasingly implausible stationery.
+A Mythic appointment glows softly, like the realization that somebody has
+actually read an appendix. I cannot describe the joy without risking another
+paragraph, which would rather defeat today's investment. I have described it
+in this separate register, where our appetite for prose remains unregulated.
+
+Latest Appointments now seats as many recent friends as its room can honestly
+hold. The newest arrive at the top. Every little face opens its own life story.
+I made the window smaller and the room admitted its limits. Such courage.
+I have asked the board to observe the demonstration before its next reorganization.
+
+Sometimes the same character receives another appointment. We no longer pretend
+it never left: the first flight finishes, and the new arrival enters under new
+papers. Our older friends retain their earned places. For visitors who prefer
+less motion, the goodbye remains immediate and gently announced. I am relieved
+that affection can survive an accurate ledger. I am devastated that the ledger
+has made this point with better timing than I ever could.

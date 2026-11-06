@@ -31,7 +31,7 @@ test('all Watch arrangements and companion biographies share the same retained e
  await ready(page);await run(page);await expect(page.locator('#companion-list li')).toHaveCount(7);const before=await custody(page);
  for(const view of ['output','companions','commentary','overview']){await page.selectOption('#watch-view',view);await expect(page.locator('#mandate-output')).toHaveAttribute('data-watch-view',view);}
  await expect(page.locator('#spotlight-open')).toBeEnabled();await page.click('#spotlight-open');await expect(page.locator('#companion-dialog')).toBeVisible();await page.keyboard.press('Escape');await expect(page.locator('#spotlight-open')).toBeFocused();
- await page.selectOption('#watch-view','commentary');await expect(page.locator('#chronicle-scroll')).toBeVisible();await page.locator('#chronicle-scroll').evaluate(e=>e.scrollTop=0);const position=await page.locator('#chronicle-scroll').evaluate(e=>e.scrollTop);await department(page,'evidence');await expect(page.locator('#chronicle-scroll')).toBeVisible();expect(await page.locator('#chronicle-scroll').evaluate(e=>e.scrollTop)).toBe(position);expect((await custody(page)).headDigest).toBe(before.headDigest);
+ await page.selectOption('#watch-view','commentary');await expect(page.locator('#chronicle-scroll')).toBeVisible();await page.locator('#chronicle-scroll').evaluate(e=>e.scrollTop=0);await page.evaluate(()=>new Promise<void>(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>resolve()))));expect(await page.locator('#chronicle-scroll').evaluate(e=>e.scrollTop)).toBe(0);await department(page,'evidence');await expect(page.locator('#chronicle-scroll')).toBeVisible();expect(await page.locator('#chronicle-scroll').evaluate(e=>e.scrollTop)).toBe(0);expect((await custody(page)).headDigest).toBe(before.headDigest);
 });
 test('experiments own their results and leave production personnel, output and custody intact',async({page})=>{
  await ready(page);await run(page);await expect(page.locator('#run-status')).toContainText('Mandate complete');const output=await page.locator('#output').textContent(),origin=await page.locator('#personnel-origin').textContent(),before=await custody(page);
@@ -49,7 +49,7 @@ test('Watch fits short portrait and landscape screens and keeps the selected sta
   await expect.poll(async()=>page.locator('#desk-observe').evaluate(e=>e.getBoundingClientRect().bottom<=document.querySelector('#discovery-register')!.getBoundingClientRect().top)).toBe(true);
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1&&document.documentElement.scrollHeight<=innerHeight+1)).toBe(true);
   const scene=(await page.locator('#supervision-stage').boundingBox())!,transport=(await page.locator('.watch-transport').boundingBox())!,footer=(await page.locator('#discovery-register').boundingBox())!;
-  expect(scene.height).toBeGreaterThan(70);expect(transport.y+transport.height).toBeLessThanOrEqual(footer.y);expect(scene.y+scene.height).toBeLessThanOrEqual(transport.y);
+  expect(scene.height,'Scene height at '+width+' × '+height).toBeGreaterThan(70);expect(transport.y+transport.height).toBeLessThanOrEqual(footer.y);expect(scene.y+scene.height).toBeLessThanOrEqual(transport.y);
  }
  await page.click('#stop-reading');
 });
