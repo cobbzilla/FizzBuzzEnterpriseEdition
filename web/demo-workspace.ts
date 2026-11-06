@@ -109,15 +109,14 @@ export class DemoWorkspace {
  private select(id:string){return byId<HTMLSelectElement>(id);}
  private policy(prefix=''):PresentationPolicy{return {cadence:this.select(prefix+'display-speed').value,companions:this.input(prefix+'emoji-companions').checked,authority:this.select(prefix+'companion-strategy').value,roll:this.input(prefix+'require-companion-roll-call').checked,hovering:this.input(prefix+'executive-hovering').checked};}
  live(){return this.policy();}
- private copyLiveToDraft(){for(const id of this.policyIds){const source=byId<HTMLInputElement|HTMLSelectElement>(id),draft=byId<HTMLInputElement|HTMLSelectElement>('authorize-'+id);if(source instanceof HTMLInputElement)(draft as HTMLInputElement).checked=source.checked;else if(source.value!=='executive-hovering')draft.value=source.value;}this.draftSummary();}
+ private copyLiveToDraft(){for(const id of this.policyIds){const source=byId<HTMLInputElement|HTMLSelectElement>(id),draft=byId<HTMLInputElement|HTMLSelectElement>('authorize-'+id);if(source instanceof HTMLInputElement)(draft as HTMLInputElement).checked=source.checked;else draft.value=source.value;}this.draftSummary();}
  commitDraft(mandate:string){
   const policy=this.policy('authorize-');this.applying=true;
-  // Restore ordinary cadence before changing it; the director owns the special option.
-  const hover=this.input('executive-hovering');if(hover.checked){hover.checked=false;hover.dispatchEvent(new Event('change'));}
+  const hover=this.input('executive-hovering');
   this.select('display-speed').value=policy.cadence;this.select('display-speed').dispatchEvent(new Event('change'));
   for(const [id,value]of [['emoji-companions',policy.companions],['require-companion-roll-call',policy.roll]] as const){const input=this.input(id);if(input.checked!==value){input.checked=value;input.dispatchEvent(new Event('change'));}}
   const authority=this.select('companion-strategy');if(authority.value!==policy.authority){authority.value=policy.authority;authority.dispatchEvent(new Event('change'));}
-  if(policy.hovering){hover.checked=true;hover.dispatchEvent(new Event('change'));}this.applying=false;
+  if(hover.checked!==policy.hovering){hover.checked=policy.hovering;hover.dispatchEvent(new Event('change'));}this.applying=false;
   this.activeMandate=mandate;this.recent.clear();this.committed=true;this.manualView=false;
   byId('watch-latest').textContent='';
   this.beginDisclosure();
@@ -201,7 +200,7 @@ export class DemoWorkspace {
  remember(discovery:Discovery){
   if(discovery.mandate===this.activeMandate)this.recent.remember(discovery);
  }
- private draftSummary(){const p=this.policy('authorize-');byId('authorization-summary').textContent=(this.input('limit').value||'Unspecified')+' numbers · '+(p.companions?'companions commissioned':'no companion appointments')+' · '+(p.hovering?'executive supervision authorized':'ordinary disclosure');const cadence=this.select('authorize-display-speed');cadence.disabled=p.hovering;byId('authorize-pace-help').textContent=p.hovering?'Executive Hovering governs every recorded decision; ordinary cadence resumes when supervision is withdrawn.':'Choose the ceremonial reading pace. Executive Fiat introduces no delay.';}
+ private draftSummary(){const p=this.policy('authorize-');byId('authorization-summary').textContent=(this.input('limit').value||'Unspecified')+' numbers · '+(p.companions?'companions commissioned':'no companion appointments')+' · '+(p.hovering?'executive supervision authorized':'ordinary disclosure');this.select('authorize-display-speed').disabled=false;byId('authorize-pace-help').textContent=p.hovering?'Full Board Ratification doubles each deliberation. Interdepartmental Sign-Off preserves established ceremony; Emergency Delegated Authority halves it. Executive Fiat uses the fastest pace the office can present smoothly.':'Choose the ceremonial reading pace. Executive Fiat introduces no delay.';}
  private saveDraft(){try{sessionStorage.setItem('slopbuzz:authorization-draft:v2',JSON.stringify(this.policy('authorize-')));}catch{/* A configuration remains usable without storage. */}}
  private restoreDraft(){
   try{

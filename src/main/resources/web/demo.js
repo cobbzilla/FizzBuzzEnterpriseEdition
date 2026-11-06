@@ -1657,8 +1657,6 @@ var OfficeTourDesk = class {
 };
 
 // web/office-supervision-model.ts
-var hoveringLabel = "Executive Hovering: Trust Has Been Suspended";
-var hoveringCadence = "executive-hovering";
 function observationEnvelope(packet, start, count) {
   const first = BigInt(start), last = first + BigInt(Math.max(0, count)) - 1n;
   const result = { prefix: [], groups: /* @__PURE__ */ new Map(), suffix: [], omitted: packet.omitted, cache: packet.cache, recorded: packet.recorded };
@@ -1771,11 +1769,12 @@ var ObservationClock = class {
   constructor(step) {
     this.step = step;
   }
-  tick(now, allow, manual = false) {
+  tick(now, allow, manual = false, budget = { rate: 1, maxAdvanceMs: Infinity }) {
     const delta = this.last === void 0 || !this.allowed ? 0 : Math.max(0, now - this.last);
     this.last = now;
     this.allowed = allow;
-    if (allow) this.elapsed = manual ? stepDuration(this.step) : Math.min(stepDuration(this.step), this.elapsed + delta);
+    const advance = budget.rate === Infinity ? delta > 0 ? budget.maxAdvanceMs : 0 : delta * budget.rate;
+    if (allow) this.elapsed = manual ? stepDuration(this.step) : Math.min(stepDuration(this.step), this.elapsed + Math.min(advance, budget.maxAdvanceMs));
     return cueAt(this.step, this.elapsed);
   }
 };
@@ -1800,6 +1799,12 @@ var OfficeShotDirector = class {
     if (same && step.origin.station === step.shot.anchor) return step.origin.hrIndex === step.hrIndex ? 0 : 620;
     return Math.round((same ? 650 : 1150) + routeLength(this.route(step, layout)) / 6 * 1e3);
   }
+  minimumFrames(step, layout) {
+    if (!step.arriveMs) return 0;
+    const to = shotFor(step.shot.room, step.shot.anchor, step.hrIndex, layout), from = step.origin ? shotFor(step.origin.room, step.origin.station, step.origin.hrIndex, layout) : { alpha: -Math.PI / 2.6, beta: 0.88, radius: 33 };
+    const rotation = Math.abs(Math.atan2(Math.sin(to.alpha - from.alpha), Math.cos(to.alpha - from.alpha)));
+    return Math.ceil(Math.max(18, routeLength(this.route(step, layout)) / 0.4, rotation / 0.045, Math.abs(to.beta - from.beta) / 0.025, Math.abs(to.radius - from.radius) / 0.65));
+  }
   pose(cue, layout) {
     const step = cue.step, to = shotFor(step.shot.room, step.shot.anchor, step.hrIndex, layout), t = cue.travel;
     const from = step.origin ? shotFor(step.origin.room, step.origin.station, step.origin.hrIndex, layout) : { ...to, target: { x: 0, y: 0.2, z: 0 }, alpha: -Math.PI / 2.6, beta: 0.88, radius: 33 };
@@ -1811,6 +1816,52 @@ var OfficeShotDirector = class {
 function rebaseObservation(elapsed, oldArrival, newArrival) {
   return elapsed < oldArrival && oldArrival > 0 ? elapsed / oldArrival * newArrival : Math.max(0, elapsed - oldArrival) + newArrival;
 }
+
+// web/office-cadence.ts
+function officeCadenceRate(value) {
+  return value === "1800" ? 0.5 : value === "225" ? 2 : value === "0" ? Infinity : 1;
+}
+var movingWork = /* @__PURE__ */ new Set(["wire", "recruit", "survey", "evict", "lease", "release", "deliver", "glyph", "assemble", "notarize", "print", "audit", "queue", "commit", "succession", "memory"]);
+var OfficeCadenceGovernor = class {
+  quality = "standard";
+  interval = 1e3 / 60;
+  cost = 0;
+  samples = 0;
+  slow = 0;
+  recovered = 0;
+  observeFrame(intervalMs, renderMs) {
+    if (intervalMs <= 0) return false;
+    this.interval += 0.15 * (Math.min(100, intervalMs) - this.interval);
+    this.cost += 0.15 * (Math.min(100, Math.max(0, renderMs)) - this.cost);
+    this.samples++;
+    const struggling = this.interval > 28 || this.cost > 18;
+    this.slow = struggling ? this.slow + 1 : 0;
+    this.recovered = !struggling && this.interval < 20 && this.cost < 10 ? this.recovered + 1 : 0;
+    const before = this.quality;
+    if (this.samples >= 12 && this.slow >= 12) this.quality = "economy";
+    else if (this.quality === "economy" && this.recovered >= 180) this.quality = "standard";
+    return before !== this.quality;
+  }
+  budget(value, step, elapsed, arrivalFrames, painted, reducedMotion = false) {
+    const rate = officeCadenceRate(value);
+    if (!painted) return { rate, maxAdvanceMs: Infinity };
+    let duration2, end, frames;
+    if (elapsed < step.arriveMs) {
+      duration2 = step.arriveMs;
+      end = step.arriveMs;
+      frames = arrivalFrames;
+    } else if (elapsed < step.arriveMs + step.workMs) {
+      duration2 = step.workMs;
+      end = step.arriveMs + step.workMs;
+      frames = movingWork.has(step.action) ? 16 : 8;
+    } else {
+      duration2 = step.holdMs;
+      end = step.arriveMs + step.workMs + step.holdMs;
+      frames = 2;
+    }
+    return { rate, maxAdvanceMs: Math.max(0, Math.min(end - elapsed, duration2 / Math.max(1, reducedMotion ? 1 : frames))) };
+  }
+};
 
 // web/presentation-scheduler.ts
 var PresentationScheduler = class {
@@ -1877,6 +1928,10 @@ var OfficeSupervisionDesk = class {
       }
     });
     this.checkbox.addEventListener("change", () => this.applyMode(true));
+    this.cadence.addEventListener("change", () => {
+      this.pane.dataset.cadence = this.cadence.value;
+      this.authority.wake();
+    });
     element("supervision-autonomy").addEventListener("click", () => {
       this.disable();
       this.checkbox.focus();
@@ -1920,8 +1975,10 @@ var OfficeSupervisionDesk = class {
   pane = element("supervision-pane");
   canvas = element("supervision-canvas");
   media = matchMedia("(prefers-reduced-motion: reduce)");
-  normalCadence = this.cadence.value;
   normalPaceHelp = element("pace-help").textContent || "";
+  governor = new OfficeCadenceGovernor();
+  paintedAt = 0;
+  paintedCue;
   renderer;
   module;
   loading;
@@ -1957,9 +2014,6 @@ var OfficeSupervisionDesk = class {
   get hasStepCredit() {
     return this.credits > 0;
   }
-  get ordinaryCadence() {
-    return Number(this.normalCadence);
-  }
   disable() {
     officeEstate.finish();
     if (!this.enabled) return;
@@ -1968,27 +2022,17 @@ var OfficeSupervisionDesk = class {
     this.authority.wake();
   }
   applyMode(user) {
+    this.cadence.disabled = false;
+    this.pane.dataset.cadence = this.cadence.value;
+    this.pane.dataset.renderQuality = this.governor.quality;
     if (this.enabled) {
-      if (this.cadence.value !== hoveringCadence) this.normalCadence = this.cadence.value;
-      let option = this.cadence.querySelector('option[value="' + hoveringCadence + '"]');
-      if (!option) {
-        option = node("option", hoveringLabel);
-        option.value = hoveringCadence;
-        option.disabled = true;
-        this.cadence.append(option);
-      }
-      this.cadence.value = hoveringCadence;
-      this.cadence.disabled = true;
       this.pane.hidden = false;
       element("mandate-output").dataset.supervised = "true";
-      element("pace-help").textContent = "Executive Hovering owns the disclosure queue. Each recorded decision must be witnessed. Restore Autonomy or uncheck Executive Hovering to recover your preceding cadence.";
+      element("pace-help").textContent = "Full Board Ratification doubles each deliberation. Interdepartmental Sign-Off preserves established ceremony; Emergency Delegated Authority halves it. Executive Fiat uses the fastest pace the office can present smoothly. Change cadence at any time; every recorded decision keeps its place.";
       if (!this.authority.reading()) this.current("Executive oversight is standing by for supplied proceedings. Run or replay a mandate to begin a new observation.");
       void this.ensureScene();
     } else {
       this.interrupt();
-      this.cadence.disabled = false;
-      this.cadence.querySelector('option[value="' + hoveringCadence + '"]')?.remove();
-      this.cadence.value = this.normalCadence;
       this.pane.hidden = true;
       delete element("mandate-output").dataset.supervised;
       element("pace-help").textContent = this.normalPaceHelp;
@@ -2112,7 +2156,15 @@ var OfficeSupervisionDesk = class {
     element("supervision-current").textContent = text2;
   }
   sceneState(step = this.activeStep || this.lastStep) {
-    return { room: step?.shot.room || "reception", route: [], ordinal: this.folio?.ordinal || "", text: this.published ? this.folio?.text || "" : "PENDING", emoji: this.companion?.companion.emoji, companionName: this.companion?.companion.name, paused: true, reducedMotion: this.media.matches, quality: "standard", seed: tourSeed(this.mandate), layout: officeEstate.displayed, relocation: officeEstate.relocation };
+    return { room: step?.shot.room || "reception", route: [], ordinal: this.folio?.ordinal || "", text: this.published ? this.folio?.text || "" : "PENDING", emoji: this.companion?.companion.emoji, companionName: this.companion?.companion.name, paused: true, reducedMotion: this.media.matches, quality: this.governor.quality, seed: tourSeed(this.mandate), layout: officeEstate.displayed, relocation: officeEstate.relocation };
+  }
+  painted(frame) {
+    this.paintedAt = frame.now;
+    this.paintedCue = frame.cue;
+    if (this.governor.observeFrame(frame.intervalMs, frame.renderMs)) {
+      this.pane.dataset.renderQuality = this.governor.quality;
+      this.updateScene();
+    }
   }
   updateScene(step = this.activeStep || this.lastStep) {
     try {
@@ -2128,7 +2180,7 @@ var OfficeSupervisionDesk = class {
     return rect.width > 0 && Math.min(rect.bottom, bottom) - Math.max(rect.top, 0) >= Math.min(60, rect.height * 0.2);
   }
   activity() {
-    const rect = this.canvas.getBoundingClientRect(), active = this.visible() && rect.width > 0 && rect.height > 0;
+    const rect = this.canvas.getBoundingClientRect(), active = this.visible() && !this.canvas.hidden && rect.width > 0 && rect.height > 0;
     if (active !== this.sceneActive) {
       this.sceneActive = active;
       this.renderer?.active(active);
@@ -2163,7 +2215,7 @@ var OfficeSupervisionDesk = class {
         }, onProp: () => {
         }, onStep: () => {
         }, onView: () => {
-        }, onReady: () => {
+        }, onFrame: (frame) => this.painted(frame), onReady: () => {
           this.ready = true;
           if (this.latestCue) this.renderer?.direct(this.latestCue);
           clearTimeout(this.readiness);
@@ -2186,12 +2238,17 @@ var OfficeSupervisionDesk = class {
   }
   graphicsFailure() {
     clearTimeout(this.readiness);
-    this.renderer?.dispose();
+    const renderer = this.renderer;
     this.renderer = void 0;
     this.ready = true;
     this.fallback = true;
     this.canvas.hidden = true;
     this.canvas.dataset.renderer = "evidence";
+    try {
+      renderer?.dispose();
+    } catch {
+    }
+    this.activity();
     if (document.activeElement === this.canvas) element("supervision-title").focus({ preventScroll: true });
     const loading = element("supervision-loading");
     loading.hidden = false;
@@ -2244,9 +2301,9 @@ var OfficeSupervisionDesk = class {
     return new Promise((resolve) => {
       const director = new OfficeShotDirector();
       step = { ...step, arriveMs: director.duration(step, officeEstate.current) };
-      let layoutKey = layoutToken(officeEstate.current);
+      let layoutKey = layoutToken(officeEstate.current), arrivalFrames = director.minimumFrames(step, officeEstate.current);
       const clock = new ObservationClock(step);
-      let shown = false, published = false, manual = false, settled = false;
+      let shown = false, published = false, manual = false, settled = false, clockAt = 0;
       const finish = (ok) => {
         if (settled) return;
         settled = true;
@@ -2266,6 +2323,7 @@ var OfficeSupervisionDesk = class {
           const arrival = director.duration(step, officeEstate.current);
           clock.elapsed = rebaseObservation(clock.elapsed, step.arriveMs, arrival);
           step.arriveMs = arrival;
+          arrivalFrames = director.minimumFrames(step, officeEstate.current);
           layoutKey = key2;
           this.updateScene(step);
         }
@@ -2285,14 +2343,16 @@ var OfficeSupervisionDesk = class {
           manual = true;
         }
         const allow = !moving && (!paused2 || manual);
-        const cue = clock.tick(now, allow, manual);
+        const painting = this.sceneActive && this.ready && !this.fallback;
+        clockAt = Math.max(clockAt, painting ? this.paintedAt : now);
+        const cue = clock.tick(clockAt, allow, manual, this.governor.budget(this.cadence.value, step, clock.elapsed, arrivalFrames, this.sceneActive, this.media.matches));
         this.latestCue = cue;
         if (this.ready) this.renderer?.direct(cue);
         if (this.pane.dataset.phase !== cue.phase) {
           this.pane.dataset.phase = cue.phase;
           element("supervision-progress").title = cue.phase === "arrival" ? "Arriving at the next office" : cue.phase === "work" ? "The supplied decision is being illustrated" : "A mandatory opportunity for executive contemplation";
         }
-        if (step.publication && !published && clock.elapsed >= step.arriveMs + step.workMs) {
+        if (!moving && step.publication && !published && clock.elapsed >= step.arriveMs + step.workMs && (!painting || manual || this.paintedCue?.step.id === step.id && this.paintedCue.work === 1)) {
           published = true;
           publish?.();
         }
@@ -2303,9 +2363,13 @@ var OfficeSupervisionDesk = class {
               return;
             }
             this.activity();
-            if (officeEstate.moving) {
+            if (officeEstate.moving || this.sceneActive && this.ready && !this.fallback && !manual && (this.paintedCue?.step.id !== step.id || !this.paintedCue.complete)) {
               this.scheduler.request(acknowledge);
               return;
+            }
+            if (step.publication && !published) {
+              published = true;
+              publish?.();
             }
             this.observed++;
             this.pane.dataset.observedSteps = String(this.observed);
@@ -5023,7 +5087,7 @@ var DemoWorkspace = class {
     for (const id of this.policyIds) {
       const source = byId(id), draft = byId("authorize-" + id);
       if (source instanceof HTMLInputElement) draft.checked = source.checked;
-      else if (source.value !== "executive-hovering") draft.value = source.value;
+      else draft.value = source.value;
     }
     this.draftSummary();
   }
@@ -5031,10 +5095,6 @@ var DemoWorkspace = class {
     const policy = this.policy("authorize-");
     this.applying = true;
     const hover = this.input("executive-hovering");
-    if (hover.checked) {
-      hover.checked = false;
-      hover.dispatchEvent(new Event("change"));
-    }
     this.select("display-speed").value = policy.cadence;
     this.select("display-speed").dispatchEvent(new Event("change"));
     for (const [id, value] of [["emoji-companions", policy.companions], ["require-companion-roll-call", policy.roll]]) {
@@ -5049,8 +5109,8 @@ var DemoWorkspace = class {
       authority.value = policy.authority;
       authority.dispatchEvent(new Event("change"));
     }
-    if (policy.hovering) {
-      hover.checked = true;
+    if (hover.checked !== policy.hovering) {
+      hover.checked = policy.hovering;
       hover.dispatchEvent(new Event("change"));
     }
     this.applying = false;
@@ -5184,9 +5244,8 @@ var DemoWorkspace = class {
   draftSummary() {
     const p = this.policy("authorize-");
     byId("authorization-summary").textContent = (this.input("limit").value || "Unspecified") + " numbers \xB7 " + (p.companions ? "companions commissioned" : "no companion appointments") + " \xB7 " + (p.hovering ? "executive supervision authorized" : "ordinary disclosure");
-    const cadence = this.select("authorize-display-speed");
-    cadence.disabled = p.hovering;
-    byId("authorize-pace-help").textContent = p.hovering ? "Executive Hovering governs every recorded decision; ordinary cadence resumes when supervision is withdrawn." : "Choose the ceremonial reading pace. Executive Fiat introduces no delay.";
+    this.select("authorize-display-speed").disabled = false;
+    byId("authorize-pace-help").textContent = p.hovering ? "Full Board Ratification doubles each deliberation. Interdepartmental Sign-Off preserves established ceremony; Emergency Delegated Authority halves it. Executive Fiat uses the fastest pace the office can present smoothly." : "Choose the ceremonial reading pace. Executive Fiat introduces no delay.";
   }
   saveDraft() {
     try {

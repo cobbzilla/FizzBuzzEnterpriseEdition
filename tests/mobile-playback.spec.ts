@@ -14,7 +14,7 @@ const printed=(page:Page)=>page.locator('#output').textContent().then(value=>val
 
 test('new and migrated authorizations commission Executive Hovering; an explicit opt-out survives reload',async({page})=>{
  await page.addInitScript(()=>{if(!sessionStorage.getItem('legacy-seeded')){sessionStorage.setItem('legacy-seeded','true');sessionStorage.setItem('slopbuzz:authorization-draft:v1',JSON.stringify({cadence:'225',companions:false,roll:false,hovering:false,authority:'factor-resonance-v1'}));}});
- await reception(page);await expect(page.locator('#authorize-executive-hovering')).toBeChecked();await expect(page.locator('#authorize-display-speed')).toHaveValue('225');await expect(page.locator('#authorize-display-speed')).toBeDisabled();await expect(page.locator('#authorize-emoji-companions')).not.toBeChecked();
+ await reception(page);await expect(page.locator('#authorize-executive-hovering')).toBeChecked();await expect(page.locator('#authorize-display-speed')).toHaveValue('225');await expect(page.locator('#authorize-display-speed')).toBeEnabled();await expect(page.locator('#authorize-emoji-companions')).not.toBeChecked();
  await page.uncheck('#authorize-executive-hovering');await page.reload();await expect(page.locator('#health-value')).toHaveText('LIVE');await expect(page.locator('#authorize-executive-hovering')).not.toBeChecked();
  await page.evaluate(()=>sessionStorage.clear());await page.reload();await expect(page.locator('#authorize-executive-hovering')).toBeChecked();
 });
@@ -57,7 +57,7 @@ test('the supervised clock runs without animation frames or graphics readiness, 
  test.setTimeout(60000);let release!:()=>void;const gate=new Promise<void>(resolve=>release=resolve);
  await page.route('**/office-world.js',async route=>{await gate;await route.abort();});
  try{
-  await reception(page);await page.fill('#limit','1');await page.click('#run-button');await expect(page.locator('#supervision-pause')).toHaveAttribute('aria-disabled','false');
+  await reception(page);await page.selectOption('#authorize-display-speed','800');await page.fill('#limit','1');await page.click('#run-button');await expect(page.locator('#supervision-pause')).toHaveAttribute('aria-disabled','false');
   await page.evaluate(()=>{const host=window as Window&{realOfficeFrame?:typeof requestAnimationFrame};host.realOfficeFrame=requestAnimationFrame;window.requestAnimationFrame=()=>0;Object.defineProperty(document,'hidden',{configurable:true,get:()=>true});document.dispatchEvent(new Event('visibilitychange'));});
   const before=await steps(page);await expect.poll(()=>steps(page),{timeout:15000}).toBeGreaterThan(before+1);await expect(page.locator('#supervision-pause')).toHaveAttribute('aria-pressed','false');
   await page.evaluate(()=>document.querySelector<HTMLButtonElement>('#supervision-pause')!.click());await expect(page.locator('#supervision-pause')).toHaveAttribute('aria-pressed','true');await page.waitForTimeout(150);const held=await steps(page);await page.waitForTimeout(350);expect(await steps(page)).toBe(held);

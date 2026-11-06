@@ -2,8 +2,6 @@ import type {ExecutionEvent,ExecutionPacket,Folio} from './chronicle.ts';
 import type {RoomId} from './office-content.ts';
 import {addresses,foundingEstate,type EstateLayout,type OfficeAddress} from './office-layout.ts';
 
-export const hoveringLabel='Executive Hovering: Trust Has Been Suspended';
-export const hoveringCadence='executive-hovering';
 export type OfficeAction='paper'|'wire'|'recruit'|'boundary'|'classify'|'allocate'|'survey'|'evict'|'lease'|'release'|'requisition'|'deliver'|'glyph'|'assemble'|'fragment'|'notarize'|'print'|'audit'|'queue'|'commit'|'cleanup'|'succession'|'memory';
 export type OfficeAnchor='desk'|'personnel'|'boundary'|'property'|'glyph'|'notary'|'printer'|'ledger'|'queue'|'memory';
 export interface ScenePoint {x:number;y:number;z:number}
@@ -127,9 +125,10 @@ export class ObservationClock {
  elapsed=0;private last?:number;private allowed=false;
  readonly step:ObservedOfficeStep;
  constructor(step:ObservedOfficeStep){this.step=step;}
- tick(now:number,allow:boolean,manual=false):OfficeCue {
+ tick(now:number,allow:boolean,manual=false,budget:{rate:number;maxAdvanceMs:number}={rate:1,maxAdvanceMs:Infinity}):OfficeCue {
   const delta=this.last===undefined||!this.allowed?0:Math.max(0,now-this.last);this.last=now;this.allowed=allow;
-  if(allow)this.elapsed=manual?stepDuration(this.step):Math.min(stepDuration(this.step),this.elapsed+delta);
+  const advance=budget.rate===Infinity?(delta>0?budget.maxAdvanceMs:0):delta*budget.rate;
+  if(allow)this.elapsed=manual?stepDuration(this.step):Math.min(stepDuration(this.step),this.elapsed+Math.min(advance,budget.maxAdvanceMs));
   return cueAt(this.step,this.elapsed);
  }
 }

@@ -44,13 +44,14 @@ export async function verifyPublic(origin: string, revision: string) {
     if (url.origin === origin && /^\/(fizzbuzz|healthz|readyz|audit|operations|capacity|cache|procurement|onboarding|precedent|companions|premises)(\/|\?|$)/.test(url.pathname)) businessRequests.push(url.pathname);
    });
    await page.goto(origin + '/demo/');
-   await expect(page.locator('#health-value')).toHaveText('LIVE');
+   // Playwright assertions have their own timeout; honor the runtime's cold-start budget.
+   await expect(page.locator('#health-value')).toHaveText('LIVE',{timeout:60000});
    const stylesheet = new URL(await page.locator('link[rel=stylesheet]').first().getAttribute('href') || '', page.url());
    assert.equal(stylesheet.pathname, '/' + config.assets + 'site.css', 'Page must use its release-specific stylesheet');
    assert.deepEqual(await page.getByRole('navigation',{name:'Demo departments'}).getByRole('link').allTextContents(),['Authorize','Observe','Experiment','Facilities','Evidence']);
    await expect(page.locator('#authorize-require-companion-roll-call')).toBeChecked();await expect(page.locator('#authorize-executive-hovering')).toBeChecked();
    await demo.run();await expect(page.locator('#observe-title')).toBeFocused();
-   await demo.options(()=>page.check('#executive-hovering'));await expect(page.locator('#display-speed')).toBeDisabled();await expect(page.locator('#display-speed')).toHaveValue('executive-hovering');await demo.watch('office');await expect(page.locator('#supervision-canvas')).toHaveAttribute('data-rendered','true');
+   await demo.options(()=>page.check('#executive-hovering'));await expect(page.locator('#display-speed')).toBeEnabled();await expect(page.locator('#display-speed')).toHaveValue('0');await demo.watch('office');await expect(page.locator('#supervision-canvas')).toHaveAttribute('data-rendered','true');
    await page.setViewportSize({width:390,height:667});
    await expect.poll(()=>page.evaluate(()=>{
     const output=document.querySelector<HTMLElement>('#output')!,style=getComputedStyle(output);
