@@ -165,9 +165,18 @@ export class ExecutiveChronicle {
  private pauseIfReading(){if(!this.relocating&&this.body.getClientRects().length&&!this.pinAfterResize&&!this.atBottom())this.pinned=false;}
  place(target:HTMLElement){
   const section=this.body.closest('.chronicle')!;if(section.parentElement===target)return;
+  // A native scroll can precede its scroll event. Read the visible position
+  // before moving the panel rather than relying on the previous event's pin.
+  if(this.body.getClientRects().length&&!this.atBottom())this.pinned=false;
   const serial=++this.relocation,following=this.isFollowing(),position=this.body.scrollTop;this.relocating=true;target.append(section);
   if(following)this.followBottom();else this.body.scrollTop=position;
-  requestAnimationFrame(()=>{if(serial!==this.relocation)return;if(following&&this.isFollowing())this.followBottom();else this.body.scrollTop=position;this.relocating=false;});
+  const restored=this.body.scrollTop;
+  requestAnimationFrame(()=>{if(serial!==this.relocation)return;
+   // Do not overwrite a scroll made while the destination was settling.
+   if(this.body.getClientRects().length&&Math.abs(this.body.scrollTop-restored)>4)this.pinned=this.atBottom();
+   else if(following&&this.isFollowing())this.followBottom();else this.body.scrollTop=position;
+   this.relocating=false;
+  });
  }
  private followBottom(){if(this.isFollowing())this.body.scrollTop=this.body.scrollHeight;}
  private latest(){this.inspected?.remove();this.inspected=undefined;this.follow.checked=true;this.pinned=true;this.pinAfterResize=false;this.selector.value='latest';for(const [ordinal,option]of this.options)if(!this.snapshots.has(ordinal)){option.remove();this.options.delete(ordinal);}if(this.pending){this.pending=false;const notes=this.pendingNotes;this.pendingNotes=[];this.entries.replaceChildren();this.rendered.clear();this.note(this.language.write('resume','Following has resumed at the latest retained minutes. No business operation was submitted again.'),'Reading position restored');this.discloseFolios(this.records.slice(-24));for(const entry of notes)this.note(entry.text,entry.heading);}const last=this.records.at(-1);if(last)setText('chronicle-current',`Ordinal ${last.ordinal}: ${title(last)}. Official output: ${last.text}.`);this.followBottom();}

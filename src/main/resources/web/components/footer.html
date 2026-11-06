@@ -5,11 +5,11 @@
   </div>
 </footer>
 
-<aside id="discovery-register" class="discovery-register" aria-labelledby="discovery-title">
+<aside id="discovery-register" class="discovery-register" aria-labelledby="discovery-title" aria-describedby="discovery-status">
   <div class="shell">
-    <button id="discovery-toggle" class="discovery-toggle" type="button" aria-expanded="false" aria-controls="discovery-content"><span id="discovery-summary">Companion register</span><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false"><path d="m6 15 6-6 6 6" fill="none" stroke="currentColor" stroke-width="2"/></svg></button>
+    <button id="discovery-toggle" class="discovery-toggle" type="button" aria-expanded="false" aria-controls="discovery-content" aria-label="Expand saved companion appointments"><span id="discovery-summary" aria-hidden="true"></span><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false"><path d="m6 15 6-6 6 6" fill="none" stroke="currentColor" stroke-width="2"/></svg></button>
     <div id="discovery-content">
-    <div class="discovery-heading"><strong id="discovery-title">Extraordinary Appointments Register</strong><button id="discovery-latest" type="button" hidden>Show latest finds</button></div>
+    <div class="discovery-heading"><strong id="discovery-title">Extraordinary Appointments Register</strong><button id="discovery-latest" type="button" hidden aria-label="Show latest saved companions" title="Show latest saved companions"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path d="M20 7v5h-5m4-3a8 8 0 1 0 0 7" fill="none" stroke="currentColor" stroke-width="2"/></svg></button></div>
     <p id="discovery-status">Your five rarest companions will be filed here.</p>
     <ol id="discovery-list" aria-label="Five rarest companion discoveries" role="list"></ol>
     </div>

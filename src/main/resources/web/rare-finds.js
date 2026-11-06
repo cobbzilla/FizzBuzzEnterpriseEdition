@@ -127,6 +127,50 @@ function companionDialog() {
   return controller;
 }
 
+// web/companion-tile.ts
+function companionGlyph(discovery) {
+  const glyph = node("span", discovery.companion.emoji);
+  glyph.className = "companion-glyph";
+  glyph.dataset.companionIdentity = discoveryIdentity(discovery);
+  glyph.dataset.rarity = discovery.companion.rarity;
+  glyph.setAttribute("aria-hidden", "true");
+  return glyph;
+}
+function companionTile(discovery) {
+  const { companion: c, assignment: a } = discovery, button = node("button");
+  button.type = "button";
+  button.className = "companion-chip";
+  button.dataset.rarity = c.rarity;
+  button.dataset.companion = c.id;
+  button.setAttribute("aria-label", c.rarity + " \xB7 " + c.name);
+  button.setAttribute("aria-haspopup", "dialog");
+  button.setAttribute("aria-controls", "companion-dialog");
+  button.title = c.rarity + " \xB7 " + c.name + " \xB7 " + c.weight + " of one billion tickets \xB7 mandate " + discovery.mandate + " \xB7 ordinal " + a.ordinal;
+  button.append(companionGlyph(discovery));
+  button.addEventListener("click", () => companionDialog().open(discovery, button));
+  return button;
+}
+
+// web/companion-flight.ts
+var fold = (value, low, high) => {
+  const span = Math.max(1, high - low), phase = ((value - low) % (2 * span) + 2 * span) % (2 * span);
+  return low + (phase <= span ? phase : 2 * span - phase);
+};
+function companionFlight(start, viewport, random = Math.random) {
+  const draw = () => Math.max(0, Math.min(1, random())), duration = 4e3 + draw() * 6e3, edge = draw(), margin = 40;
+  const target = edge < 0.7 ? { x: 20 + draw() * Math.max(1, viewport.width - 40), y: -margin } : { x: edge < 0.85 ? -margin : viewport.width + margin, y: draw() * viewport.height * 0.2 };
+  const sway = (0.18 + draw() * 0.3) * viewport.width * (draw() < 0.5 ? -1 : 1), bounce = 25 + draw() * 35, frames = [];
+  for (let index = 0; index <= 40; index++) {
+    const t = index / 40, progress = (1 - Math.cos(Math.PI * t)) / 2;
+    const rawX = start.x + (target.x - start.x) * progress + Math.sin(3 * Math.PI * t) * sway * (1 - t);
+    const rawY = start.y + (target.y - start.y) * progress + Math.sin(5 * Math.PI * t) * bounce * (1 - t);
+    const exit = Math.max(0, (t - 0.85) / 0.15), blend = exit * exit * (3 - 2 * exit), x = fold(rawX, 18, viewport.width - 18) * (1 - blend) + rawX * blend, y = Math.min(rawY, 2 * (viewport.height - 18) - rawY);
+    const turn = Math.sin(6 * Math.PI * t) * 16 + (x - start.x) / Math.max(1, viewport.width) * 12;
+    frames.push({ offset: t, transform: `translate(${x - start.x}px,${y - start.y}px) rotate(${turn}deg) scale(${1 + Math.sin(Math.PI * t) * 0.12})`, opacity: t < 0.95 ? 1 : (1 - t) / 0.05 });
+  }
+  return { duration, target, frames };
+}
+
 // web/discovery-store.ts
 var provisionalDiscoveryPrefix = "slopbuzz:provisional-appointments:";
 var storeSymbol = /* @__PURE__ */ Symbol.for("slopbuzz.discovery-store.v2");
@@ -246,6 +290,8 @@ var latest = document.querySelector("#discovery-latest");
 var dialog = document.querySelector("#companion-dialog");
 var store = discoveryStore();
 var pending = false;
+var closing = false;
+var displayed = [];
 var toggle = document.querySelector("#discovery-toggle");
 var summary = document.querySelector("#discovery-summary");
 var notice = node("span");
@@ -256,11 +302,16 @@ document.body.append(notice);
 var departures = node("div");
 departures.className = "companion-departures";
 departures.setAttribute("aria-hidden", "true");
+departures.inert = true;
 document.body.append(departures);
+var flying = /* @__PURE__ */ new Map();
+var arrivals = /* @__PURE__ */ new Set();
+var motion = matchMedia("(prefers-reduced-motion: reduce)");
 toggle.addEventListener("click", () => {
   const expanded = toggle.getAttribute("aria-expanded") !== "true";
   toggle.setAttribute("aria-expanded", String(expanded));
   register.dataset.expanded = String(expanded);
+  toggle.setAttribute("aria-label", (expanded ? "Collapse" : "Expand") + " saved companion appointments");
   size();
 });
 register.addEventListener("keydown", (event) => {
@@ -270,25 +321,43 @@ register.addEventListener("keydown", (event) => {
     toggle.focus();
   }
 });
-function depart(finds) {
-  if (!finds.length) return;
-  notice.textContent = finds.length + " provisional companion" + (finds.length === 1 ? " has" : "s have") + " left the register. Their mandate was replaced.";
-  if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-  const rail = register.getBoundingClientRect();
-  for (const [index, find] of finds.entries()) {
-    const chip = [...list.querySelectorAll("li")].find((li) => li.dataset.companion === find.companion.id), box = chip?.getBoundingClientRect();
-    const flight = node("span", find.companion.emoji);
-    flight.className = "companion-departure";
-    flight.setAttribute("aria-hidden", "true");
-    const x = box?.width ? box.left + box.width / 2 : Math.min(innerWidth - 30, rail.left + 35 + index * 48), y = box?.height ? box.top + box.height / 2 : Math.min(innerHeight - 22, rail.top + 22);
-    flight.style.left = Math.max(20, Math.min(innerWidth - 20, x)) + "px";
-    flight.style.top = Math.max(20, Math.min(innerHeight - 20, y)) + "px";
-    flight.style.setProperty("--flight-x", (index % 2 ? -1 : 1) * (100 + Math.random() * 180) + "px");
-    flight.style.setProperty("--flight-y", -(y + 100) + "px");
-    flight.style.setProperty("--flight-spin", (index % 2 ? -1 : 1) * (250 + Math.random() * 250) + "deg");
-    departures.append(flight);
-    flight.addEventListener("animationend", () => flight.remove(), { once: true });
-    setTimeout(() => flight.remove(), 1500);
+function depart() {
+  const remaining = new Set(store.snapshot().map(discoveryIdentity)), leaving = displayed.filter((find) => !remaining.has(discoveryIdentity(find)));
+  if (!leaving.length) return;
+  notice.textContent = leaving.length + " provisional companion" + (leaving.length === 1 ? " has" : "s have") + " left the register. Their mandate was replaced.";
+  for (const find of leaving) {
+    const identity = discoveryIdentity(find);
+    if (motion.matches || flying.has(identity)) continue;
+    const glyph = [...register.querySelectorAll(".companion-glyph")].find((el) => {
+      const box2 = el.getBoundingClientRect();
+      return el.dataset.companionIdentity === identity && box2.width && box2.height && box2.right > 0 && box2.left < innerWidth && box2.bottom > 0 && box2.top < innerHeight;
+    });
+    if (!glyph) continue;
+    const box = glyph.getBoundingClientRect(), font = getComputedStyle(glyph).font, plan = companionFlight({ x: box.left + box.width / 2, y: box.top + box.height / 2 }, { width: innerWidth, height: innerHeight });
+    Object.assign(glyph.style, { left: box.left + "px", top: box.top + "px", width: box.width + "px", height: box.height + "px", font });
+    glyph.classList.add("companion-departure");
+    glyph.dataset.duration = String(plan.duration);
+    glyph.dataset.targetX = String(plan.target.x);
+    glyph.dataset.targetY = String(plan.target.y);
+    departures.append(glyph);
+    let animation, timer;
+    const finish = () => {
+      if (flying.get(identity) !== finish) return;
+      flying.delete(identity);
+      clearTimeout(timer);
+      animation?.cancel();
+      glyph.remove();
+      if (store.snapshot().some((find2) => discoveryIdentity(find2) === identity)) arrivals.add(identity);
+      if (!closing) render();
+    };
+    flying.set(identity, finish);
+    try {
+      animation = glyph.animate(plan.frames, { duration: plan.duration, easing: "linear", fill: "forwards" });
+      void animation.finished.then(finish, finish);
+      timer = setTimeout(finish, plan.duration + 1e3);
+    } catch {
+      finish();
+    }
   }
 }
 function render(force = false) {
@@ -298,30 +367,25 @@ function render(force = false) {
     return;
   }
   const focused = force && list.contains(document.activeElement) ? document.activeElement?.closest("li")?.dataset.companion : void 0;
-  const finds = store.snapshot();
+  const finds = store.snapshot().filter((find) => !flying.has(discoveryIdentity(find)));
+  displayed = finds;
   list.replaceChildren(...finds.map((d, index) => {
-    const li = node("li"), button = node("button");
+    const li = node("li"), button = companionTile(d);
     li.dataset.companion = d.companion.id;
-    button.type = "button";
-    button.setAttribute("aria-haspopup", "dialog");
-    button.setAttribute("aria-controls", "companion-dialog");
-    button.title = d.companion.name;
     const description = node("span", d.companion.weight + " of one billion tickets. Open saved biography.");
     description.hidden = true;
     description.id = "discovery-evidence-" + index;
     button.setAttribute("aria-describedby", description.id);
-    const glyph = node("span", d.companion.emoji);
-    glyph.setAttribute("aria-hidden", "true");
-    const label = node("span", d.companion.rarity + " \xB7 " + d.companion.name);
-    button.append(glyph, label);
-    button.addEventListener("click", () => companionDialog().open(d, button));
+    if (arrivals.delete(discoveryIdentity(d))) button.dataset.arrival = "true";
     li.append(button, description);
     return li;
   }));
-  summary.textContent = finds.length + " companion" + (finds.length === 1 ? "" : "s") + " on file";
+  summary.replaceChildren(...finds.map(companionGlyph));
+  toggle.title = finds.length + " saved companion" + (finds.length === 1 ? "" : "s");
   if (!finds.length) {
     toggle.setAttribute("aria-expanded", "false");
     register.dataset.expanded = "false";
+    toggle.setAttribute("aria-label", "Expand saved companion appointments");
   }
   status.textContent = (finds.length ? finds.length + " distinct finds \xB7 rarest first." : "No appointments filed. Run a mandate with companions enabled.") + (store.persistent() ? " Saved in this browser." : " Storage is unavailable; finds last for this page session.");
   pending = false;
@@ -334,7 +398,7 @@ function render(force = false) {
   size();
 }
 store.subscribe((change) => {
-  depart(change.departed);
+  if (change.departed.length) depart();
   render(change.departed.length > 0);
 });
 latest.addEventListener("click", () => {
@@ -343,6 +407,13 @@ latest.addEventListener("click", () => {
 });
 dialog.addEventListener("companion-closed", () => {
   if (pending) latest.hidden = false;
+});
+motion.addEventListener("change", () => {
+  if (motion.matches) for (const finish of [...flying.values()]) finish();
+});
+addEventListener("pagehide", () => {
+  closing = true;
+  for (const finish of [...flying.values()]) finish();
 });
 render();
 function size() {

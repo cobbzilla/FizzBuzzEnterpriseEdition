@@ -257,6 +257,13 @@ with an appropriately undignified departure animation, restoring older finds it
 displaced. Completed finds and other tabs' discoveries remain. Reduced motion uses
 an immediate withdrawal and accessible notice. See [ADR 0037](docs/ADR-0037-provisional-companion-appointments.md).
 
+The footer now speaks entirely in emoji, with increasingly extravagant rarity
+frames and complete biographies behind each button. Latest Appointments fills
+its desktop pane with the newest disclosures first. Withdrawn companions move
+out of their actual tiles on independent four-to-ten-second flight plans;
+a fresh appointment of the same character waits until that departure finishes.
+See [ADR 0039](docs/ADR-0039-companion-presentation-and-departures.md).
+
 
 The **Serious Business Office** opens from the homepage invitation or the demo's
 visitor panel. Its Babylon.js cutaway has eight departments, 32 curiosities and

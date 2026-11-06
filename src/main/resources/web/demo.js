@@ -4628,14 +4628,17 @@ var ExecutiveChronicle = class {
   place(target) {
     const section = this.body.closest(".chronicle");
     if (section.parentElement === target) return;
+    if (this.body.getClientRects().length && !this.atBottom()) this.pinned = false;
     const serial = ++this.relocation, following = this.isFollowing(), position = this.body.scrollTop;
     this.relocating = true;
     target.append(section);
     if (following) this.followBottom();
     else this.body.scrollTop = position;
+    const restored = this.body.scrollTop;
     requestAnimationFrame(() => {
       if (serial !== this.relocation) return;
-      if (following && this.isFollowing()) this.followBottom();
+      if (this.body.getClientRects().length && Math.abs(this.body.scrollTop - restored) > 4) this.pinned = this.atBottom();
+      else if (following && this.isFollowing()) this.followBottom();
       else this.body.scrollTop = position;
       this.relocating = false;
     });
@@ -4696,6 +4699,128 @@ function deskURL(source, desk) {
   next.hash = "";
   return next;
 }
+
+// web/companion-tile.ts
+function companionGlyph(discovery) {
+  const glyph = node("span", discovery.companion.emoji);
+  glyph.className = "companion-glyph";
+  glyph.dataset.companionIdentity = discoveryIdentity(discovery);
+  glyph.dataset.rarity = discovery.companion.rarity;
+  glyph.setAttribute("aria-hidden", "true");
+  return glyph;
+}
+function companionTile(discovery) {
+  const { companion: c, assignment: a } = discovery, button = node("button");
+  button.type = "button";
+  button.className = "companion-chip";
+  button.dataset.rarity = c.rarity;
+  button.dataset.companion = c.id;
+  button.setAttribute("aria-label", c.rarity + " \xB7 " + c.name);
+  button.setAttribute("aria-haspopup", "dialog");
+  button.setAttribute("aria-controls", "companion-dialog");
+  button.title = c.rarity + " \xB7 " + c.name + " \xB7 " + c.weight + " of one billion tickets \xB7 mandate " + discovery.mandate + " \xB7 ordinal " + a.ordinal;
+  button.append(companionGlyph(discovery));
+  button.addEventListener("click", () => companionDialog().open(discovery, button));
+  return button;
+}
+
+// web/recent-appointments.ts
+var RecentAppointments = class {
+  panel = byId("companion-spotlight");
+  host = byId("spotlight-appointments");
+  dialog = byId("companion-dialog");
+  history = /* @__PURE__ */ new Map();
+  queued = false;
+  frame = 0;
+  constructor() {
+    new ResizeObserver(() => this.schedule()).observe(this.host);
+    this.host.addEventListener("focusout", () => queueMicrotask(() => this.render()));
+    this.dialog.addEventListener("companion-closed", () => this.render());
+    document.addEventListener("demo-watch-layout", () => this.schedule());
+    document.addEventListener("office-fullscreen-change", () => this.schedule());
+  }
+  clear() {
+    this.history.clear();
+    this.queued = false;
+    this.host.replaceChildren();
+    const placeholder = document.createElement("button");
+    placeholder.id = "spotlight-open";
+    placeholder.type = "button";
+    placeholder.disabled = true;
+    placeholder.className = "companion-chip";
+    placeholder.setAttribute("aria-label", "Awaiting a companion");
+    const glyph = document.createElement("span");
+    glyph.id = "spotlight-glyph";
+    glyph.className = "companion-glyph";
+    glyph.setAttribute("aria-hidden", "true");
+    glyph.textContent = "\u25C7";
+    placeholder.append(glyph);
+    this.host.append(placeholder);
+    byId("spotlight-name").textContent = "Awaiting a companion";
+    byId("spotlight-detail").textContent = "No disclosed friend has reported for duty.";
+    byId("spotlight-energy").textContent = "";
+    this.schedule();
+  }
+  remember(discovery) {
+    const previous = this.history.get(discovery.assignment.ordinal);
+    if (previous?.companion.id === discovery.companion.id && previous.strategy === discovery.strategy && previous.catalogVersion === discovery.catalogVersion) return;
+    this.history.set(discovery.assignment.ordinal, discovery);
+    const ordered = [...this.history.values()].sort((a, b) => BigInt(a.assignment.ordinal) > BigInt(b.assignment.ordinal) ? -1 : 1).slice(0, 100);
+    this.history = new Map(ordered.map((d) => [d.assignment.ordinal, d]));
+    this.queued = true;
+    this.schedule();
+  }
+  render() {
+    if (!this.queued || this.host.contains(document.activeElement) || this.dialog.open) return;
+    this.queued = false;
+    const rows = [...this.history.values()];
+    this.host.replaceChildren(...rows.map((d, index) => {
+      const button = companionTile(d);
+      button.dataset.ordinal = d.assignment.ordinal;
+      if (!index) {
+        button.id = "spotlight-open";
+        button.querySelector(".companion-glyph").id = "spotlight-glyph";
+      }
+      return button;
+    }));
+    if (rows.length) {
+      const latest = rows[0];
+      byId("spotlight-name").textContent = latest.companion.name;
+      byId("spotlight-detail").textContent = latest.assignment.ordinal + " \xB7 " + latest.assignment.flavor + " \xB7 " + latest.companion.rarity;
+      byId("spotlight-energy").textContent = latest.companion.energy;
+    }
+    this.layout();
+  }
+  schedule() {
+    if (!this.frame) this.frame = requestAnimationFrame(() => {
+      this.frame = 0;
+      this.render();
+      this.layout();
+    });
+  }
+  layout() {
+    const compact2 = this.panel.getBoundingClientRect().height < 128 * (parseFloat(getComputedStyle(document.documentElement).fontSize) / 16);
+    if (this.panel.dataset.compact !== String(compact2)) this.panel.dataset.compact = String(compact2);
+    const box = this.host.getBoundingClientRect();
+    if (!box.width || !box.height) return;
+    const buttons = [...this.host.querySelectorAll("button")], focused = this.host.contains(document.activeElement);
+    for (const button of buttons) button.hidden = false;
+    const mobile = matchMedia("(max-width:700px)").matches, first = buttons[0]?.getBoundingClientRect();
+    const gap = parseFloat(getComputedStyle(this.host).gap) || 0, padding = parseFloat(getComputedStyle(this.host).paddingTop) || 0;
+    const capacity = first ? Math.max(1, Math.floor((box.width - 2 * padding + gap) / (first.width + gap)) * Math.floor((box.height - 2 * padding + gap) / (first.height + gap))) : 1;
+    const title2 = !mobile && capacity > 1 ? "Latest appointments" : "Latest appointment";
+    if (byId("spotlight-title").textContent !== title2) byId("spotlight-title").textContent = title2;
+    let shown = 0;
+    for (const button of buttons) {
+      const rect = button.getBoundingClientRect(), fits = rect.bottom <= box.bottom - padding + 1 && rect.right <= box.right - padding + 1;
+      button.hidden = mobile && shown >= 1 || !fits;
+      if (!button.hidden) shown++;
+    }
+    this.panel.dataset.capacity = String(mobile ? 1 : capacity);
+    this.panel.dataset.appointments = String(shown);
+    if (focused && document.activeElement?.closest("[hidden]")) buttons.find((button) => !button.hidden)?.focus({ preventScroll: true });
+  }
+};
 
 // web/demo-workspace.ts
 var DemoWorkspace = class {
@@ -4772,15 +4897,6 @@ var DemoWorkspace = class {
     officeEstate.subscribe(() => {
       byId("watch-waive").hidden = !officeEstate.moving;
     });
-    byId("spotlight-open").addEventListener("click", () => {
-      if (this.discovery) companionDialog().open(this.discovery, byId("spotlight-open"));
-    });
-    byId("companion-dialog").addEventListener("close", () => {
-      if (this.pendingDiscovery) this.remember(this.pendingDiscovery);
-    });
-    byId("spotlight-open").addEventListener("blur", () => queueMicrotask(() => {
-      if (this.pendingDiscovery && !document.querySelector("dialog[open]:not(#office-fullscreen)")) this.remember(this.pendingDiscovery);
-    }));
     for (const id of this.policyIds) {
       byId("authorize-" + id).addEventListener("change", () => {
         this.draftSummary();
@@ -4844,8 +4960,7 @@ var DemoWorkspace = class {
   stage = byId("mandate-output");
   policyIds = ["display-speed", "emoji-companions", "companion-strategy", "require-companion-roll-call", "executive-hovering"];
   activeMandate = "";
-  discovery;
-  pendingDiscovery;
+  recent = new RecentAppointments();
   committed = false;
   applying = false;
   manualView = false;
@@ -4940,8 +5055,7 @@ var DemoWorkspace = class {
     }
     this.applying = false;
     this.activeMandate = mandate;
-    this.discovery = void 0;
-    this.pendingDiscovery = void 0;
+    this.recent.clear();
     this.committed = true;
     this.manualView = false;
     byId("watch-latest").textContent = "";
@@ -5062,28 +5176,10 @@ var DemoWorkspace = class {
     }));
   }
   clearCompanions() {
-    this.discovery = void 0;
-    this.pendingDiscovery = void 0;
-    byId("spotlight-glyph").textContent = "\u25C7";
-    byId("spotlight-name").textContent = this.live().companions ? "Awaiting a companion" : "Appointments suspended";
-    byId("spotlight-detail").textContent = "No disclosed friend has reported for duty.";
-    byId("spotlight-energy").textContent = "";
-    byId("spotlight-open").disabled = true;
+    this.recent.clear();
   }
   remember(discovery) {
-    if (discovery.mandate !== this.activeMandate || this.discovery && BigInt(discovery.assignment.ordinal) < BigInt(this.discovery.assignment.ordinal)) return;
-    if (document.activeElement === byId("spotlight-open") || byId("companion-dialog").open) {
-      this.pendingDiscovery = discovery;
-      return;
-    }
-    this.pendingDiscovery = void 0;
-    this.discovery = discovery;
-    const c = discovery.companion;
-    byId("spotlight-glyph").textContent = c.emoji;
-    byId("spotlight-name").textContent = c.name;
-    byId("spotlight-detail").textContent = discovery.assignment.ordinal + " \xB7 " + discovery.assignment.flavor + " \xB7 " + c.rarity;
-    byId("spotlight-energy").textContent = c.energy;
-    byId("spotlight-open").disabled = false;
+    if (discovery.mandate === this.activeMandate) this.recent.remember(discovery);
   }
   draftSummary() {
     const p = this.policy("authorize-");

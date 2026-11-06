@@ -1,7 +1,7 @@
 import {byId} from './dom';
 import {desks,deskURL,readDesk,watchView,initialWatchView,type DemoDesk,type PresentationPolicy,type WatchView} from './demo-workspace-model';
-import {companionDialog} from './companion-dialog';
 import type {Discovery} from './discovery-model';
+import {RecentAppointments} from './recent-appointments';
 import type {Folio} from './chronicle';
 import {officeEstate} from './office-estate';
 import {requestReorganization} from './office-relocation';
@@ -18,7 +18,7 @@ export class DemoWorkspace {
  private readonly mainLinks=document.querySelectorAll<HTMLAnchorElement>('a[href="#main"]');
  private readonly stage=byId('mandate-output');
  private readonly policyIds=['display-speed','emoji-companions','companion-strategy','require-companion-roll-call','executive-hovering'];
- private activeMandate='';private discovery?:Discovery;private pendingDiscovery?:Discovery;
+ private activeMandate='';private readonly recent=new RecentAppointments();
  private committed=false;private applying=false;private manualView=false;
  private running=false;private held=false;private activity='mandate';private latestValue?:{ordinal:string;text:string};private bannerAnnouncement='';
  private preferredAuthority=new URL(location.href).searchParams.get('authority')||'';
@@ -61,9 +61,6 @@ export class DemoWorkspace {
   byId('company-menu').addEventListener('click',()=>this.companyMenu(document.body.dataset.companyMenu!=='open'));
   document.addEventListener('keydown',event=>{if(event.key==='Escape'&&document.body.dataset.companyMenu==='open'){this.companyMenu(false);byId('company-menu').focus();}});
   officeEstate.subscribe(()=>{byId('watch-waive').hidden=!officeEstate.moving;});
-  byId('spotlight-open').addEventListener('click',()=>{if(this.discovery)companionDialog().open(this.discovery,byId('spotlight-open'));});
-  byId('companion-dialog').addEventListener('close',()=>{if(this.pendingDiscovery)this.remember(this.pendingDiscovery);});
-  byId('spotlight-open').addEventListener('blur',()=>queueMicrotask(()=>{if(this.pendingDiscovery&&!document.querySelector('dialog[open]:not(#office-fullscreen)'))this.remember(this.pendingDiscovery);}));
   for(const id of this.policyIds){
    byId('authorize-'+id).addEventListener('change',()=>{this.draftSummary();this.saveDraft();});
    byId(id).addEventListener('change',()=>{if(!this.committed&&!this.applying)this.copyLiveToDraft();this.layout();});
@@ -121,7 +118,7 @@ export class DemoWorkspace {
   for(const [id,value]of [['emoji-companions',policy.companions],['require-companion-roll-call',policy.roll]] as const){const input=this.input(id);if(input.checked!==value){input.checked=value;input.dispatchEvent(new Event('change'));}}
   const authority=this.select('companion-strategy');if(authority.value!==policy.authority){authority.value=policy.authority;authority.dispatchEvent(new Event('change'));}
   if(policy.hovering){hover.checked=true;hover.dispatchEvent(new Event('change'));}this.applying=false;
-  this.activeMandate=mandate;this.discovery=undefined;this.pendingDiscovery=undefined;this.committed=true;this.manualView=false;
+  this.activeMandate=mandate;this.recent.clear();this.committed=true;this.manualView=false;
   byId('watch-latest').textContent='';
   this.beginDisclosure();
   this.watch.value=initialWatchView(matchMedia('(max-width: 700px), (max-height: 500px)').matches,policy.hovering);
@@ -200,12 +197,9 @@ export class DemoWorkspace {
   const title=document.createElement('strong');title.textContent='Ordinal '+folio.ordinal+' · '+folio.text;
   host.replaceChildren(title,...text.map(text=>{const p=document.createElement('p');p.textContent=text;return p;}));
  }
- clearCompanions(){this.discovery=undefined;this.pendingDiscovery=undefined;byId('spotlight-glyph').textContent='◇';byId('spotlight-name').textContent=this.live().companions?'Awaiting a companion':'Appointments suspended';byId('spotlight-detail').textContent='No disclosed friend has reported for duty.';byId('spotlight-energy').textContent='';byId<HTMLButtonElement>('spotlight-open').disabled=true;}
+ clearCompanions(){this.recent.clear();}
  remember(discovery:Discovery){
-  if(discovery.mandate!==this.activeMandate||this.discovery&&BigInt(discovery.assignment.ordinal)<BigInt(this.discovery.assignment.ordinal))return;
-  if(document.activeElement===byId('spotlight-open')||byId<HTMLDialogElement>('companion-dialog').open){this.pendingDiscovery=discovery;return;}
-  this.pendingDiscovery=undefined;this.discovery=discovery;const c=discovery.companion;
-  byId('spotlight-glyph').textContent=c.emoji;byId('spotlight-name').textContent=c.name;byId('spotlight-detail').textContent=discovery.assignment.ordinal+' · '+discovery.assignment.flavor+' · '+c.rarity;byId('spotlight-energy').textContent=c.energy;byId<HTMLButtonElement>('spotlight-open').disabled=false;
+  if(discovery.mandate===this.activeMandate)this.recent.remember(discovery);
  }
  private draftSummary(){const p=this.policy('authorize-');byId('authorization-summary').textContent=(this.input('limit').value||'Unspecified')+' numbers · '+(p.companions?'companions commissioned':'no companion appointments')+' · '+(p.hovering?'executive supervision authorized':'ordinary disclosure');const cadence=this.select('authorize-display-speed');cadence.disabled=p.hovering;byId('authorize-pace-help').textContent=p.hovering?'Executive Hovering governs every recorded decision; ordinary cadence resumes when supervision is withdrawn.':'Choose the ceremonial reading pace. Executive Fiat introduces no delay.';}
  private saveDraft(){try{sessionStorage.setItem('slopbuzz:authorization-draft:v2',JSON.stringify(this.policy('authorize-')));}catch{/* A configuration remains usable without storage. */}}

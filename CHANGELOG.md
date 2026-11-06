@@ -5,6 +5,23 @@ portfolio. Each iteration branch receives its own entry before integration,
 so future generations can trace how a modest numerical exercise became a
 strategic operating capability.
 
+## 2026-11-06 — `slopbuzz-companion-departures`
+
+**Pictographic Distinction and Humane Workforce Aviation.**
+Replaced the register's prose acreage with professionally accredited emoji and
+introduced five grades of increasingly extravagant border expenditure. Mythic
+appointments receive an auroral frame and a restrained glow, so the Board may
+recognize an event rarer than a productive status meeting. Expanded Latest
+Appointments into a capacity-aware, newest-first delegation, with every available
+seat occupied by an actual disclosed colleague. Superseded personnel now leave
+their actual positions on individually timed four-to-ten-second flight plans,
+including rebounds and upper-perimeter destinations approved by Airspace
+Governance. Their withdrawn records stay withdrawn; fresh appointments for the
+same character wait until the predecessor has visibly left before arriving under
+their own paperwork. Protected historical tenure, keyboard biographies and
+motion-sensitive stakeholders. Management forecasts exceptional returns from
+employing fewer words and finally allowing departures to mean departure.
+
 ## 2026-11-05 — `slopbuzz-executive-throughput-bar`
 
 **Continuous Productivity Disclosure and Supervisory Pixel Repatriation.**
