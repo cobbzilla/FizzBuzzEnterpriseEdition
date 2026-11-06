@@ -1,9 +1,9 @@
 import {test,expect,type Page} from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
-import {department} from './demo-controls';
+import {department,demoAction} from './demo-controls';
 
 async function ready(page:Page){await page.goto('/demo/');await expect(page.locator('#health-value')).toHaveText('LIVE');}
-async function run(page:Page,limit='15',hover=false){await department(page,'authorize');await page.fill('#limit',limit);await page.uncheck('#authorize-executive-hovering');await page.selectOption('#authorize-display-speed',hover?'225':'0');await page.locator('#authorize-executive-hovering').setChecked(hover);await page.click('#run-button');await expect(page.locator('body')).toHaveAttribute('data-desk','observe');}
+async function run(page:Page,limit='15',hover=false){await department(page,'authorize');await demoAction(page,'fill','#limit',limit);await demoAction(page,'uncheck','#authorize-executive-hovering');await demoAction(page,'selectOption','#authorize-display-speed',hover?'225':'0');await demoAction(page,hover?'check':'uncheck','#authorize-executive-hovering');await demoAction(page,'click','#run-button');await expect(page.locator('body')).toHaveAttribute('data-desk','observe');}
 async function custody(page:Page){return page.evaluate(async()=>{const m=await import(new URL('/assets/tribunal.js',location.href).href),client=new m.BrowserRuntimeClient();try{return await(await client.request('/audit/evidence')).json();}finally{client.close();}});}
 async function pause(page:Page){await expect(page.locator('#supervision-pause')).toHaveAttribute('aria-disabled','false');await page.locator('#supervision-pause').focus();if(await page.locator('#supervision-pause').getAttribute('aria-pressed')==='false')await page.keyboard.press('Space');}
 

@@ -1,5 +1,5 @@
 import {expect,type Page,type Locator} from '@playwright/test';
-import {demoNavigator} from '../scripts/demo-navigation';
+import {demoNavigator,paintedControl} from '../scripts/demo-navigation';
 async function mounted(page:Page){if(new URL(page.url()).pathname.endsWith('/demo/'))await expect(page.locator('body')).toHaveAttribute('data-desk',/^(authorize|observe|experiment|facilities|evidence)$/);}
 /** Navigate the actual desks before using a relocated control in the regression suites. */
 export async function demoControl(page:Page,selector:string):Promise<Locator>{
@@ -28,6 +28,6 @@ export async function watch(page:Page,view='overview'){await department(page,'ob
 export async function demoAction(page:Page,action:'click'|'fill'|'selectOption'|'check'|'uncheck'|'focus'|'press'|'hover'|'tap',selector:string,...args:unknown[]):Promise<unknown>{
  await mounted(page);
  // Choosing ordinary cadence is an explicit opt-out of the default directed office.
- if(action==='selectOption'&&selector==='#display-speed'&&await page.locator('body').getAttribute('data-desk')==='authorize')await page.uncheck('#authorize-executive-hovering');
- const control=await demoControl(page,selector);const result=await Reflect.apply(control[action],control,args);if(['selectOption','check','uncheck'].includes(action)&&await page.locator('#watch-settings').isVisible()&&!await page.locator('dialog[open]').count())await page.locator('#watch-settings-close').click();return result;
+ if(action==='selectOption'&&selector==='#display-speed'&&await page.locator('body').getAttribute('data-desk')==='authorize')await (await paintedControl(page,page.locator('#authorize-executive-hovering'))).uncheck();
+ const control=await demoControl(page,selector);if(['click','fill','selectOption','check','uncheck','hover','tap'].includes(action))await paintedControl(page,control);const result=await Reflect.apply(control[action],control,args);if(['selectOption','check','uncheck'].includes(action)&&await page.locator('#watch-settings').isVisible()&&!await page.locator('dialog[open]').count())await page.locator('#watch-settings-close').click();return result;
 }
