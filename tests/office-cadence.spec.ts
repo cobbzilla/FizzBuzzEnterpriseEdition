@@ -6,7 +6,8 @@ test.beforeEach(async({page},info)=>{await page.route('**/runtime-config.json',a
 async function click(page:Page,id:string){await(await paintedControl(page,page.locator(id))).click();}
 async function start(page:Page){
  await page.goto('/demo/');await expect(page.locator('#health-value')).toHaveText('LIVE');await expect(page.locator('#authorize-display-speed')).toBeEnabled();await page.fill('#limit','15');await page.selectOption('#authorize-display-speed','800');await page.check('#authorize-executive-hovering');await click(page,'#run-button');await expect(page.locator('#supervision-canvas')).toHaveAttribute('data-rendered','true',{timeout:60000});await expect.poll(()=>paint(page)).toBeTruthy();await click(page,'#supervision-pause');await expect(page.locator('#supervision-pause')).toHaveAttribute('aria-pressed','true');
- const frame=(await paint(page)).frame;await page.waitForFunction(async previous=>{const canvas=document.querySelector<HTMLCanvasElement>('#supervision-canvas')!,module=await import(canvas.dataset.module!);return module.inspectOfficePaint(canvas)?.frame>=previous+2;},frame);
+ // Let the last earned pose reach the canvas before comparing a paused decision.
+ const frame=(await paint(page)).frame;await expect.poll(async()=>(await paint(page)).frame).toBeGreaterThanOrEqual(frame+2);
 }
 async function paint(page:Page):Promise<OfficePaint>{return page.evaluate(async()=>{const canvas=document.querySelector<HTMLCanvasElement>('#supervision-canvas')!,module=await import(canvas.dataset.module!);return module.inspectOfficePaint(canvas);});}
 
