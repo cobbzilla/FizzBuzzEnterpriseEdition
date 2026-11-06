@@ -1,7 +1,15 @@
 import {expect,type Page} from '@playwright/test';
 /** User-facing navigation shared by deployed and preview release checks. */
 export function demoNavigator(page:Page){
- const desk=async(name:string)=>{await expect(page.locator('body')).toHaveAttribute('data-desk',/^(authorize|observe|experiment|facilities|evidence)$/);if(await page.locator('body').getAttribute('data-desk')!==name)await page.locator('[data-desk-link="'+name+'"]').click();};
+ const desk=async(name:string)=>{
+  await expect(page.locator('body')).toHaveAttribute('data-desk',/^(authorize|observe|experiment|facilities|evidence)$/);
+  if(await page.locator('body').getAttribute('data-desk')===name)return;
+  await page.locator('[data-desk-link="'+name+'"]').click();
+  await expect(page.locator('body')).toHaveAttribute('data-desk',name);
+  // Desk changes restore scroll and resize the footer before the next paint.
+  // Let that rendered view settle before sending another pointer interaction.
+  await page.evaluate(()=>new Promise<void>(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>resolve()))));
+ };
  return {
   desk,
   watch:async(view:string)=>{await desk('observe');await page.selectOption('#watch-view',view);},

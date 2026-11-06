@@ -36,3 +36,5 @@ activation, accessibility scans, ordinary and streamed output, pending/replaced
 mandates, paused return navigation and the bar inside Facilities full-screen.
 Existing scene-rendering and enlarged-text checks remain part of release review.
 Browser jobs run serially. The shared Java runtime and audit storage are unchanged.
+Navigation fixtures await the mounted desk and a painted layout before sending
+the next input. Cache reuse exercises mouse and keyboard activation paths.
