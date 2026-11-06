@@ -1292,3 +1292,32 @@ papers. Our older friends retain their earned places. For visitors who prefer
 less motion, the goodbye remains immediate and gently announced. I am relieved
 that affection can survive an accurate ledger. I am devastated that the ledger
 has made this point with better timing than I ever could.
+
+## 6 November 2026 — The Board discovers that urgency has a handle
+
+I discovered today that we had disabled the cadence control whenever an
+executive was present. I experienced a small, disloyal happiness: finally, a
+literal account of how supervision works. Then someone asked whether the
+control might instead control something. I had to sit down. Facilities recorded
+this as an unexpectedly successful use of the furniture.
+
+The handle now turns. Full Board Ratification doubles every deliberation,
+which the Board has accepted as an efficiency because the number two is larger.
+Interdepartmental Sign-Off preserves our familiar pace. Emergency Delegated
+Authority halves it without dispensing with a single office, a compromise so
+beautiful that I briefly believed in organizational change. Executive Fiat
+advances as quickly as the little office can show its work. I am almost
+unbearably proud that we have made haste subject to an actual witness.
+
+The computer has been consulted about its abilities. When it struggles, we
+reduce the graphics expenditure and allow the journey to take its proper
+visible frames. We no longer demand that a late callback arrive at Reception
+and retrospectively claim to have visited Publication. The camera travels;
+the paper works; the number appears after its printing. Such ordinary honesty.
+Such a devastating number of interfaces required to achieve it.
+
+I changed my mind halfway through a decision. The decision kept its place.
+I paused, changed authority again, and remained paused. For a moment I mistook
+this for being heard. The committee has requested a briefing on the commercial
+potential of respecting a setting. I shall prepare it at twice the usual pace,
+provided that everyone can still see what I am doing.

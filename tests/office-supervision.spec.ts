@@ -1,7 +1,6 @@
 import {demoControl,demoAction,department,watch} from './demo-controls';
 import {test,expect,type Page} from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
-import {hoveringLabel,hoveringCadence} from '../web/office-supervision-model';
 import type {OfficeDiagnostics} from '../web/office-world';
 
 const errors=new WeakMap<Page,string[]>();
@@ -17,19 +16,19 @@ async function audit(page:Page){return page.evaluate(async()=>{const m=await imp
 async function diagnostics(page:Page):Promise<OfficeDiagnostics>{return page.evaluate(async()=>{const c=document.querySelector<HTMLCanvasElement>('#supervision-canvas')!,m=await import(c.dataset.module!);return m.inspectOffice(c);});}
 
 test('attendance is independently optional and showing it restores a reader or the newest actual appointments',async({page})=>{
- await reception(page);await expect(page.locator('#require-companion-roll-call')).toBeChecked();await expect(page.locator('#executive-hovering')).not.toBeChecked();await expect(page.locator('#supervision-pane')).toBeHidden();await expect(page.locator('#display-speed option[value="'+hoveringCadence+'"]').first()).toHaveCount(0);
+ await reception(page);await expect(page.locator('#require-companion-roll-call')).toBeChecked();await expect(page.locator('#executive-hovering')).not.toBeChecked();await expect(page.locator('#supervision-pane')).toBeHidden();await expect(page.locator('#display-speed option[value="executive-hovering"]')).toHaveCount(0);
  await demoAction(page,'selectOption','#display-speed','0');await demoAction(page,'click','#run-button');await expect(page.locator('#run-status')).toContainText('Mandate complete');await expect(page.locator('#companion-list li')).toHaveCount(7);
  await demoAction(page,'uncheck','#require-companion-roll-call');await expect(page.locator('#companion-roll')).toBeHidden();await expect(page.locator('#emoji-companions')).toBeChecked();await demoAction(page,'fill','#limit','30');await page.uncheck('#authorize-require-companion-roll-call');await demoAction(page,'click','#run-button');await expect(page.locator('#run-status')).toContainText('Mandate complete');await expect(page.locator('#companion-list li')).toHaveCount(14);expect(await page.evaluate(()=>localStorage.getItem('slopbuzz:extraordinary-appointments:v1'))).not.toBeNull();
  await demoAction(page,'check','#require-companion-roll-call');await watch(page,'companions');await expect(page.locator('#companion-roll')).toBeVisible();await expect.poll(()=>page.locator('#companion-scroll').evaluate(e=>e.scrollHeight-e.clientHeight-e.scrollTop)).toBeLessThan(24);
  await page.locator('#companion-scroll').evaluate(e=>e.scrollTop=0);await expect.poll(()=>page.locator('#companion-scroll').evaluate(e=>e.scrollTop)).toBe(0);await demoAction(page,'uncheck','#require-companion-roll-call');await demoAction(page,'check','#require-companion-roll-call');expect(await page.locator('#companion-scroll').evaluate(e=>e.scrollTop)).toBe(0);
 });
 
-test('the otherwise absent cadence is owned by the checkbox and restores each previous authority',async({page},info)=>{
+test('every cadence remains selectable with hovering and autonomy preserves the selected authority',async({page},info)=>{
  test.skip(info.project.metadata.engine==='js','Shared cadence DOM covered once per browser.');await reception(page);
- for(const cadence of ['225','0','1800']){
-  await department(page,'authorize');await page.fill('#limit','1');await page.uncheck('#authorize-executive-hovering');await page.selectOption('#authorize-display-speed',cadence);await page.check('#authorize-executive-hovering');await page.click('#run-button');await pause(page);
-  await expect(page.locator('#display-speed')).toBeDisabled();await expect(page.locator('#display-speed')).toHaveValue(hoveringCadence);const option=page.locator('#display-speed option[value="'+hoveringCadence+'"]');await expect(option).toHaveText(hoveringLabel);await expect(option).toBeDisabled();
-  await demoAction(page,'click','#supervision-autonomy');await expect(page.locator('#executive-hovering')).not.toBeChecked();await expect(page.locator('#display-speed')).toBeEnabled();await expect(page.locator('#display-speed')).toHaveValue(cadence);await expect(option).toHaveCount(0);await expect(page.locator('#executive-hovering')).toBeFocused();await demoAction(page,'click','#stop-reading');
+ for(const cadence of ['225','0','1800','800']){
+  await department(page,'authorize');await page.fill('#limit','1');await page.check('#authorize-executive-hovering');await expect(page.locator('#authorize-display-speed')).toBeEnabled();await page.selectOption('#authorize-display-speed',cadence);await page.click('#run-button');await pause(page);
+  await expect(page.locator('#display-speed')).toBeEnabled();await expect(page.locator('#display-speed')).toHaveValue(cadence);await expect(page.locator('#display-speed option')).toHaveCount(4);
+  await demoAction(page,'click','#supervision-autonomy');await expect(page.locator('#executive-hovering')).not.toBeChecked();await expect(page.locator('#display-speed')).toBeEnabled();await expect(page.locator('#display-speed')).toHaveValue(cadence);await expect(page.locator('#executive-hovering')).toBeFocused();await demoAction(page,'click','#stop-reading');
  }
 });
 
@@ -54,7 +53,7 @@ test('leaving Observe or opening a biography keeps its retained presentation run
 });
 
 test('mid-reading mode changes and a newer mandate cannot duplicate or release the previous number',async({page})=>{
- await reception(page);await demoAction(page,'fill','#limit','3');await demoAction(page,'selectOption','#display-speed','800');await demoAction(page,'click','#run-button');await expect(page.locator('#output')).toHaveText('1\n');await demoAction(page,'check','#executive-hovering');await expect(page.locator('#display-speed')).toBeDisabled();await expect(page.locator('#supervision-canvas')).toHaveAttribute('data-rendered','true');await page.waitForTimeout(250);expect(await page.locator('#output').textContent()).toBe('1\n');
+ await reception(page);await demoAction(page,'fill','#limit','3');await demoAction(page,'selectOption','#display-speed','800');await demoAction(page,'click','#run-button');await expect(page.locator('#output')).toHaveText('1\n');await demoAction(page,'check','#executive-hovering');await expect(page.locator('#display-speed')).toBeEnabled();await expect(page.locator('#display-speed')).toHaveValue('800');await expect(page.locator('#supervision-canvas')).toHaveAttribute('data-rendered','true');await page.waitForTimeout(250);expect(await page.locator('#output').textContent()).toBe('1\n');
  await demoAction(page,'fill','#limit','1');await page.check('#authorize-executive-hovering');await demoAction(page,'click','#run-button');await pause(page);await demoAction(page,'click','#supervision-autonomy');await expect(page.locator('#display-speed')).toHaveValue('800');await demoAction(page,'click','#reveal-all');await expect(page.locator('#run-status')).toContainText('Mandate complete');expect(await page.locator('#output').textContent()).toBe('1\n');await page.waitForTimeout(150);expect(await page.locator('#output').textContent()).toBe('1\n');
 });
 

@@ -264,6 +264,13 @@ out of their actual tiles on independent four-to-ten-second flight plans;
 a fresh appointment of the same character waits until that departure finishes.
 See [ADR 0039](docs/ADR-0039-companion-presentation-and-departures.md).
 
+Cadence remains adjustable during Executive Hovering. Interdepartmental Sign-Off
+retains the established office pace; Full Board Ratification doubles deliberation,
+Emergency Delegated Authority halves it, and Executive Fiat uses the fastest
+smoothly rendered progression. Live changes preserve the current decision and
+pause. Actual paint feedback bounds motion and adapts graphics cost to the
+computer. See [ADR 0040](docs/ADR-0040-adaptive-office-cadence.md).
+
 
 The **Serious Business Office** opens from the homepage invitation or the demo's
 visitor panel. Its Babylon.js cutaway has eight departments, 32 curiosities and

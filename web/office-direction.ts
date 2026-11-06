@@ -8,6 +8,12 @@ export class OfficeShotDirector {
  private key='';private path:readonly Point[]=[];
  route(step:ObservedOfficeStep,layout:EstateLayout){const key=layoutToken(layout)+'|'+step.origin?.room+'|'+step.origin?.station+'|'+step.shot.room+'|'+step.shot.anchor;if(key!==this.key){this.key=key;this.path=step.origin?routes(layout).route(step.origin,{room:step.shot.room,station:step.shot.anchor}):[addresses(layout).resolve({room:step.shot.room,station:step.shot.anchor})];}return this.path;}
  duration(step:ObservedOfficeStep,layout:EstateLayout){if(!step.origin)return step.arriveMs;const same=step.origin.room===step.shot.room;if(same&&step.origin.station===step.shot.anchor)return step.origin.hrIndex===step.hrIndex?0:620;return Math.round((same?650:1150)+routeLength(this.route(step,layout))/6*1000);}
+ minimumFrames(step:ObservedOfficeStep,layout:EstateLayout){
+  if(!step.arriveMs)return 0;
+  const to=shotFor(step.shot.room,step.shot.anchor,step.hrIndex,layout),from=step.origin?shotFor(step.origin.room,step.origin.station as OfficeAnchor,step.origin.hrIndex,layout):{alpha:-Math.PI/2.6,beta:.88,radius:33};
+  const rotation=Math.abs(Math.atan2(Math.sin(to.alpha-from.alpha),Math.cos(to.alpha-from.alpha)));
+  return Math.ceil(Math.max(18,routeLength(this.route(step,layout))/.4,rotation/.045,Math.abs(to.beta-from.beta)/.025,Math.abs(to.radius-from.radius)/.65));
+ }
  pose(cue:OfficeCue,layout:EstateLayout):DirectedPose {
   const step=cue.step,to=shotFor(step.shot.room,step.shot.anchor,step.hrIndex,layout),t=cue.travel;
   const from=step.origin?shotFor(step.origin.room,step.origin.station as OfficeAnchor,step.origin.hrIndex,layout):{...to,target:{x:0,y:.2,z:0},alpha:-Math.PI/2.6,beta:.88,radius:33};

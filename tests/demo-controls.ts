@@ -27,7 +27,7 @@ export async function department(page:Page,desk:string){await demoNavigator(page
 export async function watch(page:Page,view='overview'){await department(page,'observe');await page.selectOption('#watch-view',view);await expect(page.locator('#watch-view')).toHaveValue(view);}
 export async function demoAction(page:Page,action:'click'|'fill'|'selectOption'|'check'|'uncheck'|'focus'|'press'|'hover'|'tap',selector:string,...args:unknown[]):Promise<unknown>{
  await mounted(page);
- // Choosing ordinary cadence is an explicit opt-out of the default directed office.
+ // These legacy ordinary-reading scenarios explicitly opt out of the default office.
  if(action==='selectOption'&&selector==='#display-speed'&&await page.locator('body').getAttribute('data-desk')==='authorize')await (await paintedControl(page,page.locator('#authorize-executive-hovering'))).uncheck();
  const control=await demoControl(page,selector);if(['click','fill','selectOption','check','uncheck','hover','tap'].includes(action))await paintedControl(page,control);const result=await Reflect.apply(control[action],control,args);if(['selectOption','check','uncheck'].includes(action)&&await page.locator('#watch-settings').isVisible()&&!await page.locator('dialog[open]').count())await page.locator('#watch-settings-close').click();return result;
 }
