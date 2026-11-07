@@ -85,10 +85,10 @@ test('page scripts, runtime configuration and charter select the same immutable 
  const release=await(await page.request.get('/release.json')).json();
  expect(paths).toContain(`/assets/demo.${release.build}.js`);expect(paths).toContain(`/assets/${release.build}/runtime-config.json`);expect(paths).not.toContain('/runtime-config.json');
  await page.goto('/api/');await expect(page.locator('#api-total')).toContainText('ratified operations');expect(paths).toContain(`/assets/${release.build}/openapi.json`);
- await expect(page.getByRole('link',{name:'Download OpenAPI JSON'})).toHaveAttribute('href',`../assets/${release.build}/openapi.json`);
+ await expect(page.getByRole('link',{name:'Download OpenAPI JSON'})).toHaveAttribute('href',new URL(`../assets/${release.build}/openapi.json`,page.url()).href);
 });
 test('an installed offline clerk cannot substitute stale stable scripts or configuration',async({page})=>{
- await page.goto('/');await expect(page.locator('#health-value')).toHaveText('LIVE');
+ await page.goto('/');await expect(page.locator('#operations-health-value')).toHaveText('LIVE');
  await page.evaluate(async()=>{
   await navigator.serviceWorker.ready;if(!navigator.serviceWorker.controller)await new Promise<void>(resolve=>navigator.serviceWorker.addEventListener('controllerchange',()=>resolve(),{once:true}));
   for(const key of await caches.keys()){
