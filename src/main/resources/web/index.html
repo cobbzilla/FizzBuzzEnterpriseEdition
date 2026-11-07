@@ -8,7 +8,7 @@
   <title>SlopFizzBuzz | The Serious Business Company, Inc.</title>
   <link rel="icon" type="image/svg+xml" href="/assets/mark.svg">
   <link rel="stylesheet" href="/assets/site.css">
-  <script type="module" src="/assets/site.js"></script>
+  <link rel="slopbuzz-page-module" href="/assets/site.js">
 </head>
 <body>
   <!--SITE_HEADER-->
@@ -54,7 +54,7 @@
         </div>
         <p class="inline-status" id="operations-status" role="status" aria-live="polite" aria-atomic="true">Loading current process state.</p>
         <div class="operations-grid">
-          <article class="operation-card"><span class="card-index">01</span><h3>HTTP liveness</h3><p>Can the proclamation desk answer?</p><strong id="health-value">Checking…</strong><a href="/healthz">Endpoint ↗</a></article>
+          <article class="operation-card"><span class="card-index">01</span><h3>HTTP liveness</h3><p>Can the proclamation desk answer?</p><strong id="operations-health-value">Checking…</strong><a href="/healthz">Endpoint ↗</a></article>
           <article class="operation-card"><span class="card-index">02</span><h3>Readiness quorum</h3><p>Have integrity, capacity, and delivery voted yes?</p><strong id="readiness-value">Checking…</strong><a href="/readyz">Ballot ↗</a></article>
           <article class="operation-card"><span class="card-index">03</span><h3>Redis memory</h3><p>How often has the bureau recalled an answer?</p><strong id="cache-value">Checking…</strong><a href="/cache/status">Cache report ↗</a></article>
           <article class="operation-card"><span class="card-index">04</span><h3>Service scorecard</h3><p>How many requests reached an outcome?</p><strong id="scorecard-value">Checking…</strong><a href="/operations/scorecard">Scorecard ↗</a></article>

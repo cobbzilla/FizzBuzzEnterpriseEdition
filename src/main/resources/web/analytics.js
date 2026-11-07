@@ -9559,6 +9559,13 @@ async function initialize() {
   window.addEventListener("pageshow", (e5) => {
     if (e5.persisted) enter();
   });
+  document.addEventListener("site-page-change", () => {
+    if (properties.$pathname === location.pathname) return;
+    leave();
+    properties.$current_url = cleanUrl(location.href);
+    properties.$pathname = location.pathname;
+    enter();
+  });
   window.addEventListener("slopbuzz:usage", (event) => {
     const d2 = event.detail;
     if (!["slopbuzz_demo_run", "slopbuzz_api_request"].includes(d2.event)) return;

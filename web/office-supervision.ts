@@ -25,7 +25,7 @@ export class OfficeSupervisionDesk {
  private readonly normalPaceHelp=element('pace-help').textContent||'';
  private readonly governor=new OfficeCadenceGovernor();private paintedAt=0;private paintedCue?:OfficeCue;
  private renderer?:OfficeRenderer;private module?:Promise<typeof import('./office-world')>;private loading?:Promise<void>;
- private ready=false;private fallback=false;private sceneActive=false;private readiness?:ReturnType<typeof setTimeout>;
+ private ready=false;private fallback=false;private sceneActive=false;private sceneStartedAt=0;private readiness?:ReturnType<typeof setTimeout>;
  private epoch=0;private serial=0;private cancelFrame?:()=>void;private credits=0;
  private readonly scheduler=new PresentationScheduler(()=>this.visible());
  private envelope?:ObservationEnvelope;private prefixDone=false;private suffixDone=false;private lastStep?:ObservedOfficeStep;
@@ -44,7 +44,9 @@ export class OfficeSupervisionDesk {
   element('supervision-next').addEventListener('click',()=>{if(!this.authority.reading()||!this.authority.paused()||officeEstate.moving)return;if(!element<HTMLDialogElement>('office-fullscreen').open)element('mandate-output').scrollIntoView({block:'start',behavior:'instant'});this.credits=1;this.authority.wake();});
   const resize=new ResizeObserver(()=>{this.renderer?.resize();this.activity();});resize.observe(element('supervision-stage'));
   new IntersectionObserver(()=>this.activity(),{threshold:[0,.15]}).observe(element('supervision-stage'));
-  document.addEventListener('visibilitychange',()=>this.activity());
+  document.addEventListener('visibilitychange',()=>this.activity(true));
+  document.addEventListener('site-page-change',()=>this.activity(true));
+  addEventListener('pageshow',()=>this.activity(true));
   document.addEventListener('demo-desk-change',()=>this.activity());
   document.addEventListener('demo-watch-layout',()=>{this.activity();requestAnimationFrame(()=>this.renderer?.resize());});
   document.addEventListener('office-fullscreen-change',()=>{this.activity();requestAnimationFrame(()=>this.renderer?.resize());});
@@ -117,7 +119,12 @@ export class OfficeSupervisionDesk {
   const rect=element('supervision-stage').getBoundingClientRect(),bottom=innerHeight-(document.querySelector('#discovery-register')?.getBoundingClientRect().height||0);
   return rect.width>0&&Math.min(rect.bottom,bottom)-Math.max(rect.top,0)>=Math.min(60,rect.height*.2);
  }
- private activity(){const rect=this.canvas.getBoundingClientRect(),active=this.visible()&&!this.canvas.hidden&&rect.width>0&&rect.height>0;if(active!==this.sceneActive){this.sceneActive=active;this.renderer?.active(active);}this.scheduler.refresh();}
+ private activity(force=false){
+  const rect=this.canvas.getBoundingClientRect(),active=this.visible()&&!this.canvas.hidden&&rect.width>0&&rect.height>0;
+  if(force||active!==this.sceneActive){this.sceneActive=active;this.sceneStartedAt=performance.now();if(force&&active)this.renderer?.active(false);this.renderer?.active(active);if(active)this.renderer?.resize();}
+  if(active&&this.ready&&!this.fallback&&performance.now()-Math.max(this.sceneStartedAt,this.paintedAt)>3000){this.graphicsFailure();return;}
+  this.scheduler.refresh();
+ }
  private armReadiness(){clearTimeout(this.readiness);this.readiness=setTimeout(()=>{if(this.ready||!this.enabled)return;if(this.sceneActive)this.graphicsFailure();else this.armReadiness();},20000);}
  private async ensureScene(){
   if(this.renderer){this.activity();this.renderer.resize();return;}if(this.fallback)return;if(this.loading)return this.loading;

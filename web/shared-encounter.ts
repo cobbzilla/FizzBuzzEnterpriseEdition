@@ -5,10 +5,14 @@ import {seedPolicy,validDiscovery,type Discovery} from './discovery-model';
 import {request} from './runtime';
 import {parseMandate} from './mandate-input';
 /** A shared link prefills, but never submits an unbounded numerical mandate. */
+let previousReferral='';
 export function prepareSharedEncounter(input:HTMLInputElement){
  const query=new URL(location.href).searchParams,limit=query.get('limit');if(limit===null)return;
+ const referral=['limit','ordinal','authority','catalog','companion','seedPolicy'].map(key=>query.get(key)||'').join('|');if(referral===previousReferral)return;
  let mandate:string;try{mandate=String(parseMandate(limit));}catch{return;}
+ previousReferral=referral;document.querySelector('.shared-encounter')?.remove();
  input.value=mandate;input.dispatchEvent(new Event('input'));
+ const authority=document.querySelector<HTMLSelectElement>('#authorize-companion-strategy');if(authority&&[...authority.options].some(option=>option.value===query.get('authority'))){authority.value=query.get('authority')!;authority.dispatchEvent(new Event('change'));}
  if(!query.has('ordinal')&&!query.has('companion'))return;
  const ordinal=query.get('ordinal'),strategy=query.get('authority'),catalogVersion=query.get('catalog'),expected=query.get('companion');
  const panel=node('section');panel.className='shared-encounter';panel.setAttribute('aria-labelledby','shared-encounter-title');const title=node('h3','Interdepartmental encounter referral');title.id='shared-encounter-title';const status=node('p','The referred mandate is ready. Run it to reproduce the sequence. No numerical mandate has been submitted.');status.setAttribute('role','status');panel.append(title,status);document.querySelector('#authorize-companion-help, #companion-help')!.after(panel);

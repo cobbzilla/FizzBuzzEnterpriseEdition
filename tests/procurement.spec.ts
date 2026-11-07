@@ -12,7 +12,7 @@ test.beforeEach(async ({page}, info) => {
 test('each individual z reports to receiving without creating audit work', async ({page}) => {
  const network: string[] = [];
  page.on('request', request => {if (new URL(request.url()).pathname.startsWith('/procurement')) network.push(request.url());});
- await page.goto('/'); await expect(page.locator('#health-value')).toHaveText('LIVE');
+ await page.goto('/'); await expect(page.locator('#operations-health-value')).toHaveText('LIVE');
  const committed = await page.locator('#audit-committed').textContent();
  const form = page.getByRole('form', {name: 'Glyph Procurement Directorate'});
  await form.getByRole('button').focus(); await page.keyboard.press('Enter');
@@ -61,7 +61,7 @@ test('receiving evidence reflows and exposes its controls to keyboard and access
 });
 
 test('a receiving failure is announced and the desk can accept a subsequent inspection', async ({page}) => {
- await page.goto('/'); await expect(page.locator('#health-value')).toHaveText('LIVE');
+ await page.goto('/'); await expect(page.locator('#operations-health-value')).toHaveText('LIVE');
  // Invalid products exercise the real shared dispatcher without forging success evidence.
  await page.locator('#procurement-product').evaluate((select: HTMLSelectElement) => {
   const option = document.createElement('option'); option.value = 'Unauthorized'; option.text = 'Unauthorized'; select.add(option); select.value = option.value;

@@ -15,6 +15,7 @@ import {PremisesDesk} from './premises';
 import {DemoWorkspace} from './demo-workspace';
 import {PersonnelExperiment} from './personnel-experiment';
 import {playbackIcon} from './playback-controls';
+import {onDemoPage} from './site-navigation';
 const runForm = byId<HTMLFormElement>('run-form');
 const limitInput = byId<HTMLInputElement>('limit');
 const speedControl = byId<HTMLSelectElement>('display-speed');
@@ -367,3 +368,4 @@ void request('/healthz').then(reply=>setText('health-value',reply.ok?'LIVE':'UNA
 interface Forecast {numeralLines: number|string;fizzLines: number|string;buzzLines: number|string;fizzBuzzLines: number|string;workloadUnits: number|string}
 
 prepareSharedEncounter(limitInput);
+for(const event of ['site-page-change','site-page-ready'])document.addEventListener(event,()=>{if(onDemoPage())prepareSharedEncounter(limitInput);});

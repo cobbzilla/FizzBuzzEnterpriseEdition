@@ -29,7 +29,7 @@ test('local UI, cache, receipts, docs, cadence and scrolling',async({page})=>{
   // for cache reuse after navigating from Observe back to Authorize.
   const cachedRun=await demoControl(page,'#run-button');await cachedRun.focus();await expect(cachedRun).toBeFocused();await page.keyboard.press('Enter');
   await expect(page.locator('body')).toHaveAttribute('data-desk','observe');await expect(page.locator('#cache-result')).toHaveText('HIT');
-  await page.goto('/#operations');await expect(page.locator('#health-value')).toHaveText('LIVE');
+  await page.goto('/#operations');await expect(page.locator('#operations-health-value')).toHaveText('LIVE');
   await demoAction(page,'click','#canary-button');await expect(page.locator('#canary-value')).toHaveText('APPROVED');
   await demoAction(page,'click','#recovery-button');await expect(page.locator('#recovery-value')).toHaveText('COPY MATCHED');
   await page.getByRole('link',{name:'Cache report'}).click();await expect(page.locator('pre')).toContainText('slopbuzz-cache/v1');

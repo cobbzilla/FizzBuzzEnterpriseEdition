@@ -95,7 +95,7 @@ final class StaticSiteHandler implements HttpHandler {
         loaded.put("/reset/index.html", loaded.get("/reset/"));
         loaded.put("/full-reset/index.html", loaded.get("/full-reset/"));
         loaded.put("/reset/reset.js", asset("/web/reset.js", "text/javascript; charset=UTF-8", false));
-        for (final String script : new String[] {"demo", "validation", "response", "bestiary", "rarity-register", "rare-finds", "office-world"}) {
+        for (final String script : new String[] {"site-shell", "demo", "validation", "response", "bestiary", "rarity-register", "rare-finds", "office-world"}) {
             loaded.put("/assets/" + script + ".js", asset("/web/" + script + ".js", "text/javascript; charset=UTF-8", false));
         }
         loaded.put("/validation/report.json", new Asset("{\"status\":\"NOT_RUN\",\"note\":\"Consult the static release tribunal for cross-runtime evidence.\"}".getBytes(StandardCharsets.UTF_8), "application/json; charset=UTF-8", false));
@@ -203,6 +203,9 @@ final class StaticSiteHandler implements HttpHandler {
                         .replace("<!--SITE_FOOTER-->", new String(asset("/web/components/footer.html", contentType, false).bytes, StandardCharsets.UTF_8));
                     final String active = path.endsWith("/bestiary.html") ? "BESTIARY" : path.endsWith("/demo.html") ? "DEMO" : path.endsWith("/api.html") ? "API" : path.endsWith("/about.html") ? "ABOUT" : path.endsWith("/validation.html") ? "VALIDATION" : "";
                     html = html.replace("<!--NAV_" + active + "-->", "aria-current=\"page\"").replaceAll("<!--NAV_[A-Z]+-->", "");
+                    final String deployedRevision = System.getenv("SLOPBUZZ_RELEASE_SHA");
+                    final String edition = deployedRevision != null && deployedRevision.matches("[0-9a-f]{40}") ? deployedRevision : "unknown";
+                    html = html.replace("src=\"/assets/site-shell.js\"", "src=\"/assets/site-shell.js?edition=" + edition + "\"");
                     content = html.getBytes(StandardCharsets.UTF_8);
                 }
             }

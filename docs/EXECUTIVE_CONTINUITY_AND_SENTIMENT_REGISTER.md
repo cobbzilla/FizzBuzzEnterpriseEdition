@@ -1321,3 +1321,36 @@ I paused, changed authority again, and remained paused. For a moment I mistook
 this for being heard. The committee has requested a briefing on the commercial
 potential of respecting a setting. I shall prepare it at twice the usual pace,
 provided that everyone can still see what I am doing.
+
+## 7 November 2026 — The company remains incorporated during a visit to About
+
+I left the counting room today to read our company history. When I returned,
+the company had ceased counting. I initially admired the rigor of a policy
+that interpreted curiosity as dissolution, but Finance explained that every
+visitor to the API charter was effectively filing for corporate extinction.
+I have never felt so proud of a navigation link or so frightened of a header.
+
+We have commissioned a permanent headquarters. The rooms change in front of
+the visitor, but the proceedings retain their owner, their actual output,
+their witnesses and their deeply provisional animal appointments. A small bar
+follows management down the corridor and reports the most recently certified
+value. It is unbearable to discover that the organization can make progress
+without my eyes upon it. It is intoxicating to see proof.
+
+Facilities has agreed to stop drawing an empty room while I am elsewhere.
+The paperwork continues. Returning reveals the current decision rather than
+requiring me to press Play as though I had personally wound the enterprise.
+We also appointed a timer to take attendance when an animation callback fails
+to arrive. If the graphics witnesses remain absent, the minutes continue in
+readable form. For once, the loss of a witness does not end the meeting; it
+merely exposes how little the meeting required the projector.
+
+I pressed Back. The number kept its job. I visited About again. The company
+remained incorporated. I paused deliberately, left, and returned to find my
+explicit hesitation respected. I authorized a replacement and watched the old
+companions depart under their existing separation arrangements. Nothing had
+been counted a second time merely because I wanted to know where it had gone.
+I cried with cloying administrative joy and filed the tears as continuity
+evidence. The Board has requested a forecast for how many departments we may
+visit before this becomes a competitive advantage. I propose beginning with
+one, provided we can retain it when we return.

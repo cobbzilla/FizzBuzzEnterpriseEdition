@@ -14,10 +14,15 @@ var releaseFile = (path) => new URL(
 );
 
 // web/runtime.ts
-var config = await fetch(releaseFile("runtime-config.json"), { cache: "no-cache" }).then((r) => {
-  if (!r.ok) throw new Error("Deployment configuration is unavailable");
+var configurationKey = /* @__PURE__ */ Symbol.for("slopbuzz:runtime-configuration:v1");
+var configurationURL = releaseFile("runtime-config.json").href;
+var configurations = globalThis;
+if (configurations[configurationKey] && configurations[configurationKey].url !== configurationURL) throw Error("A different release configuration already owns this page.");
+configurations[configurationKey] ||= { url: configurationURL, load: fetch(configurationURL, { cache: "no-cache" }).then((r) => {
+  if (!r.ok) throw Error("Deployment configuration is unavailable");
   return r.json();
-});
+}) };
+var config = await configurations[configurationKey].load;
 var BrowserRuntimeClient = class _BrowserRuntimeClient {
   constructor(configuration = config, isolated, transient = false) {
     this.configuration = configuration;
@@ -26,7 +31,7 @@ var BrowserRuntimeClient = class _BrowserRuntimeClient {
     this.channel.onmessage = (event) => this.pending.get(event.data.id)?.(event.data);
     this.worker = new Worker(new URL(`${configuration.assets}runtime-worker.js`, scope));
     this.worker.postMessage({ config: configuration, scope, isolated, transient });
-    addEventListener("pagehide", () => this.close(), { once: true });
+    addEventListener("pagehide", this.onHide, { once: true });
   }
   configuration;
   channel;
@@ -35,12 +40,18 @@ var BrowserRuntimeClient = class _BrowserRuntimeClient {
   compatibleOwners = /* @__PURE__ */ new Map();
   transientClient;
   narrativeCapabilities = /* @__PURE__ */ new Map();
+  closed = false;
+  onHide = () => this.close();
   close() {
+    if (this.closed) return;
+    this.closed = true;
+    removeEventListener("pagehide", this.onHide);
     this.transientClient?.close();
     this.worker.terminate();
     this.channel.close();
   }
   async owner() {
+    if (this.closed) throw Error("This runtime client has been closed.");
     const id = crypto.randomUUID();
     return new Promise((resolve, reject) => {
       const send = () => this.channel.postMessage({ kind: "hello", id, revision: this.configuration.revision });
@@ -140,7 +151,12 @@ function annotate(response, info) {
   return new Response(response.body, { status: response.status, headers });
 }
 if (!["browser", "server"].includes(config.mode)) throw new Error("Unrecognized runtime mode");
-var runtime = config.mode === "server" ? new ServerRuntimeClient() : new BrowserRuntimeClient();
+var ownerKey = /* @__PURE__ */ Symbol.for("slopbuzz:runtime-owner:v1");
+var owners = globalThis;
+var edition = [scope, config.mode, config.revision, config.engine].join("|");
+if (owners[ownerKey] && owners[ownerKey].edition !== edition) throw Error("A different release already owns this page. Finish the current mandate before refreshing.");
+owners[ownerKey] ||= { edition, client: config.mode === "server" ? new ServerRuntimeClient() : new BrowserRuntimeClient() };
+var runtime = owners[ownerKey].client;
 var request = (path, options) => path === "/openapi.json" && (!options?.method || options.method === "GET") ? fetch(releaseFile("openapi.json")) : runtime.request(path, options);
 if ("serviceWorker" in navigator && config.mode === "browser") {
   void navigator.serviceWorker.register(new URL("sw.js", scope), { scope: new URL(scope).pathname }).catch((error) => console.warn("Offline installation unavailable", error));
@@ -238,9 +254,9 @@ async function refreshOperations() {
   try {
     const health = results[0].status === "fulfilled" ? results[0].value : null;
     if (health?.ok) {
-      setCard("health-value", "LIVE", true);
+      setCard("operations-health-value", "LIVE", true);
       available++;
-    } else setCard("health-value", "UNAVAILABLE", false);
+    } else setCard("operations-health-value", "UNAVAILABLE", false);
     const readiness = results[1].status === "fulfilled" ? results[1].value : null;
     if (readiness) {
       const ballot = parseLines(await readiness.text());

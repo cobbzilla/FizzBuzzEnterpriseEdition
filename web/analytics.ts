@@ -31,6 +31,10 @@ async function initialize() {
  const enter=()=>{if(!active){active=true;capture('$pageview');}};
  const leave=()=>{if(active){active=false;capture('$pageleave');}};
  enter();window.addEventListener('pagehide',leave);window.addEventListener('pageshow',e=>{if(e.persisted)enter();});
+ document.addEventListener('site-page-change',()=>{
+  if(properties.$pathname===location.pathname)return;
+  leave();properties.$current_url=cleanUrl(location.href);properties.$pathname=location.pathname;enter();
+ });
  window.addEventListener('slopbuzz:usage',event=>{
   const d=(event as CustomEvent<Usage>).detail;
   if(!['slopbuzz_demo_run','slopbuzz_api_request'].includes(d.event))return;

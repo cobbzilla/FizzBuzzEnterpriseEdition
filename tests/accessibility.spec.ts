@@ -18,7 +18,7 @@ for (const route of routes) {
     if(route === 'bestiary/')await expect(page.locator('#bestiary-status')).toContainText('3200 companions');
     if(route === 'department-of-improbable-appointments/')await expect(page.locator('#rarity-status')).toContainText('All 3,200');
     if(route === 'api/') await expect(page.locator('#api-total')).toContainText('ratified operations');
-    if(route === '') await expect(page.locator('#health-value')).toHaveText('LIVE');
+    if(route === '') await expect(page.locator('#operations-health-value')).toHaveText('LIVE');
     if(route === 'response/') await expect(page.locator('#response-status')).toContainText('Response received');
     const nav = page.getByRole('navigation',{name:'Primary navigation',exact:true});
     expect(await nav.getByRole('link').allTextContents()).toEqual(['Live demo','Operations','API charter','About','Validation tribunal']);

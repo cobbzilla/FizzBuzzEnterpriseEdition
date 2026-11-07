@@ -23,7 +23,9 @@ test('cookieless traffic and explicit usage are sanitized and non-blocking',asyn
  expect(direct).toEqual([]);
  expect((await page.context().cookies()).filter(c=>c.name.includes('ph_'))).toEqual([]);
  expect(await page.evaluate(()=>Object.keys(localStorage).filter(k=>k.startsWith('ph_')))).toEqual([]);
- await page.goto('/api/');await expect(page.locator('#api-total')).toContainText('ratified');
+ if(!await page.locator('#company-navigation').isVisible())await page.click('#company-menu');
+ await page.locator('.site-header').getByRole('link',{name:'API charter',exact:true}).click();await expect(page.locator('#api-total')).toContainText('ratified');
+ await expect.poll(()=>events.filter(e=>e.event==='$pageview').length).toBe(2);expect(events.filter(e=>e.event==='$pageview').at(-1).properties.$pathname).toBe('/api/');
  const card=page.locator('.api-card').first();await card.locator('summary').first().click();await card.getByRole('button').click();
  await expect.poll(()=>events.filter(e=>e.event==='slopbuzz_api_request').length).toBe(1);
  await page.route('**/intake/e/**',route=>route.abort());

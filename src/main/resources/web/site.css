@@ -871,3 +871,6 @@ html:has(.demo-page[data-desk=authorize]) { scroll-padding-bottom: calc(var(--di
  #discovery-register .companion-chip:focus-visible { outline-offset: -3px; }
 }
 @media(forced-colors:active) { :is(#discovery-register,#companion-spotlight) :is(.companion-chip,.companion-glyph)[data-rarity] { background: Canvas; color: CanvasText; border-color: ButtonText; box-shadow: none; } }
+/* Retained pages keep their controllers, but expose only the active document. */
+[data-site-page][hidden] { display: none !important; }
+.site-navigation-notice { margin: 1rem auto; max-width: 72rem; padding: .75rem 1rem; }

@@ -2,10 +2,11 @@ import type { RuntimeClient, RuntimeConfig, WorkerReply } from './contracts';
 import {isTransientOperation, runtimeProtocol} from './runtime-protocol';
 import {scope,releaseFile} from './release-assets';
 export {scope} from './release-assets';
-export const config: RuntimeConfig = await fetch(releaseFile('runtime-config.json'), {cache: 'no-cache'}).then(r => {
-  if (!r.ok) throw new Error('Deployment configuration is unavailable');
-  return r.json();
-});
+const configurationKey=Symbol.for('slopbuzz:runtime-configuration:v1'),configurationURL=releaseFile('runtime-config.json').href;
+const configurations=globalThis as typeof globalThis&{[configurationKey]?:{url:string;load:Promise<RuntimeConfig>}};
+if(configurations[configurationKey]&&configurations[configurationKey]!.url!==configurationURL)throw Error('A different release configuration already owns this page.');
+configurations[configurationKey] ||= {url:configurationURL,load:fetch(configurationURL,{cache:'no-cache'}).then(r=>{if(!r.ok)throw Error('Deployment configuration is unavailable');return r.json();})};
+export const config:RuntimeConfig=await configurations[configurationKey]!.load;
 export class BrowserRuntimeClient implements RuntimeClient {
   private channel: BroadcastChannel;
   private worker: Worker;
@@ -13,16 +14,18 @@ export class BrowserRuntimeClient implements RuntimeClient {
   private compatibleOwners = new Map<string, Promise<void>>();
   private transientClient?: BrowserRuntimeClient;
   private narrativeCapabilities=new Map<string,Promise<Record<string,unknown>>>();
+  private closed=false;private readonly onHide=()=>this.close();
   constructor(private configuration = config, isolated?: string, transient = false) {
     if (!navigator.locks || !globalThis.crypto?.subtle) throw new Error('This browser requires a secure context, Web Locks, IndexedDB and Web Crypto.');
     this.channel = new BroadcastChannel(`slopbuzz:${scope}${isolated ? `:rehearsal:${isolated}` : ''}`);
     this.channel.onmessage = (event: MessageEvent<WorkerReply>) => this.pending.get(event.data.id)?.(event.data);
     this.worker = new Worker(new URL(`${configuration.assets}runtime-worker.js`, scope));
     this.worker.postMessage({config: configuration, scope, isolated, transient});
-    addEventListener('pagehide', () => this.close(), {once: true});
+    addEventListener('pagehide', this.onHide, {once: true});
   }
-  close() { this.transientClient?.close(); this.worker.terminate(); this.channel.close(); }
+  close() {if(this.closed)return;this.closed=true;removeEventListener('pagehide',this.onHide);this.transientClient?.close();this.worker.terminate();this.channel.close();}
   private async owner(): Promise<WorkerReply> {
+    if(this.closed)throw Error('This runtime client has been closed.');
     const id = crypto.randomUUID();
     return new Promise((resolve, reject) => {
       const send = () => this.channel.postMessage({kind: 'hello', id, revision: this.configuration.revision});
@@ -103,7 +106,13 @@ class ServerRuntimeClient implements RuntimeClient {
 function explainedPath(path:string){const split=path.indexOf('?');return (split<0?path:path.slice(0,split))+'/explained'+(split<0?'':path.slice(split));}
 function annotate(response:Response,info:Record<string,unknown>){const headers=new Headers(response.headers);const safe=Object.fromEntries(['mode','engine','storage','cache','revision','protocol','narrative'].filter(key=>info[key]!==undefined).map(key=>[key,info[key]]));headers.set('X-SlopBuzz-Execution-Runtime',JSON.stringify(safe).replace(/[^\x20-\x7e]/g,char=>'\\u'+char.charCodeAt(0).toString(16).padStart(4,'0')));return new Response(response.body,{status:response.status,headers});}
 if (!['browser', 'server'].includes(config.mode)) throw new Error('Unrecognized runtime mode');
-export const runtime: RuntimeClient = config.mode === 'server' ? new ServerRuntimeClient() : new BrowserRuntimeClient();
+// Separately bundled page controllers share one owner for the lifetime of the shell.
+const ownerKey=Symbol.for('slopbuzz:runtime-owner:v1');
+const owners=globalThis as typeof globalThis&{[ownerKey]?:{edition:string;client:BrowserRuntimeClient|ServerRuntimeClient}};
+const edition=[scope,config.mode,config.revision,config.engine].join('|');
+if(owners[ownerKey]&&owners[ownerKey]!.edition!==edition)throw Error('A different release already owns this page. Finish the current mandate before refreshing.');
+owners[ownerKey] ||= {edition,client:config.mode==='server'?new ServerRuntimeClient():new BrowserRuntimeClient()};
+export const runtime:RuntimeClient=owners[ownerKey]!.client;
 export const proclamation=(path:string)=>(runtime as BrowserRuntimeClient|ServerRuntimeClient).proclamation(path);
 export const request = (path: string, options?: RequestInit) => path === '/openapi.json' && (!options?.method || options.method === 'GET') ? fetch(releaseFile('openapi.json')) : runtime.request(path, options);
 // Offline installation is an infrastructure concern, not a site-wide announcement.

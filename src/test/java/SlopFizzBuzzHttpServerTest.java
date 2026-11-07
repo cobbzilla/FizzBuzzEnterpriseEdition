@@ -266,7 +266,9 @@ public class SlopFizzBuzzHttpServerTest {
 		assertEquals("text/html; charset=UTF-8", guide.contentType);
 		assertTrue(guide.body.contains("Every desk."));
 		assertTrue(guide.body.contains("href=\"/openapi.json\""));
-		assertTrue(guide.body.matches("(?s).*src=\"/assets/api\\.js\\?v=[0-9a-f]{64}\".*"));
+		assertTrue(guide.body.matches("(?s).*rel=\"slopbuzz-page-module\" href=\"/assets/api\\.js\\?v=[0-9a-f]{64}\".*"));
+        assertTrue(guide.body.contains("data-site-shell src=\"/assets/site-shell.js?edition="));
+        assertEquals(200, request("GET", "/assets/site-shell.js").status);
 		assertEquals(200, request("GET", "/api/").status);
 		assertEquals(404, request("GET", "/api-extra").status);
 		assertTrue(request("GET", "/assets/api.js").body.contains("openapi.json"));

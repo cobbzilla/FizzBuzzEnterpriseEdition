@@ -264,6 +264,14 @@ out of their actual tiles on independent four-to-ten-second flight plans;
 a fresh appointment of the same character waits until that departure finishes.
 See [ADR 0039](docs/ADR-0039-companion-presentation-and-departures.md).
 
+Internal header and footer journeys retain the active demo. The global running
+bar follows the latest certified value on other pages and returns to the same
+Observe view. Logical disclosure continues while hidden 3D rendering rests;
+returning does not require Play or submit the mandate again. Explicit pauses,
+Stop and replacement mandates keep their existing meaning. A lost animation
+callback has a timer witness, and a stalled renderer yields to readable evidence.
+See [ADR 0041](docs/ADR-0041-persistent-proceedings.md).
+
 Cadence remains adjustable during Executive Hovering. Interdepartmental Sign-Off
 retains the established office pace; Full Board Ratification doubles deliberation,
 Emergency Delegated Authority halves it, and Executive Fiat uses the fastest
