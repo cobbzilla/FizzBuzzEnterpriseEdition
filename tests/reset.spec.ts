@@ -36,7 +36,7 @@ for(const base of ['/', '/portfolio/slopbuzz/'])test(`reset escapes a retired wo
   },scope);
   await page.goto(scope+'reset/');await expect(page).toHaveURL(scope);await expect(page.getByRole('link',{name:'Live demo',exact:true})).toBeVisible();
   expect(await page.evaluate(()=>new URL(navigator.serviceWorker.controller!.scriptURL).searchParams.has('recovery'))).toBe(true);
-  await expect(page.locator('#health-value')).toHaveText('LIVE');await expect(page.locator('#discovery-list li')).toHaveCount(5);
+  await expect(page.locator('#operations-health-value')).toHaveText('LIVE');await expect(page.locator('#discovery-list li')).toHaveCount(5);
   await page.evaluate(async scope=>{
    await navigator.serviceWorker.register(scope+'retired-worker.js',{scope:scope+'another-app/'});
    const registration=await navigator.serviceWorker.register(scope+'retired-worker.js',{scope});await registration.update();
@@ -77,12 +77,12 @@ test('full reset removes saved companions, browser databases, cookies and prefer
  if(new URL(page.url()).pathname==='/full-reset/'){
   await expect(page.locator('#reset-status')).toContainText('Close all other tabs');await owner.close();await page.getByRole('button',{name:'Retry application refresh'}).click();
  }
- await expect(page).toHaveURL(new URL('/',page.url()).href);await expect(page.locator('#health-value')).toHaveText('LIVE');
+ await expect(page).toHaveURL(new URL('/',page.url()).href);await expect(page.locator('#operations-health-value')).toHaveText('LIVE');
  expect(await page.evaluate(()=>[localStorage.getItem('slopbuzz:extraordinary-appointments:v1'),localStorage.getItem('site-reset-probe'),sessionStorage.getItem('site-reset-probe')])).toEqual([null,null,null]);
  expect(await page.evaluate(()=>document.cookie)).not.toContain('site_reset_probe');expect(await page.evaluate(()=>caches.keys())).not.toContain('site-reset-probe');expect(await page.evaluate(async()=>(await indexedDB.databases()).map(database=>database.name))).not.toContain('site-reset-probe');
  expect((await custody(page,new URL('/',page.url()).href)).journalEntries).toBe(0);
  if(!owner.isClosed())await owner.close();
- await context.setOffline(true);await page.reload();await expect(page.locator('#health-value')).toHaveText('LIVE');await context.setOffline(false);
+ await context.setOffline(true);await page.reload();await expect(page.locator('#operations-health-value')).toHaveText('LIVE');await context.setOffline(false);
 });
 
 for(const route of ['reset','full-reset'])test(`a failed refresh has an accessible keyboard retry and a homepage escape: ${route}`,async({page})=>{
