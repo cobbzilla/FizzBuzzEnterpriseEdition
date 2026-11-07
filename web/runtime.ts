@@ -108,7 +108,7 @@ function annotate(response:Response,info:Record<string,unknown>){const headers=n
 if (!['browser', 'server'].includes(config.mode)) throw new Error('Unrecognized runtime mode');
 // Separately bundled page controllers share one owner for the lifetime of the shell.
 const ownerKey=Symbol.for('slopbuzz:runtime-owner:v1');
-const owners=globalThis as typeof globalThis&{[ownerKey]?:{edition:string;client:BrowserRuntimeClient|ServerRuntimeClient}};
+const owners=globalThis as typeof globalThis&{[ownerKey]?:{edition:string;client:BrowserRuntimeClient|ServerRuntimeClient;linksBound?:boolean}};
 const edition=[scope,config.mode,config.revision,config.engine].join('|');
 if(owners[ownerKey]&&owners[ownerKey]!.edition!==edition)throw Error('A different release already owns this page. Finish the current mandate before refreshing.');
 owners[ownerKey] ||= {edition,client:config.mode==='server'?new ServerRuntimeClient():new BrowserRuntimeClient()};
@@ -122,10 +122,12 @@ if ('serviceWorker' in navigator && config.mode === 'browser') {
 }
 // Raw operational links remain useful on a static host, without pretending to be HTTP endpoints.
 const desks = /^\/(?:companions\/|fizzbuzz|onboarding\/rehearsal|precedent\/rehearsal|procurement\/dossier|capacity\/forecast|healthz|readyz|cache\/status|operations\/|audit\/)/;
-if (config.mode === 'browser') document.querySelectorAll<HTMLAnchorElement>('a[href]').forEach(link => {
+function mapOperationalLinks(){if (config.mode === 'browser') document.querySelectorAll<HTMLAnchorElement>('a[href]').forEach(link => {
   const url = new URL(link.href);
   const base = new URL(scope).pathname.replace(/\/$/, '');
   const path = url.pathname.slice(base.length) + url.search;
   if (url.origin !== location.origin || !desks.test(path)) return;
   link.href = new URL(`response/?path=${encodeURIComponent(path)}`, scope).href;
-});
+});}
+if(!owners[ownerKey]!.linksBound){owners[ownerKey]!.linksBound=true;document.addEventListener('site-page-change',mapOperationalLinks);}
+mapOperationalLinks();

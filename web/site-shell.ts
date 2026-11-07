@@ -1,6 +1,6 @@
 import {sitePage} from './site-navigation';
 
-interface View {key:string;root:HTMLElement;main:HTMLElement;title:string;description:string;classes:string;module?:string;loaded?:Promise<unknown>;scroll:{x:number;y:number}}
+interface View {key:string;root:HTMLElement;main:HTMLElement;title:string;description:string;canonical?:string;robots?:string;classes:string;module?:string;loaded?:Promise<unknown>;scroll:{x:number;y:number}}
 const views=new Map<string,View>(),shellURL=document.querySelector<HTMLScriptElement>('script[data-site-shell]')!.src;
 const styleLoads=new Map<string,Promise<void>>();
 const persistent='.site-header,.skip-link,.site-footer,#discovery-register,#companion-dialog,#active-run-banner,#active-run-announcement,.discovery-announcement,.companion-departures,.estate-announcement,script';
@@ -23,7 +23,7 @@ function adopt(source:Document,url:URL):View {
  const root=document.createElement('div');root.dataset.sitePage=key||'home';root.hidden=true;root.inert=true;
  for(const element of [...source.body.children])if(!element.matches(persistent)&&element!==notice&&element!==retry&&element!==outlet)root.append(element);
  const main=root.querySelector<HTMLElement>('main')!;if(!main)throw Error('The destination has no main content.');
- const view:View={key,root,main,title:source.title,description:source.querySelector<HTMLMetaElement>('meta[name="description"]')?.content||'',classes:source.body.className,module:source.querySelector<HTMLLinkElement>('link[rel="slopbuzz-page-module"]')?.href,scroll:{x:0,y:0}};
+ const view:View={key,root,main,title:source.title,description:source.querySelector<HTMLMetaElement>('meta[name="description"]')?.content||'',canonical:source.querySelector<HTMLLinkElement>('link[rel="canonical"]')?.href,robots:source.querySelector<HTMLMetaElement>('meta[name="robots"]')?.content,classes:source.body.className,module:source.querySelector<HTMLLinkElement>('link[rel="slopbuzz-page-module"]')?.href,scroll:{x:0,y:0}};
  main.id='site-main-'+(key||'home');views.set(key,view);outlet.append(root);return view;
 }
 function styles(source:Document):Promise<unknown[]> {
@@ -38,6 +38,8 @@ function show(view:View,url:URL){
  active=view;view.main.id='main';view.root.hidden=false;view.root.inert=false;document.title=view.title;document.body.className=view.classes;document.body.dataset.sitePage=view.key||'home';
  if(view.key!=='demo'){delete document.body.dataset.desk;document.body.dataset.companyMenu='closed';document.querySelector<HTMLButtonElement>('#company-menu')!.hidden=true;}
  const description=document.querySelector<HTMLMetaElement>('meta[name="description"]');if(description)description.content=view.description;
+ let canonical=document.querySelector<HTMLLinkElement>('link[rel="canonical"]');if(view.canonical){if(!canonical){canonical=document.createElement('link');canonical.rel='canonical';document.head.append(canonical);}canonical.href=view.canonical;}else canonical?.remove();
+ let robots=document.querySelector<HTMLMetaElement>('meta[name="robots"]');if(view.robots){if(!robots){robots=document.createElement('meta');robots.name='robots';document.head.append(robots);}robots.content=view.robots;}else robots?.remove();
  for(const link of document.querySelectorAll<HTMLAnchorElement>('.site-header nav a')){if(sitePage(new URL(link.href))===view.key)link.setAttribute('aria-current','page');else link.removeAttribute('aria-current');}
  for(const link of document.querySelectorAll<HTMLAnchorElement>('[data-site-main-link]')){const target=new URL(url);target.hash='main';link.href=target.href;}
 }
