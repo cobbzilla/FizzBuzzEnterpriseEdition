@@ -32,7 +32,7 @@ test('local UI, cache, receipts, docs, cadence and scrolling',async({page})=>{
   await page.goto('/#operations');await expect(page.locator('#operations-health-value')).toHaveText('LIVE');
   await demoAction(page,'click','#canary-button');await expect(page.locator('#canary-value')).toHaveText('APPROVED');
   await demoAction(page,'click','#recovery-button');await expect(page.locator('#recovery-value')).toHaveText('COPY MATCHED');
-  await page.getByRole('link',{name:'Cache report'}).click();await expect(page.locator('pre')).toContainText('slopbuzz-cache/v1');
+  await page.getByRole('link',{name:'Cache report'}).click();await expect(page.locator('#response-output')).toContainText('slopbuzz-cache/v1');
   await page.goto('/api/');await expect(page.locator('#api-total')).toContainText('ratified operations');
   await page.goto('/changelog/');await expect(page.locator('main')).toContainText('browser-enterprise-runtime');
   await page.goto('/continuity-register/');await expect(page.locator('main')).toContainText('WebAssembly');
