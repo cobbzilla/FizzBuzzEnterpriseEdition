@@ -162,13 +162,20 @@ if ("serviceWorker" in navigator && config.mode === "browser") {
   void navigator.serviceWorker.register(new URL("sw.js", scope), { scope: new URL(scope).pathname }).catch((error) => console.warn("Offline installation unavailable", error));
 }
 var desks = /^\/(?:companions\/|fizzbuzz|onboarding\/rehearsal|precedent\/rehearsal|procurement\/dossier|capacity\/forecast|healthz|readyz|cache\/status|operations\/|audit\/)/;
-if (config.mode === "browser") document.querySelectorAll("a[href]").forEach((link) => {
-  const url = new URL(link.href);
-  const base = new URL(scope).pathname.replace(/\/$/, "");
-  const path = url.pathname.slice(base.length) + url.search;
-  if (url.origin !== location.origin || !desks.test(path)) return;
-  link.href = new URL(`response/?path=${encodeURIComponent(path)}`, scope).href;
-});
+function mapOperationalLinks() {
+  if (config.mode === "browser") document.querySelectorAll("a[href]").forEach((link) => {
+    const url = new URL(link.href);
+    const base = new URL(scope).pathname.replace(/\/$/, "");
+    const path = url.pathname.slice(base.length) + url.search;
+    if (url.origin !== location.origin || !desks.test(path)) return;
+    link.href = new URL(`response/?path=${encodeURIComponent(path)}`, scope).href;
+  });
+}
+if (!owners[ownerKey].linksBound) {
+  owners[ownerKey].linksBound = true;
+  document.addEventListener("site-page-change", mapOperationalLinks);
+}
+mapOperationalLinks();
 
 // web/dom.ts
 var byId = (id) => {

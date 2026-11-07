@@ -56,7 +56,7 @@ function adopt(source, url) {
   for (const element of [...source.body.children]) if (!element.matches(persistent) && element !== notice && element !== retry && element !== outlet) root.append(element);
   const main = root.querySelector("main");
   if (!main) throw Error("The destination has no main content.");
-  const view = { key, root, main, title: source.title, description: source.querySelector('meta[name="description"]')?.content || "", classes: source.body.className, module: source.querySelector('link[rel="slopbuzz-page-module"]')?.href, scroll: { x: 0, y: 0 } };
+  const view = { key, root, main, title: source.title, description: source.querySelector('meta[name="description"]')?.content || "", canonical: source.querySelector('link[rel="canonical"]')?.href, robots: source.querySelector('meta[name="robots"]')?.content, classes: source.body.className, module: source.querySelector('link[rel="slopbuzz-page-module"]')?.href, scroll: { x: 0, y: 0 } };
   main.id = "site-main-" + (key || "home");
   views.set(key, view);
   outlet.append(root);
@@ -103,6 +103,24 @@ function show(view, url) {
   }
   const description = document.querySelector('meta[name="description"]');
   if (description) description.content = view.description;
+  let canonical = document.querySelector('link[rel="canonical"]');
+  if (view.canonical) {
+    if (!canonical) {
+      canonical = document.createElement("link");
+      canonical.rel = "canonical";
+      document.head.append(canonical);
+    }
+    canonical.href = view.canonical;
+  } else canonical?.remove();
+  let robots = document.querySelector('meta[name="robots"]');
+  if (view.robots) {
+    if (!robots) {
+      robots = document.createElement("meta");
+      robots.name = "robots";
+      document.head.append(robots);
+    }
+    robots.content = view.robots;
+  } else robots?.remove();
   for (const link of document.querySelectorAll(".site-header nav a")) {
     if (sitePage(new URL(link.href)) === view.key) link.setAttribute("aria-current", "page");
     else link.removeAttribute("aria-current");
