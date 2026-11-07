@@ -7,7 +7,7 @@ const list=document.querySelector<HTMLElement>('#bestiary-results')!;
 const status=document.querySelector<HTMLElement>('#bestiary-status')!;
 const previous=document.querySelector<HTMLButtonElement>('#bestiary-previous')!;
 const next=document.querySelector<HTMLButtonElement>('#bestiary-next')!;
-document.querySelector('form')!.addEventListener('submit',event=>event.preventDefault());
+search.closest('form')!.addEventListener('submit',event=>event.preventDefault());
 let entries:Companion[]=[];let page=0;const pageSize=24;
 function render(){
  const term=search.value.toLocaleLowerCase().trim();const matches=entries.filter(c=>(!kind.value||c.kind===kind.value)&&(!category.value||c.category===category.value)&&(!rarity.value||c.rarity===rarity.value)&&[c.name,c.emoji,c.personality,c.backstory,c.energy,c.goal].join(' ').toLocaleLowerCase().includes(term));

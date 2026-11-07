@@ -101,27 +101,27 @@ var rounded = (n) => Math.round(n * 1e6) / 1e6;
 var distance = (a, b) => Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z);
 var slotPosition = (slot, rows, columns) => ({ x: rounded((slot % columns - (columns - 1) / 2) * width), y: 0, z: rounded((Math.floor(slot / columns) - (rows - 1) / 2) * depth) });
 var slotAddress = (slot, columns) => String.fromCharCode(65 + slot % columns) + (Math.floor(slot / columns) + 1);
-function generate(seed, edition, rows, columns) {
-  if (!/^[a-f0-9]{32}$/.test(seed) || !Number.isSafeInteger(edition) || edition < 0 || edition > 1e6) throw new Error("Facilities received an unfamiliar estate charter.");
-  const rng = random(seed + ":" + edition), slots = Array.from({ length: rows * columns }, (_, i) => i), amenitySlot = rows === 3 ? Math.floor(rng() * 9) : -1;
-  const available = slots.filter((i) => i !== amenitySlot), order = edition === 0 ? rooms.map((r) => r.id) : shuffle(rooms.map((r) => r.id), rng);
+function generate(seed, edition2, rows, columns) {
+  if (!/^[a-f0-9]{32}$/.test(seed) || !Number.isSafeInteger(edition2) || edition2 < 0 || edition2 > 1e6) throw new Error("Facilities received an unfamiliar estate charter.");
+  const rng = random(seed + ":" + edition2), slots = Array.from({ length: rows * columns }, (_, i) => i), amenitySlot = rows === 3 ? Math.floor(rng() * 9) : -1;
+  const available = slots.filter((i) => i !== amenitySlot), order = edition2 === 0 ? rooms.map((r) => r.id) : shuffle(rooms.map((r) => r.id), rng);
   const palette = shuffle([...partitionStyles.map((s) => s.id)], rng);
-  if (edition === 1) {
+  if (edition2 === 1) {
     palette.splice(palette.indexOf("hearts"), 1);
     palette.splice(palette.indexOf("bars"), 1);
     palette.unshift("hearts", "bars");
   }
   const placements = order.map((room, i) => {
     const slot = available[i], row = Math.floor(slot / columns);
-    return Object.freeze({ room, slot, address: slotAddress(slot, columns), position: Object.freeze(slotPosition(slot, rows, columns)), yaw: edition === 0 ? 0 : row === rows - 1 ? Math.PI : 0, partition: edition === 0 ? "classic" : palette[i] });
+    return Object.freeze({ room, slot, address: slotAddress(slot, columns), position: Object.freeze(slotPosition(slot, rows, columns)), yaw: edition2 === 0 ? 0 : row === rows - 1 ? Math.PI : 0, partition: edition2 === 0 ? "classic" : palette[i] });
   });
   const amenity = amenitySlot < 0 ? void 0 : Object.freeze({ slot: amenitySlot, address: slotAddress(amenitySlot, columns), kind: rng() < 0.5 ? "atrium" : "breakroom", position: Object.freeze(slotPosition(amenitySlot, rows, columns)) });
-  return Object.freeze({ version: layoutVersion, seed, edition, rows, columns, placements: Object.freeze(placements), amenity, bounds: Object.freeze({ minX: -columns * width / 2, maxX: columns * width / 2, minZ: -rows * depth / 2, maxZ: rows * depth / 2 }) });
+  return Object.freeze({ version: layoutVersion, seed, edition: edition2, rows, columns, placements: Object.freeze(placements), amenity, bounds: Object.freeze({ minX: -columns * width / 2, maxX: columns * width / 2, minZ: -rows * depth / 2, maxZ: rows * depth / 2 }) });
 }
 var rowEstate = { create: (s, e) => generate(s, e, 2, 4) };
 var squareEstate = { create: (s, e) => generate(s, e, 3, 3) };
-function estate(seed, edition) {
-  return (edition % 2 ? squareEstate : rowEstate).create(seed, edition);
+function estate(seed, edition2) {
+  return (edition2 % 2 ? squareEstate : rowEstate).create(seed, edition2);
 }
 var foundingEstate = estate("00000000000000000000000000000000", 0);
 function nextEstate(layout) {
@@ -435,8 +435,10 @@ officeEstate.subscribe((event) => {
   }
   try {
     const url = new URL(location.href);
-    url.searchParams.set("estate", layoutToken(officeEstate.current));
-    history.replaceState(history.state, "", url);
+    if (document.body.dataset.sitePage === "demo") {
+      url.searchParams.set("estate", layoutToken(officeEstate.current));
+      history.replaceState(history.state, "", url);
+    }
   } catch {
   }
 });
@@ -1088,6 +1090,12 @@ var OfficeTourDesk = class {
     document.addEventListener("office-fullscreen-change", () => {
       this.activity();
       requestAnimationFrame(() => this.renderer?.resize());
+    });
+    document.addEventListener("site-page-change", () => {
+      this.activity();
+      this.renderer?.resize();
+      if (document.body.dataset.sitePage !== "demo") void this.audio?.suspend();
+      else if (byId2("office-sound").checked) void this.audio?.resume();
     });
     document.addEventListener("office-amenity", (event) => {
       if (event.detail === "office" && officeFullscreen().mode === "facilities") officeFullscreen().inspection(true);
@@ -1873,6 +1881,7 @@ var PresentationScheduler = class {
   timer;
   callback;
   painting = false;
+  serial = 0;
   request(callback) {
     this.cancel();
     this.callback = callback;
@@ -1883,7 +1892,7 @@ var PresentationScheduler = class {
     this.callback = void 0;
   }
   refresh() {
-    if (this.callback && this.painting !== this.canPaint()) {
+    if (this.callback) {
       this.clear();
       this.arm();
     }
@@ -1892,6 +1901,7 @@ var PresentationScheduler = class {
     return !document.hidden && this.visible();
   }
   clear() {
+    this.serial++;
     if (this.frame !== void 0) cancelAnimationFrame(this.frame);
     clearTimeout(this.timer);
     this.frame = void 0;
@@ -1899,15 +1909,16 @@ var PresentationScheduler = class {
   }
   arm() {
     this.painting = this.canPaint();
+    const serial = this.serial;
     const run = (now) => {
-      this.frame = void 0;
-      this.timer = void 0;
+      if (serial !== this.serial) return;
+      this.clear();
       const callback = this.callback;
       this.callback = void 0;
       callback?.(now);
     };
     if (this.painting) this.frame = requestAnimationFrame(run);
-    else this.timer = setTimeout(() => run(performance.now()), 50);
+    this.timer = setTimeout(() => run(performance.now()), this.painting ? 100 : 50);
   }
 };
 
@@ -1951,7 +1962,9 @@ var OfficeSupervisionDesk = class {
     });
     resize.observe(element("supervision-stage"));
     new IntersectionObserver(() => this.activity(), { threshold: [0, 0.15] }).observe(element("supervision-stage"));
-    document.addEventListener("visibilitychange", () => this.activity());
+    document.addEventListener("visibilitychange", () => this.activity(true));
+    document.addEventListener("site-page-change", () => this.activity(true));
+    addEventListener("pageshow", () => this.activity(true));
     document.addEventListener("demo-desk-change", () => this.activity());
     document.addEventListener("demo-watch-layout", () => {
       this.activity();
@@ -1985,6 +1998,7 @@ var OfficeSupervisionDesk = class {
   ready = false;
   fallback = false;
   sceneActive = false;
+  sceneStartedAt = 0;
   readiness;
   epoch = 0;
   serial = 0;
@@ -2179,11 +2193,18 @@ var OfficeSupervisionDesk = class {
     const rect = element("supervision-stage").getBoundingClientRect(), bottom = innerHeight - (document.querySelector("#discovery-register")?.getBoundingClientRect().height || 0);
     return rect.width > 0 && Math.min(rect.bottom, bottom) - Math.max(rect.top, 0) >= Math.min(60, rect.height * 0.2);
   }
-  activity() {
+  activity(force = false) {
     const rect = this.canvas.getBoundingClientRect(), active = this.visible() && !this.canvas.hidden && rect.width > 0 && rect.height > 0;
-    if (active !== this.sceneActive) {
+    if (force || active !== this.sceneActive) {
       this.sceneActive = active;
+      this.sceneStartedAt = performance.now();
+      if (force && active) this.renderer?.active(false);
       this.renderer?.active(active);
+      if (active) this.renderer?.resize();
+    }
+    if (active && this.ready && !this.fallback && performance.now() - Math.max(this.sceneStartedAt, this.paintedAt) > 3e3) {
+      this.graphicsFailure();
+      return;
     }
     this.scheduler.refresh();
   }
@@ -2411,7 +2432,7 @@ officeEstate.subscribe((event) => {
   if (event.kind === "staged") scheduler.request(tick);
   else if (event.kind === "committed" || event.kind === "cancelled") scheduler.cancel();
 });
-for (const event of ["visibilitychange", "demo-desk-change", "demo-watch-layout", "office-fullscreen-change"]) document.addEventListener(event, () => scheduler.refresh());
+for (const event of ["visibilitychange", "site-page-change", "demo-desk-change", "demo-watch-layout", "office-fullscreen-change"]) document.addEventListener(event, () => scheduler.refresh());
 reduced.addEventListener("change", () => {
   if (reduced.matches) officeEstate.finish();
 });
@@ -2694,10 +2715,15 @@ function isTransientOperation(path, method = "GET") {
 }
 
 // web/runtime.ts
-var config = await fetch(releaseFile("runtime-config.json"), { cache: "no-cache" }).then((r) => {
-  if (!r.ok) throw new Error("Deployment configuration is unavailable");
+var configurationKey = /* @__PURE__ */ Symbol.for("slopbuzz:runtime-configuration:v1");
+var configurationURL = releaseFile("runtime-config.json").href;
+var configurations = globalThis;
+if (configurations[configurationKey] && configurations[configurationKey].url !== configurationURL) throw Error("A different release configuration already owns this page.");
+configurations[configurationKey] ||= { url: configurationURL, load: fetch(configurationURL, { cache: "no-cache" }).then((r) => {
+  if (!r.ok) throw Error("Deployment configuration is unavailable");
   return r.json();
-});
+}) };
+var config = await configurations[configurationKey].load;
 var BrowserRuntimeClient = class _BrowserRuntimeClient {
   constructor(configuration = config, isolated, transient = false) {
     this.configuration = configuration;
@@ -2706,7 +2732,7 @@ var BrowserRuntimeClient = class _BrowserRuntimeClient {
     this.channel.onmessage = (event) => this.pending.get(event.data.id)?.(event.data);
     this.worker = new Worker(new URL(`${configuration.assets}runtime-worker.js`, scope));
     this.worker.postMessage({ config: configuration, scope, isolated, transient });
-    addEventListener("pagehide", () => this.close(), { once: true });
+    addEventListener("pagehide", this.onHide, { once: true });
   }
   configuration;
   channel;
@@ -2715,12 +2741,18 @@ var BrowserRuntimeClient = class _BrowserRuntimeClient {
   compatibleOwners = /* @__PURE__ */ new Map();
   transientClient;
   narrativeCapabilities = /* @__PURE__ */ new Map();
+  closed = false;
+  onHide = () => this.close();
   close() {
+    if (this.closed) return;
+    this.closed = true;
+    removeEventListener("pagehide", this.onHide);
     this.transientClient?.close();
     this.worker.terminate();
     this.channel.close();
   }
   async owner() {
+    if (this.closed) throw Error("This runtime client has been closed.");
     const id = crypto.randomUUID();
     return new Promise((resolve, reject) => {
       const send = () => this.channel.postMessage({ kind: "hello", id, revision: this.configuration.revision });
@@ -2820,7 +2852,12 @@ function annotate(response, info) {
   return new Response(response.body, { status: response.status, headers });
 }
 if (!["browser", "server"].includes(config.mode)) throw new Error("Unrecognized runtime mode");
-var runtime = config.mode === "server" ? new ServerRuntimeClient() : new BrowserRuntimeClient();
+var ownerKey = /* @__PURE__ */ Symbol.for("slopbuzz:runtime-owner:v1");
+var owners = globalThis;
+var edition = [scope, config.mode, config.revision, config.engine].join("|");
+if (owners[ownerKey] && owners[ownerKey].edition !== edition) throw Error("A different release already owns this page. Finish the current mandate before refreshing.");
+owners[ownerKey] ||= { edition, client: config.mode === "server" ? new ServerRuntimeClient() : new BrowserRuntimeClient() };
+var runtime = owners[ownerKey].client;
 var proclamation = (path) => runtime.proclamation(path);
 var request = (path, options) => path === "/openapi.json" && (!options?.method || options.method === "GET") ? fetch(releaseFile("openapi.json")) : runtime.request(path, options);
 if ("serviceWorker" in navigator && config.mode === "browser") {
@@ -3199,17 +3236,27 @@ var CompanionDesk = class {
 };
 
 // web/shared-encounter.ts
+var previousReferral = "";
 function prepareSharedEncounter(input) {
   const query = new URL(location.href).searchParams, limit = query.get("limit");
   if (limit === null) return;
+  const referral = ["limit", "ordinal", "authority", "catalog", "companion", "seedPolicy"].map((key2) => query.get(key2) || "").join("|");
+  if (referral === previousReferral) return;
   let mandate;
   try {
     mandate = String(parseMandate(limit));
   } catch {
     return;
   }
+  previousReferral = referral;
+  document.querySelector(".shared-encounter")?.remove();
   input.value = mandate;
   input.dispatchEvent(new Event("input"));
+  const authority = document.querySelector("#authorize-companion-strategy");
+  if (authority && [...authority.options].some((option) => option.value === query.get("authority"))) {
+    authority.value = query.get("authority");
+    authority.dispatchEvent(new Event("change"));
+  }
   if (!query.has("ordinal") && !query.has("companion")) return;
   const ordinal = query.get("ordinal"), strategy = query.get("authority"), catalogVersion = query.get("catalog"), expected = query.get("companion");
   const panel = node("section");
@@ -4886,6 +4933,21 @@ var RecentAppointments = class {
   }
 };
 
+// web/site-navigation.ts
+var pages = /* @__PURE__ */ new Set(["", "demo", "api", "about", "company-history", "accessibility", "validation", "bestiary", "department-of-improbable-appointments", "changelog", "continuity-register", "response"]);
+function sitePage(url) {
+  const base = new URL(scope);
+  if (url.origin !== base.origin || !url.pathname.startsWith(base.pathname)) return;
+  const path = url.pathname.slice(base.pathname.length).replace(/\/$/, "");
+  return path === "company-history" ? "about" : pages.has(path) ? path : void 0;
+}
+function onDemoPage() {
+  return sitePage(new URL(location.href)) === "demo";
+}
+function openSitePage(url) {
+  return new Promise((resolve, reject) => document.dispatchEvent(new CustomEvent("site-navigate", { detail: { url: new URL(url, scope), resolve, reject } })));
+}
+
 // web/demo-workspace.ts
 var DemoWorkspace = class {
   constructor(run) {
@@ -4910,7 +4972,10 @@ var DemoWorkspace = class {
     byId("experiment-view").addEventListener("change", () => this.sections("experiment"));
     byId("evidence-view").addEventListener("change", () => this.sections("evidence"));
     byId("resume-current").addEventListener("click", () => this.navigate("observe"));
-    byId("active-run-banner").addEventListener("click", () => this.navigate("observe"));
+    byId("active-run-banner").addEventListener("click", () => {
+      if (onDemoPage()) this.navigate("observe");
+      else void openSitePage(new URL("demo/?desk=observe", scope));
+    });
     byId("office-choose-mandate").addEventListener("click", () => {
       this.navigate("authorize");
       byId("limit").focus();
@@ -4992,10 +5057,29 @@ var DemoWorkspace = class {
       byId("personnel-record-summary").textContent = byId("personnel-origin").textContent;
     }).observe(byId("personnel-origin"), { childList: true, characterData: true, subtree: true });
     addEventListener("popstate", () => {
+      if (document.documentElement.dataset.siteShell === "ready" || !onDemoPage()) return;
       const desk = readDesk(new URL(location.href));
       if (desk !== this.desk) this.show(desk, false);
       else this.retainDesk(desk);
     });
+    document.addEventListener("site-page-leaving", (event) => {
+      if (event.detail.page === "demo") {
+        officeFullscreen().close(false);
+        this.settings(false);
+        this.companyMenu(false);
+      }
+    });
+    const sitePageChanged = () => {
+      if (onDemoPage()) {
+        const url = new URL(location.href), explicit = url.searchParams.has("desk") || url.searchParams.has("limit") || url.searchParams.has("tour") || !!url.hash, desk = explicit ? readDesk(url) : this.running ? "observe" : this.desk;
+        this.show(desk, false, false);
+      } else {
+        this.updateRunBanner();
+        document.dispatchEvent(new Event("demo-watch-layout"));
+      }
+    };
+    document.addEventListener("site-page-change", sitePageChanged);
+    document.addEventListener("site-page-ready", sitePageChanged);
     const resize = new ResizeObserver(() => this.fit());
     resize.observe(document.querySelector(".site-header"));
     resize.observe(byId("discovery-register"));
@@ -5020,7 +5104,7 @@ var DemoWorkspace = class {
   run;
   desk = "authorize";
   watch = byId("watch-view");
-  mainLinks = document.querySelectorAll('a[href="#main"]');
+  mainLinks = document.querySelectorAll("[data-site-main-link]");
   stage = byId("mandate-output");
   policyIds = ["display-speed", "emoji-companions", "companion-strategy", "require-companion-roll-call", "executive-hovering"];
   activeMandate = "";
@@ -5036,7 +5120,7 @@ var DemoWorkspace = class {
   preferredAuthority = new URL(location.href).searchParams.get("authority") || "";
   scroll = /* @__PURE__ */ new Map();
   get observing() {
-    return this.desk === "observe";
+    return onDemoPage() && this.desk === "observe";
   }
   runActivity(active, paused2 = false, mode = "mandate") {
     this.running = active;
@@ -5067,7 +5151,7 @@ var DemoWorkspace = class {
       byId("active-run-announcement").textContent = announcement2;
     }
     if (!visible2 && focused) {
-      const target = byId("office-fullscreen").open ? byId("office-fullscreen-exit") : byId("desk-" + this.desk).querySelector("h1");
+      const target = !onDemoPage() ? byId("main") : byId("office-fullscreen").open ? byId("office-fullscreen-exit") : byId("desk-" + this.desk).querySelector("h1");
       target?.focus({ preventScroll: true });
     }
   }
@@ -5134,6 +5218,7 @@ var DemoWorkspace = class {
     this.show(desk, true);
   }
   retainDesk(desk) {
+    if (!onDemoPage()) return;
     const entry = new URL(location.href);
     if (desk !== "authorize" && entry.searchParams.get("desk") !== desk) {
       entry.searchParams.set("desk", desk);
@@ -5143,6 +5228,7 @@ var DemoWorkspace = class {
     for (const link of this.mainLinks) link.href = entry.href;
   }
   show(desk, push, focus = true) {
+    if (!onDemoPage()) return;
     if (officeFullscreen().mode) officeFullscreen().close(false);
     const before = this.desk;
     if (before !== desk) this.scroll.set(before, scrollY);
@@ -5211,6 +5297,7 @@ var DemoWorkspace = class {
     byId("company-menu").setAttribute("aria-expanded", String(open));
   }
   fit() {
+    if (!onDemoPage()) return;
     document.body.dataset.expandedText = String(parseFloat(getComputedStyle(document.documentElement).fontSize) > 20);
     const style = document.documentElement.style;
     style.setProperty("--authorization-height", Math.ceil(document.querySelector(".authorization-actions").getBoundingClientRect().height) + "px");
@@ -5901,3 +5988,6 @@ document.querySelectorAll("[data-limit]").forEach((button) => {
 void loadForecast(15).catch(() => setText("forecast-units", "Unavailable"));
 void request("/healthz").then((reply) => setText("health-value", reply.ok ? "LIVE" : "UNAVAILABLE")).catch(() => setText("health-value", "UNAVAILABLE"));
 prepareSharedEncounter(limitInput);
+for (const event of ["site-page-change", "site-page-ready"]) document.addEventListener(event, () => {
+  if (onDemoPage()) prepareSharedEncounter(limitInput);
+});

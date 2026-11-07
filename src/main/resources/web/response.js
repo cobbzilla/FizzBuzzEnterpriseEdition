@@ -2,22 +2,27 @@
 
 // web/runtime-protocol.ts
 var runtimeProtocol = 1;
-function isTransientOperation(path2, method = "GET") {
-  return method === "GET" && ["/premises/rehearsal", "/companions/catalog", "/companions/strategies", "/companions/window", "/operations/runtime", "/fizzbuzz/window", "/fizzbuzz/window/explained", "/capacity/forecast/extended", "/procurement/dossier", "/onboarding/rehearsal", "/precedent/rehearsal"].includes(path2.split("?")[0]);
+function isTransientOperation(path, method = "GET") {
+  return method === "GET" && ["/premises/rehearsal", "/companions/catalog", "/companions/strategies", "/companions/window", "/operations/runtime", "/fizzbuzz/window", "/fizzbuzz/window/explained", "/capacity/forecast/extended", "/procurement/dossier", "/onboarding/rehearsal", "/precedent/rehearsal"].includes(path.split("?")[0]);
 }
 
 // web/release-assets.ts
 var scope = new URL("../", import.meta.url).href;
-var releaseFile = (path2) => new URL(
-  (typeof RELEASE_ASSET_DIRECTORY === "string" ? RELEASE_ASSET_DIRECTORY : "") + path2,
+var releaseFile = (path) => new URL(
+  (typeof RELEASE_ASSET_DIRECTORY === "string" ? RELEASE_ASSET_DIRECTORY : "") + path,
   scope
 );
 
 // web/runtime.ts
-var config = await fetch(releaseFile("runtime-config.json"), { cache: "no-cache" }).then((r) => {
-  if (!r.ok) throw new Error("Deployment configuration is unavailable");
+var configurationKey = /* @__PURE__ */ Symbol.for("slopbuzz:runtime-configuration:v1");
+var configurationURL = releaseFile("runtime-config.json").href;
+var configurations = globalThis;
+if (configurations[configurationKey] && configurations[configurationKey].url !== configurationURL) throw Error("A different release configuration already owns this page.");
+configurations[configurationKey] ||= { url: configurationURL, load: fetch(configurationURL, { cache: "no-cache" }).then((r) => {
+  if (!r.ok) throw Error("Deployment configuration is unavailable");
   return r.json();
-});
+}) };
+var config = await configurations[configurationKey].load;
 var BrowserRuntimeClient = class _BrowserRuntimeClient {
   constructor(configuration = config, isolated, transient = false) {
     this.configuration = configuration;
@@ -26,7 +31,7 @@ var BrowserRuntimeClient = class _BrowserRuntimeClient {
     this.channel.onmessage = (event) => this.pending.get(event.data.id)?.(event.data);
     this.worker = new Worker(new URL(`${configuration.assets}runtime-worker.js`, scope));
     this.worker.postMessage({ config: configuration, scope, isolated, transient });
-    addEventListener("pagehide", () => this.close(), { once: true });
+    addEventListener("pagehide", this.onHide, { once: true });
   }
   configuration;
   channel;
@@ -35,12 +40,18 @@ var BrowserRuntimeClient = class _BrowserRuntimeClient {
   compatibleOwners = /* @__PURE__ */ new Map();
   transientClient;
   narrativeCapabilities = /* @__PURE__ */ new Map();
+  closed = false;
+  onHide = () => this.close();
   close() {
+    if (this.closed) return;
+    this.closed = true;
+    removeEventListener("pagehide", this.onHide);
     this.transientClient?.close();
     this.worker.terminate();
     this.channel.close();
   }
   async owner() {
+    if (this.closed) throw Error("This runtime client has been closed.");
     const id = crypto.randomUUID();
     return new Promise((resolve, reject) => {
       const send = () => this.channel.postMessage({ kind: "hello", id, revision: this.configuration.revision });
@@ -59,7 +70,7 @@ var BrowserRuntimeClient = class _BrowserRuntimeClient {
       send();
     });
   }
-  async request(path2, options = {}) {
+  async request(path, options = {}) {
     const owner = await this.owner();
     if (owner.error) throw new Error(owner.error);
     if (owner.revision !== this.configuration.revision) {
@@ -67,27 +78,27 @@ var BrowserRuntimeClient = class _BrowserRuntimeClient {
         this.compatibleOwners.set(owner.leader, this.verifyCompatibility(owner));
       }
       await this.compatibleOwners.get(owner.leader);
-      if (isTransientOperation(path2, options.method)) {
+      if (isTransientOperation(path, options.method)) {
         this.transientClient ||= new _BrowserRuntimeClient(this.configuration, crypto.randomUUID(), true);
-        return this.transientClient.request(path2, options);
+        return this.transientClient.request(path, options);
       }
     }
-    return this.dispatch(owner, path2, options);
+    return this.dispatch(owner, path, options);
   }
-  async proclamation(path2) {
+  async proclamation(path) {
     const owner = await this.owner();
     if (owner.error) throw new Error(owner.error);
     if (owner.revision !== this.configuration.revision) {
       if (!this.compatibleOwners.has(owner.leader)) this.compatibleOwners.set(owner.leader, this.verifyCompatibility(owner));
       await this.compatibleOwners.get(owner.leader);
-      if (isTransientOperation(path2)) {
+      if (isTransientOperation(path)) {
         this.transientClient ||= new _BrowserRuntimeClient(this.configuration, crypto.randomUUID(), true);
-        return this.transientClient.proclamation(path2);
+        return this.transientClient.proclamation(path);
       }
     }
     if (!this.narrativeCapabilities.has(owner.leader)) this.narrativeCapabilities.set(owner.leader, this.dispatch(owner, "/operations/runtime").then(async (response) => response.ok ? response.json() : {}));
     const info = await this.narrativeCapabilities.get(owner.leader);
-    return annotate(await this.dispatch(owner, info.narrative === 1 ? explainedPath(path2) : path2), info);
+    return annotate(await this.dispatch(owner, info.narrative === 1 ? explainedPath(path) : path), info);
   }
   async verifyCompatibility(owner) {
     const response = await this.dispatch(owner, "/operations/runtime");
@@ -96,7 +107,7 @@ var BrowserRuntimeClient = class _BrowserRuntimeClient {
       throw new Error("The open audit runtime uses an unsupported protocol. Close other site tabs, then reload. No mandate was submitted.");
     }
   }
-  dispatch(owner, path2, options = {}) {
+  dispatch(owner, path, options = {}) {
     const id = crypto.randomUUID();
     return new Promise((resolve, reject) => {
       const timeout = setTimeout(() => {
@@ -114,24 +125,24 @@ var BrowserRuntimeClient = class _BrowserRuntimeClient {
           resolve(new Response(reply.result.body, { status: reply.result.status, headers }));
         }
       });
-      this.channel.postMessage({ kind: "request", id, leader: owner.leader, revision: owner.revision, path: path2, method: options.method || "GET", traceparent: new Headers(options.headers).get("traceparent") || "" });
+      this.channel.postMessage({ kind: "request", id, leader: owner.leader, revision: owner.revision, path, method: options.method || "GET", traceparent: new Headers(options.headers).get("traceparent") || "" });
     });
   }
 };
 var ServerRuntimeClient = class {
   capabilities;
-  request(path2, options = {}) {
-    return fetch(`${(config.apiBaseUrl || "").replace(/\/$/, "")}${path2}`, { ...options, cache: "no-store" });
+  request(path, options = {}) {
+    return fetch(`${(config.apiBaseUrl || "").replace(/\/$/, "")}${path}`, { ...options, cache: "no-store" });
   }
-  async proclamation(path2) {
+  async proclamation(path) {
     this.capabilities ||= this.request("/operations/runtime").then(async (response) => response.ok ? response.json() : {});
     const info = await this.capabilities;
-    return annotate(await this.request(info.narrative === 1 ? explainedPath(path2) : path2), info);
+    return annotate(await this.request(info.narrative === 1 ? explainedPath(path) : path), info);
   }
 };
-function explainedPath(path2) {
-  const split = path2.indexOf("?");
-  return (split < 0 ? path2 : path2.slice(0, split)) + "/explained" + (split < 0 ? "" : path2.slice(split));
+function explainedPath(path) {
+  const split = path.indexOf("?");
+  return (split < 0 ? path : path.slice(0, split)) + "/explained" + (split < 0 ? "" : path.slice(split));
 }
 function annotate(response, info) {
   const headers = new Headers(response.headers);
@@ -140,8 +151,13 @@ function annotate(response, info) {
   return new Response(response.body, { status: response.status, headers });
 }
 if (!["browser", "server"].includes(config.mode)) throw new Error("Unrecognized runtime mode");
-var runtime = config.mode === "server" ? new ServerRuntimeClient() : new BrowserRuntimeClient();
-var request = (path2, options) => path2 === "/openapi.json" && (!options?.method || options.method === "GET") ? fetch(releaseFile("openapi.json")) : runtime.request(path2, options);
+var ownerKey = /* @__PURE__ */ Symbol.for("slopbuzz:runtime-owner:v1");
+var owners = globalThis;
+var edition = [scope, config.mode, config.revision, config.engine].join("|");
+if (owners[ownerKey] && owners[ownerKey].edition !== edition) throw Error("A different release already owns this page. Finish the current mandate before refreshing.");
+owners[ownerKey] ||= { edition, client: config.mode === "server" ? new ServerRuntimeClient() : new BrowserRuntimeClient() };
+var runtime = owners[ownerKey].client;
+var request = (path, options) => path === "/openapi.json" && (!options?.method || options.method === "GET") ? fetch(releaseFile("openapi.json")) : runtime.request(path, options);
 if ("serviceWorker" in navigator && config.mode === "browser") {
   void navigator.serviceWorker.register(new URL("sw.js", scope), { scope: new URL(scope).pathname }).catch((error) => console.warn("Offline installation unavailable", error));
 }
@@ -149,26 +165,40 @@ var desks = /^\/(?:companions\/|fizzbuzz|onboarding\/rehearsal|precedent\/rehear
 if (config.mode === "browser") document.querySelectorAll("a[href]").forEach((link) => {
   const url = new URL(link.href);
   const base = new URL(scope).pathname.replace(/\/$/, "");
-  const path2 = url.pathname.slice(base.length) + url.search;
-  if (url.origin !== location.origin || !desks.test(path2)) return;
-  link.href = new URL(`response/?path=${encodeURIComponent(path2)}`, scope).href;
+  const path = url.pathname.slice(base.length) + url.search;
+  if (url.origin !== location.origin || !desks.test(path)) return;
+  link.href = new URL(`response/?path=${encodeURIComponent(path)}`, scope).href;
 });
 
 // web/response.ts
 var output = document.querySelector("#response-output");
 var status = document.querySelector("#response-status");
 output.setAttribute("aria-busy", "true");
-var path = new URL(location.href).searchParams.get("path") || "/operations/runtime";
-document.querySelector("h1").textContent = `Official response: ${path}`;
-try {
-  const response = await request(path);
-  output.textContent = `Status: ${response.status}
+var root = output.closest("[data-site-page]") || document;
+var previous = "";
+var serial = 0;
+async function receive() {
+  const url = new URL(location.href);
+  if (!url.pathname.replace(/\/$/, "").endsWith("/response")) return;
+  const path = url.searchParams.get("path") || "/operations/runtime";
+  if (path === previous) return;
+  previous = path;
+  const ticket = ++serial;
+  root.querySelector("h1").textContent = `Official response: ${path}`;
+  output.setAttribute("aria-busy", "true");
+  try {
+    const response = await request(path);
+    if (ticket !== serial) return;
+    output.textContent = `Status: ${response.status}
 ${Array.from(response.headers, ([k, v]) => `${k}: ${v}`).join("\n")}
 
 ${await response.text()}`;
-  status.textContent = `Response received. Status ${response.status}.`;
-} catch (error) {
-  status.textContent = `Response unavailable: ${error}`;
-} finally {
-  output.removeAttribute("aria-busy");
+    status.textContent = `Response received. Status ${response.status}.`;
+  } catch (error) {
+    status.textContent = `Response unavailable: ${error}`;
+  } finally {
+    if (ticket === serial) output.removeAttribute("aria-busy");
+  }
 }
+document.addEventListener("site-page-change", () => void receive());
+void receive();

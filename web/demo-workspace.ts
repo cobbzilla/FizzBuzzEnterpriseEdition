@@ -7,6 +7,8 @@ import {officeEstate} from './office-estate';
 import {requestReorganization} from './office-relocation';
 import {officeFullscreen} from './office-fullscreen';
 import {playbackIcon} from './playback-controls';
+import {onDemoPage,openSitePage} from './site-navigation';
+import {scope} from './release-assets';
 
 export interface RunPresentation {
  placeChronicle(target:HTMLElement):void;
@@ -15,7 +17,7 @@ export interface RunPresentation {
 export class DemoWorkspace {
  private desk:DemoDesk='authorize';
  private readonly watch=byId<HTMLSelectElement>('watch-view');
- private readonly mainLinks=document.querySelectorAll<HTMLAnchorElement>('a[href="#main"]');
+ private readonly mainLinks=document.querySelectorAll<HTMLAnchorElement>('[data-site-main-link]');
  private readonly stage=byId('mandate-output');
  private readonly policyIds=['display-speed','emoji-companions','companion-strategy','require-companion-roll-call','executive-hovering'];
  private activeMandate='';private readonly recent=new RecentAppointments();
@@ -40,7 +42,7 @@ export class DemoWorkspace {
   byId<HTMLSelectElement>('experiment-view').addEventListener('change',()=>this.sections('experiment'));
   byId<HTMLSelectElement>('evidence-view').addEventListener('change',()=>this.sections('evidence'));
   byId('resume-current').addEventListener('click',()=>this.navigate('observe'));
-  byId('active-run-banner').addEventListener('click',()=>this.navigate('observe'));
+  byId('active-run-banner').addEventListener('click',()=>{if(onDemoPage())this.navigate('observe');else void openSitePage(new URL('demo/?desk=observe',scope));});
   byId('office-choose-mandate').addEventListener('click',()=>{this.navigate('authorize');byId('limit').focus();});
   byId('watch-settings-toggle').addEventListener('click',()=>this.settings(byId('watch-settings').hidden===true));
   byId('watch-settings-close').addEventListener('click',()=>{this.settings(false);byId('watch-settings-toggle').focus();});
@@ -78,7 +80,13 @@ export class DemoWorkspace {
    const trigger=byId('personnel-documents');trigger.dispatchEvent(new MouseEvent('click')); 
   }));
   new MutationObserver(()=>{byId('personnel-record-summary').textContent=byId('personnel-origin').textContent;}).observe(byId('personnel-origin'),{childList:true,characterData:true,subtree:true});
-  addEventListener('popstate',()=>{const desk=readDesk(new URL(location.href));if(desk!==this.desk)this.show(desk,false);else this.retainDesk(desk);});
+  addEventListener('popstate',()=>{if(document.documentElement.dataset.siteShell==='ready'||!onDemoPage())return;const desk=readDesk(new URL(location.href));if(desk!==this.desk)this.show(desk,false);else this.retainDesk(desk);});
+  document.addEventListener('site-page-leaving',event=>{if((event as CustomEvent<{page:string}>).detail.page==='demo'){officeFullscreen().close(false);this.settings(false);this.companyMenu(false);}});
+  const sitePageChanged=()=>{
+   if(onDemoPage()){const url=new URL(location.href),explicit=url.searchParams.has('desk')||url.searchParams.has('limit')||url.searchParams.has('tour')||!!url.hash,desk=explicit?readDesk(url):this.running?'observe':this.desk;this.show(desk,false,false);}
+   else{this.updateRunBanner();document.dispatchEvent(new Event('demo-watch-layout'));}
+  };
+  document.addEventListener('site-page-change',sitePageChanged);document.addEventListener('site-page-ready',sitePageChanged);
   const resize=new ResizeObserver(()=>this.fit());resize.observe(document.querySelector('.site-header')!);resize.observe(byId('discovery-register'));
   resize.observe(document.querySelector('.authorization-actions')!);
   addEventListener('resize',()=>{if(!this.manualView&&this.committed){this.watch.value=initialWatchView(matchMedia('(max-width: 700px), (max-height: 500px)').matches,this.live().hovering);this.layout();}else this.fit();});
@@ -87,7 +95,7 @@ export class DemoWorkspace {
   this.restoreDraft();this.draftSummary();this.sections('experiment');this.sections('evidence');
   this.show(readDesk(new URL(location.href)),false,false);
  }
- get observing(){return this.desk==='observe';}
+ get observing(){return onDemoPage()&&this.desk==='observe';}
  runActivity(active:boolean,paused=false,mode='mandate'){
   this.running=active;this.held=paused;this.activity=mode;
   const warning=byId('mandate-collision-warning');
@@ -103,7 +111,7 @@ export class DemoWorkspace {
   byId('active-run-value').title=value;banner.dataset.latestOrdinal=this.latestValue?.ordinal||'';banner.hidden=!visible;
   const announcement=visible?state+'. Use the running mandate bar to return to Observe.':'';
   if(announcement!==this.bannerAnnouncement){this.bannerAnnouncement=announcement;byId('active-run-announcement').textContent=announcement;}
-  if(!visible&&focused){const target=byId<HTMLDialogElement>('office-fullscreen').open?byId('office-fullscreen-exit'):byId('desk-'+this.desk).querySelector<HTMLElement>('h1');target?.focus({preventScroll:true});}
+  if(!visible&&focused){const target=!onDemoPage()?byId('main'):byId<HTMLDialogElement>('office-fullscreen').open?byId('office-fullscreen-exit'):byId('desk-'+this.desk).querySelector<HTMLElement>('h1');target?.focus({preventScroll:true});}
  }
  private input(id:string){return byId<HTMLInputElement>(id);}
  private select(id:string){return byId<HTMLSelectElement>(id);}
@@ -127,6 +135,7 @@ export class DemoWorkspace {
  }
  navigate(desk:DemoDesk){this.show(desk,true);}
  private retainDesk(desk:DemoDesk){
+  if(!onDemoPage())return;
   // Legacy fragments also arrive within an already mounted document. Keep the
   // selected desk when a native skip link replaces that fragment with #main.
   const entry=new URL(location.href);
@@ -136,6 +145,7 @@ export class DemoWorkspace {
   entry.hash='main';for(const link of this.mainLinks)link.href=entry.href;
  }
  private show(desk:DemoDesk,push:boolean,focus=true){
+  if(!onDemoPage())return;
   if(officeFullscreen().mode)officeFullscreen().close(false);
   const before=this.desk;
   if(before!==desk)this.scroll.set(before,scrollY);
@@ -178,6 +188,7 @@ export class DemoWorkspace {
  }
  private companyMenu(open:boolean){document.body.dataset.companyMenu=open?'open':'closed';byId('company-menu').setAttribute('aria-expanded',String(open));}
  private fit(){
+  if(!onDemoPage())return;
   document.body.dataset.expandedText=String(parseFloat(getComputedStyle(document.documentElement).fontSize)>20);
   const style=document.documentElement.style;
   style.setProperty('--authorization-height',Math.ceil(document.querySelector('.authorization-actions')!.getBoundingClientRect().height)+'px');

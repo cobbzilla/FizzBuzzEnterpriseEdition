@@ -82,8 +82,8 @@ async function refreshOperations() {
   let available = 0;
   try {
     const health = results[0].status === 'fulfilled' ? results[0].value : null;
-    if (health?.ok) { setCard('health-value', 'LIVE', true); available++; }
-    else setCard('health-value', 'UNAVAILABLE', false);
+    if (health?.ok) { setCard('operations-health-value', 'LIVE', true); available++; }
+    else setCard('operations-health-value', 'UNAVAILABLE', false);
 
     const readiness = results[1].status === 'fulfilled' ? results[1].value : null;
     if (readiness) {

@@ -18,6 +18,9 @@ test('generated TypeScript interface runs against the optional Spring JVM server
     await demoAction(page,'selectOption','#precedent-scenario','lowercase-fizz');await demoAction(page,'click','#precedent-submit');await expect(page.locator('#experiment-precedent-status')).toContainText('Reuse rejected by Independent Lexical Bench');
     await demoAction(page,'click','[data-personnel-scenario="zero"]');await expect(page.locator('#experiment-personnel-verdict')).toHaveText('Application rejected');
     await demoAction(page,'fill','#limit','1001');await demoAction(page,'click','#run-button');await expect(page.locator('#run-status')).toContainText('Mandate complete. 1001 lines disclosed');
+    await demoAction(page,'fill','#limit','40');await demoAction(page,'selectOption','#display-speed','225');await demoAction(page,'click','#run-button');await expect(page.locator('#output')).toContainText('1\n');
+    await page.evaluate(()=>document.documentElement.dataset.retainedJavaRun='true');await page.locator('.brand').click();await expect(page.locator('#operations-health-value')).toHaveText('LIVE');
+    await page.locator('.site-header').getByRole('link',{name:'Live demo',exact:true}).click();await expect(page.locator('html')).toHaveAttribute('data-retained-java-run','true');await expect(page.locator('#pause-reading')).toHaveAttribute('aria-pressed','false');await page.click('#stop-reading');
     await page.goto(`http://127.0.0.1:${port}/#operations`);
     await demoAction(page,'click','#procurement-button');await expect(page.locator('#procurement-status')).toContainText('8 separate line items');
     await demoAction(page,'click','#recovery-button');await expect(page.locator('#recovery-value')).toHaveText('COPY MATCHED');

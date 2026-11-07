@@ -19,5 +19,5 @@ officeEstate.subscribe(event=>{
  if(event.kind!=='committed')return;estateRecords.notice='';
  estateRecords.history.push(estateMemo(event.relocation.from,event.relocation.to));estateRecords.history=estateRecords.history.slice(-10);
  try{sessionStorage.setItem(key,writeEstateSession(officeEstate.current,estateRecords.history));}catch{estateRecords.notice='Facilities cannot save this visit in tab storage. The current arrangement and its minutes remain available until this page closes.';}
- try{const url=new URL(location.href);url.searchParams.set('estate',layoutToken(officeEstate.current));history.replaceState(history.state,'',url);}catch{/* A blocked address book does not close the estate. */}
+ try{const url=new URL(location.href);if(document.body.dataset.sitePage==='demo'){url.searchParams.set('estate',layoutToken(officeEstate.current));history.replaceState(history.state,'',url);}}catch{/* A blocked address book does not close the estate. */}
 });
