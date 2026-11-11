@@ -57,10 +57,17 @@ API charter and validation evidence. This keeps new markup coherent even while
 an older offline service worker controls the tab. Stable file aliases support
 older clients; optional JVM pages use the server's existing asset fingerprints.
 
-The interactive mandate desk lives at `/demo/`. Its controls and official output
-share two desktop columns, with the advisory inventory below; narrow screens
-present controls, output, then advisory. The home page retains Operations and the
-company profile. Both pages use the same runtime namespace, journal, and cache.
+The interactive mandate desk lives at `/demo/`. Five addressable departments—
+Authorize, Observe, Experiment, Facilities and Evidence—share one retained run.
+Observe adapts its output, office, companions and commentary to the available
+screen. The home page retains Operations and the company profile. All pages use
+the same runtime namespace, journal and cache, and internal navigation retains
+the current proceedings.
+
+Companion stamp heists can temporarily hold the visible proceedings during
+Executive Hovering. The underlying Java operation is already complete; the chase
+does not change its output, companion appointments or audit records. Facilities
+offers an isolated rehearsal. See [ADR 0042](ADR-0042-companion-stamp-heists.md).
 
 ```
 SLOPBUZZ_RUNTIME=server SLOPBUZZ_API_BASE_URL=/java-api pnpm build

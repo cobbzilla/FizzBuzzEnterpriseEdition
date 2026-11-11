@@ -22,7 +22,7 @@ export class DemoWorkspace {
  private readonly policyIds=['display-speed','emoji-companions','companion-strategy','require-companion-roll-call','executive-hovering'];
  private activeMandate='';private readonly recent=new RecentAppointments();
  private committed=false;private applying=false;private manualView=false;
- private running=false;private held=false;private activity='mandate';private latestValue?:{ordinal:string;text:string};private bannerAnnouncement='';
+ private running=false;private held=false;private activity='mandate';private interruption='';private latestValue?:{ordinal:string;text:string};private bannerAnnouncement='';
  private preferredAuthority=new URL(location.href).searchParams.get('authority')||'';
  private scroll=new Map<DemoDesk,number>();
  constructor(private readonly run:RunPresentation){
@@ -96,8 +96,8 @@ export class DemoWorkspace {
   this.show(readDesk(new URL(location.href)),false,false);
  }
  get observing(){return onDemoPage()&&this.desk==='observe';}
- runActivity(active:boolean,paused=false,mode='mandate'){
-  this.running=active;this.held=paused;this.activity=mode;
+ runActivity(active:boolean,paused=false,mode='mandate',interruption=''){
+  this.running=active;this.held=paused;this.activity=mode;this.interruption=interruption;
   const warning=byId('mandate-collision-warning');
   if(warning.hidden!==!active){warning.hidden=!active;byId('run-button').setAttribute('aria-describedby',active?'mandate-collision-copy':'authorization-summary');}
   this.updateRunBanner();
@@ -105,7 +105,7 @@ export class DemoWorkspace {
  beginDisclosure(){this.latestValue=undefined;this.updateRunBanner();}
  private updateRunBanner(){
   const banner=byId<HTMLButtonElement>('active-run-banner'),visible=this.running&&!this.observing,focused=banner.contains(document.activeElement);
-  const state=this.held?'Executive hold remains in force':this.activity==='replay'?'Retained proceedings under review':'Authorized production continues';
+  const state=this.held?'Executive hold remains in force':this.interruption|| (this.activity==='replay'?'Retained proceedings under review':'Authorized production continues');
   const value=this.latestValue?this.latestValue.text+' · certified ordinal '+this.latestValue.ordinal:'Awaiting the first certified value';
   for(const [id,text]of [['active-run-state',state],['active-run-value',value]])if(byId(id).textContent!==text)byId(id).textContent=text;
   byId('active-run-value').title=value;banner.dataset.latestOrdinal=this.latestValue?.ordinal||'';banner.hidden=!visible;

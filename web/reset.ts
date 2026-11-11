@@ -70,7 +70,7 @@ async function reset(){
   }
   // Tab preferences can be abandoned without erasing discoveries or audit data.
   if(full){status.textContent='Erasing saved companions, preferences and local audit history…';await forgetSavedData();}
-  else try{for(const key of ['slopbuzz:authorization-draft:v1','slopbuzz:authorization-draft:v2','slopbuzz:estate:v1'])sessionStorage.removeItem(key);}catch{/* Unavailable tab storage already falls back to defaults. */}
+  else try{for(const key of ['slopbuzz:authorization-draft:v1','slopbuzz:authorization-draft:v2','slopbuzz:estate:v1','slopbuzz:stamp-heists:v1'])sessionStorage.removeItem(key);}catch{/* Unavailable tab storage already falls back to defaults. */}
   if(reinstall){
    // The Java-hosted version has no offline worker. A browser deployment gets a
    // distinct script URL so even identical bytes perform a fresh installation.

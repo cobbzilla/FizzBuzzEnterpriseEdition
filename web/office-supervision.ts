@@ -2,6 +2,7 @@ import {releaseAsset} from './release-assets';
 import {OfficeShotDirector,rebaseObservation} from './office-direction';
 import {layoutToken} from './office-layout';
 import {officeEstate} from './office-estate';
+import {officeHeist} from './office-heist';
 import {node} from './companion-story';
 import {tourSeed} from './office-model';
 import {observationEnvelope,planOfficeSteps,planFolio,ObservationClock,type ObservedOfficeStep,type OfficeCue,type ObservationEnvelope} from './office-supervision-model';
@@ -35,13 +36,14 @@ export class OfficeSupervisionDesk {
  private folio?:Folio;private published=false;private companion?:Discovery;private mandate='15';private mode='mandate';private observed=0;
 
  constructor(private readonly authority:ReadingAuthority){
+  officeHeist.subscribe(()=>this.updateScene());
   officeEstate.subscribe(event=>{this.updateScene();if(event.kind==='committed'){const label=element('supervision-current').querySelector('strong'),step=this.activeStep||this.lastStep;if(label&&step)label.textContent=label.textContent!.replace(/ · Address [A-D][1-3]$/,' · Address '+officeEstate.current.placements.find(p=>p.room===step.shot.room)!.address);}
    if(event.kind!=='progress'){this.syncControls();this.authority.wake();}});
   this.checkbox.addEventListener('change',()=>this.applyMode(true));
   this.cadence.addEventListener('change',()=>{this.pane.dataset.cadence=this.cadence.value;this.authority.wake();});
   element('supervision-autonomy').addEventListener('click',()=>{this.disable();this.checkbox.focus();});
   element('supervision-pause').addEventListener('click',()=>{if(this.authority.reading())this.authority.pause(!this.authority.paused());});
-  element('supervision-next').addEventListener('click',()=>{if(!this.authority.reading()||!this.authority.paused()||officeEstate.moving)return;if(!element<HTMLDialogElement>('office-fullscreen').open)element('mandate-output').scrollIntoView({block:'start',behavior:'instant'});this.credits=1;this.authority.wake();});
+  element('supervision-next').addEventListener('click',()=>{if(!this.authority.reading()||!this.authority.paused()||officeEstate.moving||officeHeist.active)return;if(!element<HTMLDialogElement>('office-fullscreen').open)element('mandate-output').scrollIntoView({block:'start',behavior:'instant'});this.credits=1;this.authority.wake();});
   const resize=new ResizeObserver(()=>{this.renderer?.resize();this.activity();});resize.observe(element('supervision-stage'));
   new IntersectionObserver(()=>this.activity(),{threshold:[0,.15]}).observe(element('supervision-stage'));
   document.addEventListener('visibilitychange',()=>this.activity(true));
@@ -57,7 +59,7 @@ export class OfficeSupervisionDesk {
  get enabled(){return this.checkbox.checked;}
  get generation(){return this.epoch;}
  get hasStepCredit(){return this.credits>0;}
- disable(){officeEstate.finish();if(!this.enabled)return;this.checkbox.checked=false;this.applyMode(false);this.authority.wake();}
+ disable(){officeHeist.finish('skipped');officeEstate.finish();if(!this.enabled)return;this.checkbox.checked=false;this.applyMode(false);this.authority.wake();}
  private applyMode(user:boolean){
   this.cadence.disabled=false;this.pane.dataset.cadence=this.cadence.value;this.pane.dataset.renderQuality=this.governor.quality;
   if(this.enabled){
@@ -76,14 +78,15 @@ export class OfficeSupervisionDesk {
  syncControls(){
   const reading=this.authority.reading(),paused=this.authority.paused();
   const button=element<HTMLButtonElement>('supervision-pause');playbackIcon(button,paused?'play':'pause',paused?'Resume':'Pause');button.setAttribute('aria-disabled',String(!reading));button.setAttribute('aria-pressed',String(paused));
-  element('supervision-next').setAttribute('aria-disabled',String(!reading||!paused||officeEstate.moving));
+  element('supervision-next').setAttribute('aria-disabled',String(!reading||!paused||officeEstate.moving||officeHeist.active));
   if(officeEstate.moving&&reading)this.authority.notice('Facilities has suspended disclosure while all eight departments reconsider their addresses. Your pause and current decision are retained.');
+  else if(officeHeist.active&&reading)this.authority.notice('The approval stamp is missing. Proceedings will resume at this decision when the chase resolves. Your Pause setting is retained.');
  }
  begin(mandate:string,mode='mandate'){
   this.interrupt();this.mandate=mandate;this.mode=mode;this.envelope=undefined;this.packet=undefined;this.prefixDone=false;this.suffixDone=false;this.lastStep=undefined;this.activeStep=undefined;this.folio=undefined;this.published=false;this.companion=undefined;this.observed=0;
   this.pane.dataset.observedSteps='0';this.pane.dataset.state='waiting';this.current('Reception is accepting the mandate. The executive is withholding trust.');this.renderer?.direct(null);this.updateScene();this.syncControls();
  }
- interrupt(){officeEstate.finish();this.epoch++;this.credits=0;this.latestCue=undefined;this.cancelFrame?.();this.cancelFrame=undefined;this.scheduler.cancel();this.pane.dataset.state='stopped';}
+ interrupt(){officeHeist.finish('cancelled');officeEstate.finish();this.epoch++;this.credits=0;this.latestCue=undefined;this.cancelFrame?.();this.cancelFrame=undefined;this.scheduler.cancel();this.pane.dataset.state='stopped';}
  receive(packet:ExecutionPacket,start:string,count:number){this.packet=packet;this.packetContexts.set(packet,{start,count});this.envelope=observationEnvelope(packet,start,count);this.prefixDone=false;this.suffixDone=false;this.serial++;}
  async prelude(current:()=>boolean){
   if(!this.enabled||this.prefixDone||!this.envelope)return;this.prefixDone=true;this.folio=undefined;this.companion=undefined;this.published=false;
@@ -110,7 +113,7 @@ export class OfficeSupervisionDesk {
  clearCompanions(){this.companion=undefined;this.updateScene();}
  complete(){if(this.enabled){this.pane.dataset.state='complete';this.current('Observation is complete. The company is still withholding trust.');}this.syncControls();}
  private current(text:string){element('supervision-current').textContent=text;}
- private sceneState(step=this.activeStep||this.lastStep):OfficeSceneState{return {room:step?.shot.room||'reception',route:[],ordinal:this.folio?.ordinal||'',text:this.published?this.folio?.text||'':'PENDING',emoji:this.companion?.companion.emoji,companionName:this.companion?.companion.name,paused:true,reducedMotion:this.media.matches,quality:this.governor.quality,seed:tourSeed(this.mandate),layout:officeEstate.displayed,relocation:officeEstate.relocation};}
+ private sceneState(step=this.activeStep||this.lastStep):OfficeSceneState{return {room:step?.shot.room||'reception',route:[],ordinal:this.folio?.ordinal||'',text:this.published?this.folio?.text||'':'PENDING',emoji:this.companion?.companion.emoji,companionName:this.companion?.companion.name,paused:true,reducedMotion:this.media.matches,quality:this.governor.quality,seed:tourSeed(this.mandate),layout:officeEstate.displayed,relocation:officeEstate.relocation,heist:officeHeist.snapshot};}
  private painted(frame:OfficeRenderFrame){this.paintedAt=frame.now;this.paintedCue=frame.cue;if(this.governor.observeFrame(frame.intervalMs,frame.renderMs)){this.pane.dataset.renderQuality=this.governor.quality;this.updateScene();}}
  private updateScene(step=this.activeStep||this.lastStep){try{this.renderer?.update(this.sceneState(step));}catch{this.graphicsFailure();}}
  private visible(){
@@ -133,7 +136,7 @@ export class OfficeSupervisionDesk {
     this.module ||= import(releaseAsset('office-world.js').href) as Promise<typeof import('./office-world')>;
     const module=await this.module;if(!this.enabled)return;
     this.canvas.hidden=false;this.canvas.dataset.module=releaseAsset('office-world.js').href;this.canvas.dataset.renderer='babylon';
-    this.renderer=module.createOffice({canvas:this.canvas,state:this.sceneState(),interactive:false,onRoom:()=>{},onProp:()=>{},onStep:()=>{},onView:()=>{},onFrame:frame=>this.painted(frame),onReady:()=>{this.ready=true;if(this.latestCue)this.renderer?.direct(this.latestCue);clearTimeout(this.readiness);const loading=element('supervision-loading'),focused=loading.contains(document.activeElement);loading.hidden=true;if(focused)element('supervision-title').focus({preventScroll:true});},onProblem:()=>this.graphicsFailure()});
+    this.renderer=module.createOffice({canvas:this.canvas,state:this.sceneState(),interactive:false,onRoom:()=>{},onProp:()=>{},onStep:()=>{},onView:()=>{},onHeistSuspect:(index,id)=>officeHeist.intercept(index,id),onHeistFootprint:()=>officeHeist.follow(),onFrame:frame=>this.painted(frame),onReady:()=>{this.ready=true;if(this.latestCue)this.renderer?.direct(this.latestCue);clearTimeout(this.readiness);const loading=element('supervision-loading'),focused=loading.contains(document.activeElement);loading.hidden=true;if(focused)element('supervision-title').focus({preventScroll:true});},onProblem:()=>this.graphicsFailure()});
     this.sceneActive=!this.visible();this.activity();this.renderer.resize();this.armReadiness();
    }catch{this.module=undefined;this.graphicsFailure();}
   })().finally(()=>{this.loading=undefined;});return this.loading;
@@ -173,7 +176,7 @@ export class OfficeSupervisionDesk {
    const frame=(now:number)=>{
     if(epoch!==this.epoch||!this.enabled||!current()){finish(false);return;}
     const key=layoutToken(officeEstate.current);if(key!==layoutKey){const arrival=director.duration(step,officeEstate.current);clock.elapsed=rebaseObservation(clock.elapsed,step.arriveMs,arrival);step.arriveMs=arrival;arrivalFrames=director.minimumFrames(step,officeEstate.current);layoutKey=key;this.updateScene(step);}
-    this.activity();const moving=officeEstate.moving,paused=this.authority.paused();
+    this.activity();const moving=officeEstate.moving||officeHeist.active,paused=this.authority.paused();
     if(!shown){
      if(!moving&&(!paused||this.credits>0)){shown=true;this.show(step,index,total);}
      else{this.scheduler.request(frame);return;}
@@ -189,7 +192,7 @@ export class OfficeSupervisionDesk {
      // Preserve one rendered final frame before moving to the next recorded decision.
      const acknowledge=()=>{
       if(epoch!==this.epoch||!current()){finish(false);return;}this.activity();
-      if(officeEstate.moving||(this.sceneActive&&this.ready&&!this.fallback&&!manual&&(this.paintedCue?.step.id!==step.id||!this.paintedCue.complete))){this.scheduler.request(acknowledge);return;}
+      if(officeEstate.moving||officeHeist.active||(this.sceneActive&&this.ready&&!this.fallback&&!manual&&(this.paintedCue?.step.id!==step.id||!this.paintedCue.complete))){this.scheduler.request(acknowledge);return;}
       if(step.publication&&!published){published=true;publish?.();}
       this.observed++;this.pane.dataset.observedSteps=String(this.observed);this.pane.dataset.state='held';element<HTMLProgressElement>('supervision-progress').value=index+1;finish(true);
      };
