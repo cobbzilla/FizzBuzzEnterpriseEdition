@@ -64,7 +64,9 @@ The tab remembers its opt-out. Normal application refresh resets that preference
 Ten bounded incident records remain available in Facilities. The optional GPU
 module receives snapshots from the single demo owner; it has no second mutable
 coordinator. Three sprites, eight stamp models, twelve footprints and three
-sheets are reused, with replaced emoji textures disposed.
+sheets are allocated only when the first chase is shown, then reused, with
+replaced emoji textures disposed. Ordinary office visits retain their existing
+mesh budget.
 
 ## Verification
 
