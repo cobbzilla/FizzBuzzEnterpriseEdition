@@ -79,8 +79,8 @@ var hash = (value) => {
   for (const c of value) n = Math.imul(n ^ c.charCodeAt(0), 16777619);
   return n >>> 0;
 };
-function random(seed) {
-  let n = hash(seed);
+function random(seed2) {
+  let n = hash(seed2);
   return () => {
     n += 1831565813;
     let t = n;
@@ -101,9 +101,9 @@ var rounded = (n) => Math.round(n * 1e6) / 1e6;
 var distance = (a, b) => Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z);
 var slotPosition = (slot, rows, columns) => ({ x: rounded((slot % columns - (columns - 1) / 2) * width), y: 0, z: rounded((Math.floor(slot / columns) - (rows - 1) / 2) * depth) });
 var slotAddress = (slot, columns) => String.fromCharCode(65 + slot % columns) + (Math.floor(slot / columns) + 1);
-function generate(seed, edition2, rows, columns) {
-  if (!/^[a-f0-9]{32}$/.test(seed) || !Number.isSafeInteger(edition2) || edition2 < 0 || edition2 > 1e6) throw new Error("Facilities received an unfamiliar estate charter.");
-  const rng = random(seed + ":" + edition2), slots = Array.from({ length: rows * columns }, (_, i) => i), amenitySlot = rows === 3 ? Math.floor(rng() * 9) : -1;
+function generate(seed2, edition2, rows, columns) {
+  if (!/^[a-f0-9]{32}$/.test(seed2) || !Number.isSafeInteger(edition2) || edition2 < 0 || edition2 > 1e6) throw new Error("Facilities received an unfamiliar estate charter.");
+  const rng = random(seed2 + ":" + edition2), slots = Array.from({ length: rows * columns }, (_, i) => i), amenitySlot = rows === 3 ? Math.floor(rng() * 9) : -1;
   const available = slots.filter((i) => i !== amenitySlot), order = edition2 === 0 ? rooms.map((r) => r.id) : shuffle(rooms.map((r) => r.id), rng);
   const palette = shuffle([...partitionStyles.map((s) => s.id)], rng);
   if (edition2 === 1) {
@@ -116,12 +116,12 @@ function generate(seed, edition2, rows, columns) {
     return Object.freeze({ room, slot, address: slotAddress(slot, columns), position: Object.freeze(slotPosition(slot, rows, columns)), yaw: edition2 === 0 ? 0 : row === rows - 1 ? Math.PI : 0, partition: edition2 === 0 ? "classic" : palette[i] });
   });
   const amenity = amenitySlot < 0 ? void 0 : Object.freeze({ slot: amenitySlot, address: slotAddress(amenitySlot, columns), kind: rng() < 0.5 ? "atrium" : "breakroom", position: Object.freeze(slotPosition(amenitySlot, rows, columns)) });
-  return Object.freeze({ version: layoutVersion, seed, edition: edition2, rows, columns, placements: Object.freeze(placements), amenity, bounds: Object.freeze({ minX: -columns * width / 2, maxX: columns * width / 2, minZ: -rows * depth / 2, maxZ: rows * depth / 2 }) });
+  return Object.freeze({ version: layoutVersion, seed: seed2, edition: edition2, rows, columns, placements: Object.freeze(placements), amenity, bounds: Object.freeze({ minX: -columns * width / 2, maxX: columns * width / 2, minZ: -rows * depth / 2, maxZ: rows * depth / 2 }) });
 }
 var rowEstate = { create: (s, e) => generate(s, e, 2, 4) };
 var squareEstate = { create: (s, e) => generate(s, e, 3, 3) };
-function estate(seed, edition2) {
-  return (edition2 % 2 ? squareEstate : rowEstate).create(seed, edition2);
+function estate(seed2, edition2) {
+  return (edition2 % 2 ? squareEstate : rowEstate).create(seed2, edition2);
 }
 var foundingEstate = estate("00000000000000000000000000000000", 0);
 function nextEstate(layout) {
@@ -443,1431 +443,144 @@ officeEstate.subscribe((event) => {
   }
 });
 
-// web/office-model.ts
-var roomForEvent = (e) => {
-  const k = e.kind;
-  if (k.startsWith("HR_")) return "personnel";
-  if (k.startsWith("PREMISES_")) return "premises";
-  if (["REQUISITION", "DELIVERY", "GLYPH_ACCEPTED", "GLYPH_ASSEMBLED"].includes(k)) return "procurement";
-  if (k === "NOTARY" || k === "EXTENDED_NOTARY") return "notary";
-  if (k.startsWith("CACHE_") || k.startsWith("PRECEDENT_")) return "memory";
-  if (["PUBLICATION", "AUDIT_APPEND", "QUEUE_ENQUEUED", "TRANSACTION_COMMIT"].includes(k)) return "publication";
-  if (["ASSEMBLY", "CLASSIFICATION", "EXTENDED_CLASSIFICATION", "TRANSACTION_BEGIN", "NUMERAL", "SUCCESSION", "EXTENDED_SUCCESSION"].includes(k)) return "reception";
-  return void 0;
-};
-function routeFor(file) {
-  if (!file) return [];
-  if (file.cache === "HIT") return [{ room: "memory", label: "Institutional memory returned prior text", source: "receipt", finding: "The response reported a cache hit. Fresh recruitment, procurement and printing are not inferred." }, { room: "publication", label: "Retained result disclosed", source: "disclosed", finding: "The retained text " + file.text + " was disclosed in the demo." }];
-  const route = [];
-  for (const e of file.events) {
-    const room = roomForEvent(e);
-    if (room && route.at(-1)?.room !== room) route.push({ room, label: e.office, source: "recorded", finding: e.finding });
+// web/office-heist-model.ts
+var heistChaseMs = 15e3;
+var heistReturnMs = 3e3;
+var destinations = ["reception", "personnel", "procurement", "premises", "memory", "publication", "executive"];
+function heistEligible(ordinal) {
+  return /^[1-9][0-9]+$/.test(ordinal) && ordinal === Array.from(ordinal).reverse().join("");
+}
+function heistTactic(emoji) {
+  return emoji.includes("\u{1F40C}") ? "snail" : emoji.includes("\u{1F47B}") ? "ghost" : emoji.includes("\u{1F419}") ? "octopus" : "runner";
+}
+function seed(text2) {
+  let value = 2166136261;
+  for (const character of text2) value = Math.imul(value ^ character.charCodeAt(0), 16777619) >>> 0;
+  return value;
+}
+function planHeist(mandate, ordinal, authority, companions2, source = "encounter") {
+  if (!/^[1-9][0-9]*$/.test(mandate) || !heistEligible(ordinal) || !authority || companions2.length < 1) throw new Error("The heist requires a positive mandate, a multi-digit palindrome and a named accomplice.");
+  const unique = [...new Map(companions2.map((c) => [c.id, c])).values()].slice(0, 3);
+  if (unique.some((c) => !c.id || !c.name || !c.emoji)) throw new Error("Anonymous suspects must first report to Personnel.");
+  const actors = Object.freeze(unique.map((c) => Object.freeze({ ...c, tactic: heistTactic(c.emoji) })));
+  const key2 = ["stamp-heist-v1", source, mandate, ordinal, authority, ...actors.map((a) => a.id)].join("|");
+  let random2 = seed(key2);
+  const pool = [...destinations];
+  for (let i = pool.length - 1; i > 0; i--) {
+    random2 = Math.imul(random2, 1664525) + 1013904223 >>> 0;
+    const j = random2 % (i + 1);
+    [pool[i], pool[j]] = [pool[j], pool[i]];
   }
-  const capped = route.slice(0, 23);
-  if (capped.at(-1)?.room !== "publication") capped.push({ room: "publication", label: "Observed output disclosed", source: "disclosed", finding: "The demo disclosed " + file.text + ". " + (file.recorded ? "The route summarizes the supplied records." : "No complete production dossier accompanied this result.") });
-  return capped;
+  return Object.freeze({ key: key2, ordinal, mandate, source, actors, rooms: Object.freeze(["notary", ...pool.slice(0, 3)]) });
 }
-var OfficeArchive = class {
-  mandate = "15";
-  mode = "mandate";
-  latest;
-  files = /* @__PURE__ */ new Map();
-  companions = /* @__PURE__ */ new Map();
-  globals = [];
-  selected = "latest";
-  omitted = 0;
-  disclosed = 0;
-  begin(mandate, mode = "mandate") {
-    this.mandate = mandate;
-    this.mode = mode;
-    this.latest = void 0;
-    this.files.clear();
-    this.companions.clear();
-    this.globals = [];
-    this.selected = "latest";
-    this.omitted = 0;
-    this.disclosed = 0;
-  }
-  receive(events, omitted) {
-    this.globals = events.filter((e) => e.ordinal === null).slice(0, 300);
-    this.omitted = omitted;
-  }
-  disclose(folios) {
-    for (const f of folios) {
-      if (!this.files.has(f.ordinal)) this.disclosed++;
-      this.latest = f.ordinal;
-      this.files.set(f.ordinal, { mandate: this.mandate, ordinal: f.ordinal, text: f.text, events: f.events.slice(0, 300), cache: f.cache, recorded: f.recorded, omitted: Math.max(0, f.events.length - 300), globals: this.globals, sourceOmitted: this.omitted });
-    }
-    this.trim();
-  }
-  trim() {
-    while (this.files.size > 32) {
-      const victim = [...this.files.keys()].find((k) => k !== "1" && k !== this.selected && k !== this.latest);
-      if (!victim) break;
-      this.files.delete(victim);
-      this.companions.delete(victim);
-    }
-  }
-  choose(ordinal, snapshot, companion) {
-    if (ordinal === "latest") {
-      this.selected = "latest";
-      return;
-    }
-    if (!this.files.has(ordinal)) {
-      if (!snapshot || snapshot.ordinal !== ordinal || snapshot.mandate !== this.mandate) return;
-      this.files.set(ordinal, snapshot);
-    }
-    this.selected = ordinal;
-    if (companion) this.remember(companion);
-    this.trim();
-  }
-  inspect(f) {
-    if (!this.files.has(f.ordinal)) this.files.set(f.ordinal, { mandate: this.mandate, ordinal: f.ordinal, text: f.text, events: f.events.slice(0, 300), cache: f.cache, recorded: f.recorded, omitted: Math.max(0, f.events.length - 300), globals: [], sourceOmitted: 0 });
-    this.selected = f.ordinal;
-    this.mode = "inspection";
-    this.trim();
-  }
-  current() {
-    return this.selected === "latest" ? this.files.get(this.latest || "") : this.files.get(this.selected);
-  }
-  remember(d) {
-    if (d.mandate !== this.mandate || !this.files.has(d.assignment.ordinal)) return;
-    this.companions.set(d.assignment.ordinal, d);
-  }
-  evidence(room) {
-    const file = this.current();
-    const actual = (file?.cache === "HIT" ? [] : file?.events || []).filter((e) => roomForEvent(e) === room);
-    const global = (file?.globals || this.globals).filter((e) => roomForEvent(e) === room);
-    return [...global, ...actual].slice(0, 60);
-  }
-};
-function tourSeed(text2) {
-  let h = 2166136261;
-  for (let i = 0; i < text2.length; i++) h = Math.imul(h ^ text2.charCodeAt(i), 16777619);
-  return h >>> 0;
+function heistFinding(resolution) {
+  return {
+    intercepted: "Stamp recovered. The suspect claims this was a cross-departmental delivery.",
+    biscuit: "Amnesty accepted. One biscuit has outperformed the entire security budget.",
+    automatic: "The accomplices returned the stamp after discovering that stolen approval still requires approval.",
+    skipped: "The chase was waived. The stamp returned through an undisclosed administrative shortcut.",
+    cancelled: "The chase was adjourned and the stamp returned. No numerical work was repeated.",
+    disabled: "Companion mischief is disabled. The stamp has reluctantly resumed its ordinary employment."
+  }[resolution];
 }
-function officeShare(scope2, mandate, room, prop2, authority = "factor-resonance-v1", action, estate2) {
-  if (estate2) parseLayoutToken(estate2);
-  const url = new URL("demo/", scope2);
-  url.search = new URLSearchParams({ limit: mandate, authority, tour: officeVersion, room, ...prop2 ? { prop: prop2 } : {}, ...action === 0 || action === 1 ? { action: String(action) } : {} }).toString();
-  if (estate2) url.searchParams.set("estate", estate2);
-  url.hash = "office-tour";
-  return url.href;
+function heistAntic(actor) {
+  return {
+    snail: "An extremely slow getaway. Security has requested a slower pursuit.",
+    ghost: "The ghost uses the wall. Its pursuing paperwork must use the door.",
+    octopus: "Eight apparent stamps. Seven are unauthorized impressions of confidence.",
+    runner: "The suspect is carrying approval without permission to carry approval."
+  }[actor.tactic];
 }
-function parseTourLink(search) {
-  const p = new URLSearchParams(search);
-  if (p.get("tour") !== officeVersion) return;
-  const room = roomById(p.get("room") || "reception");
-  if (!room) return;
-  const prop2 = room.props.find((x) => x.id === p.get("prop"));
-  const action = p.get("action");
-  return { room: room.id, prop: prop2?.id, action: prop2 && (action === "0" || action === "1") ? Number(action) : void 0 };
-}
-
-// web/release-assets.ts
-var scope = new URL("../", import.meta.url).href;
-var releaseFile = (path) => new URL(
-  (typeof RELEASE_ASSET_DIRECTORY === "string" ? RELEASE_ASSET_DIRECTORY : "") + path,
-  scope
-);
-var releaseAsset = (path) => new URL((typeof RELEASE_ASSET_DIRECTORY === "string" ? RELEASE_ASSET_DIRECTORY : "assets/") + path, scope);
-
-// web/companion-story.ts
-function node(tag, text2) {
-  const n = document.createElement(tag);
-  if (text2) n.textContent = text2;
-  return n;
-}
-function characterStory(c) {
-  const fragment = document.createDocumentFragment();
-  const glyph = node("span", c.emoji);
-  glyph.className = "companion-glyph";
-  glyph.setAttribute("aria-hidden", "true");
-  fragment.append(glyph, node("p", (c.kind === "pair" ? "Themed emoji pair" : "Single emoji") + " \xB7 " + c.category + " \xB7 " + c.rarity + " \xB7 target frequency: " + c.weight.toLocaleString() + " of 1,000,000,000 tickets."));
-  const dl = node("dl");
-  for (const [label, value] of [["Personality", c.personality], ["Previously in this extraordinary career", c.backstory], ["Motivating energy", c.energy], ["Ultimate goal", c.goal]]) dl.append(node("dt", label), node("dd", value));
-  fragment.append(dl);
-  return fragment;
-}
-
-// web/mandate-input.ts
-function parseMandate(raw) {
-  const text2 = raw.trim();
-  if (!/^[0-9]+$/.test(text2)) return null;
-  const ordinary = Number(text2);
-  return Number.isSafeInteger(ordinary) ? ordinary : BigInt(text2);
-}
-var autocorrectMandate = (raw) => raw.replace(/[^0-9]/g, "");
-var addOrdinals = (value, count) => typeof value === "bigint" ? value + BigInt(count) : value + count;
-function windowCount(next, limit) {
-  if (typeof next === "bigint" && typeof limit === "bigint") return Number(limit - next + 1n < 100n ? limit - next + 1n : 100n);
-  return Math.min(100, Number(limit) - Number(next) + 1);
-}
-var magnitudeWarnings = Object.freeze([
-  "PROVISIONAL INCIDENT: Your integer may possibly have exceeded its delegated magnitude authority.",
-  "POLICY REVIEW PENDING: This request might have crossed an undocumented numerical border.",
-  "PRELIMINARY ESCALATION: An oversized ordinal may have entered circulation without executive indemnity.",
-  "POSSIBLE CONTROL BREACH: The requested magnitude appears larger than the committee\u2019s confidence.",
-  "UNCONFIRMED NUMERICAL EMERGENCY: Your upper limit may require a larger filing cabinet.",
-  "POTENTIAL JURISDICTIONAL EVENT: This integer might be operating beyond the ordinary-number charter.",
-  "TENTATIVE COMPLIANCE ALERT: A digit may have arrived without its magnitude escort.",
-  "CONDITIONAL SEVERITY ONE: Your request could conceivably exceed our ceremonial insurance allowance.",
-  "SUSPECTED ORDINAL EXCESS: Management cannot presently exclude the possibility of too much number.",
-  "PROVISIONAL GOVERNANCE FAILURE: This value may have outgrown its approved organizational chart.",
-  "MAGNITUDE EXCEPTION SUSPECTED: The decimal expansion might require a second board of directors.",
-  "POSSIBLE POLICY DEVIATION: An unauthorized quantity of integer may be present in this request.",
-  "PRECAUTIONARY EXECUTIVE NOTICE: Your number could be larger than the policy author anticipated.",
-  "UNVERIFIED BOUNDARY INCIDENT: The requested ordinal may have escaped the standard arithmetic enclosure.",
-  "CONTINGENT DISCIPLINARY REVIEW: Someone might possibly need to explain all these digits.",
-  "PRELIMINARY RISK FINDING: This upper limit may have exceeded the building\u2019s authorized numerical load.",
-  "POTENTIAL CHARTER OVERRUN: The committee has not ruled out a surplus of mathematical ambition.",
-  "PROVISIONAL EXCESS-MAGNITUDE NOTICE: This request may require an unusually solemn signature.",
-  "SUSPECTED SCALE VIOLATION: Your integer might be too substantial for the current stationery.",
-  "POSSIBLE ENTERPRISE INCIDENT: This value may have activated a policy nobody has finished writing."
-]);
-function chooseMagnitudeWarning(previous = -1, random2 = Math.random) {
-  const width2 = previous >= 0 ? magnitudeWarnings.length - 1 : magnitudeWarnings.length;
-  let index = Math.min(width2 - 1, Math.floor(random2() * width2));
-  if (previous >= 0 && index >= previous) index++;
-  return { index, text: magnitudeWarnings[index] };
-}
-
-// web/discovery-model.ts
-var seedPolicy = "mandate-v1";
-var discoveryStorageKey = "slopbuzz:extraordinary-appointments:v1";
-var decimal = (x) => typeof x === "string" && /^(0|[1-9][0-9]*)$/.test(x);
-var text = (x) => typeof x === "string" && x.length > 0;
-function validDiscovery(x) {
-  if (!x || !decimal(x.mandate) || !text(x.strategy) || !text(x.catalogVersion) || x.seedPolicy !== seedPolicy || typeof x.discoveredAt !== "string" || !Number.isFinite(Date.parse(x.discoveredAt))) return false;
-  const c = x.companion, a = x.assignment, f = a?.factors;
-  if (!c || !["single", "pair"].includes(c.kind) || !Array.isArray(c.components) || !c.components.every(text) || !["Common", "Uncommon", "Rare", "Legendary", "Mythic"].includes(c.rarity) || !Number.isSafeInteger(c.weight) || c.weight < 1 || c.weight > 1e9) return false;
-  if (!["id", "emoji", "name", "category", "personality", "backstory", "energy", "goal"].every((key2) => text(c[key2]))) return false;
-  if (!a || !decimal(a.ordinal) || a.ordinal === "0" || BigInt(a.ordinal) > BigInt(x.mandate) || !["Fizz", "Buzz", "FizzBuzz"].includes(a.flavor) || a.companionId !== c.id || !Number.isSafeInteger(a.ticket) || a.ticket < 0 || a.ticket >= 1e9) return false;
-  const n = BigInt(a.ordinal), flavor = n % 15n === 0n ? "FizzBuzz" : n % 3n === 0n ? "Fizz" : n % 5n === 0n ? "Buzz" : "";
-  return flavor === a.flavor && !!f && text(f.factors) && decimal(f.cofactor) && typeof f.complete === "boolean" && Number.isInteger(f.divisions) && f.divisions >= 0 && Number.isInteger(f.divisionBudget) && f.divisionBudget >= f.divisions && Number.isInteger(f.trialPrimeCeiling);
-}
-function discoveryIdentity(d) {
-  return d.catalogVersion + "|" + d.companion.id;
-}
-var provenance = (d) => JSON.stringify([d.discoveredAt, d.mandate, d.assignment.ordinal, d.strategy, d.assignment.ticket]);
-function rarestDiscoveries(...collections) {
-  const distinct = /* @__PURE__ */ new Map();
-  for (const collection of collections) for (const d of collection) {
-    if (!validDiscovery(d)) continue;
-    const id = discoveryIdentity(d), previous = distinct.get(id);
-    if (!previous || provenance(d) < provenance(previous)) distinct.set(id, d);
-  }
-  return [...distinct.values()].sort((a, b) => a.companion.weight - b.companion.weight || discoveryIdentity(a).localeCompare(discoveryIdentity(b), "en")).slice(0, 5);
-}
-function decodeDiscoveries(value) {
-  try {
-    const x = JSON.parse(value || "null");
-    return x?.schema === "slopbuzz-discoveries/v1" && Array.isArray(x.finds) ? rarestDiscoveries(x.finds) : [];
-  } catch {
-    return [];
-  }
-}
-var encodeDiscoveries = (finds) => JSON.stringify({ schema: "slopbuzz-discoveries/v1", finds });
-function discoveryLink(d, scope2) {
-  const url = new URL("demo/", scope2);
-  url.search = new URLSearchParams({ limit: d.mandate, authority: d.strategy, catalog: d.catalogVersion, seedPolicy: d.seedPolicy, ordinal: d.assignment.ordinal, companion: d.companion.id }).toString();
-  return url.href;
-}
-
-// web/companion-dialog.ts
-var controllerSymbol = /* @__PURE__ */ Symbol.for("slopbuzz.companion-dialog.v1");
-function companionDialog() {
-  const dialog = document.querySelector("#companion-dialog");
-  if (dialog[controllerSymbol]) return dialog[controllerSymbol];
-  let invoker, beganOnBackdrop = false;
-  dialog.querySelector("[data-companion-close]").addEventListener("click", () => dialog.close());
-  const outside = (e) => {
-    const b = dialog.getBoundingClientRect();
-    return e.clientX < b.left || e.clientX > b.right || e.clientY < b.top || e.clientY > b.bottom;
-  };
-  dialog.addEventListener("pointerdown", (e) => {
-    beganOnBackdrop = e.target === dialog && outside(e);
-  });
-  dialog.addEventListener("pointercancel", () => {
-    beganOnBackdrop = false;
-  });
-  dialog.addEventListener("click", (e) => {
-    const dismiss = dialog.open && beganOnBackdrop && e.target === dialog && outside(e);
-    beganOnBackdrop = false;
-    if (dismiss) dialog.close();
-  });
-  dialog.addEventListener("close", () => {
-    beganOnBackdrop = false;
-    const target = invoker?.isConnected && invoker.getClientRects().length ? invoker : [document.querySelector("#discovery-toggle"), document.querySelector("#discovery-list button"), document.querySelector("main")].find((el) => el?.getClientRects().length);
-    target?.focus();
-    dialog.dispatchEvent(new Event("companion-closed"));
-  });
-  const controller = { open(d, opener) {
-    invoker = opener;
-    const a = d.assignment, c = d.companion;
-    dialog.querySelector("h2").textContent = c.name + " \xB7 " + a.ordinal + " " + a.flavor;
-    const body = dialog.querySelector("[data-companion-story]");
-    body.replaceChildren(characterStory(c));
-    body.append(node("h3", "Allocation evidence"), node("p", "Mandate: " + d.mandate + ". Strategy: " + d.strategy + ". Seed policy: " + d.seedPolicy + ". Catalog: " + d.catalogVersion + ". Ticket: " + a.ticket + "."), node("p", "Extracted exact factors: " + a.factors.factors + ". " + (a.factors.complete ? "Complete factorization." : "Unresolved exact cofactor: " + a.factors.cofactor + ". This cofactor is not certified prime.") + " Division checks: " + a.factors.divisions + " of " + a.factors.divisionBudget + "."));
-    const label = node("label", "Reproducible encounter link");
-    label.htmlFor = "companion-share-link";
-    const link = node("input");
-    link.id = "companion-share-link";
-    link.type = "url";
-    link.readOnly = true;
-    link.value = discoveryLink(d, scope);
-    const copy = node("button", "Copy encounter link");
-    copy.type = "button";
-    const status = node("p");
-    status.setAttribute("role", "status");
-    copy.addEventListener("click", async () => {
-      try {
-        await navigator.clipboard.writeText(link.value);
-        status.textContent = "Encounter link copied. The recipient can inspect this appointment without running the full mandate.";
-      } catch {
-        link.focus();
-        link.select();
-        status.textContent = "Copy the selected link using your browser\u2019s copy command.";
-      }
-    });
-    body.append(label, link, copy, status);
-    if (!dialog.open) dialog.showModal();
-    dialog.querySelector(".companion-dialog-body").scrollTop = 0;
-  } };
-  dialog[controllerSymbol] = controller;
-  return controller;
-}
-
-// web/dom.ts
-var byId = (id) => {
-  const node3 = document.getElementById(id);
-  if (!node3) throw new Error(`Missing element ${id}`);
-  return node3;
-};
-function setText(id, value) {
-  byId(id).textContent = String(value);
-}
-
-// web/playback-controls.ts
-var paths = {
-  pause: "M9 5v14M15 5v14",
-  play: "M8 5l11 7-11 7V5Z",
-  stop: "M6 6h12v12H6Z",
-  next: "M5 5l10 7-10 7V5ZM19 5v14",
-  options: "M3 7h3m6 0h9M3 17h9m6 0h3M12 7a3 3 0 1 1-6 0 3 3 0 0 1 6 0ZM18 17a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z",
-  evidence: "M14 3H5v18h8M14 3l5 5h-5V3ZM8 8h3M8 12h3M8 16h3M20 17a3 3 0 1 1-6 0 3 3 0 0 1 6 0ZM20 20l2 2",
-  waive: "M3 5l8 7-8 7V5ZM12 5l8 7-8 7V5ZM22 5v14",
-  fullscreen: "M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5",
-  restore: "M3 8h5V3m8 0v5h5M8 21v-5H3m18 0h-5v5"
-};
-function playbackIcon(button, icon, label) {
-  button.setAttribute("aria-label", label);
-  button.title = label;
-  button.classList.add("playback-icon");
-  if (button.dataset.icon === icon) return;
-  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-  svg.setAttribute("viewBox", "0 0 24 24");
-  svg.setAttribute("aria-hidden", "true");
-  svg.setAttribute("focusable", "false");
-  svg.setAttribute("fill", "none");
-  svg.setAttribute("stroke", "currentColor");
-  svg.setAttribute("stroke-width", "2");
-  svg.setAttribute("stroke-linecap", "round");
-  svg.setAttribute("stroke-linejoin", "round");
-  const path = document.createElementNS(svg.namespaceURI, "path");
-  path.setAttribute("d", paths[icon]);
-  svg.append(path);
-  button.dataset.icon = icon;
-  button.replaceChildren(svg);
-}
-
-// web/office-fullscreen.ts
-var OfficeFullscreen = class {
-  dialog = byId("office-fullscreen");
-  surface = byId("office-fullscreen-surface");
-  panels = byId("office-fullscreen-panels");
-  exit = byId("office-fullscreen-exit");
-  restorations = [];
-  invoker;
-  native = false;
+var HeistCoordinator = class {
   serial = 0;
-  position = { x: 0, y: 0 };
-  mode;
-  placeChronicle;
-  constructor() {
-    playbackIcon(byId("supervision-fullscreen"), "fullscreen", "Full-screen office observation");
-    playbackIcon(byId("office-fullscreen-enter"), "fullscreen", "Full-screen office view");
-    playbackIcon(this.exit, "restore", "Exit full-screen and return to website");
-    this.exit.addEventListener("click", () => this.close());
-    this.dialog.addEventListener("cancel", (event) => {
-      event.preventDefault();
-      this.close();
-    });
-    this.dialog.addEventListener("close", () => {
-      if (!this.dialog.open) this.close();
-    });
-    this.panels.addEventListener("change", () => this.layout());
-    addEventListener("resize", () => {
-      if (this.mode) this.adapt();
-    });
-    document.addEventListener("demo-watch-layout", () => {
-      if (this.mode === "observe") this.layout();
-    });
-    byId("office-fullscreen-inspect").addEventListener("click", () => this.inspection(byId("office-fullscreen-drawer").hidden === true));
-    byId("office-fullscreen-drawer-close").addEventListener("click", () => this.inspection(false, true));
-    byId("office-fullscreen-drawer").addEventListener("keydown", (event) => {
-      if (event.key === "Escape") {
-        event.preventDefault();
-        event.stopPropagation();
-        this.inspection(false, true);
-      }
-    });
-    document.addEventListener("fullscreenchange", () => {
-      if (!this.mode) return;
-      if (document.fullscreenElement === this.surface) this.native = true;
-      else if (this.native) this.close();
-    });
-    document.addEventListener("demo-presentation-change", () => {
-      if (this.mode !== "observe") return;
-      if (!byId("executive-hovering").checked) this.close();
-      else this.layout();
-    });
-    const resize = new ResizeObserver(() => {
-      this.surface.style.setProperty("--immersive-controls-height", Math.ceil(byId("office-fullscreen-controls").getBoundingClientRect().height) + "px");
-      this.surface.style.setProperty("--immersive-header-height", Math.ceil(byId("office-fullscreen-header").getBoundingClientRect().height) + "px");
-      this.surface.style.setProperty("--immersive-banner-height", Math.ceil(byId("active-run-banner").getBoundingClientRect().height) + "px");
-    });
-    resize.observe(byId("office-fullscreen-controls"));
-    resize.observe(byId("office-fullscreen-header"));
-    resize.observe(byId("active-run-banner"));
-    addEventListener("pagehide", () => this.close(false), { once: true });
-  }
-  open(mode, invoker) {
-    if (this.mode) return;
-    if (mode === "observe" && !byId("executive-hovering").checked) return;
-    byId("office-modal").close();
-    this.mode = mode;
-    const serial = ++this.serial;
-    this.invoker = invoker;
-    this.position = { x: scrollX, y: scrollY };
-    this.surface.dataset.view = mode;
-    document.documentElement.classList.add("office-is-fullscreen");
-    byId("office-fullscreen-title").textContent = mode === "observe" ? "Executive Occupation of the Entire Screen" : "The Serious Business Office \xB7 Full estate access";
-    byId("office-fullscreen-panel-control").hidden = mode !== "observe";
-    byId("office-fullscreen-inspect").hidden = mode !== "facilities";
-    this.adapt();
-    this.panels.value = this.surface.dataset.largeText === "true" ? "none" : innerWidth < 360 || innerHeight < 450 ? "log" : "both";
-    if (mode === "observe") {
-      this.move(byId("supervision-pane"), "office-fullscreen-stage");
-      this.move(byId("watch-output"), "office-fullscreen-output-slot");
-      this.move(byId("supervision-caption"), "office-fullscreen-current-slot");
-      this.move(byId("chronicle-scroll").closest(".chronicle"), "office-fullscreen-log-slot", true);
-      this.move(document.querySelector(".watch-transport"), "office-fullscreen-controls");
-      this.move(byId("watch-settings"), "office-fullscreen-settings");
-      this.move(byId("companion-spotlight"), "office-fullscreen-companion");
-    } else {
-      this.move(byId("active-run-banner"), this.surface);
-      this.move(byId("office-stage"), "office-fullscreen-stage");
-      this.move(document.querySelector(".office-toolbar"), "office-fullscreen-controls");
-      this.move(byId("office-walking-controls"), "office-fullscreen-controls");
-      const playback = document.createElement("div");
-      playback.className = "immersive-route-controls";
-      byId("office-fullscreen-controls").append(playback);
-      this.restorations.push(() => playback.remove());
-      this.move(byId("office-pause"), playback);
-      this.move(byId("office-next"), playback);
-      for (const element4 of [byId("office-camera-help"), document.querySelector(".office-inspection"), document.querySelector(".office-playback"), byId("office-route-status"), byId("office-route"), byId("office-reorganization"), document.querySelector(".office-options")]) this.move(element4, "office-fullscreen-inspection-slot");
-    }
-    const notice = byId(mode === "observe" ? "run-status" : "office-status");
-    const previousTabIndex = notice.getAttribute("tabindex");
-    notice.tabIndex = 0;
-    this.restorations.push(() => {
-      if (previousTabIndex === null) notice.removeAttribute("tabindex");
-      else notice.setAttribute("tabindex", previousTabIndex);
-    });
-    this.move(notice, "office-fullscreen-notice");
-    for (const id of ["companion-dialog", "personnel-dialog"]) this.move(byId(id), this.surface);
-    this.inspection(false);
-    this.layout();
-    this.dialog.showModal();
-    this.exit.focus({ preventScroll: true });
-    this.changed();
-    byId("office-fullscreen-status").textContent = "The office fills this tab. Return to website restores your previous view.";
-    if (document.fullscreenEnabled && this.surface.requestFullscreen) {
-      try {
-        void this.surface.requestFullscreen({ navigationUI: "hide" }).then(() => {
-          if (serial !== this.serial || !this.mode) {
-            if (document.fullscreenElement === this.surface) void document.exitFullscreen().catch(() => {
-            });
-          } else {
-            this.native = true;
-            byId("office-fullscreen-status").textContent = "Browser full-screen is active. Escape or Return to website leaves the office view.";
-          }
-        }).catch(() => {
-          if (serial === this.serial && this.mode) byId("office-fullscreen-status").textContent = "Browser full-screen is unavailable. The office still fills this tab; all controls remain available.";
-        });
-      } catch {
-      }
-    }
-  }
-  close(restoreFocus = true) {
-    if (!this.mode) return;
-    const observed = this.mode === "observe";
-    this.mode = void 0;
-    this.serial++;
-    this.native = false;
-    for (const child of this.surface.querySelectorAll("dialog[open]")) child.close();
-    this.dialog.close();
-    for (const restore of this.restorations.reverse()) restore();
-    this.restorations = [];
-    document.documentElement.classList.remove("office-is-fullscreen");
-    const nativeExit = document.fullscreenElement === this.surface ? document.exitFullscreen().catch(() => {
-    }) : Promise.resolve();
-    this.changed();
-    if (restoreFocus) {
-      const invoker = this.invoker, position = this.position, serial = this.serial;
-      void nativeExit.then(() => requestAnimationFrame(() => {
-        if (serial !== this.serial || this.mode) return;
-        const target = invoker?.getClientRects().length ? invoker : observed && byId("executive-hovering").getClientRects().length ? byId("executive-hovering") : observed ? byId("watch-settings-toggle") : byId("office-enter");
-        target.focus({ preventScroll: true });
-        window.scrollTo({ left: position.x, top: position.y, behavior: "instant" });
-      }));
-    }
-  }
-  inspection(open, focus = false) {
-    byId("office-fullscreen-drawer").hidden = !open;
-    byId("office-fullscreen-inspect").setAttribute("aria-expanded", String(open));
-    if (focus) byId("office-fullscreen-inspect").focus({ preventScroll: true });
-  }
-  move(element4, destination, chronicle2 = false) {
-    const target = typeof destination === "string" ? byId(destination) : destination;
-    const marker = document.createComment("Retained office presentation slot");
-    element4.before(marker);
-    if (chronicle2 && this.placeChronicle) this.placeChronicle(target);
-    else target.append(element4);
-    this.restorations.push(() => {
-      if (chronicle2 && this.placeChronicle) {
-        this.placeChronicle(marker.parentElement);
-        marker.remove();
-      } else marker.replaceWith(element4);
-    });
-  }
-  layout() {
-    const panels = this.panels.value;
-    byId("office-fullscreen-output").hidden = this.mode !== "observe" || !["both", "output"].includes(panels);
-    byId("office-fullscreen-log").hidden = this.mode !== "observe" || !["both", "log"].includes(panels);
-    byId("office-fullscreen-companion").hidden = this.mode !== "observe" || panels === "none" || !byId("emoji-companions").checked || !byId("require-companion-roll-call").checked;
-    this.surface.dataset.panels = panels;
-  }
-  adapt() {
-    const large = parseFloat(getComputedStyle(document.documentElement).fontSize) > 20;
-    this.surface.dataset.largeText = String(large);
-    const names = large ? ["Both", "Output", "Log", "Hide"] : ["Output + log", "Output", "Running log", "Hide panels"];
-    [...this.panels.options].forEach((option, index) => {
-      if (option.textContent !== names[index]) option.textContent = names[index];
-    });
-  }
-  changed() {
-    document.dispatchEvent(new Event("office-fullscreen-change"));
-  }
-};
-var presentation;
-function officeFullscreen() {
-  return presentation ||= new OfficeFullscreen();
-}
-
-// web/office-pack-contract.ts
-function parseOfficeManifest(x) {
-  const m = x;
-  if (!m || m.schema !== "slopbuzz-office-pack/v1" || m.file !== "office-world.js" || !Number.isSafeInteger(m.bytes) || m.bytes < 1 || typeof m.sha256 !== "string" || !/^[a-f0-9]{64}$/.test(m.sha256)) throw new Error("The building manifest is unfamiliar.");
-  return m;
-}
-async function verifyOfficePackage(manifest, bytes) {
-  const hash2 = [...new Uint8Array(await crypto.subtle.digest("SHA-256", bytes))].map((x) => x.toString(16).padStart(2, "0")).join("");
-  if (bytes.byteLength !== manifest.bytes || hash2 !== manifest.sha256) throw new Error("The delivered building does not match its manifest.");
-}
-
-// web/office-pack-key.ts
-var officePackPrefix = (base) => `slopbuzz-office-${encodeURIComponent(base)}-`;
-function officeCacheKey(base, url) {
-  const id = url.pathname.match(/\/assets\/([a-f0-9]{16})\/office-world\.js$/)?.[1];
-  return id ? officePackPrefix(base) + id : void 0;
-}
-
-// web/office-pack.ts
-var officePackKey = (base = scope, url = releaseAsset("office-world.js")) => officeCacheKey(base, url);
-async function saveOfficePack() {
-  const url = releaseAsset("office-world.js"), key2 = officePackKey();
-  if (!key2) throw new Error("This deployment does not publish a versioned offline building.");
-  const manifestReply = await fetch(releaseAsset("office-pack.json"));
-  if (!manifestReply.ok) throw new Error("The building manifest could not be obtained.");
-  const manifest = parseOfficeManifest(await manifestReply.json());
-  const reply = await fetch(url);
-  if (!reply.ok) throw new Error("The building could not be downloaded.");
-  const bytes = await reply.arrayBuffer();
-  await verifyOfficePackage(manifest, bytes);
-  const cache = await caches.open(key2);
-  await cache.put(url, new Response(bytes, { headers: { "Content-Type": "text/javascript; charset=UTF-8", "Cache-Control": "public, max-age=31536000, immutable" } }));
-  return bytes.byteLength;
-}
-
-// web/office-tour.ts
-var byId2 = (id) => document.getElementById(id);
-var curiosityKey = "slopbuzz:office-curiosities:v1";
-var OfficeTourDesk = class {
-  archive = new OfficeArchive();
-  offeredFiles = /* @__PURE__ */ new Map();
-  offeredCompanions = /* @__PURE__ */ new Map();
-  room = "reception";
-  selectedProp;
-  selectedAction;
-  renderer;
-  module;
-  completedZero = false;
-  exitFocus;
-  opened = false;
-  enlarged = false;
-  opening = 0;
-  paused = false;
-  routeIndex = -1;
-  routeKey = "";
-  lastEvidence;
-  visited = /* @__PURE__ */ new Set();
-  persistence = true;
-  audio;
-  walking = false;
-  root = byId2("office-experience");
-  canvas = byId2("office-canvas");
-  dialog = byId2("office-modal");
-  enter = byId2("office-enter");
-  fileSelect = byId2("office-file");
-  motion = byId2("office-motion");
-  follow = byId2("office-follow");
-  media = matchMedia("(prefers-reduced-motion: reduce)");
-  directory = /* @__PURE__ */ new Map();
-  constructor() {
-    officeEstate.subscribe((event) => {
-      this.syncRenderer();
-      if (event.kind === "committed") {
-        this.renderAddress();
-        this.shareLink();
-      }
-    });
-    try {
-      const limit = new URL(location.href).searchParams.get("limit");
-      if (limit !== null) this.archive.mandate = String(parseMandate(limit));
-    } catch {
-    }
-    this.motion.checked = !this.media.matches;
-    this.follow.checked = true;
-    try {
-      const saved = JSON.parse(localStorage.getItem(curiosityKey) || "[]");
-      if (Array.isArray(saved)) {
-        for (const id of saved) if (typeof id === "string" && rooms.some((r) => r.props.some((p) => p.id === id))) this.visited.add(id);
-      }
-    } catch {
-      this.persistence = false;
-    }
-    rooms.forEach((room, index) => {
-      const b = node("button", String(index + 1).padStart(2, "0") + " \xB7 " + room.short);
-      b.type = "button";
-      b.title = room.name;
-      b.setAttribute("aria-pressed", String(room.id === this.room));
-      b.addEventListener("click", () => this.select(room.id));
-      this.directory.set(room.id, b);
-      byId2("office-directory").append(b);
-    });
-    this.enter.addEventListener("click", () => void this.open());
-    byId2("office-close").addEventListener("click", () => this.close());
-    byId2("office-choose-mandate").addEventListener("click", () => {
-      const input = byId2("limit");
-      this.close(input);
-      input.scrollIntoView({ block: "center", behavior: this.media.matches ? "instant" : "smooth" });
-    });
-    byId2("office-enlarge").addEventListener("click", () => this.enlarged ? this.dialog.close() : this.enlarge());
-    byId2("office-modal-close").addEventListener("click", () => this.dialog.close());
-    byId2("office-fullscreen-enter").addEventListener("click", () => officeFullscreen().open("facilities", byId2("office-fullscreen-enter")));
-    document.addEventListener("office-fullscreen-change", () => {
-      this.activity();
-      requestAnimationFrame(() => this.renderer?.resize());
-    });
-    document.addEventListener("site-page-change", () => {
-      this.activity();
-      this.renderer?.resize();
-      if (document.body.dataset.sitePage !== "demo") void this.audio?.suspend();
-      else if (byId2("office-sound").checked) void this.audio?.resume();
-    });
-    document.addEventListener("office-amenity", (event) => {
-      if (event.detail === "office" && officeFullscreen().mode === "facilities") officeFullscreen().inspection(true);
-    });
-    let backdrop = false;
-    const outside = (e) => {
-      const b = this.dialog.getBoundingClientRect();
-      return e.clientX < b.left || e.clientX > b.right || e.clientY < b.top || e.clientY > b.bottom;
-    };
-    this.dialog.addEventListener("pointerdown", (e) => {
-      backdrop = e.target === this.dialog && outside(e);
-    });
-    this.dialog.addEventListener("pointercancel", () => {
-      backdrop = false;
-    });
-    this.dialog.addEventListener("click", (e) => {
-      const dismiss = backdrop && e.target === this.dialog && outside(e);
-      backdrop = false;
-      if (dismiss) this.dialog.close();
-    });
-    this.dialog.addEventListener("close", () => {
-      backdrop = false;
-      this.enlarged = false;
-      byId2("office-home-slot").append(this.root);
-      byId2("office-enlarge").textContent = "Enlarge office";
-      this.renderer?.resize();
-      if (this.opened) byId2("office-enlarge").focus();
-      else (this.exitFocus || this.enter).focus();
-    });
-    byId2("office-overview").addEventListener("click", () => {
-      this.renderer?.overview();
-      this.routeCamera(false);
-    });
-    byId2("office-walk").addEventListener("click", () => {
-      if (!this.renderer) return;
-      if (this.walking) {
-        this.renderer.overview();
-        return;
-      }
-      this.retainFile();
-      this.renderer.walk(this.room);
-      byId2("office-stage").scrollIntoView({ block: "nearest", behavior: "instant" });
-      this.activity();
-      this.canvas.focus({ preventScroll: true });
-    });
-    byId2("office-zoom-in").addEventListener("click", () => this.renderer?.zoom(-1));
-    byId2("office-zoom-out").addEventListener("click", () => this.renderer?.zoom(1));
-    document.querySelectorAll("[data-office-move]").forEach((b) => b.addEventListener("click", () => {
-      byId2("office-stage").scrollIntoView({ block: "nearest", behavior: "instant" });
-      this.activity();
-      this.renderer?.move(b.dataset.officeMove);
-    }));
-    this.canvas.addEventListener("keydown", (e) => {
-      if (e.key === "Escape" && !this.dialog.open) {
-        this.renderer?.overview();
-        byId2("office-walk").focus();
-      }
-    });
-    byId2("office-pause").addEventListener("click", () => {
-      if (!this.motion.checked || !this.renderer) return;
-      this.paused = !this.paused;
-      this.syncRenderer();
-      this.playbackLabels();
-    });
-    byId2("office-replay").addEventListener("click", () => {
-      if (!routeFor(this.archive.current()).length) return;
-      this.seekRoute(0);
-      this.paused = !this.renderer || !this.motion.checked;
-      this.syncRenderer();
-      this.playbackLabels();
-    });
-    byId2("office-next").addEventListener("click", () => {
-      const route = routeFor(this.archive.current());
-      if (!route.length) {
-        this.status("A mandate must disclose a file before its recorded route can be stepped through.");
-        return;
-      }
-      this.paused = true;
-      this.seekRoute((this.routeIndex + 1) % route.length);
-      this.playbackLabels();
-    });
-    this.fileSelect.addEventListener("focus", () => {
-      this.offeredFiles = new Map(this.archive.files);
-      this.offeredCompanions = new Map(this.archive.companions);
-      this.retainFile();
-    });
-    this.fileSelect.addEventListener("blur", () => {
-      this.offeredFiles.clear();
-      this.offeredCompanions.clear();
-      this.updateFiles();
-    });
-    byId2("office-evidence").addEventListener("focusin", () => this.retainFile());
-    byId2("office-evidence").addEventListener("wheel", () => this.retainFile(), { passive: true });
-    this.fileSelect.addEventListener("change", () => {
-      const value = this.fileSelect.value;
-      this.archive.choose(value, this.offeredFiles.get(value), this.offeredCompanions.get(value));
-      this.follow.checked = value === "latest";
-      this.renderEvidence();
-      this.updateRoute();
-      this.syncRenderer();
-    });
-    this.follow.addEventListener("change", () => {
-      if (this.follow.checked) {
-        this.archive.selected = "latest";
-        this.fileSelect.value = "latest";
-        this.renderEvidence();
-        this.updateRoute();
-        this.syncRenderer();
-      } else this.retainFile();
-    });
-    byId2("office-follow-route").addEventListener("change", () => {
-      if (byId2("office-follow-route").checked && this.routeIndex >= 0) {
-        const route = routeFor(this.archive.current());
-        if (route[this.routeIndex]) this.select(route[this.routeIndex].room, false);
-      }
-      this.syncRenderer();
-    });
-    this.motion.addEventListener("change", () => {
-      if (!this.motion.checked) officeEstate.finish();
-      this.syncRenderer();
-      this.playbackLabels();
-    });
-    this.media.addEventListener("change", () => {
-      this.motion.checked = !this.media.matches;
-      this.syncRenderer();
-      this.playbackLabels();
-    });
-    byId2("office-quality").addEventListener("change", () => this.syncRenderer());
-    byId2("office-sound").addEventListener("change", () => void this.soundPreference());
-    byId2("office-offline").addEventListener("click", () => void this.saveOffline());
-    if (!officePackKey()) {
-      byId2("office-offline").hidden = true;
-      byId2("office-offline-status").textContent = "The building and its documents are served by this site.";
-    }
-    byId2("office-share-copy").addEventListener("click", async () => {
-      const input = byId2("office-share-link");
-      try {
-        await navigator.clipboard.writeText(input.value);
-        byId2("office-share-status").textContent = "Visit link copied. It opens this room and prefills the mandate; counting starts when the recipient asks.";
-      } catch {
-        input.focus();
-        input.select();
-        byId2("office-share-status").textContent = "Copy the selected visit link with your browser\u2019s copy command.";
-      }
-    });
-    byId2("office-companion-story").addEventListener("click", () => {
-      const d = this.archive.companions.get(this.archive.current()?.ordinal || "");
-      if (d) companionDialog().open(d, byId2("office-companion-story"));
-    });
-    const observer = new IntersectionObserver(() => this.activity(), { rootMargin: "100px" });
-    observer.observe(byId2("office-stage"));
-    new ResizeObserver(() => this.renderer?.resize()).observe(byId2("office-stage"));
-    document.addEventListener("visibilitychange", () => {
-      this.activity();
-      if (document.hidden) void this.audio?.suspend();
-      else if (byId2("office-sound").checked) void this.audio?.resume();
-    });
-    addEventListener("pagehide", () => {
-      this.renderer?.dispose();
-      void this.audio?.close();
-    }, { once: true });
-    this.renderRoom();
-    this.updateFiles();
-    this.updateRoute();
-    const shared = parseTourLink(location.search);
-    if (shared) {
-      this.room = shared.room;
-      this.selectedProp = roomById(shared.room)?.props.find((p) => p.id === shared.prop);
-      this.renderRoom();
-      if (shared.action !== void 0) this.respond(shared.action);
-      void this.open(false);
-    } else if (location.hash === "#office-tour") this.status("Welcome. Enter the office to open its 3D building and complete room directory.");
-  }
-  begin(mandate, mode = "mandate") {
-    this.completedZero = false;
-    this.archive.begin(mandate, mode);
-    this.offeredFiles.clear();
-    this.offeredCompanions.clear();
-    this.follow.checked = true;
-    this.routeKey = "";
-    this.updateFiles();
-    this.renderEvidence();
-    this.updateRoute();
-    this.syncRenderer();
-    this.shareLink();
-  }
-  complete(zero = false) {
-    if (zero && !this.archive.current()) {
-      this.completedZero = true;
-      this.updateRoute();
-    }
-  }
-  receive(packet) {
-    this.archive.receive(packet.events, packet.omitted);
-    if (this.opened) this.renderEvidence();
-  }
-  disclose(mandate, folios) {
-    if (mandate !== this.archive.mandate) return;
-    this.archive.disclose(folios);
-    if (this.follow.checked) this.archive.selected = "latest";
-    if (this.opened) {
-      this.updateFiles();
-      this.renderEvidence();
-      this.updateRoute();
-      this.syncRenderer();
-    }
-  }
-  inspect(f) {
-    this.follow.checked = false;
-    this.archive.inspect(f);
-    this.updateFiles();
-    this.renderEvidence();
-    this.updateRoute();
-    this.syncRenderer();
-  }
-  remember(d) {
-    this.archive.remember(d);
-    if (this.opened) {
-      this.renderCompanion();
-      this.syncRenderer();
-    }
-  }
-  clearCompanions() {
-    this.archive.companions.clear();
-    this.offeredCompanions.clear();
-    if (this.opened) {
-      this.renderCompanion();
-      this.syncRenderer();
-    }
-  }
-  status(text2) {
-    byId2("office-status").textContent = text2;
-  }
-  async open(scroll = true, focus = scroll) {
-    this.opened = true;
-    this.root.hidden = false;
-    this.enter.hidden = true;
-    const opening = ++this.opening;
-    this.renderEvidence();
-    this.updateRoute();
-    this.updateFiles();
-    if (focus) byId2(officeFullscreen().mode === "facilities" ? "office-fullscreen-exit" : "office-close").focus({ preventScroll: true });
-    if (scroll) this.root.scrollIntoView({ behavior: this.media.matches ? "instant" : "smooth", block: "start" });
-    if (this.renderer) {
-      this.activity();
-      this.renderer.resize();
-      return;
-    }
-    const loading = byId2("office-loading");
-    this.graphicsAvailable(false);
-    loading.hidden = false;
-    loading.replaceChildren(node("p", "Facilities is locating the building. The room directory and all inspections are already open."));
-    try {
-      this.module ||= import(releaseAsset("office-world.js").href);
-      const module = await this.module;
-      if (!this.opened || opening !== this.opening) return;
-      let readiness;
-      this.canvas.removeAttribute("data-rendered");
-      this.canvas.dataset.module = releaseAsset("office-world.js").href;
-      this.renderer = module.createOffice({ canvas: this.canvas, state: this.sceneState(), onRoom: (id) => this.select(id), onAmenity: () => document.dispatchEvent(new CustomEvent("office-amenity", { detail: "office" })), onProp: (room, prop2) => {
-        this.select(room);
-        const p = roomById(room)?.props.find((x) => x.id === prop2);
-        if (p) this.inspectProp(p);
-      }, onStep: (index) => {
-        this.routeIndex = index;
-        this.highlightRoute();
-        if (byId2("office-follow-route").checked && index >= 0) {
-          const r = routeFor(this.archive.current())[index];
-          if (r) this.select(r.room, false);
-        }
-        this.tone();
-      }, onView: (view) => {
-        this.walking = view === "walk";
-        byId2("office-walk").setAttribute("aria-pressed", String(this.walking));
-        byId2("office-walk").textContent = this.walking ? "Return to cutaway" : "Walk in this room";
-        byId2("office-walking-controls").hidden = !this.walking;
-      }, onReady: () => {
-        clearTimeout(readiness);
-        loading.hidden = true;
-        this.graphicsAvailable(true);
-        this.playbackLabels();
-        this.status("The estate is open. Select any room or object; its actual evidence and fictional arrangements are labeled separately.");
-      }, onProblem: () => this.fallback() });
-      this.canvas.dataset.renderer = "babylon";
-      if (this.room !== "reception" || this.selectedProp) this.renderer.selectRoom(this.room);
-      this.activity();
-      readiness = setTimeout(() => {
-        if (this.opened && opening === this.opening && this.canvas.dataset.rendered !== "true") this.fallback();
-      }, 2e4);
-    } catch {
-      this.module = void 0;
-      if (this.opened && opening === this.opening) this.fallback();
-    }
-  }
-  fallback() {
-    this.renderer?.dispose();
-    this.renderer = void 0;
-    this.canvas.dataset.renderer = "directory";
-    this.graphicsAvailable(false);
-    this.playbackLabels();
-    const loading = byId2("office-loading");
-    loading.hidden = false;
-    const retry = node("button", "Try the 3D display again");
-    retry.type = "button";
-    retry.addEventListener("click", () => void this.open(false, true));
-    loading.replaceChildren(node("p", "The 3D display could not open. All eight rooms, thirty-two stories and recorded papers remain available through the directory."), retry);
-    this.status("The office directory is open. The graphics display is unavailable on this visit.");
-  }
-  graphicsAvailable(value) {
-    for (const id of ["office-overview", "office-walk", "office-zoom-in", "office-zoom-out"]) byId2(id).disabled = !value;
-    this.canvas.tabIndex = value ? 0 : -1;
-    if (value) this.canvas.removeAttribute("aria-hidden");
-    else this.canvas.setAttribute("aria-hidden", "true");
-  }
-  close(target = this.enter) {
-    if (officeFullscreen().mode === "facilities") officeFullscreen().close(false);
-    officeEstate.finish();
-    this.exitFocus = target;
-    this.opened = false;
-    ++this.opening;
-    this.renderer?.active(false);
-    this.root.hidden = true;
-    this.enter.hidden = false;
-    if (this.dialog.open) this.dialog.close();
-    target.focus();
-    this.status("Your departure has been approved without an additional form. Reception is reviewing this precedent.");
-  }
-  enlarge() {
-    this.enlarged = true;
-    byId2("office-modal-slot").append(this.root);
-    this.dialog.showModal();
-    byId2("office-enlarge").textContent = "Return to page";
-    this.renderer?.resize();
-    byId2("office-modal-close").focus();
-  }
-  select(id, user = true) {
-    if (user) {
-      this.retainFile();
-      if (officeFullscreen().mode === "facilities") officeFullscreen().inspection(true);
-    }
-    this.room = id;
-    this.selectedProp = void 0;
-    this.selectedAction = void 0;
-    this.renderRoom();
-    this.syncRenderer();
-    this.renderer?.selectRoom(id);
-  }
-  retainFile() {
-    const file = this.archive.current();
-    if (file) this.archive.selected = file.ordinal;
-    this.follow.checked = false;
-    this.fileSelect.value = this.archive.selected;
-    this.routeCamera(false);
-  }
-  routeCamera(value) {
-    byId2("office-follow-route").checked = value;
-  }
-  renderAddress() {
-    this.root.dataset.room = this.room;
-    document.dispatchEvent(new CustomEvent("office-location", { detail: { view: "office" } }));
-    byId2("office-room-label").textContent = "Department " + String(rooms.findIndex((r) => r.id === this.room) + 1).padStart(2, "0") + " \xB7 Address " + officeEstate.current.placements.find((p) => p.room === this.room).address;
-  }
-  renderRoom() {
-    const room = roomById(this.room);
-    for (const [id, b] of this.directory) b.setAttribute("aria-pressed", String(id === this.room));
-    this.renderAddress();
-    byId2("office-room-title").textContent = room.name;
-    byId2("office-room-subtitle").textContent = room.subtitle;
-    const selected = this.selectedProp;
-    byId2("office-props").replaceChildren(...room.props.map((p) => {
-      const b = node("button", p.name);
-      b.type = "button";
-      b.setAttribute("aria-pressed", String(p.id === selected?.id));
-      b.addEventListener("click", () => this.inspectProp(p));
-      return b;
-    }));
-    if (selected) this.inspectProp(selected);
-    else {
-      byId2("office-story-title").textContent = "Welcome to " + room.short;
-      byId2("office-story-text").textContent = "Select a named curiosity or click its object in the building. Facilities encourages looking closely while accepting no responsibility for what you notice.";
-      byId2("office-story-answer").textContent = "";
-      byId2("office-story-actions").replaceChildren();
-    }
-    this.curiosityLabel();
-    this.renderEvidence();
-    this.shareLink();
-    this.playbackLabels();
-  }
-  inspectProp(p) {
-    this.selectedProp = p;
-    this.selectedAction = void 0;
-    this.retainFile();
-    this.visited.add(p.id);
-    try {
-      localStorage.setItem(curiosityKey, JSON.stringify([...this.visited]));
-      this.persistence = true;
-    } catch {
-      this.persistence = false;
-    }
-    if (officeFullscreen().mode === "facilities") officeFullscreen().inspection(true);
-    byId2("office-story-title").textContent = p.name;
-    byId2("office-story-text").textContent = p.story;
-    byId2("office-story-answer").textContent = "";
-    byId2("office-story-actions").replaceChildren(...p.actions.map((a, index) => {
-      const b = node("button", a.label);
-      b.type = "button";
-      b.addEventListener("click", () => this.respond(index));
-      return b;
-    }));
-    for (const b of byId2("office-props").querySelectorAll("button")) b.setAttribute("aria-pressed", String(b.textContent === p.name));
-    this.curiosityLabel();
-    this.shareLink();
-  }
-  respond(index) {
-    const action = this.selectedProp?.actions[index];
-    if (!action) return;
-    this.selectedAction = index;
-    byId2("office-story-answer").textContent = action.answer;
-    this.renderer?.react(this.selectedProp.id, index);
-    this.tone();
-    this.shareLink();
-  }
-  curiosityLabel() {
-    byId2("office-curiosities").textContent = this.visited.size + " of 32 curiosities discovered." + (this.visited.size === 32 ? " Facilities appoints you Senior Visitor (Acting)." : "") + (this.persistence ? " Remembered in this browser." : " Storage is unavailable; this visit remembers them temporarily.");
-  }
-  updateFiles() {
-    if (document.activeElement === this.fileSelect) return;
-    const known = new Set(this.archive.files.keys());
-    for (const option of [...this.fileSelect.options]) if (option.value !== "latest" && !known.has(option.value)) option.remove();
-    for (const f of this.archive.files.values()) if (![...this.fileSelect.options].some((o) => o.value === f.ordinal)) {
-      const o = node("option", "Ordinal " + f.ordinal + " \xB7 " + f.text);
-      o.value = f.ordinal;
-      this.fileSelect.append(o);
-    }
-    this.fileSelect.value = this.archive.selected;
-  }
-  renderEvidence() {
-    const file = this.archive.current(), globals = file?.globals || this.archive.globals;
-    const previous = this.lastEvidence;
-    if (previous && previous.file === file && previous.room === this.room && previous.globals === globals) {
-      this.renderCompanion();
-      return;
-    }
-    this.lastEvidence = { file, room: this.room, globals };
-    const events = this.archive.evidence(this.room);
-    let source = file ? "File " + file.ordinal + " \xB7 disclosed text \u201C" + file.text + "\u201D. " + (file.cache === "HIT" ? "Institutional memory returned prior text; fresh production decisions are not inferred." : file.recorded ? "Only supplied execution records are shown." : "The complete production dossier was unavailable; supplied records remain identifiable.") : "No numerical file has been disclosed. These rooms are open for fictional inspection.";
-    if (this.room === "executive") source += " The executive room is tour scenery, not an additional production approval.";
-    if (file?.sourceOmitted || file?.omitted) source += " The source dossier or finite tour view omitted some records; the route is a summary.";
-    byId2("office-evidence-source").textContent = source;
-    byId2("office-evidence").replaceChildren(...events.map((e) => {
-      const li = node("li");
-      li.append(node("strong", e.office), node("p", e.finding));
-      if (e.document) {
-        const details = node("details"), summary = node("summary", "Inspect supplied document"), pre = node("pre", e.document.slice(0, 12e3) + (e.document.length > 12e3 ? "\n[First 12,000 of " + e.document.length + " characters shown.]" : ""));
-        details.append(summary, pre);
-        li.append(details);
-      }
-      return li;
-    }));
-    if (!events.length) byId2("office-evidence").append(node("li", file ? "No supplied decision for this department accompanies this file. Its furnishings and conversations are fictional tour content." : "Run a mandate to supply actual proceedings."));
-    this.renderCompanion();
-  }
-  renderCompanion() {
-    const d = this.archive.companions.get(this.archive.current()?.ordinal || "");
-    byId2("office-companion").textContent = d ? "Appointed companion: " + d.companion.name + " \xB7 " + d.companion.rarity + ". This is a disclosed companion assignment, separate from the numerical output." : "";
-    byId2("office-companion-story").hidden = !d;
-  }
-  updateRoute() {
-    const file = this.archive.current(), route = routeFor(file), key2 = (file?.ordinal || "") + "|" + route.map((s) => s.room + ":" + s.source).join("|") + "|" + this.completedZero;
-    if (key2 === this.routeKey) return;
-    this.routeKey = key2;
-    this.routeIndex = -1;
-    byId2("office-route-status").textContent = file ? "Recorded route summary for " + file.ordinal + " \xB7 " + file.text + ". " + (this.archive.mode !== "mandate" ? "This is retained playback. " : "") + "The moving file illustrates these stops; it does not measure execution time." : this.completedZero ? "Zero\u2019s mandate is complete. No numerical file was needed. The estate\u2019s overhead remains fully funded." : "Run a mandate to supply a recorded file. Every room is open for fictional inspection.";
-    byId2("office-route").replaceChildren(...route.map((s, i) => {
-      const li = node("li"), b = node("button", i + 1 + ". " + roomById(s.room).short + " \xB7 " + s.source);
-      b.type = "button";
-      b.title = s.finding;
-      b.addEventListener("click", () => {
-        this.paused = true;
-        this.routeIndex = i;
-        this.renderer?.seek(i);
-        this.select(s.room);
-        this.highlightRoute();
-        this.playbackLabels();
-      });
-      li.append(b);
-      return li;
-    }));
-    this.playbackLabels();
-    this.shareLink();
-  }
-  seekRoute(index) {
-    const step = routeFor(this.archive.current())[index];
-    if (!step) return;
-    this.routeIndex = index;
-    this.renderer?.seek(index);
-    this.select(step.room, false);
-    this.highlightRoute();
-  }
-  highlightRoute() {
-    [...byId2("office-route").querySelectorAll("button")].forEach((b, i) => b.setAttribute("aria-pressed", String(i === this.routeIndex)));
-  }
-  playbackLabels() {
-    const empty = routeFor(this.archive.current()).length === 0;
-    for (const id of ["office-replay", "office-next"]) byId2(id).setAttribute("aria-disabled", String(empty));
-    byId2("office-pause").setAttribute("aria-disabled", String(!this.motion.checked || !this.renderer));
-    byId2("office-pause").textContent = !this.renderer ? "Use recorded stops" : !this.motion.checked ? "Animation off" : this.paused ? "Resume route" : "Pause route";
-    byId2("office-pause").setAttribute("aria-pressed", String(this.paused));
-  }
-  sceneState() {
-    const file = this.archive.current(), d = file ? this.archive.companions.get(file.ordinal) : void 0;
-    return { room: this.room, route: routeFor(file), ordinal: file?.ordinal || "", text: file?.text || "", emoji: d?.companion.emoji, companionName: d?.companion.name, paused: this.paused, followRoute: byId2("office-follow-route").checked, reducedMotion: !this.motion.checked, quality: byId2("office-quality").value, seed: tourSeed(this.archive.mandate), layout: officeEstate.displayed, relocation: officeEstate.relocation };
-  }
-  syncRenderer() {
-    try {
-      this.renderer?.update(this.sceneState());
-    } catch {
-      this.fallback();
-    }
-  }
-  activity() {
-    const rect = byId2("office-stage").getBoundingClientRect();
-    this.renderer?.active(this.opened && rect.height > 0 && rect.bottom > -100 && rect.top < innerHeight + 100 && !document.hidden);
-  }
-  shareLink() {
-    byId2("office-share-link").value = officeShare(scope, this.archive.mandate, this.room, this.selectedProp?.id, byId2("companion-strategy").value || "factor-resonance-v1", this.selectedAction, layoutToken(officeEstate.current));
-  }
-  async soundPreference() {
-    const enabled = byId2("office-sound").checked;
-    try {
-      if (enabled) {
-        this.audio ||= new AudioContext();
-        await this.audio.resume();
-        this.tone();
-      } else await this.audio?.suspend();
-    } catch {
-      byId2("office-sound").checked = false;
-      this.status("Office sounds are unavailable. All tour dialogue remains readable.");
-    }
-  }
-  tone() {
-    if (!byId2("office-sound").checked || this.audio?.state !== "running" || document.hidden) return;
-    const oscillator = this.audio.createOscillator(), gain = this.audio.createGain(), now = this.audio.currentTime;
-    oscillator.type = "sine";
-    oscillator.frequency.setValueAtTime(440 + this.routeIndex % 3 * 110, now);
-    gain.gain.setValueAtTime(0.025, now);
-    gain.gain.exponentialRampToValueAtTime(1e-3, now + 0.09);
-    oscillator.connect(gain);
-    gain.connect(this.audio.destination);
-    oscillator.start(now);
-    oscillator.stop(now + 0.1);
-  }
-  async saveOffline() {
-    const b = byId2("office-offline");
-    if (b.getAttribute("aria-disabled") === "true") return;
-    b.setAttribute("aria-disabled", "true");
-    byId2("office-offline-status").textContent = "Facilities is saving this release\u2019s 3D building\u2026";
-    try {
-      await saveOfficePack();
-      byId2("office-offline-status").textContent = "The 3D office is saved for offline visits with this installed release.";
-    } catch (error) {
-      byId2("office-offline-status").textContent = "The offline building could not be saved: " + error.message + " You can keep exploring online.";
-    } finally {
-      b.setAttribute("aria-disabled", "false");
-    }
-  }
-};
-
-// web/office-supervision-model.ts
-function observationEnvelope(packet, start, count) {
-  const first = BigInt(start), last = first + BigInt(Math.max(0, count)) - 1n;
-  const result = { prefix: [], groups: /* @__PURE__ */ new Map(), suffix: [], omitted: packet.omitted, cache: packet.cache, recorded: packet.recorded };
-  let entered = false;
-  for (const event of packet.events) {
-    if (packet.cache === "HIT" && !["REQUEST", "COMPLETE", "FAILED"].includes(event.kind) && !event.kind.startsWith("CACHE_") && !event.kind.startsWith("PRECEDENT_")) continue;
-    const ordinal = event.ordinal === null ? void 0 : BigInt(event.ordinal);
-    if (count > 0 && ordinal !== void 0 && ordinal >= first && ordinal <= last) {
-      entered = true;
-      const group = result.groups.get(event.ordinal) || [];
-      group.push(event);
-      result.groups.set(event.ordinal, group);
-    } else if (!entered) result.prefix.push(event);
-    else result.suffix.push(event);
-  }
-  if (packet.precedent && !packet.events.some((e) => e.kind.startsWith("PRECEDENT_"))) {
-    result.prefix.push(...packet.precedent.steps.map((e) => ({ ordinal: null, kind: "PRECEDENT_" + e.state, office: e.office, finding: e.finding, document: e.document })));
-  }
-  return result;
-}
-var personnelOffices = ["Headcount Planning", "Recruitment", "Identity Office", "Offer Authority", "Induction", "Probation Review", "Independent Audit"];
-function identifyAction(event, previous) {
-  const kind = event.kind, office2 = event.office;
-  if (kind.startsWith("HR_")) return { action: "recruit", room: "personnel", anchor: "personnel" };
-  if (kind.startsWith("CACHE_") || kind.startsWith("PRECEDENT_")) return { action: "memory", room: "memory", anchor: "memory" };
-  if (kind === "CONTINUATION" || kind === "EXTENDED_CONTINUATION") return { action: "boundary", room: "reception", anchor: "boundary" };
-  if (kind.startsWith("PREMISES_")) {
-    const action = kind === "PREMISES_RELEASE" ? "release" : kind === "PREMISES_DISCOVERY" ? "survey" : kind === "PREMISES_CERTIFICATE" ? "lease" : office2.includes("Allocation") ? "allocate" : office2.includes("Eviction") ? "evict" : office2.includes("Lease") || office2.includes("Auditor") ? "lease" : "survey";
-    return { action, room: "premises", anchor: "property" };
-  }
-  const procurement = { REQUISITION: "requisition", DELIVERY: "deliver", GLYPH_ACCEPTED: "glyph", GLYPH_ASSEMBLED: "assemble" };
-  if (procurement[kind]) return { action: procurement[kind], room: "procurement", anchor: "glyph" };
-  if (kind === "NOTARY" || kind === "EXTENDED_NOTARY") return { action: "notarize", room: "notary", anchor: "notary" };
-  if (kind === "PUBLICATION") return { action: "print", room: "publication", anchor: "printer" };
-  if (kind === "DISCLOSE_OBSERVED") return event.office.startsWith("Retained") ? { action: "memory", room: "memory", anchor: "memory" } : { action: "paper", room: "publication", anchor: "ledger" };
-  if (kind === "AUDIT_APPEND") return { action: "audit", room: "publication", anchor: "ledger" };
-  if (kind === "QUEUE_ENQUEUED") return { action: "queue", room: "publication", anchor: "queue" };
-  if (kind === "TRANSACTION_COMMIT") return { action: "commit", room: "publication", anchor: "ledger" };
-  if (kind === "TRANSACTION_CLEANUP") return { action: "cleanup", room: previous?.shot.room || "reception", anchor: previous?.shot.anchor || "desk" };
-  if (kind.includes("SUCCESSION")) return { action: "succession", room: "reception", anchor: "boundary" };
-  if (kind === "CLASSIFICATION" || kind === "EXTENDED_CLASSIFICATION") return { action: "classify", room: "reception", anchor: "desk" };
-  if (kind === "ASSEMBLY") return { action: "wire", room: "reception", anchor: "desk" };
-  if (kind === "FRAGMENT" || kind === "VISITOR") return { action: kind === "FRAGMENT" ? "fragment" : "classify", room: previous?.shot.room === "procurement" ? "procurement" : "reception", anchor: previous?.shot.room === "procurement" ? "glyph" : "desk" };
-  return { action: kind === "NUMERAL" ? "fragment" : "paper", room: "reception", anchor: "desk" };
-}
-function shotFor(room, anchor, hrIndex = -1, layout = foundingEstate) {
-  const book = addresses(layout), placement = book.placement(room), target = book.resolve({ room, station: anchor });
-  const historicNorth = layout.edition === 0 && placement.position.z > 0;
-  const alpha = (historicNorth ? Math.PI / 2 : -Math.PI / 2 + placement.yaw) + (anchor === "glyph" ? 0.22 : anchor === "notary" ? -0.22 : anchor === "queue" ? -0.14 : anchor === "personnel" ? hrIndex % 2 === 0 ? -0.12 : 0.12 : 0.1);
-  return { room, anchor, target, alpha, beta: layout.edition > 0 || historicNorth ? 0.7 : anchor === "property" ? 0.85 : 0.93, radius: anchor === "glyph" ? 3.8 : anchor === "printer" ? 3.7 : anchor === "ledger" ? 3.9 : anchor === "boundary" ? 5.5 : 4.6 };
-}
-var substantial = /* @__PURE__ */ new Set(["recruit", "survey", "evict", "lease", "glyph", "assemble", "notarize", "print", "audit", "queue", "commit", "memory"]);
-function duration(action, kind) {
-  if (kind === "PREMISES_DISCOVERY") return [1400, 800];
-  if (action === "print") return [1250, 850];
-  if (action === "notarize") return [1e3, 650];
-  if (action === "glyph") return [800, 550];
-  if (action === "recruit") return [850, 600];
-  return substantial.has(action) ? [750, 550] : [420, 360];
-}
-function planOfficeSteps(events, context, ensureDisclosure = false) {
-  const result = [], glyphs = [], hrStates = Array(7).fill(void 0);
-  let previous = context.previous, tenantCode;
-  for (const [index, event] of events.entries()) {
-    const match = event.kind === "GLYPH_ACCEPTED" ? event.finding.match(/Accepted (FizzBuzz|Fizz|Buzz) position (\d+): character (\S), SKU ([^,]+)/) : null;
-    if (match && glyphs.length < 8) glyphs.push({ product: match[1], position: Number(match[2]), character: match[3], sku: match[4] });
-    const { action, room, anchor } = identifyAction(event, previous), hrIndex = personnelOffices.indexOf(event.office), shot = shotFor(room, anchor, hrIndex);
-    const status = event.kind.slice(3);
-    if (event.kind.startsWith("HR_") && hrIndex >= 0 && ["APPROVED", "REJECTED", "NOT_REACHED"].includes(status)) hrStates[hrIndex] = status;
-    if (event.kind === "PREMISES_DISCOVERY") tenantCode = event.finding.match(/U\+[A-Fa-f0-9]{4,6}/)?.[0];
-    const same = previous?.shot.room === room && previous.shot.anchor === anchor && (action !== "recruit" || previous.hrIndex === hrIndex);
-    const distance2 = previous ? Math.hypot(previous.shot.target.x - shot.target.x, previous.shot.target.z - shot.target.z) : 0;
-    const arriveMs = same ? 0 : previous?.shot.room === room ? 620 : 1350 + Math.round(distance2 * 15);
-    const [workMs, holdMs] = duration(action, event.kind);
-    const step = { id: context.id + ":" + index, event, source: context.source || "recorded", ordinal: context.ordinal || event.ordinal || "", text: context.text || "", action, shot, hasFile: context.hasFile ?? !!context.ordinal, publication: event.kind === "PUBLICATION" || event.kind === "DISCLOSE_OBSERVED", arriveMs, workMs, holdMs, glyphs: [...glyphs], hrIndex, hrStates: [...hrStates], tenantCode };
-    if (previous) step.origin = { room: previous.shot.room, station: previous.shot.anchor, hrIndex: previous.hrIndex };
-    result.push(step);
-    previous = step;
-  }
-  if (ensureDisclosure && !result.some((s) => s.publication)) {
-    const event = { ordinal: context.ordinal || null, kind: "DISCLOSE_OBSERVED", office: "Observed Output Disclosure", finding: "Disclose the supplied text. No individual publication record accompanied this response; fresh production decisions are not inferred.", document: context.text || "" };
-    result.push(...planOfficeSteps([event], { ...context, id: context.id + ":disclosure", source: "disclosure", previous }));
-  }
-  return result;
-}
-function planFolio(folio, id, previous) {
-  const context = { id, ordinal: folio.ordinal, text: folio.text, previous, hasFile: true };
-  if (folio.cache === "HIT") return planOfficeSteps([
-    { ordinal: folio.ordinal, kind: "CACHE_RECEIPT", office: "Institutional Memory", finding: "The response reported a cache hit. This retained line requires no fresh hiring, glyph procurement or numerical audit transaction.", document: folio.text },
-    { ordinal: folio.ordinal, kind: "DISCLOSE_OBSERVED", office: "Retained Output Disclosure", finding: "Display the retained answer. This is a new UI disclosure of an already completed result.", document: folio.text }
-  ], { ...context, source: "disclosure" });
-  return planOfficeSteps(folio.events, context, true);
-}
-var stepDuration = (step) => step.arriveMs + step.workMs + step.holdMs;
-var smooth = (value) => {
-  const t = Math.max(0, Math.min(1, value));
-  return t * t * (3 - 2 * t);
-};
-function cueAt(step, elapsed) {
-  const travel = step.arriveMs ? Math.min(1, elapsed / step.arriveMs) : 1;
-  const work = Math.max(0, Math.min(1, (elapsed - step.arriveMs) / step.workMs));
-  const hold = Math.max(0, Math.min(1, (elapsed - step.arriveMs - step.workMs) / step.holdMs));
-  return { step, travel: smooth(travel), work: smooth(work), hold, phase: travel < 1 ? "arrival" : work < 1 ? "work" : "hold", complete: elapsed >= stepDuration(step) };
-}
-var ObservationClock = class {
-  elapsed = 0;
+  pending;
   last;
   allowed = false;
-  step;
-  constructor(step) {
-    this.step = step;
+  listeners = /* @__PURE__ */ new Set();
+  records = [];
+  get active() {
+    return !!this.pending;
   }
-  tick(now, allow, manual = false, budget = { rate: 1, maxAdvanceMs: Infinity }) {
-    const delta = this.last === void 0 || !this.allowed ? 0 : Math.max(0, now - this.last);
-    this.last = now;
+  get snapshot() {
+    const p = this.pending;
+    if (!p) return;
+    const chase = p.returnFrom ?? Math.min(p.elapsed, heistChaseMs), leg = Math.min(2, Math.floor(chase / 5e3));
+    return Object.freeze({ ...p, leg, holder: leg % p.plan.actors.length, legProgress: Math.min(1, (chase - leg * 5e3) / 5e3), returning: p.elapsed >= heistChaseMs, returnProgress: Math.max(0, (p.elapsed - heistChaseMs) / heistReturnMs) });
+  }
+  subscribe(listener) {
+    this.listeners.add(listener);
+    return () => this.listeners.delete(listener);
+  }
+  notify() {
+    for (const listener of this.listeners) listener();
+  }
+  start(plan) {
+    if (this.active) return false;
+    this.pending = { id: ++this.serial, plan, elapsed: 0, footprints: false, announcement: plan.actors[0].name + " has stolen the approval stamp." };
+    this.last = void 0;
+    this.allowed = false;
+    this.notify();
+    return true;
+  }
+  advance(now, allow, id = this.pending?.id) {
+    const p = this.pending;
+    if (!p || id !== p.id) return;
+    if (!Number.isFinite(now)) throw new Error("A pursuit requires a finite clock.");
+    const delta = this.last === void 0 || !this.allowed || !allow ? 0 : Math.max(0, now - this.last);
+    this.last = Math.max(this.last ?? now, now);
     this.allowed = allow;
-    const advance = budget.rate === Infinity ? delta > 0 ? budget.maxAdvanceMs : 0 : delta * budget.rate;
-    if (allow) this.elapsed = manual ? stepDuration(this.step) : Math.min(stepDuration(this.step), this.elapsed + Math.min(advance, budget.maxAdvanceMs));
-    return cueAt(this.step, this.elapsed);
-  }
-};
-
-// web/office-direction.ts
-var lerp = (a, b, t) => a + (b - a) * t;
-var angle = (a, b, t) => a + Math.atan2(Math.sin(b - a), Math.cos(b - a)) * t;
-var OfficeShotDirector = class {
-  key = "";
-  path = [];
-  route(step, layout) {
-    const key2 = layoutToken(layout) + "|" + step.origin?.room + "|" + step.origin?.station + "|" + step.shot.room + "|" + step.shot.anchor;
-    if (key2 !== this.key) {
-      this.key = key2;
-      this.path = step.origin ? routes(layout).route(step.origin, { room: step.shot.room, station: step.shot.anchor }) : [addresses(layout).resolve({ room: step.shot.room, station: step.shot.anchor })];
+    if (!allow) return;
+    const before = this.snapshot;
+    p.elapsed = Math.min(heistChaseMs + heistReturnMs, p.elapsed + delta);
+    if (p.elapsed >= heistChaseMs && !p.resolution) {
+      p.resolution = "automatic";
+      p.returnFrom = heistChaseMs;
+      p.announcement = heistFinding("automatic");
+    } else if (!this.snapshot.returning && before.holder !== this.snapshot.holder) p.announcement = p.plan.actors[this.snapshot.holder].name + " now holds the stamp. " + heistAntic(p.plan.actors[this.snapshot.holder]);
+    if (p.elapsed >= heistChaseMs + heistReturnMs) {
+      this.finish(p.resolution || "automatic");
+      return;
     }
-    return this.path;
+    if (delta) this.notify();
   }
-  duration(step, layout) {
-    if (!step.origin) return step.arriveMs;
-    const same = step.origin.room === step.shot.room;
-    if (same && step.origin.station === step.shot.anchor) return step.origin.hrIndex === step.hrIndex ? 0 : 620;
-    return Math.round((same ? 650 : 1150) + routeLength(this.route(step, layout)) / 6 * 1e3);
-  }
-  minimumFrames(step, layout) {
-    if (!step.arriveMs) return 0;
-    const to = shotFor(step.shot.room, step.shot.anchor, step.hrIndex, layout), from = step.origin ? shotFor(step.origin.room, step.origin.station, step.origin.hrIndex, layout) : { alpha: -Math.PI / 2.6, beta: 0.88, radius: 33 };
-    const rotation = Math.abs(Math.atan2(Math.sin(to.alpha - from.alpha), Math.cos(to.alpha - from.alpha)));
-    return Math.ceil(Math.max(18, routeLength(this.route(step, layout)) / 0.4, rotation / 0.045, Math.abs(to.beta - from.beta) / 0.025, Math.abs(to.radius - from.radius) / 0.65));
-  }
-  pose(cue, layout) {
-    const step = cue.step, to = shotFor(step.shot.room, step.shot.anchor, step.hrIndex, layout), t = cue.travel;
-    const from = step.origin ? shotFor(step.origin.room, step.origin.station, step.origin.hrIndex, layout) : { ...to, target: { x: 0, y: 0.2, z: 0 }, alpha: -Math.PI / 2.6, beta: 0.88, radius: 33 };
-    const p = pointAlong(this.route(step, layout), t), cross = !!step.origin && step.origin.room !== step.shot.room;
-    const target = step.origin ? { x: p.x, y: lerp(from.target.y, to.target.y, t) + Math.sin(t * Math.PI) * 0.3, z: p.z } : { x: lerp(0, to.target.x, t), y: lerp(0.2, to.target.y, t), z: lerp(0, to.target.z, t) };
-    return { target, file: { x: p.x, y: 0, z: p.z }, alpha: angle(from.alpha, to.alpha, t), beta: lerp(from.beta, to.beta, t) - (cross ? Math.sin(t * Math.PI) * 0.12 : 0), radius: lerp(from.radius, to.radius, t) + (cross ? Math.sin(t * Math.PI) * 5 : 0) };
-  }
-};
-function rebaseObservation(elapsed, oldArrival, newArrival) {
-  return elapsed < oldArrival && oldArrival > 0 ? elapsed / oldArrival * newArrival : Math.max(0, elapsed - oldArrival) + newArrival;
-}
-
-// web/office-cadence.ts
-function officeCadenceRate(value) {
-  return value === "1800" ? 0.5 : value === "225" ? 2 : value === "0" ? Infinity : 1;
-}
-var movingWork = /* @__PURE__ */ new Set(["wire", "recruit", "survey", "evict", "lease", "release", "deliver", "glyph", "assemble", "notarize", "print", "audit", "queue", "commit", "succession", "memory"]);
-var OfficeCadenceGovernor = class {
-  quality = "standard";
-  interval = 1e3 / 60;
-  cost = 0;
-  samples = 0;
-  slow = 0;
-  recovered = 0;
-  observeFrame(intervalMs, renderMs) {
-    if (intervalMs <= 0) return false;
-    this.interval += 0.15 * (Math.min(100, intervalMs) - this.interval);
-    this.cost += 0.15 * (Math.min(100, Math.max(0, renderMs)) - this.cost);
-    this.samples++;
-    const struggling = this.interval > 28 || this.cost > 18;
-    this.slow = struggling ? this.slow + 1 : 0;
-    this.recovered = !struggling && this.interval < 20 && this.cost < 10 ? this.recovered + 1 : 0;
-    const before = this.quality;
-    if (this.samples >= 12 && this.slow >= 12) this.quality = "economy";
-    else if (this.quality === "economy" && this.recovered >= 180) this.quality = "standard";
-    return before !== this.quality;
-  }
-  budget(value, step, elapsed, arrivalFrames, painted, reducedMotion = false) {
-    const rate = officeCadenceRate(value);
-    if (!painted) return { rate, maxAdvanceMs: Infinity };
-    let duration2, end, frames;
-    if (elapsed < step.arriveMs) {
-      duration2 = step.arriveMs;
-      end = step.arriveMs;
-      frames = arrivalFrames;
-    } else if (elapsed < step.arriveMs + step.workMs) {
-      duration2 = step.workMs;
-      end = step.arriveMs + step.workMs;
-      frames = movingWork.has(step.action) ? 16 : 8;
-    } else {
-      duration2 = step.holdMs;
-      end = step.arriveMs + step.workMs + step.holdMs;
-      frames = 2;
+  intercept(index, id = this.pending?.id) {
+    const s = this.snapshot;
+    if (!s || s.id !== id || s.returning || !Number.isInteger(index) || !s.plan.actors[index]) return false;
+    if (index !== s.holder) {
+      this.pending.announcement = s.plan.actors[index].name + " objects: \u201CI was attending a meeting about my whereabouts.\u201D";
+      this.notify();
+      return false;
     }
-    return { rate, maxAdvanceMs: Math.max(0, Math.min(end - elapsed, duration2 / Math.max(1, reducedMotion ? 1 : frames))) };
+    this.recover("intercepted");
+    return true;
+  }
+  follow() {
+    const s = this.snapshot;
+    if (!s || s.returning) return;
+    this.pending.footprints = true;
+    this.pending.announcement = "Footprints lead from " + s.plan.rooms[Math.min(2, Math.floor(s.elapsed / 5e3))] + " toward " + s.plan.rooms[Math.min(3, Math.floor(s.elapsed / 5e3) + 1)] + ". The trail has not applied for confidentiality.";
+    this.notify();
+  }
+  recover(resolution) {
+    const p = this.pending;
+    if (!p || p.resolution) return;
+    p.resolution = resolution;
+    p.returnFrom = p.elapsed;
+    p.elapsed = heistChaseMs;
+    p.announcement = heistFinding(resolution);
+    this.last = void 0;
+    this.allowed = false;
+    this.notify();
+  }
+  finish(resolution = "skipped") {
+    const p = this.pending;
+    if (!p) return;
+    this.records.push(Object.freeze({ id: p.id, plan: p.plan, resolution, finding: heistFinding(resolution) }));
+    if (this.records.length > 10) this.records.shift();
+    this.pending = void 0;
+    this.last = void 0;
+    this.allowed = false;
+    this.notify();
   }
 };
 
@@ -1922,797 +635,37 @@ var PresentationScheduler = class {
   }
 };
 
-// web/office-supervision.ts
-var element = (id) => document.getElementById(id);
-var OfficeSupervisionDesk = class {
-  constructor(authority) {
-    this.authority = authority;
-    officeEstate.subscribe((event) => {
-      this.updateScene();
-      if (event.kind === "committed") {
-        const label = element("supervision-current").querySelector("strong"), step = this.activeStep || this.lastStep;
-        if (label && step) label.textContent = label.textContent.replace(/ · Address [A-D][1-3]$/, " \xB7 Address " + officeEstate.current.placements.find((p) => p.room === step.shot.room).address);
-      }
-      if (event.kind !== "progress") {
-        this.syncControls();
-        this.authority.wake();
-      }
-    });
-    this.checkbox.addEventListener("change", () => this.applyMode(true));
-    this.cadence.addEventListener("change", () => {
-      this.pane.dataset.cadence = this.cadence.value;
-      this.authority.wake();
-    });
-    element("supervision-autonomy").addEventListener("click", () => {
-      this.disable();
-      this.checkbox.focus();
-    });
-    element("supervision-pause").addEventListener("click", () => {
-      if (this.authority.reading()) this.authority.pause(!this.authority.paused());
-    });
-    element("supervision-next").addEventListener("click", () => {
-      if (!this.authority.reading() || !this.authority.paused() || officeEstate.moving) return;
-      if (!element("office-fullscreen").open) element("mandate-output").scrollIntoView({ block: "start", behavior: "instant" });
-      this.credits = 1;
-      this.authority.wake();
-    });
-    const resize = new ResizeObserver(() => {
-      this.renderer?.resize();
-      this.activity();
-    });
-    resize.observe(element("supervision-stage"));
-    new IntersectionObserver(() => this.activity(), { threshold: [0, 0.15] }).observe(element("supervision-stage"));
-    document.addEventListener("visibilitychange", () => this.activity(true));
-    document.addEventListener("site-page-change", () => this.activity(true));
-    addEventListener("pageshow", () => this.activity(true));
-    document.addEventListener("demo-desk-change", () => this.activity());
-    document.addEventListener("demo-watch-layout", () => {
-      this.activity();
-      requestAnimationFrame(() => this.renderer?.resize());
-    });
-    document.addEventListener("office-fullscreen-change", () => {
-      this.activity();
-      requestAnimationFrame(() => this.renderer?.resize());
-    });
-    this.media.addEventListener("change", () => this.updateScene());
-    addEventListener("pagehide", () => {
-      this.interrupt();
-      this.renderer?.dispose();
-      clearTimeout(this.readiness);
-    }, { once: true });
-    this.applyMode(false);
-  }
-  authority;
-  checkbox = element("executive-hovering");
-  cadence = element("display-speed");
-  pane = element("supervision-pane");
-  canvas = element("supervision-canvas");
-  media = matchMedia("(prefers-reduced-motion: reduce)");
-  normalPaceHelp = element("pace-help").textContent || "";
-  governor = new OfficeCadenceGovernor();
-  paintedAt = 0;
-  paintedCue;
-  renderer;
-  module;
-  loading;
-  ready = false;
-  fallback = false;
-  sceneActive = false;
-  sceneStartedAt = 0;
-  readiness;
-  epoch = 0;
-  serial = 0;
-  cancelFrame;
-  credits = 0;
-  scheduler = new PresentationScheduler(() => this.visible());
-  envelope;
-  prefixDone = false;
-  suffixDone = false;
-  lastStep;
-  activeStep;
-  latestCue;
-  packet;
-  packetContexts = /* @__PURE__ */ new WeakMap();
-  folio;
-  published = false;
-  companion;
-  mandate = "15";
-  mode = "mandate";
-  observed = 0;
-  get enabled() {
-    return this.checkbox.checked;
-  }
-  get generation() {
-    return this.epoch;
-  }
-  get hasStepCredit() {
-    return this.credits > 0;
-  }
-  disable() {
-    officeEstate.finish();
-    if (!this.enabled) return;
-    this.checkbox.checked = false;
-    this.applyMode(false);
-    this.authority.wake();
-  }
-  applyMode(user) {
-    this.cadence.disabled = false;
-    this.pane.dataset.cadence = this.cadence.value;
-    this.pane.dataset.renderQuality = this.governor.quality;
-    if (this.enabled) {
-      this.pane.hidden = false;
-      element("mandate-output").dataset.supervised = "true";
-      element("pace-help").textContent = "Full Board Ratification doubles each deliberation. Interdepartmental Sign-Off preserves established ceremony; Emergency Delegated Authority halves it. Executive Fiat uses the fastest pace the office can present smoothly. Change cadence at any time; every recorded decision keeps its place.";
-      if (!this.authority.reading()) this.current("Executive oversight is standing by for supplied proceedings. Run or replay a mandate to begin a new observation.");
-      void this.ensureScene();
-    } else {
-      this.interrupt();
-      this.pane.hidden = true;
-      delete element("mandate-output").dataset.supervised;
-      element("pace-help").textContent = this.normalPaceHelp;
-    }
-    this.activity();
-    this.syncControls();
-    document.dispatchEvent(new Event("demo-presentation-change"));
-    if (user) this.authority.wake();
-  }
-  syncControls() {
-    const reading2 = this.authority.reading(), paused2 = this.authority.paused();
-    const button = element("supervision-pause");
-    playbackIcon(button, paused2 ? "play" : "pause", paused2 ? "Resume" : "Pause");
-    button.setAttribute("aria-disabled", String(!reading2));
-    button.setAttribute("aria-pressed", String(paused2));
-    element("supervision-next").setAttribute("aria-disabled", String(!reading2 || !paused2 || officeEstate.moving));
-    if (officeEstate.moving && reading2) this.authority.notice("Facilities has suspended disclosure while all eight departments reconsider their addresses. Your pause and current decision are retained.");
-  }
-  begin(mandate, mode = "mandate") {
-    this.interrupt();
-    this.mandate = mandate;
-    this.mode = mode;
-    this.envelope = void 0;
-    this.packet = void 0;
-    this.prefixDone = false;
-    this.suffixDone = false;
-    this.lastStep = void 0;
-    this.activeStep = void 0;
-    this.folio = void 0;
-    this.published = false;
-    this.companion = void 0;
-    this.observed = 0;
-    this.pane.dataset.observedSteps = "0";
-    this.pane.dataset.state = "waiting";
-    this.current("Reception is accepting the mandate. The executive is withholding trust.");
-    this.renderer?.direct(null);
-    this.updateScene();
-    this.syncControls();
-  }
-  interrupt() {
-    officeEstate.finish();
-    this.epoch++;
-    this.credits = 0;
-    this.latestCue = void 0;
-    this.cancelFrame?.();
-    this.cancelFrame = void 0;
-    this.scheduler.cancel();
-    this.pane.dataset.state = "stopped";
-  }
-  receive(packet, start, count) {
-    this.packet = packet;
-    this.packetContexts.set(packet, { start, count });
-    this.envelope = observationEnvelope(packet, start, count);
-    this.prefixDone = false;
-    this.suffixDone = false;
-    this.serial++;
-  }
-  async prelude(current) {
-    if (!this.enabled || this.prefixDone || !this.envelope) return;
-    this.prefixDone = true;
-    this.folio = void 0;
-    this.companion = void 0;
-    this.published = false;
-    const steps = planOfficeSteps(this.envelope.prefix, { id: "prelude-" + this.serial, hasFile: false, previous: this.lastStep });
-    await this.play(steps, current);
-  }
-  async observe(folio, current, publish) {
-    if (!this.enabled) return;
-    if (folio.packet && folio.packet !== this.packet) {
-      await this.finishPacket(current);
-      if (!current() || !this.enabled) return;
-      const context = this.packetContexts.get(folio.packet);
-      this.receive(folio.packet, context?.start || folio.ordinal, context?.count || 1);
-    }
-    await this.prelude(current);
-    if (!current() || !this.enabled) return;
-    this.folio = folio;
-    this.published = false;
-    this.companion = void 0;
-    await this.play(planFolio(folio, "folio-" + this.serial + "-" + folio.ordinal, this.lastStep), current, () => {
-      if (!current()) return;
-      this.published = true;
-      publish();
-      this.updateScene();
-    });
-  }
-  async finishPacket(current) {
-    if (!this.enabled || !this.envelope || this.suffixDone) return;
-    await this.prelude(current);
-    if (!current() || !this.enabled) return;
-    this.suffixDone = true;
-    this.folio = void 0;
-    this.companion = void 0;
-    this.published = false;
-    await this.play(planOfficeSteps(this.envelope.suffix, { id: "conclusion-" + this.serial, hasFile: false, previous: this.lastStep }), current);
-  }
-  async rehearsal(event, current, preceding = []) {
-    if (!this.enabled) return;
-    this.folio = void 0;
-    this.companion = void 0;
-    this.published = false;
-    await this.play(planOfficeSteps([...preceding, event], { id: "rehearsal-" + ++this.serial, source: "rehearsal", hasFile: false, previous: this.lastStep }).slice(-1), current, void 0, preceding.length, 7);
-  }
-  remember(discovery) {
-    if (!this.published || discovery.mandate !== this.mandate || discovery.assignment.ordinal !== this.folio?.ordinal) return;
-    this.companion = discovery;
-    this.updateScene();
-  }
-  clearCompanions() {
-    this.companion = void 0;
-    this.updateScene();
-  }
-  complete() {
-    if (this.enabled) {
-      this.pane.dataset.state = "complete";
-      this.current("Observation is complete. The company is still withholding trust.");
-    }
-    this.syncControls();
-  }
-  current(text2) {
-    element("supervision-current").textContent = text2;
-  }
-  sceneState(step = this.activeStep || this.lastStep) {
-    return { room: step?.shot.room || "reception", route: [], ordinal: this.folio?.ordinal || "", text: this.published ? this.folio?.text || "" : "PENDING", emoji: this.companion?.companion.emoji, companionName: this.companion?.companion.name, paused: true, reducedMotion: this.media.matches, quality: this.governor.quality, seed: tourSeed(this.mandate), layout: officeEstate.displayed, relocation: officeEstate.relocation };
-  }
-  painted(frame) {
-    this.paintedAt = frame.now;
-    this.paintedCue = frame.cue;
-    if (this.governor.observeFrame(frame.intervalMs, frame.renderMs)) {
-      this.pane.dataset.renderQuality = this.governor.quality;
-      this.updateScene();
-    }
-  }
-  updateScene(step = this.activeStep || this.lastStep) {
-    try {
-      this.renderer?.update(this.sceneState(step));
-    } catch {
-      this.graphicsFailure();
-    }
-  }
-  visible() {
-    if (!this.enabled || document.hidden || document.querySelector("dialog[open]:not(#office-fullscreen)")) return false;
-    if (document.body.classList.contains("demo-page") && document.body.dataset.desk !== "observe") return false;
-    const rect = element("supervision-stage").getBoundingClientRect(), bottom = innerHeight - (document.querySelector("#discovery-register")?.getBoundingClientRect().height || 0);
-    return rect.width > 0 && Math.min(rect.bottom, bottom) - Math.max(rect.top, 0) >= Math.min(60, rect.height * 0.2);
-  }
-  activity(force = false) {
-    const rect = this.canvas.getBoundingClientRect(), active = this.visible() && !this.canvas.hidden && rect.width > 0 && rect.height > 0;
-    if (force || active !== this.sceneActive) {
-      this.sceneActive = active;
-      this.sceneStartedAt = performance.now();
-      if (force && active) this.renderer?.active(false);
-      this.renderer?.active(active);
-      if (active) this.renderer?.resize();
-    }
-    if (active && this.ready && !this.fallback && performance.now() - Math.max(this.sceneStartedAt, this.paintedAt) > 3e3) {
-      this.graphicsFailure();
-      return;
-    }
-    this.scheduler.refresh();
-  }
-  armReadiness() {
-    clearTimeout(this.readiness);
-    this.readiness = setTimeout(() => {
-      if (this.ready || !this.enabled) return;
-      if (this.sceneActive) this.graphicsFailure();
-      else this.armReadiness();
-    }, 2e4);
-  }
-  async ensureScene() {
-    if (this.renderer) {
-      this.activity();
-      this.renderer.resize();
-      return;
-    }
-    if (this.fallback) return;
-    if (this.loading) return this.loading;
-    this.loading = (async () => {
-      try {
-        this.module ||= import(releaseAsset("office-world.js").href);
-        const module = await this.module;
-        if (!this.enabled) return;
-        this.canvas.hidden = false;
-        this.canvas.dataset.module = releaseAsset("office-world.js").href;
-        this.canvas.dataset.renderer = "babylon";
-        this.renderer = module.createOffice({ canvas: this.canvas, state: this.sceneState(), interactive: false, onRoom: () => {
-        }, onProp: () => {
-        }, onStep: () => {
-        }, onView: () => {
-        }, onFrame: (frame) => this.painted(frame), onReady: () => {
-          this.ready = true;
-          if (this.latestCue) this.renderer?.direct(this.latestCue);
-          clearTimeout(this.readiness);
-          const loading = element("supervision-loading"), focused = loading.contains(document.activeElement);
-          loading.hidden = true;
-          if (focused) element("supervision-title").focus({ preventScroll: true });
-        }, onProblem: () => this.graphicsFailure() });
-        this.sceneActive = !this.visible();
-        this.activity();
-        this.renderer.resize();
-        this.armReadiness();
-      } catch {
-        this.module = void 0;
-        this.graphicsFailure();
-      }
-    })().finally(() => {
-      this.loading = void 0;
-    });
-    return this.loading;
-  }
-  graphicsFailure() {
-    clearTimeout(this.readiness);
-    const renderer = this.renderer;
-    this.renderer = void 0;
-    this.ready = true;
-    this.fallback = true;
-    this.canvas.hidden = true;
-    this.canvas.dataset.renderer = "evidence";
-    try {
-      renderer?.dispose();
-    } catch {
-    }
-    this.activity();
-    if (document.activeElement === this.canvas) element("supervision-title").focus({ preventScroll: true });
-    const loading = element("supervision-loading");
-    loading.hidden = false;
-    const retry = node("button", "Requisition another graphics attempt");
-    retry.type = "button";
-    retry.addEventListener("click", () => {
-      this.fallback = false;
-      this.ready = false;
-      this.module = void 0;
-      this.canvas.removeAttribute("data-rendered");
-      loading.replaceChildren(node("p", "Facilities is arranging another graphics interview\u2026"));
-      element("supervision-title").focus({ preventScroll: true });
-      void this.ensureScene();
-    });
-    loading.replaceChildren(node("p", "The 3D display is unavailable. Executive observation continues through the supplied evidence below. The numbers remain employable."), retry);
-  }
-  show(step, index, total) {
-    this.activeStep = step;
-    this.pane.dataset.room = step.shot.room;
-    document.dispatchEvent(new CustomEvent("office-location", { detail: { view: "supervision" } }));
-    this.pane.dataset.kind = step.event.kind;
-    this.pane.dataset.ordinal = step.ordinal;
-    this.pane.dataset.action = step.action;
-    this.pane.dataset.state = "running";
-    const status = element("supervision-current");
-    status.replaceChildren(node("strong", index + 1 + " / " + total + " \xB7 " + step.event.office + " \xB7 Address " + officeEstate.current.placements.find((p) => p.room === step.shot.room).address), document.createTextNode(step.event.finding));
-    this.authority.notice((this.authority.paused() ? "Paused observation" : "Observing") + " \xB7 " + (index + 1) + " / " + total + " \xB7 " + step.event.office);
-    element("supervision-caption").scrollTop = 0;
-    const source = step.source === "rehearsal" ? "Read-only personnel specimen. Numerical output is retained." : step.source === "disclosure" ? "Observed result or cache receipt. Fresh production work is not inferred." : this.mode === "replay" ? "Retained Java evidence. No business operation is being repeated." : "Recorded Java evidence. The operation has already completed; its UI disclosure is being choreographed.";
-    element("supervision-source").textContent = source + (this.envelope?.omitted ? " The source dossier omitted " + this.envelope.omitted + " entries; absent work is not reconstructed." : "");
-    element("supervision-document").textContent = JSON.stringify(step.event, null, 2).slice(0, 12e3);
-    const progress = element("supervision-progress");
-    progress.max = total;
-    progress.value = index;
-    progress.setAttribute("aria-label", "Observed decisions" + (step.ordinal ? " for ordinal " + step.ordinal : ""));
-    this.updateScene(step);
-  }
-  async play(steps, current, publish, offset = 0, total = steps.length) {
-    const epoch = this.epoch;
-    void this.ensureScene();
-    if (epoch !== this.epoch || !current() || !this.enabled) return;
-    for (const [index, step] of steps.entries()) {
-      if (epoch !== this.epoch || !current() || !this.enabled) return;
-      const done = await this.playOne(step, index + offset, total, epoch, current, publish);
-      if (!done) return;
-      this.lastStep = step;
-    }
-  }
-  playOne(step, index, total, epoch, current, publish) {
-    return new Promise((resolve) => {
-      const director = new OfficeShotDirector();
-      step = { ...step, arriveMs: director.duration(step, officeEstate.current) };
-      let layoutKey = layoutToken(officeEstate.current), arrivalFrames = director.minimumFrames(step, officeEstate.current);
-      const clock = new ObservationClock(step);
-      let shown = false, published = false, manual = false, settled = false, clockAt = 0;
-      const finish = (ok) => {
-        if (settled) return;
-        settled = true;
-        this.scheduler.cancel();
-        if (this.cancelFrame === cancel) this.cancelFrame = void 0;
-        resolve(ok);
-      };
-      const cancel = () => finish(false);
-      this.cancelFrame = cancel;
-      const frame = (now) => {
-        if (epoch !== this.epoch || !this.enabled || !current()) {
-          finish(false);
-          return;
-        }
-        const key2 = layoutToken(officeEstate.current);
-        if (key2 !== layoutKey) {
-          const arrival = director.duration(step, officeEstate.current);
-          clock.elapsed = rebaseObservation(clock.elapsed, step.arriveMs, arrival);
-          step.arriveMs = arrival;
-          arrivalFrames = director.minimumFrames(step, officeEstate.current);
-          layoutKey = key2;
-          this.updateScene(step);
-        }
-        this.activity();
-        const moving = officeEstate.moving, paused2 = this.authority.paused();
-        if (!shown) {
-          if (!moving && (!paused2 || this.credits > 0)) {
-            shown = true;
-            this.show(step, index, total);
-          } else {
-            this.scheduler.request(frame);
-            return;
-          }
-        }
-        if (!moving && paused2 && this.credits > 0) {
-          this.credits = 0;
-          manual = true;
-        }
-        const allow = !moving && (!paused2 || manual);
-        const painting = this.sceneActive && this.ready && !this.fallback;
-        clockAt = Math.max(clockAt, painting ? this.paintedAt : now);
-        const cue = clock.tick(clockAt, allow, manual, this.governor.budget(this.cadence.value, step, clock.elapsed, arrivalFrames, this.sceneActive, this.media.matches));
-        this.latestCue = cue;
-        if (this.ready) this.renderer?.direct(cue);
-        if (this.pane.dataset.phase !== cue.phase) {
-          this.pane.dataset.phase = cue.phase;
-          element("supervision-progress").title = cue.phase === "arrival" ? "Arriving at the next office" : cue.phase === "work" ? "The supplied decision is being illustrated" : "A mandatory opportunity for executive contemplation";
-        }
-        if (!moving && step.publication && !published && clock.elapsed >= step.arriveMs + step.workMs && (!painting || manual || this.paintedCue?.step.id === step.id && this.paintedCue.work === 1)) {
-          published = true;
-          publish?.();
-        }
-        if (cue.complete) {
-          const acknowledge = () => {
-            if (epoch !== this.epoch || !current()) {
-              finish(false);
-              return;
-            }
-            this.activity();
-            if (officeEstate.moving || this.sceneActive && this.ready && !this.fallback && !manual && (this.paintedCue?.step.id !== step.id || !this.paintedCue.complete)) {
-              this.scheduler.request(acknowledge);
-              return;
-            }
-            if (step.publication && !published) {
-              published = true;
-              publish?.();
-            }
-            this.observed++;
-            this.pane.dataset.observedSteps = String(this.observed);
-            this.pane.dataset.state = "held";
-            element("supervision-progress").value = index + 1;
-            finish(true);
-          };
-          this.scheduler.request(acknowledge);
-        } else this.scheduler.request(frame);
-      };
-      this.scheduler.request(frame);
-    });
-  }
-};
-
-// web/office-relocation.ts
-var reduced = matchMedia("(prefers-reduced-motion: reduce)");
-function visible() {
-  if (document.hidden) return false;
-  if (document.querySelector("dialog[open]:not(#office-modal):not(#office-fullscreen)")) return false;
-  return ["office-stage", "supervision-stage"].some((id) => {
-    const el = document.getElementById(id);
-    if (!el || el.closest("[hidden]")) return false;
-    const r = el.getBoundingClientRect();
-    return r.width > 0 && Math.min(r.bottom, innerHeight) - Math.max(r.top, 0) > Math.min(60, r.height * 0.2);
-  });
+// web/companion-story.ts
+function node(tag, text2) {
+  const n = document.createElement(tag);
+  if (text2) n.textContent = text2;
+  return n;
 }
-var scheduler = new PresentationScheduler(visible);
-function tick(now) {
-  if (!officeEstate.moving) return;
-  if (reduced.matches || document.getElementById("office-motion")?.checked === false) {
-    officeEstate.finish();
-    return;
-  }
-  officeEstate.advance(now, true);
-  if (officeEstate.moving) scheduler.request(tick);
+function characterStory(c) {
+  const fragment = document.createDocumentFragment();
+  const glyph = node("span", c.emoji);
+  glyph.className = "companion-glyph";
+  glyph.setAttribute("aria-hidden", "true");
+  fragment.append(glyph, node("p", (c.kind === "pair" ? "Themed emoji pair" : "Single emoji") + " \xB7 " + c.category + " \xB7 " + c.rarity + " \xB7 target frequency: " + c.weight.toLocaleString() + " of 1,000,000,000 tickets."));
+  const dl = node("dl");
+  for (const [label, value] of [["Personality", c.personality], ["Previously in this extraordinary career", c.backstory], ["Motivating energy", c.energy], ["Ultimate goal", c.goal]]) dl.append(node("dt", label), node("dd", value));
+  fragment.append(dl);
+  return fragment;
 }
-officeEstate.subscribe((event) => {
-  if (event.kind === "staged") scheduler.request(tick);
-  else if (event.kind === "committed" || event.kind === "cancelled") scheduler.cancel();
-});
-for (const event of ["visibilitychange", "site-page-change", "demo-desk-change", "demo-watch-layout", "office-fullscreen-change"]) document.addEventListener(event, () => scheduler.refresh());
-reduced.addEventListener("change", () => {
-  if (reduced.matches) officeEstate.finish();
-});
-addEventListener("pagehide", () => {
-  scheduler.cancel();
-  officeEstate.finish();
-}, { once: true });
-function requestReorganization() {
-  officeEstate.request();
-  if (reduced.matches) officeEstate.finish();
-}
-
-// web/office-reorganization.ts
-var announcement = node("p");
-announcement.className = "estate-announcement";
-announcement.setAttribute("role", "status");
-announcement.setAttribute("aria-live", "polite");
-announcement.setAttribute("aria-atomic", "true");
-document.body.append(announcement);
-var announce = (text2) => {
-  const parent = document.querySelector("#office-fullscreen[open] #office-fullscreen-surface, #office-modal[open]") || document.body;
-  if (announcement.parentElement !== parent) parent.append(announcement);
-  if (announcement.textContent !== text2) announcement.textContent = text2;
-};
-var ReorganizationPanel = class {
-  constructor(container) {
-    this.container = container;
-    container.classList.add("reorganization-panel");
-    this.button.type = "button";
-    this.button.className = "button button-secondary";
-    this.button.addEventListener("click", () => {
-      if (officeEstate.moving) return;
-      try {
-        requestReorganization();
-      } catch (error) {
-        this.status.textContent = error instanceof Error ? error.message : "Facilities has deferred certainty.";
-        announce(this.status.textContent);
-      }
-    });
-    this.status.className = "field-help";
-    this.notice.className = "field-help";
-    const summary = node("summary", "Inspect the current workplace arrangement");
-    summary.addEventListener("click", (event) => {
-      if (!this.details.open && this.firstOpen) {
-        event.preventDefault();
-        this.expand();
-      }
-    });
-    this.details.append(summary);
-    this.map.className = "estate-map";
-    this.map.setAttribute("role", "list");
-    this.map.setAttribute("aria-label", "Current estate floorplan");
-    this.table.className = "estate-addresses";
-    this.scroll.className = "estate-minutes";
-    this.scroll.tabIndex = 0;
-    this.scroll.setAttribute("role", "region");
-    this.scroll.setAttribute("aria-label", "Minutes of Spatial Achievement");
-    this.scroll.append(this.empty, this.minutes);
-    this.perk.hidden = true;
-    this.perk.className = "estate-perk";
-    const share = node("input");
-    share.type = "url";
-    share.hidden = true;
-    share.readOnly = true;
-    share.setAttribute("aria-label", "Reorganization visit link");
-    const copy = node("button", "Copy This Approved Chaos");
-    copy.type = "button";
-    copy.addEventListener("click", async () => {
-      const input = document.getElementById("limit"), authority = document.getElementById("authorize-companion-strategy") || document.getElementById("companion-strategy");
-      let mandate = "15";
-      try {
-        mandate = String(parseMandate(input.value));
-      } catch {
-      }
-      const room = document.getElementById(this.view === "office" ? "office-experience" : "supervision-pane")?.dataset.room || "reception";
-      const visit = this.view === "office" ? document.getElementById("office-share-link").value : officeShare(scope, mandate, room, void 0, authority.value, void 0, layoutToken(officeEstate.current));
-      const currentVisit = new URL(visit);
-      currentVisit.searchParams.set("limit", mandate);
-      currentVisit.searchParams.set("authority", authority.value);
-      currentVisit.searchParams.set("estate", layoutToken(officeEstate.current));
-      share.value = currentVisit.href;
-      share.hidden = false;
-      try {
-        await navigator.clipboard.writeText(currentVisit.href);
-        announce("Approved chaos copied. The link reproduces this estate and prefills a mandate; it never starts counting automatically.");
-      } catch {
-        share.focus();
-        share.select();
-        announce("Copy the selected visit link using your browser copy command.");
-      }
-    });
-    const sharing = node("div");
-    sharing.className = "estate-controls estate-sharing";
-    sharing.append(copy, share);
-    this.details.append(sharing, this.map, this.perk, this.table, node("h3", "Minutes of Spatial Achievement"), node("p", "The latest ten transformations are retained in this tab. These distances describe illustrated desk-to-desk paper routes in scene units; they are not service response times."), this.scroll);
-    this.skip.type = "button";
-    this.skip.addEventListener("click", () => {
-      this.button.focus({ preventScroll: true });
-      officeEstate.finish();
-    });
-    this.progress.max = 1;
-    this.progress.setAttribute("aria-label", "Facilities relocation progress");
-    const controls = node("div");
-    controls.className = "estate-controls";
-    controls.append(this.button, this.skip, this.progress);
-    container.append(node("p", "Facilities improves the same eight departments by putting them somewhere else. Each announcement alternates a 2\xD74 estate with a 3\xD73 estate, sometimes making room for a thoroughly conditional perk. Disclosure waits during the move; Java does no additional work."), controls, this.status, this.notice, this.details);
-    officeEstate.subscribe((event) => {
-      this.transaction();
-      if (event.kind === "committed" || event.kind === "cancelled") this.render();
-      if (event.kind === "committed") announce("Facilities declares victory. " + estateLabel(officeEstate.current) + ". Proceedings may resume at the interrupted decision.");
-    });
-    document.addEventListener("office-location", (event) => {
-      const detail = event.detail;
-      if (detail.view === this.view) this.highlight();
-    });
-    document.addEventListener("office-amenity", (event) => {
-      if (event.detail === this.view) {
-        this.expand();
-        this.inspectAmenity(this.details.querySelector("summary"));
-      }
-    });
-    this.render();
-    this.transaction();
-  }
-  container;
-  button = node("button", "Announce Another Reorganization");
-  status = node("p");
-  notice = node("p");
-  details = node("details");
-  table = node("table");
-  skip = node("button", "Waive the Moving Ceremony");
-  progress = node("progress");
-  phase = "";
-  map = node("ol");
-  minutes = node("ol");
-  scroll = node("div");
-  memoNodes = /* @__PURE__ */ new Map();
-  empty = node("p", "No transformations are recorded yet. The company is coping with the unsettling adequacy of its existing furniture.");
-  firstOpen = true;
-  perk = node("section");
-  perkTrigger;
-  expand() {
-    const first = this.firstOpen;
-    this.firstOpen = false;
-    this.details.open = true;
-    if (first) this.scroll.scrollTop = this.scroll.scrollHeight;
-  }
-  get view() {
-    return this.container.id.startsWith("supervision") ? "supervision" : "office";
-  }
-  setReading(_reading) {
-    this.button.title = "Authorize a new arrangement of the same responsibilities. Current proceedings wait for Facilities.";
-  }
-  transaction() {
-    const r = officeEstate.relocation;
-    this.button.setAttribute("aria-disabled", String(!!r));
-    if (!r && document.activeElement === this.skip) this.button.focus({ preventScroll: true });
-    this.skip.hidden = !r;
-    this.progress.hidden = !r;
-    if (!r) {
-      this.phase = "";
-      return;
-    }
-    this.progress.value = r.progress;
-    this.container.dataset.relocationPhase = r.phase;
-    if (this.phase !== r.phase) {
-      this.phase = r.phase;
-      const text2 = { packing: "Packing every department. Responsibilities are being carefully separated from accountability.", moving: "All eight offices are in transit. The moving boxes have been granted acting management authority.", unpacking: "Unpacking the approved future. These addresses remain provisional until Facilities declares victory.", returning: "Returning to the interrupted decision. No work has been repeated; no responsibility has been reduced." }[r.phase];
-      this.status.textContent = text2;
-      announce(text2);
-    }
-  }
-  highlight() {
-    const room = document.getElementById(this.view === "office" ? "office-experience" : "supervision-pane")?.dataset.room || "reception";
-    for (const cell of this.map.children) {
-      if (cell.dataset.room === room) cell.setAttribute("aria-current", "location");
-      else cell.removeAttribute("aria-current");
-    }
-  }
-  inspectAmenity(trigger) {
-    const l = officeEstate.current;
-    if (!l.amenity) return;
-    this.perkTrigger = trigger;
-    const specimen = amenities[l.amenity.kind], title2 = node("h3", specimen.name + " \xB7 " + estateLabel(l) + " / " + l.amenity.address), answer = node("p");
-    answer.setAttribute("role", "status");
-    answer.setAttribute("aria-live", "polite");
-    answer.setAttribute("aria-atomic", "true");
-    title2.tabIndex = -1;
-    const actions = node("div");
-    actions.className = "estate-controls";
-    for (const action of specimen.actions) {
-      const button = node("button", action.label);
-      button.type = "button";
-      button.addEventListener("click", () => answer.textContent = action.answer);
-      actions.append(button);
-    }
-    const close = node("button", "Close amenity inspection");
-    close.type = "button";
-    close.addEventListener("click", () => {
-      this.perk.hidden = true;
-      (this.perkTrigger?.isConnected ? this.perkTrigger : this.details.querySelector("summary"))?.focus({ preventScroll: true });
-    });
-    this.perk.replaceChildren(title2, node("p", "Fictional Facilities specimen. This perk has no role in the recorded numerical proceedings."), node("p", specimen.story), actions, answer, close);
-    this.perk.hidden = false;
-    title2.focus({ preventScroll: true });
-    this.perk.scrollIntoView({ block: "nearest", behavior: "instant" });
-  }
-  appendMemo(m) {
-    const li = node("li");
-    li.append(node("h4", "Transformation " + m.to.edition + ": " + m.title), node("p", m.rationale), node("p", m.finding + " Mean illustrated commute: " + m.before.toFixed(1) + " \u2192 " + m.after.toFixed(1) + " scene units."));
-    const moves = node("ul");
-    for (const p of m.to.placements) {
-      const name = rooms.find((r) => r.id === p.room).short;
-      moves.append(node("li", name + ": " + qualifiedAddress(m.from, p.room) + " \u2192 " + qualifiedAddress(m.to, p.room)));
-    }
-    li.append(moves);
-    this.minutes.append(li);
-    this.memoNodes.set(m.to.edition, li);
-  }
-  render() {
-    const l = officeEstate.current;
-    delete this.container.dataset.relocationPhase;
-    this.status.textContent = estateLabel(l) + (l.amenity ? " \xB7 " + l.amenity.kind + " at " + l.amenity.address : " \xB7 all available space is committed to seriousness");
-    this.container.dataset.estateEdition = String(l.edition);
-    this.notice.textContent = estateRecords.notice;
-    this.notice.hidden = !estateRecords.notice;
-    const head = node("thead"), row = node("tr");
-    for (const name of ["Department", "Address", "Partition policy"]) {
-      const th = node("th", name);
-      th.scope = "col";
-      row.append(th);
-    }
-    head.append(row);
-    const body = node("tbody"), cells = [];
-    for (let slot = 0; slot < l.rows * l.columns; slot++) {
-      const p = l.placements.find((p2) => p2.slot === slot), cell = node("li");
-      if (p) {
-        cell.dataset.room = p.room;
-        const theme = partitionStyles.find((s) => s.id === p.partition), name = rooms.find((r) => r.id === p.room).short;
-        cell.append(node("strong", p.address), node("span", name));
-        const tr = node("tr");
-        tr.append(node("td", name), node("td", p.address), node("td", theme ? theme.name + " \xB7 " + theme.claim : "Founding architectural certainty"));
-        body.append(tr);
-      } else if (l.amenity) {
-        const a = l.amenity, button = node("button", "Inspect " + a.kind + " at " + a.address);
-        button.type = "button";
-        button.addEventListener("click", () => this.inspectAmenity(button));
-        cell.append(node("strong", a.address), button);
-        const tr = node("tr");
-        tr.append(node("td", a.kind === "atrium" ? "Atrium: Chief Growth Officer in residence" : "Breakroom: mandatory optional restoration"), node("td", a.address), node("td", "The company is accommodating the appearance of a perk."));
-        body.append(tr);
-      }
-      cells.push(cell);
-    }
-    if (this.map.contains(document.activeElement)) {
-      this.details.querySelector("summary")?.focus({ preventScroll: true });
-    }
-    this.map.style.setProperty("--estate-columns", String(l.columns));
-    this.map.replaceChildren(...cells);
-    this.map.setAttribute("aria-label", "Current estate floorplan: " + estateLabel(l));
-    this.highlight();
-    this.table.replaceChildren(node("caption", "Current department addresses"), head, body);
-    this.empty.hidden = estateRecords.history.length > 0;
-    const following = this.scroll.scrollHeight - this.scroll.clientHeight - this.scroll.scrollTop < 24, ids = new Set(estateRecords.history.map((m) => m.to.edition));
-    for (const [id, el] of this.memoNodes) if (!ids.has(id)) {
-      el.remove();
-      this.memoNodes.delete(id);
-    }
-    for (const memo of estateRecords.history) if (!this.memoNodes.has(memo.to.edition)) this.appendMemo(memo);
-    if (!estateRecords.history.length) this.minutes.setAttribute("aria-label", "No transformations have been recorded in this tab.");
-    else this.minutes.removeAttribute("aria-label");
-    if (this.details.open && following) this.scroll.scrollTop = this.scroll.scrollHeight;
-  }
-};
 
 // web/runtime-protocol.ts
 var runtimeProtocol = 1;
 function isTransientOperation(path, method = "GET") {
   return method === "GET" && ["/premises/rehearsal", "/companions/catalog", "/companions/strategies", "/companions/window", "/operations/runtime", "/fizzbuzz/window", "/fizzbuzz/window/explained", "/capacity/forecast/extended", "/procurement/dossier", "/onboarding/rehearsal", "/precedent/rehearsal"].includes(path.split("?")[0]);
 }
+
+// web/release-assets.ts
+var scope = new URL("../", import.meta.url).href;
+var releaseFile = (path) => new URL(
+  (typeof RELEASE_ASSET_DIRECTORY === "string" ? RELEASE_ASSET_DIRECTORY : "") + path,
+  scope
+);
+var releaseAsset = (path) => new URL((typeof RELEASE_ASSET_DIRECTORY === "string" ? RELEASE_ASSET_DIRECTORY : "assets/") + path, scope);
 
 // web/runtime.ts
 var configurationKey = /* @__PURE__ */ Symbol.for("slopbuzz:runtime-configuration:v1");
@@ -2878,6 +831,112 @@ if (!owners[ownerKey].linksBound) {
   document.addEventListener("site-page-change", mapOperationalLinks);
 }
 mapOperationalLinks();
+
+// web/discovery-model.ts
+var seedPolicy = "mandate-v1";
+var discoveryStorageKey = "slopbuzz:extraordinary-appointments:v1";
+var decimal = (x) => typeof x === "string" && /^(0|[1-9][0-9]*)$/.test(x);
+var text = (x) => typeof x === "string" && x.length > 0;
+function validDiscovery(x) {
+  if (!x || !decimal(x.mandate) || !text(x.strategy) || !text(x.catalogVersion) || x.seedPolicy !== seedPolicy || typeof x.discoveredAt !== "string" || !Number.isFinite(Date.parse(x.discoveredAt))) return false;
+  const c = x.companion, a = x.assignment, f = a?.factors;
+  if (!c || !["single", "pair"].includes(c.kind) || !Array.isArray(c.components) || !c.components.every(text) || !["Common", "Uncommon", "Rare", "Legendary", "Mythic"].includes(c.rarity) || !Number.isSafeInteger(c.weight) || c.weight < 1 || c.weight > 1e9) return false;
+  if (!["id", "emoji", "name", "category", "personality", "backstory", "energy", "goal"].every((key2) => text(c[key2]))) return false;
+  if (!a || !decimal(a.ordinal) || a.ordinal === "0" || BigInt(a.ordinal) > BigInt(x.mandate) || !["Fizz", "Buzz", "FizzBuzz"].includes(a.flavor) || a.companionId !== c.id || !Number.isSafeInteger(a.ticket) || a.ticket < 0 || a.ticket >= 1e9) return false;
+  const n = BigInt(a.ordinal), flavor = n % 15n === 0n ? "FizzBuzz" : n % 3n === 0n ? "Fizz" : n % 5n === 0n ? "Buzz" : "";
+  return flavor === a.flavor && !!f && text(f.factors) && decimal(f.cofactor) && typeof f.complete === "boolean" && Number.isInteger(f.divisions) && f.divisions >= 0 && Number.isInteger(f.divisionBudget) && f.divisionBudget >= f.divisions && Number.isInteger(f.trialPrimeCeiling);
+}
+function discoveryIdentity(d) {
+  return d.catalogVersion + "|" + d.companion.id;
+}
+var provenance = (d) => JSON.stringify([d.discoveredAt, d.mandate, d.assignment.ordinal, d.strategy, d.assignment.ticket]);
+function rarestDiscoveries(...collections) {
+  const distinct = /* @__PURE__ */ new Map();
+  for (const collection of collections) for (const d of collection) {
+    if (!validDiscovery(d)) continue;
+    const id = discoveryIdentity(d), previous = distinct.get(id);
+    if (!previous || provenance(d) < provenance(previous)) distinct.set(id, d);
+  }
+  return [...distinct.values()].sort((a, b) => a.companion.weight - b.companion.weight || discoveryIdentity(a).localeCompare(discoveryIdentity(b), "en")).slice(0, 5);
+}
+function decodeDiscoveries(value) {
+  try {
+    const x = JSON.parse(value || "null");
+    return x?.schema === "slopbuzz-discoveries/v1" && Array.isArray(x.finds) ? rarestDiscoveries(x.finds) : [];
+  } catch {
+    return [];
+  }
+}
+var encodeDiscoveries = (finds) => JSON.stringify({ schema: "slopbuzz-discoveries/v1", finds });
+function discoveryLink(d, scope2) {
+  const url = new URL("demo/", scope2);
+  url.search = new URLSearchParams({ limit: d.mandate, authority: d.strategy, catalog: d.catalogVersion, seedPolicy: d.seedPolicy, ordinal: d.assignment.ordinal, companion: d.companion.id }).toString();
+  return url.href;
+}
+
+// web/companion-dialog.ts
+var controllerSymbol = /* @__PURE__ */ Symbol.for("slopbuzz.companion-dialog.v1");
+function companionDialog() {
+  const dialog = document.querySelector("#companion-dialog");
+  if (dialog[controllerSymbol]) return dialog[controllerSymbol];
+  let invoker, beganOnBackdrop = false;
+  dialog.querySelector("[data-companion-close]").addEventListener("click", () => dialog.close());
+  const outside = (e) => {
+    const b = dialog.getBoundingClientRect();
+    return e.clientX < b.left || e.clientX > b.right || e.clientY < b.top || e.clientY > b.bottom;
+  };
+  dialog.addEventListener("pointerdown", (e) => {
+    beganOnBackdrop = e.target === dialog && outside(e);
+  });
+  dialog.addEventListener("pointercancel", () => {
+    beganOnBackdrop = false;
+  });
+  dialog.addEventListener("click", (e) => {
+    const dismiss = dialog.open && beganOnBackdrop && e.target === dialog && outside(e);
+    beganOnBackdrop = false;
+    if (dismiss) dialog.close();
+  });
+  dialog.addEventListener("close", () => {
+    beganOnBackdrop = false;
+    const target = invoker?.isConnected && invoker.getClientRects().length ? invoker : [document.querySelector("#discovery-toggle"), document.querySelector("#discovery-list button"), document.querySelector("main")].find((el) => el?.getClientRects().length);
+    target?.focus();
+    dialog.dispatchEvent(new Event("companion-closed"));
+  });
+  const controller = { open(d, opener) {
+    invoker = opener;
+    const a = d.assignment, c = d.companion;
+    dialog.querySelector("h2").textContent = c.name + " \xB7 " + a.ordinal + " " + a.flavor;
+    const body = dialog.querySelector("[data-companion-story]");
+    body.replaceChildren(characterStory(c));
+    body.append(node("h3", "Allocation evidence"), node("p", "Mandate: " + d.mandate + ". Strategy: " + d.strategy + ". Seed policy: " + d.seedPolicy + ". Catalog: " + d.catalogVersion + ". Ticket: " + a.ticket + "."), node("p", "Extracted exact factors: " + a.factors.factors + ". " + (a.factors.complete ? "Complete factorization." : "Unresolved exact cofactor: " + a.factors.cofactor + ". This cofactor is not certified prime.") + " Division checks: " + a.factors.divisions + " of " + a.factors.divisionBudget + "."));
+    const label = node("label", "Reproducible encounter link");
+    label.htmlFor = "companion-share-link";
+    const link = node("input");
+    link.id = "companion-share-link";
+    link.type = "url";
+    link.readOnly = true;
+    link.value = discoveryLink(d, scope);
+    const copy = node("button", "Copy encounter link");
+    copy.type = "button";
+    const status = node("p");
+    status.setAttribute("role", "status");
+    copy.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(link.value);
+        status.textContent = "Encounter link copied. The recipient can inspect this appointment without running the full mandate.";
+      } catch {
+        link.focus();
+        link.select();
+        status.textContent = "Copy the selected link using your browser\u2019s copy command.";
+      }
+    });
+    body.append(label, link, copy, status);
+    if (!dialog.open) dialog.showModal();
+    dialog.querySelector(".companion-dialog-body").scrollTop = 0;
+  } };
+  dialog[controllerSymbol] = controller;
+  return controller;
+}
 
 // web/discovery-store.ts
 var provisionalDiscoveryPrefix = "slopbuzz:provisional-appointments:";
@@ -3239,6 +1298,2320 @@ var CompanionDesk = class {
   inspect(a, c, invoker) {
     this.following = false;
     companionDialog().open(this.discovery(a, c), invoker);
+  }
+};
+
+// web/office-heist.ts
+var officeHeist = new HeistCoordinator();
+var scheduler = new PresentationScheduler(() => !document.hidden && document.body.dataset.sitePage === "demo");
+function tick(now) {
+  officeHeist.advance(now, !officeEstate.moving);
+  if (officeHeist.active) scheduler.request(tick);
+}
+officeHeist.subscribe(() => {
+  if (officeHeist.active) scheduler.request(tick);
+  else scheduler.cancel();
+});
+for (const event of ["visibilitychange", "site-page-change", "demo-desk-change", "office-fullscreen-change"]) document.addEventListener(event, () => scheduler.refresh());
+addEventListener("pagehide", () => {
+  scheduler.cancel();
+  officeHeist.finish("cancelled");
+}, { once: true });
+var StampHeistDesk = class {
+  constructor(mayInterrupt, wake) {
+    this.mayInterrupt = mayInterrupt;
+    this.wake = wake;
+    try {
+      this.enabled = sessionStorage.getItem("slopbuzz:stamp-heists:v1") !== "off";
+    } catch {
+    }
+    this.views = ["supervision", "office"].map((prefix) => new HeistPanel(prefix));
+    for (const checkbox of document.querySelectorAll("[data-heist-enabled]")) {
+      checkbox.checked = this.enabled;
+      checkbox.addEventListener("change", () => {
+        this.enabled = checkbox.checked;
+        for (const other of document.querySelectorAll("[data-heist-enabled]")) other.checked = this.enabled;
+        try {
+          sessionStorage.setItem("slopbuzz:stamp-heists:v1", this.enabled ? "on" : "off");
+        } catch {
+        }
+        if (!this.enabled) {
+          ++this.rehearsalSerial;
+          officeHeist.finish("disabled");
+        }
+      });
+    }
+    document.getElementById("heist-rehearse").addEventListener("click", () => void this.rehearse());
+    document.getElementById("office-close").addEventListener("click", () => {
+      ++this.rehearsalSerial;
+    });
+    officeHeist.subscribe(() => {
+      if (this.held !== officeHeist.active) {
+        this.held = officeHeist.active;
+        this.wake();
+      }
+      this.records();
+    });
+  }
+  mayInterrupt;
+  wake;
+  mandate = "";
+  active = false;
+  seen = /* @__PURE__ */ new Set();
+  companions = /* @__PURE__ */ new Map();
+  count = 0;
+  last = "0";
+  enabled = true;
+  rehearsalSerial = 0;
+  views;
+  held = false;
+  begin(mandate) {
+    this.cancel();
+    this.mandate = mandate;
+    this.active = true;
+    this.seen.clear();
+    this.companions.clear();
+    this.count = 0;
+    this.last = "0";
+  }
+  complete() {
+    this.active = false;
+  }
+  cancel() {
+    this.active = false;
+    ++this.rehearsalSerial;
+    officeHeist.finish("cancelled");
+  }
+  clear() {
+    this.companions.clear();
+    officeHeist.finish("cancelled");
+  }
+  remember(discovery) {
+    if (!this.active || discovery.mandate !== this.mandate) return;
+    const ordinal = discovery.assignment.ordinal, key2 = discovery.strategy + "|" + ordinal;
+    this.companions.set(ordinal, discovery);
+    while (this.companions.size > 100) this.companions.delete(this.companions.keys().next().value);
+    if (this.seen.has(key2)) return;
+    this.seen.add(key2);
+    while (this.seen.size > 1e3) this.seen.delete(this.seen.values().next().value);
+    if (!this.enabled || !this.mayInterrupt() || officeHeist.active || officeEstate.moving || this.count >= 3 || !heistEligible(ordinal) || BigInt(ordinal) - BigInt(this.last) < 30n) return;
+    const previous = [...this.companions.values()].filter((d) => d.strategy === discovery.strategy && BigInt(d.assignment.ordinal) < BigInt(ordinal)).sort((a, b) => BigInt(a.assignment.ordinal) > BigInt(b.assignment.ordinal) ? -1 : 1);
+    const roster = [discovery, ...previous].filter((d, i, all) => all.findIndex((a) => a.companion.id === d.companion.id) === i).slice(0, 3).map((d) => d.companion);
+    if (officeHeist.start(planHeist(this.mandate, ordinal, discovery.strategy, roster))) {
+      this.count++;
+      this.last = ordinal;
+    }
+  }
+  async rehearse() {
+    if (officeHeist.active) return;
+    const serial = ++this.rehearsalSerial, button = document.getElementById("heist-rehearse"), status = document.getElementById("heist-rehearsal-status");
+    button.disabled = true;
+    status.textContent = "Security is recruiting three entirely fictional suspects\u2026";
+    try {
+      const catalog = await companionCatalog();
+      if (serial !== this.rehearsalSerial) return;
+      const choice = document.getElementById("heist-suspect").value;
+      const glyphs = [choice, ...["\u{1F40C}", "\u{1F47B}", "\u{1F419}"].filter((g) => g !== choice)];
+      const actors = glyphs.map((g) => g === "\u{1F47B}" ? { id: "security-ghost-v1", name: "Ghost of Pending Approval", emoji: g } : catalog.entries.find((c) => c.emoji === g)).filter((c) => !!c);
+      if (actors.length !== 3) throw new Error("The complete rehearsal cast is unavailable.");
+      const plan = planHeist("111", "33", "security-rehearsal-v1", actors, "rehearsal");
+      if (officeHeist.start(plan)) {
+        status.textContent = "Rehearsal in progress. These stand-ins earn no companion discoveries.";
+        document.getElementById("office-stage").scrollIntoView({ block: "nearest", behavior: "instant" });
+      }
+    } catch (error) {
+      if (serial === this.rehearsalSerial) status.textContent = "The rehearsal could not start: " + error.message;
+    } finally {
+      button.disabled = false;
+    }
+  }
+  records() {
+    const last = officeHeist.records.at(-1), target = document.getElementById("heist-records");
+    const key2 = officeHeist.records.map((r) => r.id + ":" + r.resolution).join("|");
+    if (target.dataset.records === key2) return;
+    target.dataset.records = key2;
+    target.replaceChildren(...officeHeist.records.slice().reverse().map((r) => node("li", `${r.plan.source === "rehearsal" ? "Security rehearsal" : "Ordinal " + r.plan.ordinal}: ${r.plan.actors[0].name}. ${r.finding}`)));
+    if (last) document.getElementById("heist-rehearsal-status").textContent = last.finding + " Numerical output and companion appointments retain their existing records.";
+  }
+};
+var HeistPanel = class {
+  constructor(prefix) {
+    this.prefix = prefix;
+    this.root = node("section");
+    this.root.className = "heist-panel";
+    this.root.id = prefix + "-heist";
+    this.root.hidden = true;
+    this.root.setAttribute("aria-label", "The Great Rubber-Stamp Heist");
+    this.label = node("strong");
+    this.status = node("p");
+    this.status.setAttribute("role", "status");
+    this.status.setAttribute("aria-live", "polite");
+    this.status.setAttribute("aria-atomic", "true");
+    this.cast = node("div");
+    this.cast.className = "heist-suspects";
+    this.cast.setAttribute("role", "group");
+    this.cast.setAttribute("aria-label", "Intercept a suspect");
+    this.actions = node("div");
+    this.actions.className = "heist-actions";
+    for (const [text2, title2, action] of [["\u{1F463}", "Follow footprints", () => officeHeist.follow()], ["\u{1F36A}", "Offer an amnesty biscuit", () => officeHeist.recover("biscuit")], ["\u21AA", "Skip the chase", () => officeHeist.finish("skipped")]]) {
+      const b = node("button", text2);
+      b.type = "button";
+      b.title = title2;
+      b.setAttribute("aria-label", title2);
+      b.addEventListener("click", () => {
+        if (b.getAttribute("aria-disabled") !== "true") action();
+      });
+      this.actions.append(b);
+    }
+    this.root.append(this.label, this.status, this.cast, this.actions);
+    document.getElementById(prefix === "office" ? "office-stage" : "supervision-stage").append(this.root);
+    officeHeist.subscribe(() => this.render());
+    officeEstate.subscribe((event) => {
+      if (event.kind !== "progress") this.render();
+    });
+  }
+  prefix;
+  root;
+  label;
+  status;
+  cast;
+  actions;
+  signature = "";
+  lastStatus = "";
+  record = 0;
+  render() {
+    const s = officeHeist.snapshot;
+    if (!s) {
+      const record = officeHeist.records.at(-1);
+      if (record && record.id !== this.record) {
+        this.record = record.id;
+        this.status.textContent = record.finding;
+      }
+      if (this.root.contains(document.activeElement)) {
+        const target = document.getElementById(document.getElementById("office-fullscreen").open ? "office-fullscreen-exit" : this.prefix === "office" ? "office-close" : "supervision-pause");
+        target?.focus({ preventScroll: true });
+      }
+      this.root.hidden = true;
+      this.root.removeAttribute("data-active");
+      return;
+    }
+    this.root.hidden = false;
+    this.root.dataset.active = "true";
+    this.root.dataset.heistId = String(s.id);
+    this.root.dataset.holder = String(s.holder);
+    this.root.dataset.phase = s.returning ? "returning" : "chase";
+    const title2 = s.plan.source === "rehearsal" ? "Security rehearsal \xB7 Stamp heist" : "Stamp heist \xB7 " + s.plan.ordinal;
+    if (this.label.textContent !== title2) this.label.textContent = title2;
+    const status = (officeEstate.moving ? "Pursuit held while Facilities moves the rooms. " : s.returning ? "" : heistAntic(s.plan.actors[s.holder]) + " ") + s.announcement;
+    if (this.lastStatus !== status) {
+      this.status.textContent = status;
+      this.lastStatus = status;
+    }
+    if (this.signature !== s.id + "|" + s.plan.key) {
+      this.signature = s.id + "|" + s.plan.key;
+      this.cast.replaceChildren(...s.plan.actors.map((actor, index) => {
+        const b = node("button", actor.emoji);
+        b.type = "button";
+        b.title = actor.name;
+        b.setAttribute("aria-label", "Intercept " + actor.name);
+        b.dataset.suspect = String(index);
+        const id = s.id;
+        b.addEventListener("click", () => {
+          if (b.getAttribute("aria-disabled") !== "true") officeHeist.intercept(index, id);
+        });
+        return b;
+      }));
+    }
+    for (const button of this.cast.querySelectorAll("button")) button.setAttribute("aria-disabled", String(s.returning || officeEstate.moving));
+    for (const button of this.actions.querySelectorAll("button")) button.setAttribute("aria-disabled", String((s.returning || officeEstate.moving) && button.getAttribute("aria-label") !== "Skip the chase"));
+  }
+};
+
+// web/office-model.ts
+var roomForEvent = (e) => {
+  const k = e.kind;
+  if (k.startsWith("HR_")) return "personnel";
+  if (k.startsWith("PREMISES_")) return "premises";
+  if (["REQUISITION", "DELIVERY", "GLYPH_ACCEPTED", "GLYPH_ASSEMBLED"].includes(k)) return "procurement";
+  if (k === "NOTARY" || k === "EXTENDED_NOTARY") return "notary";
+  if (k.startsWith("CACHE_") || k.startsWith("PRECEDENT_")) return "memory";
+  if (["PUBLICATION", "AUDIT_APPEND", "QUEUE_ENQUEUED", "TRANSACTION_COMMIT"].includes(k)) return "publication";
+  if (["ASSEMBLY", "CLASSIFICATION", "EXTENDED_CLASSIFICATION", "TRANSACTION_BEGIN", "NUMERAL", "SUCCESSION", "EXTENDED_SUCCESSION"].includes(k)) return "reception";
+  return void 0;
+};
+function routeFor(file) {
+  if (!file) return [];
+  if (file.cache === "HIT") return [{ room: "memory", label: "Institutional memory returned prior text", source: "receipt", finding: "The response reported a cache hit. Fresh recruitment, procurement and printing are not inferred." }, { room: "publication", label: "Retained result disclosed", source: "disclosed", finding: "The retained text " + file.text + " was disclosed in the demo." }];
+  const route = [];
+  for (const e of file.events) {
+    const room = roomForEvent(e);
+    if (room && route.at(-1)?.room !== room) route.push({ room, label: e.office, source: "recorded", finding: e.finding });
+  }
+  const capped = route.slice(0, 23);
+  if (capped.at(-1)?.room !== "publication") capped.push({ room: "publication", label: "Observed output disclosed", source: "disclosed", finding: "The demo disclosed " + file.text + ". " + (file.recorded ? "The route summarizes the supplied records." : "No complete production dossier accompanied this result.") });
+  return capped;
+}
+var OfficeArchive = class {
+  mandate = "15";
+  mode = "mandate";
+  latest;
+  files = /* @__PURE__ */ new Map();
+  companions = /* @__PURE__ */ new Map();
+  globals = [];
+  selected = "latest";
+  omitted = 0;
+  disclosed = 0;
+  begin(mandate, mode = "mandate") {
+    this.mandate = mandate;
+    this.mode = mode;
+    this.latest = void 0;
+    this.files.clear();
+    this.companions.clear();
+    this.globals = [];
+    this.selected = "latest";
+    this.omitted = 0;
+    this.disclosed = 0;
+  }
+  receive(events, omitted) {
+    this.globals = events.filter((e) => e.ordinal === null).slice(0, 300);
+    this.omitted = omitted;
+  }
+  disclose(folios) {
+    for (const f of folios) {
+      if (!this.files.has(f.ordinal)) this.disclosed++;
+      this.latest = f.ordinal;
+      this.files.set(f.ordinal, { mandate: this.mandate, ordinal: f.ordinal, text: f.text, events: f.events.slice(0, 300), cache: f.cache, recorded: f.recorded, omitted: Math.max(0, f.events.length - 300), globals: this.globals, sourceOmitted: this.omitted });
+    }
+    this.trim();
+  }
+  trim() {
+    while (this.files.size > 32) {
+      const victim = [...this.files.keys()].find((k) => k !== "1" && k !== this.selected && k !== this.latest);
+      if (!victim) break;
+      this.files.delete(victim);
+      this.companions.delete(victim);
+    }
+  }
+  choose(ordinal, snapshot, companion) {
+    if (ordinal === "latest") {
+      this.selected = "latest";
+      return;
+    }
+    if (!this.files.has(ordinal)) {
+      if (!snapshot || snapshot.ordinal !== ordinal || snapshot.mandate !== this.mandate) return;
+      this.files.set(ordinal, snapshot);
+    }
+    this.selected = ordinal;
+    if (companion) this.remember(companion);
+    this.trim();
+  }
+  inspect(f) {
+    if (!this.files.has(f.ordinal)) this.files.set(f.ordinal, { mandate: this.mandate, ordinal: f.ordinal, text: f.text, events: f.events.slice(0, 300), cache: f.cache, recorded: f.recorded, omitted: Math.max(0, f.events.length - 300), globals: [], sourceOmitted: 0 });
+    this.selected = f.ordinal;
+    this.mode = "inspection";
+    this.trim();
+  }
+  current() {
+    return this.selected === "latest" ? this.files.get(this.latest || "") : this.files.get(this.selected);
+  }
+  remember(d) {
+    if (d.mandate !== this.mandate || !this.files.has(d.assignment.ordinal)) return;
+    this.companions.set(d.assignment.ordinal, d);
+  }
+  evidence(room) {
+    const file = this.current();
+    const actual = (file?.cache === "HIT" ? [] : file?.events || []).filter((e) => roomForEvent(e) === room);
+    const global = (file?.globals || this.globals).filter((e) => roomForEvent(e) === room);
+    return [...global, ...actual].slice(0, 60);
+  }
+};
+function tourSeed(text2) {
+  let h = 2166136261;
+  for (let i = 0; i < text2.length; i++) h = Math.imul(h ^ text2.charCodeAt(i), 16777619);
+  return h >>> 0;
+}
+function officeShare(scope2, mandate, room, prop2, authority = "factor-resonance-v1", action, estate2) {
+  if (estate2) parseLayoutToken(estate2);
+  const url = new URL("demo/", scope2);
+  url.search = new URLSearchParams({ limit: mandate, authority, tour: officeVersion, room, ...prop2 ? { prop: prop2 } : {}, ...action === 0 || action === 1 ? { action: String(action) } : {} }).toString();
+  if (estate2) url.searchParams.set("estate", estate2);
+  url.hash = "office-tour";
+  return url.href;
+}
+function parseTourLink(search) {
+  const p = new URLSearchParams(search);
+  if (p.get("tour") !== officeVersion) return;
+  const room = roomById(p.get("room") || "reception");
+  if (!room) return;
+  const prop2 = room.props.find((x) => x.id === p.get("prop"));
+  const action = p.get("action");
+  return { room: room.id, prop: prop2?.id, action: prop2 && (action === "0" || action === "1") ? Number(action) : void 0 };
+}
+
+// web/mandate-input.ts
+function parseMandate(raw) {
+  const text2 = raw.trim();
+  if (!/^[0-9]+$/.test(text2)) return null;
+  const ordinary = Number(text2);
+  return Number.isSafeInteger(ordinary) ? ordinary : BigInt(text2);
+}
+var autocorrectMandate = (raw) => raw.replace(/[^0-9]/g, "");
+var addOrdinals = (value, count) => typeof value === "bigint" ? value + BigInt(count) : value + count;
+function windowCount(next, limit) {
+  if (typeof next === "bigint" && typeof limit === "bigint") return Number(limit - next + 1n < 100n ? limit - next + 1n : 100n);
+  return Math.min(100, Number(limit) - Number(next) + 1);
+}
+var magnitudeWarnings = Object.freeze([
+  "PROVISIONAL INCIDENT: Your integer may possibly have exceeded its delegated magnitude authority.",
+  "POLICY REVIEW PENDING: This request might have crossed an undocumented numerical border.",
+  "PRELIMINARY ESCALATION: An oversized ordinal may have entered circulation without executive indemnity.",
+  "POSSIBLE CONTROL BREACH: The requested magnitude appears larger than the committee\u2019s confidence.",
+  "UNCONFIRMED NUMERICAL EMERGENCY: Your upper limit may require a larger filing cabinet.",
+  "POTENTIAL JURISDICTIONAL EVENT: This integer might be operating beyond the ordinary-number charter.",
+  "TENTATIVE COMPLIANCE ALERT: A digit may have arrived without its magnitude escort.",
+  "CONDITIONAL SEVERITY ONE: Your request could conceivably exceed our ceremonial insurance allowance.",
+  "SUSPECTED ORDINAL EXCESS: Management cannot presently exclude the possibility of too much number.",
+  "PROVISIONAL GOVERNANCE FAILURE: This value may have outgrown its approved organizational chart.",
+  "MAGNITUDE EXCEPTION SUSPECTED: The decimal expansion might require a second board of directors.",
+  "POSSIBLE POLICY DEVIATION: An unauthorized quantity of integer may be present in this request.",
+  "PRECAUTIONARY EXECUTIVE NOTICE: Your number could be larger than the policy author anticipated.",
+  "UNVERIFIED BOUNDARY INCIDENT: The requested ordinal may have escaped the standard arithmetic enclosure.",
+  "CONTINGENT DISCIPLINARY REVIEW: Someone might possibly need to explain all these digits.",
+  "PRELIMINARY RISK FINDING: This upper limit may have exceeded the building\u2019s authorized numerical load.",
+  "POTENTIAL CHARTER OVERRUN: The committee has not ruled out a surplus of mathematical ambition.",
+  "PROVISIONAL EXCESS-MAGNITUDE NOTICE: This request may require an unusually solemn signature.",
+  "SUSPECTED SCALE VIOLATION: Your integer might be too substantial for the current stationery.",
+  "POSSIBLE ENTERPRISE INCIDENT: This value may have activated a policy nobody has finished writing."
+]);
+function chooseMagnitudeWarning(previous = -1, random2 = Math.random) {
+  const width2 = previous >= 0 ? magnitudeWarnings.length - 1 : magnitudeWarnings.length;
+  let index = Math.min(width2 - 1, Math.floor(random2() * width2));
+  if (previous >= 0 && index >= previous) index++;
+  return { index, text: magnitudeWarnings[index] };
+}
+
+// web/dom.ts
+var byId = (id) => {
+  const node3 = document.getElementById(id);
+  if (!node3) throw new Error(`Missing element ${id}`);
+  return node3;
+};
+function setText(id, value) {
+  byId(id).textContent = String(value);
+}
+
+// web/playback-controls.ts
+var paths = {
+  pause: "M9 5v14M15 5v14",
+  play: "M8 5l11 7-11 7V5Z",
+  stop: "M6 6h12v12H6Z",
+  next: "M5 5l10 7-10 7V5ZM19 5v14",
+  options: "M3 7h3m6 0h9M3 17h9m6 0h3M12 7a3 3 0 1 1-6 0 3 3 0 0 1 6 0ZM18 17a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z",
+  evidence: "M14 3H5v18h8M14 3l5 5h-5V3ZM8 8h3M8 12h3M8 16h3M20 17a3 3 0 1 1-6 0 3 3 0 0 1 6 0ZM20 20l2 2",
+  waive: "M3 5l8 7-8 7V5ZM12 5l8 7-8 7V5ZM22 5v14",
+  fullscreen: "M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5",
+  restore: "M3 8h5V3m8 0v5h5M8 21v-5H3m18 0h-5v5"
+};
+function playbackIcon(button, icon, label) {
+  button.setAttribute("aria-label", label);
+  button.title = label;
+  button.classList.add("playback-icon");
+  if (button.dataset.icon === icon) return;
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.setAttribute("viewBox", "0 0 24 24");
+  svg.setAttribute("aria-hidden", "true");
+  svg.setAttribute("focusable", "false");
+  svg.setAttribute("fill", "none");
+  svg.setAttribute("stroke", "currentColor");
+  svg.setAttribute("stroke-width", "2");
+  svg.setAttribute("stroke-linecap", "round");
+  svg.setAttribute("stroke-linejoin", "round");
+  const path = document.createElementNS(svg.namespaceURI, "path");
+  path.setAttribute("d", paths[icon]);
+  svg.append(path);
+  button.dataset.icon = icon;
+  button.replaceChildren(svg);
+}
+
+// web/office-fullscreen.ts
+var OfficeFullscreen = class {
+  dialog = byId("office-fullscreen");
+  surface = byId("office-fullscreen-surface");
+  panels = byId("office-fullscreen-panels");
+  exit = byId("office-fullscreen-exit");
+  restorations = [];
+  invoker;
+  native = false;
+  serial = 0;
+  position = { x: 0, y: 0 };
+  mode;
+  placeChronicle;
+  constructor() {
+    playbackIcon(byId("supervision-fullscreen"), "fullscreen", "Full-screen office observation");
+    playbackIcon(byId("office-fullscreen-enter"), "fullscreen", "Full-screen office view");
+    playbackIcon(this.exit, "restore", "Exit full-screen and return to website");
+    this.exit.addEventListener("click", () => this.close());
+    this.dialog.addEventListener("cancel", (event) => {
+      event.preventDefault();
+      this.close();
+    });
+    this.dialog.addEventListener("close", () => {
+      if (!this.dialog.open) this.close();
+    });
+    this.panels.addEventListener("change", () => this.layout());
+    addEventListener("resize", () => {
+      if (this.mode) this.adapt();
+    });
+    document.addEventListener("demo-watch-layout", () => {
+      if (this.mode === "observe") this.layout();
+    });
+    byId("office-fullscreen-inspect").addEventListener("click", () => this.inspection(byId("office-fullscreen-drawer").hidden === true));
+    byId("office-fullscreen-drawer-close").addEventListener("click", () => this.inspection(false, true));
+    byId("office-fullscreen-drawer").addEventListener("keydown", (event) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        event.stopPropagation();
+        this.inspection(false, true);
+      }
+    });
+    document.addEventListener("fullscreenchange", () => {
+      if (!this.mode) return;
+      if (document.fullscreenElement === this.surface) this.native = true;
+      else if (this.native) this.close();
+    });
+    document.addEventListener("demo-presentation-change", () => {
+      if (this.mode !== "observe") return;
+      if (!byId("executive-hovering").checked) this.close();
+      else this.layout();
+    });
+    const resize = new ResizeObserver(() => {
+      this.surface.style.setProperty("--immersive-controls-height", Math.ceil(byId("office-fullscreen-controls").getBoundingClientRect().height) + "px");
+      this.surface.style.setProperty("--immersive-header-height", Math.ceil(byId("office-fullscreen-header").getBoundingClientRect().height) + "px");
+      this.surface.style.setProperty("--immersive-banner-height", Math.ceil(byId("active-run-banner").getBoundingClientRect().height) + "px");
+    });
+    resize.observe(byId("office-fullscreen-controls"));
+    resize.observe(byId("office-fullscreen-header"));
+    resize.observe(byId("active-run-banner"));
+    addEventListener("pagehide", () => this.close(false), { once: true });
+  }
+  open(mode, invoker) {
+    if (this.mode) return;
+    if (mode === "observe" && !byId("executive-hovering").checked) return;
+    byId("office-modal").close();
+    this.mode = mode;
+    const serial = ++this.serial;
+    this.invoker = invoker;
+    this.position = { x: scrollX, y: scrollY };
+    this.surface.dataset.view = mode;
+    document.documentElement.classList.add("office-is-fullscreen");
+    byId("office-fullscreen-title").textContent = mode === "observe" ? "Executive Occupation of the Entire Screen" : "The Serious Business Office \xB7 Full estate access";
+    byId("office-fullscreen-panel-control").hidden = mode !== "observe";
+    byId("office-fullscreen-inspect").hidden = mode !== "facilities";
+    this.adapt();
+    this.panels.value = this.surface.dataset.largeText === "true" ? "none" : innerWidth < 360 || innerHeight < 450 ? "log" : "both";
+    if (mode === "observe") {
+      this.move(byId("supervision-pane"), "office-fullscreen-stage");
+      this.move(byId("watch-output"), "office-fullscreen-output-slot");
+      this.move(byId("supervision-caption"), "office-fullscreen-current-slot");
+      this.move(byId("chronicle-scroll").closest(".chronicle"), "office-fullscreen-log-slot", true);
+      this.move(document.querySelector(".watch-transport"), "office-fullscreen-controls");
+      this.move(byId("watch-settings"), "office-fullscreen-settings");
+      this.move(byId("companion-spotlight"), "office-fullscreen-companion");
+    } else {
+      this.move(byId("active-run-banner"), this.surface);
+      this.move(byId("office-stage"), "office-fullscreen-stage");
+      this.move(document.querySelector(".office-toolbar"), "office-fullscreen-controls");
+      this.move(byId("office-walking-controls"), "office-fullscreen-controls");
+      const playback = document.createElement("div");
+      playback.className = "immersive-route-controls";
+      byId("office-fullscreen-controls").append(playback);
+      this.restorations.push(() => playback.remove());
+      this.move(byId("office-pause"), playback);
+      this.move(byId("office-next"), playback);
+      for (const element4 of [byId("office-camera-help"), document.querySelector(".office-inspection"), document.querySelector(".office-playback"), byId("office-route-status"), byId("office-route"), byId("office-reorganization"), document.querySelector(".office-options")]) this.move(element4, "office-fullscreen-inspection-slot");
+    }
+    const notice = byId(mode === "observe" ? "run-status" : "office-status");
+    const previousTabIndex = notice.getAttribute("tabindex");
+    notice.tabIndex = 0;
+    this.restorations.push(() => {
+      if (previousTabIndex === null) notice.removeAttribute("tabindex");
+      else notice.setAttribute("tabindex", previousTabIndex);
+    });
+    this.move(notice, "office-fullscreen-notice");
+    for (const id of ["companion-dialog", "personnel-dialog"]) this.move(byId(id), this.surface);
+    this.inspection(false);
+    this.layout();
+    this.dialog.showModal();
+    this.exit.focus({ preventScroll: true });
+    this.changed();
+    byId("office-fullscreen-status").textContent = "The office fills this tab. Return to website restores your previous view.";
+    if (document.fullscreenEnabled && this.surface.requestFullscreen) {
+      try {
+        void this.surface.requestFullscreen({ navigationUI: "hide" }).then(() => {
+          if (serial !== this.serial || !this.mode) {
+            if (document.fullscreenElement === this.surface) void document.exitFullscreen().catch(() => {
+            });
+          } else {
+            this.native = true;
+            byId("office-fullscreen-status").textContent = "Browser full-screen is active. Escape or Return to website leaves the office view.";
+          }
+        }).catch(() => {
+          if (serial === this.serial && this.mode) byId("office-fullscreen-status").textContent = "Browser full-screen is unavailable. The office still fills this tab; all controls remain available.";
+        });
+      } catch {
+      }
+    }
+  }
+  close(restoreFocus = true) {
+    if (!this.mode) return;
+    const observed = this.mode === "observe";
+    this.mode = void 0;
+    this.serial++;
+    this.native = false;
+    for (const child of this.surface.querySelectorAll("dialog[open]")) child.close();
+    this.dialog.close();
+    for (const restore of this.restorations.reverse()) restore();
+    this.restorations = [];
+    document.documentElement.classList.remove("office-is-fullscreen");
+    const nativeExit = document.fullscreenElement === this.surface ? document.exitFullscreen().catch(() => {
+    }) : Promise.resolve();
+    this.changed();
+    if (restoreFocus) {
+      const invoker = this.invoker, position = this.position, serial = this.serial;
+      void nativeExit.then(() => requestAnimationFrame(() => {
+        if (serial !== this.serial || this.mode) return;
+        const target = invoker?.getClientRects().length ? invoker : observed && byId("executive-hovering").getClientRects().length ? byId("executive-hovering") : observed ? byId("watch-settings-toggle") : byId("office-enter");
+        target.focus({ preventScroll: true });
+        window.scrollTo({ left: position.x, top: position.y, behavior: "instant" });
+      }));
+    }
+  }
+  inspection(open, focus = false) {
+    byId("office-fullscreen-drawer").hidden = !open;
+    byId("office-fullscreen-inspect").setAttribute("aria-expanded", String(open));
+    if (focus) byId("office-fullscreen-inspect").focus({ preventScroll: true });
+  }
+  move(element4, destination, chronicle2 = false) {
+    const target = typeof destination === "string" ? byId(destination) : destination;
+    const marker = document.createComment("Retained office presentation slot");
+    element4.before(marker);
+    if (chronicle2 && this.placeChronicle) this.placeChronicle(target);
+    else target.append(element4);
+    this.restorations.push(() => {
+      if (chronicle2 && this.placeChronicle) {
+        this.placeChronicle(marker.parentElement);
+        marker.remove();
+      } else marker.replaceWith(element4);
+    });
+  }
+  layout() {
+    const panels = this.panels.value;
+    byId("office-fullscreen-output").hidden = this.mode !== "observe" || !["both", "output"].includes(panels);
+    byId("office-fullscreen-log").hidden = this.mode !== "observe" || !["both", "log"].includes(panels);
+    byId("office-fullscreen-companion").hidden = this.mode !== "observe" || panels === "none" || !byId("emoji-companions").checked || !byId("require-companion-roll-call").checked;
+    this.surface.dataset.panels = panels;
+  }
+  adapt() {
+    const large = parseFloat(getComputedStyle(document.documentElement).fontSize) > 20;
+    this.surface.dataset.largeText = String(large);
+    const names = large ? ["Both", "Output", "Log", "Hide"] : ["Output + log", "Output", "Running log", "Hide panels"];
+    [...this.panels.options].forEach((option, index) => {
+      if (option.textContent !== names[index]) option.textContent = names[index];
+    });
+  }
+  changed() {
+    document.dispatchEvent(new Event("office-fullscreen-change"));
+  }
+};
+var presentation;
+function officeFullscreen() {
+  return presentation ||= new OfficeFullscreen();
+}
+
+// web/office-pack-contract.ts
+function parseOfficeManifest(x) {
+  const m = x;
+  if (!m || m.schema !== "slopbuzz-office-pack/v1" || m.file !== "office-world.js" || !Number.isSafeInteger(m.bytes) || m.bytes < 1 || typeof m.sha256 !== "string" || !/^[a-f0-9]{64}$/.test(m.sha256)) throw new Error("The building manifest is unfamiliar.");
+  return m;
+}
+async function verifyOfficePackage(manifest, bytes) {
+  const hash2 = [...new Uint8Array(await crypto.subtle.digest("SHA-256", bytes))].map((x) => x.toString(16).padStart(2, "0")).join("");
+  if (bytes.byteLength !== manifest.bytes || hash2 !== manifest.sha256) throw new Error("The delivered building does not match its manifest.");
+}
+
+// web/office-pack-key.ts
+var officePackPrefix = (base) => `slopbuzz-office-${encodeURIComponent(base)}-`;
+function officeCacheKey(base, url) {
+  const id = url.pathname.match(/\/assets\/([a-f0-9]{16})\/office-world\.js$/)?.[1];
+  return id ? officePackPrefix(base) + id : void 0;
+}
+
+// web/office-pack.ts
+var officePackKey = (base = scope, url = releaseAsset("office-world.js")) => officeCacheKey(base, url);
+async function saveOfficePack() {
+  const url = releaseAsset("office-world.js"), key2 = officePackKey();
+  if (!key2) throw new Error("This deployment does not publish a versioned offline building.");
+  const manifestReply = await fetch(releaseAsset("office-pack.json"));
+  if (!manifestReply.ok) throw new Error("The building manifest could not be obtained.");
+  const manifest = parseOfficeManifest(await manifestReply.json());
+  const reply = await fetch(url);
+  if (!reply.ok) throw new Error("The building could not be downloaded.");
+  const bytes = await reply.arrayBuffer();
+  await verifyOfficePackage(manifest, bytes);
+  const cache = await caches.open(key2);
+  await cache.put(url, new Response(bytes, { headers: { "Content-Type": "text/javascript; charset=UTF-8", "Cache-Control": "public, max-age=31536000, immutable" } }));
+  return bytes.byteLength;
+}
+
+// web/office-tour.ts
+var byId2 = (id) => document.getElementById(id);
+var curiosityKey = "slopbuzz:office-curiosities:v1";
+var OfficeTourDesk = class {
+  archive = new OfficeArchive();
+  offeredFiles = /* @__PURE__ */ new Map();
+  offeredCompanions = /* @__PURE__ */ new Map();
+  room = "reception";
+  selectedProp;
+  selectedAction;
+  renderer;
+  module;
+  completedZero = false;
+  exitFocus;
+  opened = false;
+  enlarged = false;
+  opening = 0;
+  paused = false;
+  routeIndex = -1;
+  routeKey = "";
+  lastEvidence;
+  visited = /* @__PURE__ */ new Set();
+  persistence = true;
+  audio;
+  walking = false;
+  root = byId2("office-experience");
+  canvas = byId2("office-canvas");
+  dialog = byId2("office-modal");
+  enter = byId2("office-enter");
+  fileSelect = byId2("office-file");
+  motion = byId2("office-motion");
+  follow = byId2("office-follow");
+  media = matchMedia("(prefers-reduced-motion: reduce)");
+  directory = /* @__PURE__ */ new Map();
+  constructor() {
+    officeHeist.subscribe(() => this.syncRenderer());
+    officeEstate.subscribe((event) => {
+      this.syncRenderer();
+      if (event.kind === "committed") {
+        this.renderAddress();
+        this.shareLink();
+      }
+    });
+    try {
+      const limit = new URL(location.href).searchParams.get("limit");
+      if (limit !== null) this.archive.mandate = String(parseMandate(limit));
+    } catch {
+    }
+    this.motion.checked = !this.media.matches;
+    this.follow.checked = true;
+    try {
+      const saved = JSON.parse(localStorage.getItem(curiosityKey) || "[]");
+      if (Array.isArray(saved)) {
+        for (const id of saved) if (typeof id === "string" && rooms.some((r) => r.props.some((p) => p.id === id))) this.visited.add(id);
+      }
+    } catch {
+      this.persistence = false;
+    }
+    rooms.forEach((room, index) => {
+      const b = node("button", String(index + 1).padStart(2, "0") + " \xB7 " + room.short);
+      b.type = "button";
+      b.title = room.name;
+      b.setAttribute("aria-pressed", String(room.id === this.room));
+      b.addEventListener("click", () => this.select(room.id));
+      this.directory.set(room.id, b);
+      byId2("office-directory").append(b);
+    });
+    this.enter.addEventListener("click", () => void this.open());
+    byId2("office-close").addEventListener("click", () => this.close());
+    byId2("office-choose-mandate").addEventListener("click", () => {
+      const input = byId2("limit");
+      this.close(input);
+      input.scrollIntoView({ block: "center", behavior: this.media.matches ? "instant" : "smooth" });
+    });
+    byId2("office-enlarge").addEventListener("click", () => this.enlarged ? this.dialog.close() : this.enlarge());
+    byId2("office-modal-close").addEventListener("click", () => this.dialog.close());
+    byId2("office-fullscreen-enter").addEventListener("click", () => officeFullscreen().open("facilities", byId2("office-fullscreen-enter")));
+    document.addEventListener("office-fullscreen-change", () => {
+      this.activity();
+      requestAnimationFrame(() => this.renderer?.resize());
+    });
+    document.addEventListener("site-page-change", () => {
+      this.activity();
+      this.renderer?.resize();
+      if (document.body.dataset.sitePage !== "demo") void this.audio?.suspend();
+      else if (byId2("office-sound").checked) void this.audio?.resume();
+    });
+    document.addEventListener("office-amenity", (event) => {
+      if (event.detail === "office" && officeFullscreen().mode === "facilities") officeFullscreen().inspection(true);
+    });
+    let backdrop = false;
+    const outside = (e) => {
+      const b = this.dialog.getBoundingClientRect();
+      return e.clientX < b.left || e.clientX > b.right || e.clientY < b.top || e.clientY > b.bottom;
+    };
+    this.dialog.addEventListener("pointerdown", (e) => {
+      backdrop = e.target === this.dialog && outside(e);
+    });
+    this.dialog.addEventListener("pointercancel", () => {
+      backdrop = false;
+    });
+    this.dialog.addEventListener("click", (e) => {
+      const dismiss = backdrop && e.target === this.dialog && outside(e);
+      backdrop = false;
+      if (dismiss) this.dialog.close();
+    });
+    this.dialog.addEventListener("close", () => {
+      backdrop = false;
+      this.enlarged = false;
+      byId2("office-home-slot").append(this.root);
+      byId2("office-enlarge").textContent = "Enlarge office";
+      this.renderer?.resize();
+      if (this.opened) byId2("office-enlarge").focus();
+      else (this.exitFocus || this.enter).focus();
+    });
+    byId2("office-overview").addEventListener("click", () => {
+      this.renderer?.overview();
+      this.routeCamera(false);
+    });
+    byId2("office-walk").addEventListener("click", () => {
+      if (!this.renderer) return;
+      if (this.walking) {
+        this.renderer.overview();
+        return;
+      }
+      this.retainFile();
+      this.renderer.walk(this.room);
+      byId2("office-stage").scrollIntoView({ block: "nearest", behavior: "instant" });
+      this.activity();
+      this.canvas.focus({ preventScroll: true });
+    });
+    byId2("office-zoom-in").addEventListener("click", () => this.renderer?.zoom(-1));
+    byId2("office-zoom-out").addEventListener("click", () => this.renderer?.zoom(1));
+    document.querySelectorAll("[data-office-move]").forEach((b) => b.addEventListener("click", () => {
+      byId2("office-stage").scrollIntoView({ block: "nearest", behavior: "instant" });
+      this.activity();
+      this.renderer?.move(b.dataset.officeMove);
+    }));
+    this.canvas.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && !this.dialog.open) {
+        this.renderer?.overview();
+        byId2("office-walk").focus();
+      }
+    });
+    byId2("office-pause").addEventListener("click", () => {
+      if (!this.motion.checked || !this.renderer) return;
+      this.paused = !this.paused;
+      this.syncRenderer();
+      this.playbackLabels();
+    });
+    byId2("office-replay").addEventListener("click", () => {
+      if (!routeFor(this.archive.current()).length) return;
+      this.seekRoute(0);
+      this.paused = !this.renderer || !this.motion.checked;
+      this.syncRenderer();
+      this.playbackLabels();
+    });
+    byId2("office-next").addEventListener("click", () => {
+      const route = routeFor(this.archive.current());
+      if (!route.length) {
+        this.status("A mandate must disclose a file before its recorded route can be stepped through.");
+        return;
+      }
+      this.paused = true;
+      this.seekRoute((this.routeIndex + 1) % route.length);
+      this.playbackLabels();
+    });
+    this.fileSelect.addEventListener("focus", () => {
+      this.offeredFiles = new Map(this.archive.files);
+      this.offeredCompanions = new Map(this.archive.companions);
+      this.retainFile();
+    });
+    this.fileSelect.addEventListener("blur", () => {
+      this.offeredFiles.clear();
+      this.offeredCompanions.clear();
+      this.updateFiles();
+    });
+    byId2("office-evidence").addEventListener("focusin", () => this.retainFile());
+    byId2("office-evidence").addEventListener("wheel", () => this.retainFile(), { passive: true });
+    this.fileSelect.addEventListener("change", () => {
+      const value = this.fileSelect.value;
+      this.archive.choose(value, this.offeredFiles.get(value), this.offeredCompanions.get(value));
+      this.follow.checked = value === "latest";
+      this.renderEvidence();
+      this.updateRoute();
+      this.syncRenderer();
+    });
+    this.follow.addEventListener("change", () => {
+      if (this.follow.checked) {
+        this.archive.selected = "latest";
+        this.fileSelect.value = "latest";
+        this.renderEvidence();
+        this.updateRoute();
+        this.syncRenderer();
+      } else this.retainFile();
+    });
+    byId2("office-follow-route").addEventListener("change", () => {
+      if (byId2("office-follow-route").checked && this.routeIndex >= 0) {
+        const route = routeFor(this.archive.current());
+        if (route[this.routeIndex]) this.select(route[this.routeIndex].room, false);
+      }
+      this.syncRenderer();
+    });
+    this.motion.addEventListener("change", () => {
+      if (!this.motion.checked) officeEstate.finish();
+      this.syncRenderer();
+      this.playbackLabels();
+    });
+    this.media.addEventListener("change", () => {
+      this.motion.checked = !this.media.matches;
+      this.syncRenderer();
+      this.playbackLabels();
+    });
+    byId2("office-quality").addEventListener("change", () => this.syncRenderer());
+    byId2("office-sound").addEventListener("change", () => void this.soundPreference());
+    byId2("office-offline").addEventListener("click", () => void this.saveOffline());
+    if (!officePackKey()) {
+      byId2("office-offline").hidden = true;
+      byId2("office-offline-status").textContent = "The building and its documents are served by this site.";
+    }
+    byId2("office-share-copy").addEventListener("click", async () => {
+      const input = byId2("office-share-link");
+      try {
+        await navigator.clipboard.writeText(input.value);
+        byId2("office-share-status").textContent = "Visit link copied. It opens this room and prefills the mandate; counting starts when the recipient asks.";
+      } catch {
+        input.focus();
+        input.select();
+        byId2("office-share-status").textContent = "Copy the selected visit link with your browser\u2019s copy command.";
+      }
+    });
+    byId2("office-companion-story").addEventListener("click", () => {
+      const d = this.archive.companions.get(this.archive.current()?.ordinal || "");
+      if (d) companionDialog().open(d, byId2("office-companion-story"));
+    });
+    const observer = new IntersectionObserver(() => this.activity(), { rootMargin: "100px" });
+    observer.observe(byId2("office-stage"));
+    new ResizeObserver(() => this.renderer?.resize()).observe(byId2("office-stage"));
+    document.addEventListener("visibilitychange", () => {
+      this.activity();
+      if (document.hidden) void this.audio?.suspend();
+      else if (byId2("office-sound").checked) void this.audio?.resume();
+    });
+    addEventListener("pagehide", () => {
+      this.renderer?.dispose();
+      void this.audio?.close();
+    }, { once: true });
+    this.renderRoom();
+    this.updateFiles();
+    this.updateRoute();
+    const shared = parseTourLink(location.search);
+    if (shared) {
+      this.room = shared.room;
+      this.selectedProp = roomById(shared.room)?.props.find((p) => p.id === shared.prop);
+      this.renderRoom();
+      if (shared.action !== void 0) this.respond(shared.action);
+      void this.open(false);
+    } else if (location.hash === "#office-tour") this.status("Welcome. Enter the office to open its 3D building and complete room directory.");
+  }
+  begin(mandate, mode = "mandate") {
+    this.completedZero = false;
+    this.archive.begin(mandate, mode);
+    this.offeredFiles.clear();
+    this.offeredCompanions.clear();
+    this.follow.checked = true;
+    this.routeKey = "";
+    this.updateFiles();
+    this.renderEvidence();
+    this.updateRoute();
+    this.syncRenderer();
+    this.shareLink();
+  }
+  complete(zero = false) {
+    if (zero && !this.archive.current()) {
+      this.completedZero = true;
+      this.updateRoute();
+    }
+  }
+  receive(packet) {
+    this.archive.receive(packet.events, packet.omitted);
+    if (this.opened) this.renderEvidence();
+  }
+  disclose(mandate, folios) {
+    if (mandate !== this.archive.mandate) return;
+    this.archive.disclose(folios);
+    if (this.follow.checked) this.archive.selected = "latest";
+    if (this.opened) {
+      this.updateFiles();
+      this.renderEvidence();
+      this.updateRoute();
+      this.syncRenderer();
+    }
+  }
+  inspect(f) {
+    this.follow.checked = false;
+    this.archive.inspect(f);
+    this.updateFiles();
+    this.renderEvidence();
+    this.updateRoute();
+    this.syncRenderer();
+  }
+  remember(d) {
+    this.archive.remember(d);
+    if (this.opened) {
+      this.renderCompanion();
+      this.syncRenderer();
+    }
+  }
+  clearCompanions() {
+    this.archive.companions.clear();
+    this.offeredCompanions.clear();
+    if (this.opened) {
+      this.renderCompanion();
+      this.syncRenderer();
+    }
+  }
+  status(text2) {
+    byId2("office-status").textContent = text2;
+  }
+  async open(scroll = true, focus = scroll) {
+    this.opened = true;
+    this.root.hidden = false;
+    this.enter.hidden = true;
+    const opening = ++this.opening;
+    this.renderEvidence();
+    this.updateRoute();
+    this.updateFiles();
+    if (focus) byId2(officeFullscreen().mode === "facilities" ? "office-fullscreen-exit" : "office-close").focus({ preventScroll: true });
+    if (scroll) this.root.scrollIntoView({ behavior: this.media.matches ? "instant" : "smooth", block: "start" });
+    if (this.renderer) {
+      this.activity();
+      this.renderer.resize();
+      return;
+    }
+    const loading = byId2("office-loading");
+    this.graphicsAvailable(false);
+    loading.hidden = false;
+    loading.replaceChildren(node("p", "Facilities is locating the building. The room directory and all inspections are already open."));
+    try {
+      this.module ||= import(releaseAsset("office-world.js").href);
+      const module = await this.module;
+      if (!this.opened || opening !== this.opening) return;
+      let readiness;
+      this.canvas.removeAttribute("data-rendered");
+      this.canvas.dataset.module = releaseAsset("office-world.js").href;
+      this.renderer = module.createOffice({ canvas: this.canvas, state: this.sceneState(), onHeistSuspect: (index, id) => officeHeist.intercept(index, id), onHeistFootprint: () => officeHeist.follow(), onRoom: (id) => this.select(id), onAmenity: () => document.dispatchEvent(new CustomEvent("office-amenity", { detail: "office" })), onProp: (room, prop2) => {
+        this.select(room);
+        const p = roomById(room)?.props.find((x) => x.id === prop2);
+        if (p) this.inspectProp(p);
+      }, onStep: (index) => {
+        this.routeIndex = index;
+        this.highlightRoute();
+        if (byId2("office-follow-route").checked && index >= 0) {
+          const r = routeFor(this.archive.current())[index];
+          if (r) this.select(r.room, false);
+        }
+        this.tone();
+      }, onView: (view) => {
+        this.walking = view === "walk";
+        byId2("office-walk").setAttribute("aria-pressed", String(this.walking));
+        byId2("office-walk").textContent = this.walking ? "Return to cutaway" : "Walk in this room";
+        byId2("office-walking-controls").hidden = !this.walking;
+      }, onReady: () => {
+        clearTimeout(readiness);
+        loading.hidden = true;
+        this.graphicsAvailable(true);
+        this.playbackLabels();
+        this.status("The estate is open. Select any room or object; its actual evidence and fictional arrangements are labeled separately.");
+      }, onProblem: () => this.fallback() });
+      this.canvas.dataset.renderer = "babylon";
+      if (this.room !== "reception" || this.selectedProp) this.renderer.selectRoom(this.room);
+      this.activity();
+      readiness = setTimeout(() => {
+        if (this.opened && opening === this.opening && this.canvas.dataset.rendered !== "true") this.fallback();
+      }, 2e4);
+    } catch {
+      this.module = void 0;
+      if (this.opened && opening === this.opening) this.fallback();
+    }
+  }
+  fallback() {
+    this.renderer?.dispose();
+    this.renderer = void 0;
+    this.canvas.dataset.renderer = "directory";
+    this.graphicsAvailable(false);
+    this.playbackLabels();
+    const loading = byId2("office-loading");
+    loading.hidden = false;
+    const retry = node("button", "Try the 3D display again");
+    retry.type = "button";
+    retry.addEventListener("click", () => void this.open(false, true));
+    loading.replaceChildren(node("p", "The 3D display could not open. All eight rooms, thirty-two stories and recorded papers remain available through the directory."), retry);
+    this.status("The office directory is open. The graphics display is unavailable on this visit.");
+  }
+  graphicsAvailable(value) {
+    for (const id of ["office-overview", "office-walk", "office-zoom-in", "office-zoom-out"]) byId2(id).disabled = !value;
+    this.canvas.tabIndex = value ? 0 : -1;
+    if (value) this.canvas.removeAttribute("aria-hidden");
+    else this.canvas.setAttribute("aria-hidden", "true");
+  }
+  close(target = this.enter) {
+    officeHeist.finish("skipped");
+    if (officeFullscreen().mode === "facilities") officeFullscreen().close(false);
+    officeEstate.finish();
+    this.exitFocus = target;
+    this.opened = false;
+    ++this.opening;
+    this.renderer?.active(false);
+    this.root.hidden = true;
+    this.enter.hidden = false;
+    if (this.dialog.open) this.dialog.close();
+    target.focus();
+    this.status("Your departure has been approved without an additional form. Reception is reviewing this precedent.");
+  }
+  enlarge() {
+    this.enlarged = true;
+    byId2("office-modal-slot").append(this.root);
+    this.dialog.showModal();
+    byId2("office-enlarge").textContent = "Return to page";
+    this.renderer?.resize();
+    byId2("office-modal-close").focus();
+  }
+  select(id, user = true) {
+    if (user) {
+      this.retainFile();
+      if (officeFullscreen().mode === "facilities") officeFullscreen().inspection(true);
+    }
+    this.room = id;
+    this.selectedProp = void 0;
+    this.selectedAction = void 0;
+    this.renderRoom();
+    this.syncRenderer();
+    this.renderer?.selectRoom(id);
+  }
+  retainFile() {
+    const file = this.archive.current();
+    if (file) this.archive.selected = file.ordinal;
+    this.follow.checked = false;
+    this.fileSelect.value = this.archive.selected;
+    this.routeCamera(false);
+  }
+  routeCamera(value) {
+    byId2("office-follow-route").checked = value;
+  }
+  renderAddress() {
+    this.root.dataset.room = this.room;
+    document.dispatchEvent(new CustomEvent("office-location", { detail: { view: "office" } }));
+    byId2("office-room-label").textContent = "Department " + String(rooms.findIndex((r) => r.id === this.room) + 1).padStart(2, "0") + " \xB7 Address " + officeEstate.current.placements.find((p) => p.room === this.room).address;
+  }
+  renderRoom() {
+    const room = roomById(this.room);
+    for (const [id, b] of this.directory) b.setAttribute("aria-pressed", String(id === this.room));
+    this.renderAddress();
+    byId2("office-room-title").textContent = room.name;
+    byId2("office-room-subtitle").textContent = room.subtitle;
+    const selected = this.selectedProp;
+    byId2("office-props").replaceChildren(...room.props.map((p) => {
+      const b = node("button", p.name);
+      b.type = "button";
+      b.setAttribute("aria-pressed", String(p.id === selected?.id));
+      b.addEventListener("click", () => this.inspectProp(p));
+      return b;
+    }));
+    if (selected) this.inspectProp(selected);
+    else {
+      byId2("office-story-title").textContent = "Welcome to " + room.short;
+      byId2("office-story-text").textContent = "Select a named curiosity or click its object in the building. Facilities encourages looking closely while accepting no responsibility for what you notice.";
+      byId2("office-story-answer").textContent = "";
+      byId2("office-story-actions").replaceChildren();
+    }
+    this.curiosityLabel();
+    this.renderEvidence();
+    this.shareLink();
+    this.playbackLabels();
+  }
+  inspectProp(p) {
+    this.selectedProp = p;
+    this.selectedAction = void 0;
+    this.retainFile();
+    this.visited.add(p.id);
+    try {
+      localStorage.setItem(curiosityKey, JSON.stringify([...this.visited]));
+      this.persistence = true;
+    } catch {
+      this.persistence = false;
+    }
+    if (officeFullscreen().mode === "facilities") officeFullscreen().inspection(true);
+    byId2("office-story-title").textContent = p.name;
+    byId2("office-story-text").textContent = p.story;
+    byId2("office-story-answer").textContent = "";
+    byId2("office-story-actions").replaceChildren(...p.actions.map((a, index) => {
+      const b = node("button", a.label);
+      b.type = "button";
+      b.addEventListener("click", () => this.respond(index));
+      return b;
+    }));
+    for (const b of byId2("office-props").querySelectorAll("button")) b.setAttribute("aria-pressed", String(b.textContent === p.name));
+    this.curiosityLabel();
+    this.shareLink();
+  }
+  respond(index) {
+    const action = this.selectedProp?.actions[index];
+    if (!action) return;
+    this.selectedAction = index;
+    byId2("office-story-answer").textContent = action.answer;
+    this.renderer?.react(this.selectedProp.id, index);
+    this.tone();
+    this.shareLink();
+  }
+  curiosityLabel() {
+    byId2("office-curiosities").textContent = this.visited.size + " of 32 curiosities discovered." + (this.visited.size === 32 ? " Facilities appoints you Senior Visitor (Acting)." : "") + (this.persistence ? " Remembered in this browser." : " Storage is unavailable; this visit remembers them temporarily.");
+  }
+  updateFiles() {
+    if (document.activeElement === this.fileSelect) return;
+    const known = new Set(this.archive.files.keys());
+    for (const option of [...this.fileSelect.options]) if (option.value !== "latest" && !known.has(option.value)) option.remove();
+    for (const f of this.archive.files.values()) if (![...this.fileSelect.options].some((o) => o.value === f.ordinal)) {
+      const o = node("option", "Ordinal " + f.ordinal + " \xB7 " + f.text);
+      o.value = f.ordinal;
+      this.fileSelect.append(o);
+    }
+    this.fileSelect.value = this.archive.selected;
+  }
+  renderEvidence() {
+    const file = this.archive.current(), globals = file?.globals || this.archive.globals;
+    const previous = this.lastEvidence;
+    if (previous && previous.file === file && previous.room === this.room && previous.globals === globals) {
+      this.renderCompanion();
+      return;
+    }
+    this.lastEvidence = { file, room: this.room, globals };
+    const events = this.archive.evidence(this.room);
+    let source = file ? "File " + file.ordinal + " \xB7 disclosed text \u201C" + file.text + "\u201D. " + (file.cache === "HIT" ? "Institutional memory returned prior text; fresh production decisions are not inferred." : file.recorded ? "Only supplied execution records are shown." : "The complete production dossier was unavailable; supplied records remain identifiable.") : "No numerical file has been disclosed. These rooms are open for fictional inspection.";
+    if (this.room === "executive") source += " The executive room is tour scenery, not an additional production approval.";
+    if (file?.sourceOmitted || file?.omitted) source += " The source dossier or finite tour view omitted some records; the route is a summary.";
+    byId2("office-evidence-source").textContent = source;
+    byId2("office-evidence").replaceChildren(...events.map((e) => {
+      const li = node("li");
+      li.append(node("strong", e.office), node("p", e.finding));
+      if (e.document) {
+        const details = node("details"), summary = node("summary", "Inspect supplied document"), pre = node("pre", e.document.slice(0, 12e3) + (e.document.length > 12e3 ? "\n[First 12,000 of " + e.document.length + " characters shown.]" : ""));
+        details.append(summary, pre);
+        li.append(details);
+      }
+      return li;
+    }));
+    if (!events.length) byId2("office-evidence").append(node("li", file ? "No supplied decision for this department accompanies this file. Its furnishings and conversations are fictional tour content." : "Run a mandate to supply actual proceedings."));
+    this.renderCompanion();
+  }
+  renderCompanion() {
+    const d = this.archive.companions.get(this.archive.current()?.ordinal || "");
+    byId2("office-companion").textContent = d ? "Appointed companion: " + d.companion.name + " \xB7 " + d.companion.rarity + ". This is a disclosed companion assignment, separate from the numerical output." : "";
+    byId2("office-companion-story").hidden = !d;
+  }
+  updateRoute() {
+    const file = this.archive.current(), route = routeFor(file), key2 = (file?.ordinal || "") + "|" + route.map((s) => s.room + ":" + s.source).join("|") + "|" + this.completedZero;
+    if (key2 === this.routeKey) return;
+    this.routeKey = key2;
+    this.routeIndex = -1;
+    byId2("office-route-status").textContent = file ? "Recorded route summary for " + file.ordinal + " \xB7 " + file.text + ". " + (this.archive.mode !== "mandate" ? "This is retained playback. " : "") + "The moving file illustrates these stops; it does not measure execution time." : this.completedZero ? "Zero\u2019s mandate is complete. No numerical file was needed. The estate\u2019s overhead remains fully funded." : "Run a mandate to supply a recorded file. Every room is open for fictional inspection.";
+    byId2("office-route").replaceChildren(...route.map((s, i) => {
+      const li = node("li"), b = node("button", i + 1 + ". " + roomById(s.room).short + " \xB7 " + s.source);
+      b.type = "button";
+      b.title = s.finding;
+      b.addEventListener("click", () => {
+        this.paused = true;
+        this.routeIndex = i;
+        this.renderer?.seek(i);
+        this.select(s.room);
+        this.highlightRoute();
+        this.playbackLabels();
+      });
+      li.append(b);
+      return li;
+    }));
+    this.playbackLabels();
+    this.shareLink();
+  }
+  seekRoute(index) {
+    const step = routeFor(this.archive.current())[index];
+    if (!step) return;
+    this.routeIndex = index;
+    this.renderer?.seek(index);
+    this.select(step.room, false);
+    this.highlightRoute();
+  }
+  highlightRoute() {
+    [...byId2("office-route").querySelectorAll("button")].forEach((b, i) => b.setAttribute("aria-pressed", String(i === this.routeIndex)));
+  }
+  playbackLabels() {
+    const empty = routeFor(this.archive.current()).length === 0;
+    for (const id of ["office-replay", "office-next"]) byId2(id).setAttribute("aria-disabled", String(empty));
+    byId2("office-pause").setAttribute("aria-disabled", String(!this.motion.checked || !this.renderer));
+    byId2("office-pause").textContent = !this.renderer ? "Use recorded stops" : !this.motion.checked ? "Animation off" : this.paused ? "Resume route" : "Pause route";
+    byId2("office-pause").setAttribute("aria-pressed", String(this.paused));
+  }
+  sceneState() {
+    const file = this.archive.current(), d = file ? this.archive.companions.get(file.ordinal) : void 0;
+    return { room: this.room, route: routeFor(file), ordinal: file?.ordinal || "", text: file?.text || "", emoji: d?.companion.emoji, companionName: d?.companion.name, paused: this.paused, followRoute: byId2("office-follow-route").checked, reducedMotion: !this.motion.checked, quality: byId2("office-quality").value, seed: tourSeed(this.archive.mandate), layout: officeEstate.displayed, relocation: officeEstate.relocation, heist: officeHeist.snapshot };
+  }
+  syncRenderer() {
+    try {
+      this.renderer?.update(this.sceneState());
+    } catch {
+      this.fallback();
+    }
+  }
+  activity() {
+    const rect = byId2("office-stage").getBoundingClientRect();
+    this.renderer?.active(this.opened && rect.height > 0 && rect.bottom > -100 && rect.top < innerHeight + 100 && !document.hidden);
+  }
+  shareLink() {
+    byId2("office-share-link").value = officeShare(scope, this.archive.mandate, this.room, this.selectedProp?.id, byId2("companion-strategy").value || "factor-resonance-v1", this.selectedAction, layoutToken(officeEstate.current));
+  }
+  async soundPreference() {
+    const enabled = byId2("office-sound").checked;
+    try {
+      if (enabled) {
+        this.audio ||= new AudioContext();
+        await this.audio.resume();
+        this.tone();
+      } else await this.audio?.suspend();
+    } catch {
+      byId2("office-sound").checked = false;
+      this.status("Office sounds are unavailable. All tour dialogue remains readable.");
+    }
+  }
+  tone() {
+    if (!byId2("office-sound").checked || this.audio?.state !== "running" || document.hidden) return;
+    const oscillator = this.audio.createOscillator(), gain = this.audio.createGain(), now = this.audio.currentTime;
+    oscillator.type = "sine";
+    oscillator.frequency.setValueAtTime(440 + this.routeIndex % 3 * 110, now);
+    gain.gain.setValueAtTime(0.025, now);
+    gain.gain.exponentialRampToValueAtTime(1e-3, now + 0.09);
+    oscillator.connect(gain);
+    gain.connect(this.audio.destination);
+    oscillator.start(now);
+    oscillator.stop(now + 0.1);
+  }
+  async saveOffline() {
+    const b = byId2("office-offline");
+    if (b.getAttribute("aria-disabled") === "true") return;
+    b.setAttribute("aria-disabled", "true");
+    byId2("office-offline-status").textContent = "Facilities is saving this release\u2019s 3D building\u2026";
+    try {
+      await saveOfficePack();
+      byId2("office-offline-status").textContent = "The 3D office is saved for offline visits with this installed release.";
+    } catch (error) {
+      byId2("office-offline-status").textContent = "The offline building could not be saved: " + error.message + " You can keep exploring online.";
+    } finally {
+      b.setAttribute("aria-disabled", "false");
+    }
+  }
+};
+
+// web/office-supervision-model.ts
+function observationEnvelope(packet, start, count) {
+  const first = BigInt(start), last = first + BigInt(Math.max(0, count)) - 1n;
+  const result = { prefix: [], groups: /* @__PURE__ */ new Map(), suffix: [], omitted: packet.omitted, cache: packet.cache, recorded: packet.recorded };
+  let entered = false;
+  for (const event of packet.events) {
+    if (packet.cache === "HIT" && !["REQUEST", "COMPLETE", "FAILED"].includes(event.kind) && !event.kind.startsWith("CACHE_") && !event.kind.startsWith("PRECEDENT_")) continue;
+    const ordinal = event.ordinal === null ? void 0 : BigInt(event.ordinal);
+    if (count > 0 && ordinal !== void 0 && ordinal >= first && ordinal <= last) {
+      entered = true;
+      const group = result.groups.get(event.ordinal) || [];
+      group.push(event);
+      result.groups.set(event.ordinal, group);
+    } else if (!entered) result.prefix.push(event);
+    else result.suffix.push(event);
+  }
+  if (packet.precedent && !packet.events.some((e) => e.kind.startsWith("PRECEDENT_"))) {
+    result.prefix.push(...packet.precedent.steps.map((e) => ({ ordinal: null, kind: "PRECEDENT_" + e.state, office: e.office, finding: e.finding, document: e.document })));
+  }
+  return result;
+}
+var personnelOffices = ["Headcount Planning", "Recruitment", "Identity Office", "Offer Authority", "Induction", "Probation Review", "Independent Audit"];
+function identifyAction(event, previous) {
+  const kind = event.kind, office2 = event.office;
+  if (kind.startsWith("HR_")) return { action: "recruit", room: "personnel", anchor: "personnel" };
+  if (kind.startsWith("CACHE_") || kind.startsWith("PRECEDENT_")) return { action: "memory", room: "memory", anchor: "memory" };
+  if (kind === "CONTINUATION" || kind === "EXTENDED_CONTINUATION") return { action: "boundary", room: "reception", anchor: "boundary" };
+  if (kind.startsWith("PREMISES_")) {
+    const action = kind === "PREMISES_RELEASE" ? "release" : kind === "PREMISES_DISCOVERY" ? "survey" : kind === "PREMISES_CERTIFICATE" ? "lease" : office2.includes("Allocation") ? "allocate" : office2.includes("Eviction") ? "evict" : office2.includes("Lease") || office2.includes("Auditor") ? "lease" : "survey";
+    return { action, room: "premises", anchor: "property" };
+  }
+  const procurement = { REQUISITION: "requisition", DELIVERY: "deliver", GLYPH_ACCEPTED: "glyph", GLYPH_ASSEMBLED: "assemble" };
+  if (procurement[kind]) return { action: procurement[kind], room: "procurement", anchor: "glyph" };
+  if (kind === "NOTARY" || kind === "EXTENDED_NOTARY") return { action: "notarize", room: "notary", anchor: "notary" };
+  if (kind === "PUBLICATION") return { action: "print", room: "publication", anchor: "printer" };
+  if (kind === "DISCLOSE_OBSERVED") return event.office.startsWith("Retained") ? { action: "memory", room: "memory", anchor: "memory" } : { action: "paper", room: "publication", anchor: "ledger" };
+  if (kind === "AUDIT_APPEND") return { action: "audit", room: "publication", anchor: "ledger" };
+  if (kind === "QUEUE_ENQUEUED") return { action: "queue", room: "publication", anchor: "queue" };
+  if (kind === "TRANSACTION_COMMIT") return { action: "commit", room: "publication", anchor: "ledger" };
+  if (kind === "TRANSACTION_CLEANUP") return { action: "cleanup", room: previous?.shot.room || "reception", anchor: previous?.shot.anchor || "desk" };
+  if (kind.includes("SUCCESSION")) return { action: "succession", room: "reception", anchor: "boundary" };
+  if (kind === "CLASSIFICATION" || kind === "EXTENDED_CLASSIFICATION") return { action: "classify", room: "reception", anchor: "desk" };
+  if (kind === "ASSEMBLY") return { action: "wire", room: "reception", anchor: "desk" };
+  if (kind === "FRAGMENT" || kind === "VISITOR") return { action: kind === "FRAGMENT" ? "fragment" : "classify", room: previous?.shot.room === "procurement" ? "procurement" : "reception", anchor: previous?.shot.room === "procurement" ? "glyph" : "desk" };
+  return { action: kind === "NUMERAL" ? "fragment" : "paper", room: "reception", anchor: "desk" };
+}
+function shotFor(room, anchor, hrIndex = -1, layout = foundingEstate) {
+  const book = addresses(layout), placement = book.placement(room), target = book.resolve({ room, station: anchor });
+  const historicNorth = layout.edition === 0 && placement.position.z > 0;
+  const alpha = (historicNorth ? Math.PI / 2 : -Math.PI / 2 + placement.yaw) + (anchor === "glyph" ? 0.22 : anchor === "notary" ? -0.22 : anchor === "queue" ? -0.14 : anchor === "personnel" ? hrIndex % 2 === 0 ? -0.12 : 0.12 : 0.1);
+  return { room, anchor, target, alpha, beta: layout.edition > 0 || historicNorth ? 0.7 : anchor === "property" ? 0.85 : 0.93, radius: anchor === "glyph" ? 3.8 : anchor === "printer" ? 3.7 : anchor === "ledger" ? 3.9 : anchor === "boundary" ? 5.5 : 4.6 };
+}
+var substantial = /* @__PURE__ */ new Set(["recruit", "survey", "evict", "lease", "glyph", "assemble", "notarize", "print", "audit", "queue", "commit", "memory"]);
+function duration(action, kind) {
+  if (kind === "PREMISES_DISCOVERY") return [1400, 800];
+  if (action === "print") return [1250, 850];
+  if (action === "notarize") return [1e3, 650];
+  if (action === "glyph") return [800, 550];
+  if (action === "recruit") return [850, 600];
+  return substantial.has(action) ? [750, 550] : [420, 360];
+}
+function planOfficeSteps(events, context, ensureDisclosure = false) {
+  const result = [], glyphs = [], hrStates = Array(7).fill(void 0);
+  let previous = context.previous, tenantCode;
+  for (const [index, event] of events.entries()) {
+    const match = event.kind === "GLYPH_ACCEPTED" ? event.finding.match(/Accepted (FizzBuzz|Fizz|Buzz) position (\d+): character (\S), SKU ([^,]+)/) : null;
+    if (match && glyphs.length < 8) glyphs.push({ product: match[1], position: Number(match[2]), character: match[3], sku: match[4] });
+    const { action, room, anchor } = identifyAction(event, previous), hrIndex = personnelOffices.indexOf(event.office), shot = shotFor(room, anchor, hrIndex);
+    const status = event.kind.slice(3);
+    if (event.kind.startsWith("HR_") && hrIndex >= 0 && ["APPROVED", "REJECTED", "NOT_REACHED"].includes(status)) hrStates[hrIndex] = status;
+    if (event.kind === "PREMISES_DISCOVERY") tenantCode = event.finding.match(/U\+[A-Fa-f0-9]{4,6}/)?.[0];
+    const same = previous?.shot.room === room && previous.shot.anchor === anchor && (action !== "recruit" || previous.hrIndex === hrIndex);
+    const distance2 = previous ? Math.hypot(previous.shot.target.x - shot.target.x, previous.shot.target.z - shot.target.z) : 0;
+    const arriveMs = same ? 0 : previous?.shot.room === room ? 620 : 1350 + Math.round(distance2 * 15);
+    const [workMs, holdMs] = duration(action, event.kind);
+    const step = { id: context.id + ":" + index, event, source: context.source || "recorded", ordinal: context.ordinal || event.ordinal || "", text: context.text || "", action, shot, hasFile: context.hasFile ?? !!context.ordinal, publication: event.kind === "PUBLICATION" || event.kind === "DISCLOSE_OBSERVED", arriveMs, workMs, holdMs, glyphs: [...glyphs], hrIndex, hrStates: [...hrStates], tenantCode };
+    if (previous) step.origin = { room: previous.shot.room, station: previous.shot.anchor, hrIndex: previous.hrIndex };
+    result.push(step);
+    previous = step;
+  }
+  if (ensureDisclosure && !result.some((s) => s.publication)) {
+    const event = { ordinal: context.ordinal || null, kind: "DISCLOSE_OBSERVED", office: "Observed Output Disclosure", finding: "Disclose the supplied text. No individual publication record accompanied this response; fresh production decisions are not inferred.", document: context.text || "" };
+    result.push(...planOfficeSteps([event], { ...context, id: context.id + ":disclosure", source: "disclosure", previous }));
+  }
+  return result;
+}
+function planFolio(folio, id, previous) {
+  const context = { id, ordinal: folio.ordinal, text: folio.text, previous, hasFile: true };
+  if (folio.cache === "HIT") return planOfficeSteps([
+    { ordinal: folio.ordinal, kind: "CACHE_RECEIPT", office: "Institutional Memory", finding: "The response reported a cache hit. This retained line requires no fresh hiring, glyph procurement or numerical audit transaction.", document: folio.text },
+    { ordinal: folio.ordinal, kind: "DISCLOSE_OBSERVED", office: "Retained Output Disclosure", finding: "Display the retained answer. This is a new UI disclosure of an already completed result.", document: folio.text }
+  ], { ...context, source: "disclosure" });
+  return planOfficeSteps(folio.events, context, true);
+}
+var stepDuration = (step) => step.arriveMs + step.workMs + step.holdMs;
+var smooth = (value) => {
+  const t = Math.max(0, Math.min(1, value));
+  return t * t * (3 - 2 * t);
+};
+function cueAt(step, elapsed) {
+  const travel = step.arriveMs ? Math.min(1, elapsed / step.arriveMs) : 1;
+  const work = Math.max(0, Math.min(1, (elapsed - step.arriveMs) / step.workMs));
+  const hold = Math.max(0, Math.min(1, (elapsed - step.arriveMs - step.workMs) / step.holdMs));
+  return { step, travel: smooth(travel), work: smooth(work), hold, phase: travel < 1 ? "arrival" : work < 1 ? "work" : "hold", complete: elapsed >= stepDuration(step) };
+}
+var ObservationClock = class {
+  elapsed = 0;
+  last;
+  allowed = false;
+  step;
+  constructor(step) {
+    this.step = step;
+  }
+  tick(now, allow, manual = false, budget = { rate: 1, maxAdvanceMs: Infinity }) {
+    const delta = this.last === void 0 || !this.allowed ? 0 : Math.max(0, now - this.last);
+    this.last = now;
+    this.allowed = allow;
+    const advance = budget.rate === Infinity ? delta > 0 ? budget.maxAdvanceMs : 0 : delta * budget.rate;
+    if (allow) this.elapsed = manual ? stepDuration(this.step) : Math.min(stepDuration(this.step), this.elapsed + Math.min(advance, budget.maxAdvanceMs));
+    return cueAt(this.step, this.elapsed);
+  }
+};
+
+// web/office-direction.ts
+var lerp = (a, b, t) => a + (b - a) * t;
+var angle = (a, b, t) => a + Math.atan2(Math.sin(b - a), Math.cos(b - a)) * t;
+var OfficeShotDirector = class {
+  key = "";
+  path = [];
+  route(step, layout) {
+    const key2 = layoutToken(layout) + "|" + step.origin?.room + "|" + step.origin?.station + "|" + step.shot.room + "|" + step.shot.anchor;
+    if (key2 !== this.key) {
+      this.key = key2;
+      this.path = step.origin ? routes(layout).route(step.origin, { room: step.shot.room, station: step.shot.anchor }) : [addresses(layout).resolve({ room: step.shot.room, station: step.shot.anchor })];
+    }
+    return this.path;
+  }
+  duration(step, layout) {
+    if (!step.origin) return step.arriveMs;
+    const same = step.origin.room === step.shot.room;
+    if (same && step.origin.station === step.shot.anchor) return step.origin.hrIndex === step.hrIndex ? 0 : 620;
+    return Math.round((same ? 650 : 1150) + routeLength(this.route(step, layout)) / 6 * 1e3);
+  }
+  minimumFrames(step, layout) {
+    if (!step.arriveMs) return 0;
+    const to = shotFor(step.shot.room, step.shot.anchor, step.hrIndex, layout), from = step.origin ? shotFor(step.origin.room, step.origin.station, step.origin.hrIndex, layout) : { alpha: -Math.PI / 2.6, beta: 0.88, radius: 33 };
+    const rotation = Math.abs(Math.atan2(Math.sin(to.alpha - from.alpha), Math.cos(to.alpha - from.alpha)));
+    return Math.ceil(Math.max(18, routeLength(this.route(step, layout)) / 0.4, rotation / 0.045, Math.abs(to.beta - from.beta) / 0.025, Math.abs(to.radius - from.radius) / 0.65));
+  }
+  pose(cue, layout) {
+    const step = cue.step, to = shotFor(step.shot.room, step.shot.anchor, step.hrIndex, layout), t = cue.travel;
+    const from = step.origin ? shotFor(step.origin.room, step.origin.station, step.origin.hrIndex, layout) : { ...to, target: { x: 0, y: 0.2, z: 0 }, alpha: -Math.PI / 2.6, beta: 0.88, radius: 33 };
+    const p = pointAlong(this.route(step, layout), t), cross = !!step.origin && step.origin.room !== step.shot.room;
+    const target = step.origin ? { x: p.x, y: lerp(from.target.y, to.target.y, t) + Math.sin(t * Math.PI) * 0.3, z: p.z } : { x: lerp(0, to.target.x, t), y: lerp(0.2, to.target.y, t), z: lerp(0, to.target.z, t) };
+    return { target, file: { x: p.x, y: 0, z: p.z }, alpha: angle(from.alpha, to.alpha, t), beta: lerp(from.beta, to.beta, t) - (cross ? Math.sin(t * Math.PI) * 0.12 : 0), radius: lerp(from.radius, to.radius, t) + (cross ? Math.sin(t * Math.PI) * 5 : 0) };
+  }
+};
+function rebaseObservation(elapsed, oldArrival, newArrival) {
+  return elapsed < oldArrival && oldArrival > 0 ? elapsed / oldArrival * newArrival : Math.max(0, elapsed - oldArrival) + newArrival;
+}
+
+// web/office-cadence.ts
+function officeCadenceRate(value) {
+  return value === "1800" ? 0.5 : value === "225" ? 2 : value === "0" ? Infinity : 1;
+}
+var movingWork = /* @__PURE__ */ new Set(["wire", "recruit", "survey", "evict", "lease", "release", "deliver", "glyph", "assemble", "notarize", "print", "audit", "queue", "commit", "succession", "memory"]);
+var OfficeCadenceGovernor = class {
+  quality = "standard";
+  interval = 1e3 / 60;
+  cost = 0;
+  samples = 0;
+  slow = 0;
+  recovered = 0;
+  observeFrame(intervalMs, renderMs) {
+    if (intervalMs <= 0) return false;
+    this.interval += 0.15 * (Math.min(100, intervalMs) - this.interval);
+    this.cost += 0.15 * (Math.min(100, Math.max(0, renderMs)) - this.cost);
+    this.samples++;
+    const struggling = this.interval > 28 || this.cost > 18;
+    this.slow = struggling ? this.slow + 1 : 0;
+    this.recovered = !struggling && this.interval < 20 && this.cost < 10 ? this.recovered + 1 : 0;
+    const before = this.quality;
+    if (this.samples >= 12 && this.slow >= 12) this.quality = "economy";
+    else if (this.quality === "economy" && this.recovered >= 180) this.quality = "standard";
+    return before !== this.quality;
+  }
+  budget(value, step, elapsed, arrivalFrames, painted, reducedMotion = false) {
+    const rate = officeCadenceRate(value);
+    if (!painted) return { rate, maxAdvanceMs: Infinity };
+    let duration2, end, frames;
+    if (elapsed < step.arriveMs) {
+      duration2 = step.arriveMs;
+      end = step.arriveMs;
+      frames = arrivalFrames;
+    } else if (elapsed < step.arriveMs + step.workMs) {
+      duration2 = step.workMs;
+      end = step.arriveMs + step.workMs;
+      frames = movingWork.has(step.action) ? 16 : 8;
+    } else {
+      duration2 = step.holdMs;
+      end = step.arriveMs + step.workMs + step.holdMs;
+      frames = 2;
+    }
+    return { rate, maxAdvanceMs: Math.max(0, Math.min(end - elapsed, duration2 / Math.max(1, reducedMotion ? 1 : frames))) };
+  }
+};
+
+// web/office-supervision.ts
+var element = (id) => document.getElementById(id);
+var OfficeSupervisionDesk = class {
+  constructor(authority) {
+    this.authority = authority;
+    officeHeist.subscribe(() => this.updateScene());
+    officeEstate.subscribe((event) => {
+      this.updateScene();
+      if (event.kind === "committed") {
+        const label = element("supervision-current").querySelector("strong"), step = this.activeStep || this.lastStep;
+        if (label && step) label.textContent = label.textContent.replace(/ · Address [A-D][1-3]$/, " \xB7 Address " + officeEstate.current.placements.find((p) => p.room === step.shot.room).address);
+      }
+      if (event.kind !== "progress") {
+        this.syncControls();
+        this.authority.wake();
+      }
+    });
+    this.checkbox.addEventListener("change", () => this.applyMode(true));
+    this.cadence.addEventListener("change", () => {
+      this.pane.dataset.cadence = this.cadence.value;
+      this.authority.wake();
+    });
+    element("supervision-autonomy").addEventListener("click", () => {
+      this.disable();
+      this.checkbox.focus();
+    });
+    element("supervision-pause").addEventListener("click", () => {
+      if (this.authority.reading()) this.authority.pause(!this.authority.paused());
+    });
+    element("supervision-next").addEventListener("click", () => {
+      if (!this.authority.reading() || !this.authority.paused() || officeEstate.moving || officeHeist.active) return;
+      if (!element("office-fullscreen").open) element("mandate-output").scrollIntoView({ block: "start", behavior: "instant" });
+      this.credits = 1;
+      this.authority.wake();
+    });
+    const resize = new ResizeObserver(() => {
+      this.renderer?.resize();
+      this.activity();
+    });
+    resize.observe(element("supervision-stage"));
+    new IntersectionObserver(() => this.activity(), { threshold: [0, 0.15] }).observe(element("supervision-stage"));
+    document.addEventListener("visibilitychange", () => this.activity(true));
+    document.addEventListener("site-page-change", () => this.activity(true));
+    addEventListener("pageshow", () => this.activity(true));
+    document.addEventListener("demo-desk-change", () => this.activity());
+    document.addEventListener("demo-watch-layout", () => {
+      this.activity();
+      requestAnimationFrame(() => this.renderer?.resize());
+    });
+    document.addEventListener("office-fullscreen-change", () => {
+      this.activity();
+      requestAnimationFrame(() => this.renderer?.resize());
+    });
+    this.media.addEventListener("change", () => this.updateScene());
+    addEventListener("pagehide", () => {
+      this.interrupt();
+      this.renderer?.dispose();
+      clearTimeout(this.readiness);
+    }, { once: true });
+    this.applyMode(false);
+  }
+  authority;
+  checkbox = element("executive-hovering");
+  cadence = element("display-speed");
+  pane = element("supervision-pane");
+  canvas = element("supervision-canvas");
+  media = matchMedia("(prefers-reduced-motion: reduce)");
+  normalPaceHelp = element("pace-help").textContent || "";
+  governor = new OfficeCadenceGovernor();
+  paintedAt = 0;
+  paintedCue;
+  renderer;
+  module;
+  loading;
+  ready = false;
+  fallback = false;
+  sceneActive = false;
+  sceneStartedAt = 0;
+  readiness;
+  epoch = 0;
+  serial = 0;
+  cancelFrame;
+  credits = 0;
+  scheduler = new PresentationScheduler(() => this.visible());
+  envelope;
+  prefixDone = false;
+  suffixDone = false;
+  lastStep;
+  activeStep;
+  latestCue;
+  packet;
+  packetContexts = /* @__PURE__ */ new WeakMap();
+  folio;
+  published = false;
+  companion;
+  mandate = "15";
+  mode = "mandate";
+  observed = 0;
+  get enabled() {
+    return this.checkbox.checked;
+  }
+  get generation() {
+    return this.epoch;
+  }
+  get hasStepCredit() {
+    return this.credits > 0;
+  }
+  disable() {
+    officeHeist.finish("skipped");
+    officeEstate.finish();
+    if (!this.enabled) return;
+    this.checkbox.checked = false;
+    this.applyMode(false);
+    this.authority.wake();
+  }
+  applyMode(user) {
+    this.cadence.disabled = false;
+    this.pane.dataset.cadence = this.cadence.value;
+    this.pane.dataset.renderQuality = this.governor.quality;
+    if (this.enabled) {
+      this.pane.hidden = false;
+      element("mandate-output").dataset.supervised = "true";
+      element("pace-help").textContent = "Full Board Ratification doubles each deliberation. Interdepartmental Sign-Off preserves established ceremony; Emergency Delegated Authority halves it. Executive Fiat uses the fastest pace the office can present smoothly. Change cadence at any time; every recorded decision keeps its place.";
+      if (!this.authority.reading()) this.current("Executive oversight is standing by for supplied proceedings. Run or replay a mandate to begin a new observation.");
+      void this.ensureScene();
+    } else {
+      this.interrupt();
+      this.pane.hidden = true;
+      delete element("mandate-output").dataset.supervised;
+      element("pace-help").textContent = this.normalPaceHelp;
+    }
+    this.activity();
+    this.syncControls();
+    document.dispatchEvent(new Event("demo-presentation-change"));
+    if (user) this.authority.wake();
+  }
+  syncControls() {
+    const reading2 = this.authority.reading(), paused2 = this.authority.paused();
+    const button = element("supervision-pause");
+    playbackIcon(button, paused2 ? "play" : "pause", paused2 ? "Resume" : "Pause");
+    button.setAttribute("aria-disabled", String(!reading2));
+    button.setAttribute("aria-pressed", String(paused2));
+    element("supervision-next").setAttribute("aria-disabled", String(!reading2 || !paused2 || officeEstate.moving || officeHeist.active));
+    if (officeEstate.moving && reading2) this.authority.notice("Facilities has suspended disclosure while all eight departments reconsider their addresses. Your pause and current decision are retained.");
+    else if (officeHeist.active && reading2) this.authority.notice("The approval stamp is missing. Proceedings will resume at this decision when the chase resolves. Your Pause setting is retained.");
+  }
+  begin(mandate, mode = "mandate") {
+    this.interrupt();
+    this.mandate = mandate;
+    this.mode = mode;
+    this.envelope = void 0;
+    this.packet = void 0;
+    this.prefixDone = false;
+    this.suffixDone = false;
+    this.lastStep = void 0;
+    this.activeStep = void 0;
+    this.folio = void 0;
+    this.published = false;
+    this.companion = void 0;
+    this.observed = 0;
+    this.pane.dataset.observedSteps = "0";
+    this.pane.dataset.state = "waiting";
+    this.current("Reception is accepting the mandate. The executive is withholding trust.");
+    this.renderer?.direct(null);
+    this.updateScene();
+    this.syncControls();
+  }
+  interrupt() {
+    officeHeist.finish("cancelled");
+    officeEstate.finish();
+    this.epoch++;
+    this.credits = 0;
+    this.latestCue = void 0;
+    this.cancelFrame?.();
+    this.cancelFrame = void 0;
+    this.scheduler.cancel();
+    this.pane.dataset.state = "stopped";
+  }
+  receive(packet, start, count) {
+    this.packet = packet;
+    this.packetContexts.set(packet, { start, count });
+    this.envelope = observationEnvelope(packet, start, count);
+    this.prefixDone = false;
+    this.suffixDone = false;
+    this.serial++;
+  }
+  async prelude(current) {
+    if (!this.enabled || this.prefixDone || !this.envelope) return;
+    this.prefixDone = true;
+    this.folio = void 0;
+    this.companion = void 0;
+    this.published = false;
+    const steps = planOfficeSteps(this.envelope.prefix, { id: "prelude-" + this.serial, hasFile: false, previous: this.lastStep });
+    await this.play(steps, current);
+  }
+  async observe(folio, current, publish) {
+    if (!this.enabled) return;
+    if (folio.packet && folio.packet !== this.packet) {
+      await this.finishPacket(current);
+      if (!current() || !this.enabled) return;
+      const context = this.packetContexts.get(folio.packet);
+      this.receive(folio.packet, context?.start || folio.ordinal, context?.count || 1);
+    }
+    await this.prelude(current);
+    if (!current() || !this.enabled) return;
+    this.folio = folio;
+    this.published = false;
+    this.companion = void 0;
+    await this.play(planFolio(folio, "folio-" + this.serial + "-" + folio.ordinal, this.lastStep), current, () => {
+      if (!current()) return;
+      this.published = true;
+      publish();
+      this.updateScene();
+    });
+  }
+  async finishPacket(current) {
+    if (!this.enabled || !this.envelope || this.suffixDone) return;
+    await this.prelude(current);
+    if (!current() || !this.enabled) return;
+    this.suffixDone = true;
+    this.folio = void 0;
+    this.companion = void 0;
+    this.published = false;
+    await this.play(planOfficeSteps(this.envelope.suffix, { id: "conclusion-" + this.serial, hasFile: false, previous: this.lastStep }), current);
+  }
+  async rehearsal(event, current, preceding = []) {
+    if (!this.enabled) return;
+    this.folio = void 0;
+    this.companion = void 0;
+    this.published = false;
+    await this.play(planOfficeSteps([...preceding, event], { id: "rehearsal-" + ++this.serial, source: "rehearsal", hasFile: false, previous: this.lastStep }).slice(-1), current, void 0, preceding.length, 7);
+  }
+  remember(discovery) {
+    if (!this.published || discovery.mandate !== this.mandate || discovery.assignment.ordinal !== this.folio?.ordinal) return;
+    this.companion = discovery;
+    this.updateScene();
+  }
+  clearCompanions() {
+    this.companion = void 0;
+    this.updateScene();
+  }
+  complete() {
+    if (this.enabled) {
+      this.pane.dataset.state = "complete";
+      this.current("Observation is complete. The company is still withholding trust.");
+    }
+    this.syncControls();
+  }
+  current(text2) {
+    element("supervision-current").textContent = text2;
+  }
+  sceneState(step = this.activeStep || this.lastStep) {
+    return { room: step?.shot.room || "reception", route: [], ordinal: this.folio?.ordinal || "", text: this.published ? this.folio?.text || "" : "PENDING", emoji: this.companion?.companion.emoji, companionName: this.companion?.companion.name, paused: true, reducedMotion: this.media.matches, quality: this.governor.quality, seed: tourSeed(this.mandate), layout: officeEstate.displayed, relocation: officeEstate.relocation, heist: officeHeist.snapshot };
+  }
+  painted(frame) {
+    this.paintedAt = frame.now;
+    this.paintedCue = frame.cue;
+    if (this.governor.observeFrame(frame.intervalMs, frame.renderMs)) {
+      this.pane.dataset.renderQuality = this.governor.quality;
+      this.updateScene();
+    }
+  }
+  updateScene(step = this.activeStep || this.lastStep) {
+    try {
+      this.renderer?.update(this.sceneState(step));
+    } catch {
+      this.graphicsFailure();
+    }
+  }
+  visible() {
+    if (!this.enabled || document.hidden || document.querySelector("dialog[open]:not(#office-fullscreen)")) return false;
+    if (document.body.classList.contains("demo-page") && document.body.dataset.desk !== "observe") return false;
+    const rect = element("supervision-stage").getBoundingClientRect(), bottom = innerHeight - (document.querySelector("#discovery-register")?.getBoundingClientRect().height || 0);
+    return rect.width > 0 && Math.min(rect.bottom, bottom) - Math.max(rect.top, 0) >= Math.min(60, rect.height * 0.2);
+  }
+  activity(force = false) {
+    const rect = this.canvas.getBoundingClientRect(), active = this.visible() && !this.canvas.hidden && rect.width > 0 && rect.height > 0;
+    if (force || active !== this.sceneActive) {
+      this.sceneActive = active;
+      this.sceneStartedAt = performance.now();
+      if (force && active) this.renderer?.active(false);
+      this.renderer?.active(active);
+      if (active) this.renderer?.resize();
+    }
+    if (active && this.ready && !this.fallback && performance.now() - Math.max(this.sceneStartedAt, this.paintedAt) > 3e3) {
+      this.graphicsFailure();
+      return;
+    }
+    this.scheduler.refresh();
+  }
+  armReadiness() {
+    clearTimeout(this.readiness);
+    this.readiness = setTimeout(() => {
+      if (this.ready || !this.enabled) return;
+      if (this.sceneActive) this.graphicsFailure();
+      else this.armReadiness();
+    }, 2e4);
+  }
+  async ensureScene() {
+    if (this.renderer) {
+      this.activity();
+      this.renderer.resize();
+      return;
+    }
+    if (this.fallback) return;
+    if (this.loading) return this.loading;
+    this.loading = (async () => {
+      try {
+        this.module ||= import(releaseAsset("office-world.js").href);
+        const module = await this.module;
+        if (!this.enabled) return;
+        this.canvas.hidden = false;
+        this.canvas.dataset.module = releaseAsset("office-world.js").href;
+        this.canvas.dataset.renderer = "babylon";
+        this.renderer = module.createOffice({ canvas: this.canvas, state: this.sceneState(), interactive: false, onRoom: () => {
+        }, onProp: () => {
+        }, onStep: () => {
+        }, onView: () => {
+        }, onHeistSuspect: (index, id) => officeHeist.intercept(index, id), onHeistFootprint: () => officeHeist.follow(), onFrame: (frame) => this.painted(frame), onReady: () => {
+          this.ready = true;
+          if (this.latestCue) this.renderer?.direct(this.latestCue);
+          clearTimeout(this.readiness);
+          const loading = element("supervision-loading"), focused = loading.contains(document.activeElement);
+          loading.hidden = true;
+          if (focused) element("supervision-title").focus({ preventScroll: true });
+        }, onProblem: () => this.graphicsFailure() });
+        this.sceneActive = !this.visible();
+        this.activity();
+        this.renderer.resize();
+        this.armReadiness();
+      } catch {
+        this.module = void 0;
+        this.graphicsFailure();
+      }
+    })().finally(() => {
+      this.loading = void 0;
+    });
+    return this.loading;
+  }
+  graphicsFailure() {
+    clearTimeout(this.readiness);
+    const renderer = this.renderer;
+    this.renderer = void 0;
+    this.ready = true;
+    this.fallback = true;
+    this.canvas.hidden = true;
+    this.canvas.dataset.renderer = "evidence";
+    try {
+      renderer?.dispose();
+    } catch {
+    }
+    this.activity();
+    if (document.activeElement === this.canvas) element("supervision-title").focus({ preventScroll: true });
+    const loading = element("supervision-loading");
+    loading.hidden = false;
+    const retry = node("button", "Requisition another graphics attempt");
+    retry.type = "button";
+    retry.addEventListener("click", () => {
+      this.fallback = false;
+      this.ready = false;
+      this.module = void 0;
+      this.canvas.removeAttribute("data-rendered");
+      loading.replaceChildren(node("p", "Facilities is arranging another graphics interview\u2026"));
+      element("supervision-title").focus({ preventScroll: true });
+      void this.ensureScene();
+    });
+    loading.replaceChildren(node("p", "The 3D display is unavailable. Executive observation continues through the supplied evidence below. The numbers remain employable."), retry);
+  }
+  show(step, index, total) {
+    this.activeStep = step;
+    this.pane.dataset.room = step.shot.room;
+    document.dispatchEvent(new CustomEvent("office-location", { detail: { view: "supervision" } }));
+    this.pane.dataset.kind = step.event.kind;
+    this.pane.dataset.ordinal = step.ordinal;
+    this.pane.dataset.action = step.action;
+    this.pane.dataset.state = "running";
+    const status = element("supervision-current");
+    status.replaceChildren(node("strong", index + 1 + " / " + total + " \xB7 " + step.event.office + " \xB7 Address " + officeEstate.current.placements.find((p) => p.room === step.shot.room).address), document.createTextNode(step.event.finding));
+    this.authority.notice((this.authority.paused() ? "Paused observation" : "Observing") + " \xB7 " + (index + 1) + " / " + total + " \xB7 " + step.event.office);
+    element("supervision-caption").scrollTop = 0;
+    const source = step.source === "rehearsal" ? "Read-only personnel specimen. Numerical output is retained." : step.source === "disclosure" ? "Observed result or cache receipt. Fresh production work is not inferred." : this.mode === "replay" ? "Retained Java evidence. No business operation is being repeated." : "Recorded Java evidence. The operation has already completed; its UI disclosure is being choreographed.";
+    element("supervision-source").textContent = source + (this.envelope?.omitted ? " The source dossier omitted " + this.envelope.omitted + " entries; absent work is not reconstructed." : "");
+    element("supervision-document").textContent = JSON.stringify(step.event, null, 2).slice(0, 12e3);
+    const progress = element("supervision-progress");
+    progress.max = total;
+    progress.value = index;
+    progress.setAttribute("aria-label", "Observed decisions" + (step.ordinal ? " for ordinal " + step.ordinal : ""));
+    this.updateScene(step);
+  }
+  async play(steps, current, publish, offset = 0, total = steps.length) {
+    const epoch = this.epoch;
+    void this.ensureScene();
+    if (epoch !== this.epoch || !current() || !this.enabled) return;
+    for (const [index, step] of steps.entries()) {
+      if (epoch !== this.epoch || !current() || !this.enabled) return;
+      const done = await this.playOne(step, index + offset, total, epoch, current, publish);
+      if (!done) return;
+      this.lastStep = step;
+    }
+  }
+  playOne(step, index, total, epoch, current, publish) {
+    return new Promise((resolve) => {
+      const director = new OfficeShotDirector();
+      step = { ...step, arriveMs: director.duration(step, officeEstate.current) };
+      let layoutKey = layoutToken(officeEstate.current), arrivalFrames = director.minimumFrames(step, officeEstate.current);
+      const clock = new ObservationClock(step);
+      let shown = false, published = false, manual = false, settled = false, clockAt = 0;
+      const finish = (ok) => {
+        if (settled) return;
+        settled = true;
+        this.scheduler.cancel();
+        if (this.cancelFrame === cancel) this.cancelFrame = void 0;
+        resolve(ok);
+      };
+      const cancel = () => finish(false);
+      this.cancelFrame = cancel;
+      const frame = (now) => {
+        if (epoch !== this.epoch || !this.enabled || !current()) {
+          finish(false);
+          return;
+        }
+        const key2 = layoutToken(officeEstate.current);
+        if (key2 !== layoutKey) {
+          const arrival = director.duration(step, officeEstate.current);
+          clock.elapsed = rebaseObservation(clock.elapsed, step.arriveMs, arrival);
+          step.arriveMs = arrival;
+          arrivalFrames = director.minimumFrames(step, officeEstate.current);
+          layoutKey = key2;
+          this.updateScene(step);
+        }
+        this.activity();
+        const moving = officeEstate.moving || officeHeist.active, paused2 = this.authority.paused();
+        if (!shown) {
+          if (!moving && (!paused2 || this.credits > 0)) {
+            shown = true;
+            this.show(step, index, total);
+          } else {
+            this.scheduler.request(frame);
+            return;
+          }
+        }
+        if (!moving && paused2 && this.credits > 0) {
+          this.credits = 0;
+          manual = true;
+        }
+        const allow = !moving && (!paused2 || manual);
+        const painting = this.sceneActive && this.ready && !this.fallback;
+        clockAt = Math.max(clockAt, painting ? this.paintedAt : now);
+        const cue = clock.tick(clockAt, allow, manual, this.governor.budget(this.cadence.value, step, clock.elapsed, arrivalFrames, this.sceneActive, this.media.matches));
+        this.latestCue = cue;
+        if (this.ready) this.renderer?.direct(cue);
+        if (this.pane.dataset.phase !== cue.phase) {
+          this.pane.dataset.phase = cue.phase;
+          element("supervision-progress").title = cue.phase === "arrival" ? "Arriving at the next office" : cue.phase === "work" ? "The supplied decision is being illustrated" : "A mandatory opportunity for executive contemplation";
+        }
+        if (!moving && step.publication && !published && clock.elapsed >= step.arriveMs + step.workMs && (!painting || manual || this.paintedCue?.step.id === step.id && this.paintedCue.work === 1)) {
+          published = true;
+          publish?.();
+        }
+        if (cue.complete) {
+          const acknowledge = () => {
+            if (epoch !== this.epoch || !current()) {
+              finish(false);
+              return;
+            }
+            this.activity();
+            if (officeEstate.moving || officeHeist.active || this.sceneActive && this.ready && !this.fallback && !manual && (this.paintedCue?.step.id !== step.id || !this.paintedCue.complete)) {
+              this.scheduler.request(acknowledge);
+              return;
+            }
+            if (step.publication && !published) {
+              published = true;
+              publish?.();
+            }
+            this.observed++;
+            this.pane.dataset.observedSteps = String(this.observed);
+            this.pane.dataset.state = "held";
+            element("supervision-progress").value = index + 1;
+            finish(true);
+          };
+          this.scheduler.request(acknowledge);
+        } else this.scheduler.request(frame);
+      };
+      this.scheduler.request(frame);
+    });
+  }
+};
+
+// web/office-relocation.ts
+var reduced = matchMedia("(prefers-reduced-motion: reduce)");
+function visible() {
+  if (document.hidden) return false;
+  if (document.querySelector("dialog[open]:not(#office-modal):not(#office-fullscreen)")) return false;
+  return ["office-stage", "supervision-stage"].some((id) => {
+    const el = document.getElementById(id);
+    if (!el || el.closest("[hidden]")) return false;
+    const r = el.getBoundingClientRect();
+    return r.width > 0 && Math.min(r.bottom, innerHeight) - Math.max(r.top, 0) > Math.min(60, r.height * 0.2);
+  });
+}
+var scheduler2 = new PresentationScheduler(visible);
+function tick2(now) {
+  if (!officeEstate.moving) return;
+  if (reduced.matches || document.getElementById("office-motion")?.checked === false) {
+    officeEstate.finish();
+    return;
+  }
+  officeEstate.advance(now, true);
+  if (officeEstate.moving) scheduler2.request(tick2);
+}
+officeEstate.subscribe((event) => {
+  if (event.kind === "staged") scheduler2.request(tick2);
+  else if (event.kind === "committed" || event.kind === "cancelled") scheduler2.cancel();
+});
+for (const event of ["visibilitychange", "site-page-change", "demo-desk-change", "demo-watch-layout", "office-fullscreen-change"]) document.addEventListener(event, () => scheduler2.refresh());
+reduced.addEventListener("change", () => {
+  if (reduced.matches) officeEstate.finish();
+});
+addEventListener("pagehide", () => {
+  scheduler2.cancel();
+  officeEstate.finish();
+}, { once: true });
+function requestReorganization() {
+  officeEstate.request();
+  if (reduced.matches) officeEstate.finish();
+}
+
+// web/office-reorganization.ts
+var announcement = node("p");
+announcement.className = "estate-announcement";
+announcement.setAttribute("role", "status");
+announcement.setAttribute("aria-live", "polite");
+announcement.setAttribute("aria-atomic", "true");
+document.body.append(announcement);
+var announce = (text2) => {
+  const parent = document.querySelector("#office-fullscreen[open] #office-fullscreen-surface, #office-modal[open]") || document.body;
+  if (announcement.parentElement !== parent) parent.append(announcement);
+  if (announcement.textContent !== text2) announcement.textContent = text2;
+};
+var ReorganizationPanel = class {
+  constructor(container) {
+    this.container = container;
+    container.classList.add("reorganization-panel");
+    this.button.type = "button";
+    this.button.className = "button button-secondary";
+    this.button.addEventListener("click", () => {
+      if (officeEstate.moving) return;
+      try {
+        requestReorganization();
+      } catch (error) {
+        this.status.textContent = error instanceof Error ? error.message : "Facilities has deferred certainty.";
+        announce(this.status.textContent);
+      }
+    });
+    this.status.className = "field-help";
+    this.notice.className = "field-help";
+    const summary = node("summary", "Inspect the current workplace arrangement");
+    summary.addEventListener("click", (event) => {
+      if (!this.details.open && this.firstOpen) {
+        event.preventDefault();
+        this.expand();
+      }
+    });
+    this.details.append(summary);
+    this.map.className = "estate-map";
+    this.map.setAttribute("role", "list");
+    this.map.setAttribute("aria-label", "Current estate floorplan");
+    this.table.className = "estate-addresses";
+    this.scroll.className = "estate-minutes";
+    this.scroll.tabIndex = 0;
+    this.scroll.setAttribute("role", "region");
+    this.scroll.setAttribute("aria-label", "Minutes of Spatial Achievement");
+    this.scroll.append(this.empty, this.minutes);
+    this.perk.hidden = true;
+    this.perk.className = "estate-perk";
+    const share = node("input");
+    share.type = "url";
+    share.hidden = true;
+    share.readOnly = true;
+    share.setAttribute("aria-label", "Reorganization visit link");
+    const copy = node("button", "Copy This Approved Chaos");
+    copy.type = "button";
+    copy.addEventListener("click", async () => {
+      const input = document.getElementById("limit"), authority = document.getElementById("authorize-companion-strategy") || document.getElementById("companion-strategy");
+      let mandate = "15";
+      try {
+        mandate = String(parseMandate(input.value));
+      } catch {
+      }
+      const room = document.getElementById(this.view === "office" ? "office-experience" : "supervision-pane")?.dataset.room || "reception";
+      const visit = this.view === "office" ? document.getElementById("office-share-link").value : officeShare(scope, mandate, room, void 0, authority.value, void 0, layoutToken(officeEstate.current));
+      const currentVisit = new URL(visit);
+      currentVisit.searchParams.set("limit", mandate);
+      currentVisit.searchParams.set("authority", authority.value);
+      currentVisit.searchParams.set("estate", layoutToken(officeEstate.current));
+      share.value = currentVisit.href;
+      share.hidden = false;
+      try {
+        await navigator.clipboard.writeText(currentVisit.href);
+        announce("Approved chaos copied. The link reproduces this estate and prefills a mandate; it never starts counting automatically.");
+      } catch {
+        share.focus();
+        share.select();
+        announce("Copy the selected visit link using your browser copy command.");
+      }
+    });
+    const sharing = node("div");
+    sharing.className = "estate-controls estate-sharing";
+    sharing.append(copy, share);
+    this.details.append(sharing, this.map, this.perk, this.table, node("h3", "Minutes of Spatial Achievement"), node("p", "The latest ten transformations are retained in this tab. These distances describe illustrated desk-to-desk paper routes in scene units; they are not service response times."), this.scroll);
+    this.skip.type = "button";
+    this.skip.addEventListener("click", () => {
+      this.button.focus({ preventScroll: true });
+      officeEstate.finish();
+    });
+    this.progress.max = 1;
+    this.progress.setAttribute("aria-label", "Facilities relocation progress");
+    const controls = node("div");
+    controls.className = "estate-controls";
+    controls.append(this.button, this.skip, this.progress);
+    container.append(node("p", "Facilities improves the same eight departments by putting them somewhere else. Each announcement alternates a 2\xD74 estate with a 3\xD73 estate, sometimes making room for a thoroughly conditional perk. Disclosure waits during the move; Java does no additional work."), controls, this.status, this.notice, this.details);
+    officeEstate.subscribe((event) => {
+      this.transaction();
+      if (event.kind === "committed" || event.kind === "cancelled") this.render();
+      if (event.kind === "committed") announce("Facilities declares victory. " + estateLabel(officeEstate.current) + ". Proceedings may resume at the interrupted decision.");
+    });
+    document.addEventListener("office-location", (event) => {
+      const detail = event.detail;
+      if (detail.view === this.view) this.highlight();
+    });
+    document.addEventListener("office-amenity", (event) => {
+      if (event.detail === this.view) {
+        this.expand();
+        this.inspectAmenity(this.details.querySelector("summary"));
+      }
+    });
+    this.render();
+    this.transaction();
+  }
+  container;
+  button = node("button", "Announce Another Reorganization");
+  status = node("p");
+  notice = node("p");
+  details = node("details");
+  table = node("table");
+  skip = node("button", "Waive the Moving Ceremony");
+  progress = node("progress");
+  phase = "";
+  map = node("ol");
+  minutes = node("ol");
+  scroll = node("div");
+  memoNodes = /* @__PURE__ */ new Map();
+  empty = node("p", "No transformations are recorded yet. The company is coping with the unsettling adequacy of its existing furniture.");
+  firstOpen = true;
+  perk = node("section");
+  perkTrigger;
+  expand() {
+    const first = this.firstOpen;
+    this.firstOpen = false;
+    this.details.open = true;
+    if (first) this.scroll.scrollTop = this.scroll.scrollHeight;
+  }
+  get view() {
+    return this.container.id.startsWith("supervision") ? "supervision" : "office";
+  }
+  setReading(_reading) {
+    this.button.title = "Authorize a new arrangement of the same responsibilities. Current proceedings wait for Facilities.";
+  }
+  transaction() {
+    const r = officeEstate.relocation;
+    this.button.setAttribute("aria-disabled", String(!!r));
+    if (!r && document.activeElement === this.skip) this.button.focus({ preventScroll: true });
+    this.skip.hidden = !r;
+    this.progress.hidden = !r;
+    if (!r) {
+      this.phase = "";
+      return;
+    }
+    this.progress.value = r.progress;
+    this.container.dataset.relocationPhase = r.phase;
+    if (this.phase !== r.phase) {
+      this.phase = r.phase;
+      const text2 = { packing: "Packing every department. Responsibilities are being carefully separated from accountability.", moving: "All eight offices are in transit. The moving boxes have been granted acting management authority.", unpacking: "Unpacking the approved future. These addresses remain provisional until Facilities declares victory.", returning: "Returning to the interrupted decision. No work has been repeated; no responsibility has been reduced." }[r.phase];
+      this.status.textContent = text2;
+      announce(text2);
+    }
+  }
+  highlight() {
+    const room = document.getElementById(this.view === "office" ? "office-experience" : "supervision-pane")?.dataset.room || "reception";
+    for (const cell of this.map.children) {
+      if (cell.dataset.room === room) cell.setAttribute("aria-current", "location");
+      else cell.removeAttribute("aria-current");
+    }
+  }
+  inspectAmenity(trigger) {
+    const l = officeEstate.current;
+    if (!l.amenity) return;
+    this.perkTrigger = trigger;
+    const specimen = amenities[l.amenity.kind], title2 = node("h3", specimen.name + " \xB7 " + estateLabel(l) + " / " + l.amenity.address), answer = node("p");
+    answer.setAttribute("role", "status");
+    answer.setAttribute("aria-live", "polite");
+    answer.setAttribute("aria-atomic", "true");
+    title2.tabIndex = -1;
+    const actions = node("div");
+    actions.className = "estate-controls";
+    for (const action of specimen.actions) {
+      const button = node("button", action.label);
+      button.type = "button";
+      button.addEventListener("click", () => answer.textContent = action.answer);
+      actions.append(button);
+    }
+    const close = node("button", "Close amenity inspection");
+    close.type = "button";
+    close.addEventListener("click", () => {
+      this.perk.hidden = true;
+      (this.perkTrigger?.isConnected ? this.perkTrigger : this.details.querySelector("summary"))?.focus({ preventScroll: true });
+    });
+    this.perk.replaceChildren(title2, node("p", "Fictional Facilities specimen. This perk has no role in the recorded numerical proceedings."), node("p", specimen.story), actions, answer, close);
+    this.perk.hidden = false;
+    title2.focus({ preventScroll: true });
+    this.perk.scrollIntoView({ block: "nearest", behavior: "instant" });
+  }
+  appendMemo(m) {
+    const li = node("li");
+    li.append(node("h4", "Transformation " + m.to.edition + ": " + m.title), node("p", m.rationale), node("p", m.finding + " Mean illustrated commute: " + m.before.toFixed(1) + " \u2192 " + m.after.toFixed(1) + " scene units."));
+    const moves = node("ul");
+    for (const p of m.to.placements) {
+      const name = rooms.find((r) => r.id === p.room).short;
+      moves.append(node("li", name + ": " + qualifiedAddress(m.from, p.room) + " \u2192 " + qualifiedAddress(m.to, p.room)));
+    }
+    li.append(moves);
+    this.minutes.append(li);
+    this.memoNodes.set(m.to.edition, li);
+  }
+  render() {
+    const l = officeEstate.current;
+    delete this.container.dataset.relocationPhase;
+    this.status.textContent = estateLabel(l) + (l.amenity ? " \xB7 " + l.amenity.kind + " at " + l.amenity.address : " \xB7 all available space is committed to seriousness");
+    this.container.dataset.estateEdition = String(l.edition);
+    this.notice.textContent = estateRecords.notice;
+    this.notice.hidden = !estateRecords.notice;
+    const head = node("thead"), row = node("tr");
+    for (const name of ["Department", "Address", "Partition policy"]) {
+      const th = node("th", name);
+      th.scope = "col";
+      row.append(th);
+    }
+    head.append(row);
+    const body = node("tbody"), cells = [];
+    for (let slot = 0; slot < l.rows * l.columns; slot++) {
+      const p = l.placements.find((p2) => p2.slot === slot), cell = node("li");
+      if (p) {
+        cell.dataset.room = p.room;
+        const theme = partitionStyles.find((s) => s.id === p.partition), name = rooms.find((r) => r.id === p.room).short;
+        cell.append(node("strong", p.address), node("span", name));
+        const tr = node("tr");
+        tr.append(node("td", name), node("td", p.address), node("td", theme ? theme.name + " \xB7 " + theme.claim : "Founding architectural certainty"));
+        body.append(tr);
+      } else if (l.amenity) {
+        const a = l.amenity, button = node("button", "Inspect " + a.kind + " at " + a.address);
+        button.type = "button";
+        button.addEventListener("click", () => this.inspectAmenity(button));
+        cell.append(node("strong", a.address), button);
+        const tr = node("tr");
+        tr.append(node("td", a.kind === "atrium" ? "Atrium: Chief Growth Officer in residence" : "Breakroom: mandatory optional restoration"), node("td", a.address), node("td", "The company is accommodating the appearance of a perk."));
+        body.append(tr);
+      }
+      cells.push(cell);
+    }
+    if (this.map.contains(document.activeElement)) {
+      this.details.querySelector("summary")?.focus({ preventScroll: true });
+    }
+    this.map.style.setProperty("--estate-columns", String(l.columns));
+    this.map.replaceChildren(...cells);
+    this.map.setAttribute("aria-label", "Current estate floorplan: " + estateLabel(l));
+    this.highlight();
+    this.table.replaceChildren(node("caption", "Current department addresses"), head, body);
+    this.empty.hidden = estateRecords.history.length > 0;
+    const following = this.scroll.scrollHeight - this.scroll.clientHeight - this.scroll.scrollTop < 24, ids = new Set(estateRecords.history.map((m) => m.to.edition));
+    for (const [id, el] of this.memoNodes) if (!ids.has(id)) {
+      el.remove();
+      this.memoNodes.delete(id);
+    }
+    for (const memo of estateRecords.history) if (!this.memoNodes.has(memo.to.edition)) this.appendMemo(memo);
+    if (!estateRecords.history.length) this.minutes.setAttribute("aria-label", "No transformations have been recorded in this tab.");
+    else this.minutes.removeAttribute("aria-label");
+    if (this.details.open && following) this.scroll.scrollTop = this.scroll.scrollHeight;
   }
 };
 
@@ -5122,6 +5495,7 @@ var DemoWorkspace = class {
   running = false;
   held = false;
   activity = "mandate";
+  interruption = "";
   latestValue;
   bannerAnnouncement = "";
   preferredAuthority = new URL(location.href).searchParams.get("authority") || "";
@@ -5129,10 +5503,11 @@ var DemoWorkspace = class {
   get observing() {
     return onDemoPage() && this.desk === "observe";
   }
-  runActivity(active, paused2 = false, mode = "mandate") {
+  runActivity(active, paused2 = false, mode = "mandate", interruption = "") {
     this.running = active;
     this.held = paused2;
     this.activity = mode;
+    this.interruption = interruption;
     const warning = byId("mandate-collision-warning");
     if (warning.hidden !== !active) {
       warning.hidden = !active;
@@ -5146,7 +5521,7 @@ var DemoWorkspace = class {
   }
   updateRunBanner() {
     const banner = byId("active-run-banner"), visible2 = this.running && !this.observing, focused = banner.contains(document.activeElement);
-    const state = this.held ? "Executive hold remains in force" : this.activity === "replay" ? "Retained proceedings under review" : "Authorized production continues";
+    const state = this.held ? "Executive hold remains in force" : this.interruption || (this.activity === "replay" ? "Retained proceedings under review" : "Authorized production continues");
     const value = this.latestValue ? this.latestValue.text + " \xB7 certified ordinal " + this.latestValue.ordinal : "Awaiting the first certified value";
     for (const [id, text2] of [["active-run-state", state], ["active-run-value", value]]) if (byId(id).textContent !== text2) byId(id).textContent = text2;
     byId("active-run-value").title = value;
@@ -5487,6 +5862,7 @@ var precedent = new PrecedentView();
 new PrecedentView("experiment-");
 new PremisesDesk();
 var workspace;
+var heists;
 var office = new OfficeTourDesk();
 var supervision = new OfficeSupervisionDesk({ reading: () => reading, paused: () => paused, pause: setReadingPaused, wake: () => {
   wakeReading?.();
@@ -5502,10 +5878,12 @@ var companions = new CompanionDesk({ remember: (discovery) => {
   office.remember(discovery);
   supervision.remember(discovery);
   workspace?.remember(discovery);
+  heists?.remember(discovery);
 }, clearCompanions: () => {
   office.clearCompanions();
   supervision.clearCompanions();
   workspace?.clearCompanions();
+  heists?.clear();
 } });
 var currentLimit = "15";
 var receivedPacket;
@@ -5515,6 +5893,10 @@ var personnel = new PersonnelProceedings({ rehearse: () => {
 }, replay: () => void replayPersonnel(), step: stepPersonnel }, "");
 new PersonnelExperiment();
 workspace = new DemoWorkspace({ placeChronicle: (target) => chronicle.place(target) });
+heists = new StampHeistDesk(() => reading && productionActive && supervision.enabled && !revealAll, () => {
+  wakeReading?.();
+  readingControls();
+});
 function discloseLines(start, lines2) {
   companions.disclose(start, lines2);
   const folios = chronicle.disclose(start, lines2);
@@ -5538,13 +5920,13 @@ async function observeLine(folio, sequence, publish) {
     if (generation === supervision.generation || !supervision.enabled) break;
   }
   if (sequence !== mandateSequence) return false;
-  while ((officeEstate.moving || paused && !supervision.enabled) && sequence === mandateSequence) await waitForPace();
+  while ((officeEstate.moving || officeHeist.active || paused && !supervision.enabled) && sequence === mandateSequence) await waitForPace();
   if (sequence !== mandateSequence) return false;
   release();
   return true;
 }
 function readingControls() {
-  workspace?.runActivity(productionActive || reading, reading && paused, activityMode);
+  workspace?.runActivity(productionActive || reading, reading && paused, activityMode, officeHeist.active ? "Approval stamp missing \xB7 proceedings held" : "");
   for (const panel of reorganizationPanels) panel.setReading(reading);
   stopButton.setAttribute("aria-disabled", String(!reading));
   revealButton.textContent = activityMode === "replay" ? "Reveal completed proceedings" : streaming ? "Waive disclosure delays" : "Reveal complete output";
@@ -5581,6 +5963,7 @@ readingControls();
 function finishProduction() {
   productionActive = false;
   companions.completeRun();
+  heists?.complete();
 }
 var autocorrect = byId("numeric-autocorrect");
 var warnedValue = "";
@@ -5638,6 +6021,7 @@ function validateLimit() {
 }
 stopButton.addEventListener("click", () => {
   if (!reading) return;
+  heists?.cancel();
   officeEstate.finish(), ++mandateSequence;
   reading = false;
   streaming = false;
@@ -5689,7 +6073,7 @@ async function revealOutput(text2, sequence, serviceMillis) {
   if (supervision.enabled) await supervision.prelude(() => sequence === mandateSequence);
   for (let index = 0; index < lines2.length; index++) {
     if (sequence !== mandateSequence) return;
-    while ((officeEstate.moving || paused && !supervision.enabled) && sequence === mandateSequence) await waitForPace();
+    while ((officeEstate.moving || officeHeist.active || paused && !supervision.enabled) && sequence === mandateSequence) await waitForPace();
     if (sequence !== mandateSequence) return;
     if (immediate()) {
       discloseLines(String(index + 1), lines2.slice(index));
@@ -5710,6 +6094,7 @@ async function revealOutput(text2, sequence, serviceMillis) {
     if (index < lines2.length - 1 && !supervision.enabled && !revealAll) await waitForPace(Number(speedControl.value));
   }
   if (supervision.enabled) await supervision.finishPacket(() => sequence === mandateSequence);
+  while (officeHeist.active && sequence === mandateSequence) await waitForPace();
   if (sequence === mandateSequence) {
     setText("output-count", `${lines2.length} ${lines2.length === 1 ? "line" : "lines"}`);
     reading = false;
@@ -5751,7 +6136,7 @@ async function streamMandate(limit, sequence, started) {
     setText("output-count", `${disclosed} of ${bound} lines \xB7 latest ${Math.min(1e3, output.childNodes.length)} retained`);
   }
   while (sequence === mandateSequence) {
-    while (paused && (!supervision.enabled || !supervision.hasStepCredit) && sequence === mandateSequence) await waitForPace();
+    while ((officeHeist.active || officeEstate.moving || paused && (!supervision.enabled || !supervision.hasStepCredit)) && sequence === mandateSequence) await waitForPace();
     if (sequence !== mandateSequence) return;
     const count = windowCount(next, limit);
     const answer = await proclamation(`/fizzbuzz/window?start=${next}&count=${count}`);
@@ -5782,7 +6167,7 @@ async function streamMandate(limit, sequence, started) {
     }
     if (!answer.ok) throw new Error(`Extended proclamation desk returned ${answer.status}.`);
     for (let i = 0; i < lines2.length; ) {
-      while (paused && !supervision.enabled && sequence === mandateSequence) await waitForPace();
+      while ((officeHeist.active || officeEstate.moving || paused && !supervision.enabled) && sequence === mandateSequence) await waitForPace();
       if (sequence !== mandateSequence) return;
       if (immediate()) {
         append(lines2.slice(i));
@@ -5795,6 +6180,7 @@ async function streamMandate(limit, sequence, started) {
       }
     }
     if (supervision.enabled) await supervision.finishPacket(() => sequence === mandateSequence);
+    while (officeHeist.active && sequence === mandateSequence) await waitForPace();
     if (sequence !== mandateSequence) return;
     if (disclosed === limit) break;
     next = addOrdinals(next, count);
@@ -5816,10 +6202,12 @@ async function runMandate(event) {
   const limit = validateLimit();
   if (limit === null) return;
   const sequence = ++mandateSequence;
+  heists?.cancel();
   if (productionActive) companions.withdrawRun();
   workspace.commitDraft(String(limit));
   companions.beginRun(String(limit));
   productionActive = true;
+  heists?.begin(String(limit));
   wakeReading?.();
   reading = false;
   streaming = false;
@@ -5901,6 +6289,7 @@ async function runMandate(event) {
   }
 }
 function beginPersonnelActivity(mode) {
+  heists?.cancel();
   finishProduction();
   workspace?.beginDisclosure();
   const sequence = ++mandateSequence;
@@ -5939,7 +6328,7 @@ async function replayPersonnel() {
     if (supervision.enabled) await supervision.prelude(() => sequence === mandateSequence);
   }
   for (let i = 0; i < saved.folios.length; ) {
-    while (paused && !supervision.enabled && sequence === mandateSequence) await waitForPace();
+    while ((officeHeist.active || officeEstate.moving || paused && !supervision.enabled) && sequence === mandateSequence) await waitForPace();
     if (sequence !== mandateSequence) return;
     const batch = immediate() ? saved.folios.slice(i) : saved.folios.slice(i, i + 1), shown = i + batch.length;
     const publish = () => {

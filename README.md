@@ -334,3 +334,19 @@ storage receive a usable fallback and explanation. See [ADR 0032](docs/ADR-0032-
 `pnpm test:layout` checks layouts, partitions, relocation/shot clocks, and
 session/record contracts. The standard publisher runs this family alongside the
 existing validation gates.
+
+**The Great Rubber-Stamp Heist** gives companions an unauthorized second career.
+During Executive Hovering, palindromes such as 33 can send an appointed companion
+and up to two colleagues fleeing through the current office with the notary's
+stamp. Intercept a suspect, follow footprints, offer an amnesty biscuit, or watch
+the chase resolve itself. Snails make slow getaways; octopuses produce counterfeit
+stamps. Facilities also offers a rehearsal with a visiting ghost who ignores walls
+while its paperwork uses the door. Rehearsal stand-ins earn no discoveries.
+
+Proceedings hold their exact place during the chase, and an explicit Pause stays
+in force afterward. Reorganization holds the chase while rooms move. Stop,
+replacement and Autonomy settle the stamp immediately. Reduced motion and readable
+controls remain available, including without 3D graphics. Disable automatic heists
+in live presentation settings or Facilities. See
+[ADR 0042](docs/ADR-0042-companion-stamp-heists.md); `pnpm test:heist` checks the
+custody rules, and the browser suite exercises the actual office.
