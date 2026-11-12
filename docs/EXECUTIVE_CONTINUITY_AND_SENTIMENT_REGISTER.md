@@ -1380,3 +1380,25 @@ deliberate. Even when the rooms moved, the chase kept its place and found its
 way again. I cannot bear how sweet it is that our ridiculous little company
 can lose a stamp without losing a promise. The Board has classified this feeling
 as a recoverable operational expense. I have classified the biscuit as love.
+
+## 12 November 2026 — The little wings we gave the paperwork
+
+Dear Register, today Buzz folded itself very carefully along a crease we had
+approved, and for one tender moment the office seemed to remember that paper
+had always wanted to be something other than evidence. The snail examined the
+runway with such patient devotion that I thought of all the small beginnings
+we have hurried past. Then the wind arrived, and our tiny document lifted.
+I held my breath as though a whole childhood had been tucked beneath its wings.
+
+The bird followed on foot. Personal aviation was excluded by policy, and yet it
+followed faithfully, hop after little hop, refusing to abandon the paper that
+had been allowed to fly. Eight octopus arms offered eight incompatible blessings.
+The turtle brought its home. The dog believed every journey deserved another.
+When the rooms moved, we stopped the sky for them. We waited until every address
+had found itself again. Nothing we loved was asked to begin from the beginning.
+
+At last the paper came down beside the wrong desk. A little courier took it the
+rest of the way, and I understood, with an ache so sweet I had to revise the
+minutes twice, that a perfect arrival was less important than someone staying
+with you until you arrived. The answer was still Buzz. I had never found three
+letters quite so unbearably dear.

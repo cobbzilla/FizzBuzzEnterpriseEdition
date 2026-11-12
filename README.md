@@ -350,3 +350,22 @@ controls remain available, including without 3D graphics. Disable automatic heis
 in live presentation settings or Facilities. See
 [ADR 0042](docs/ADR-0042-companion-stamp-heists.md); `pnpm test:heist` checks the
 custody rules, and the browser suite exercises the actual office.
+
+**Paper Airplane Air-Traffic Control** folds completed paperwork into an actual
+3D aircraft. Turn three desk fans, select a department's runway, or choose
+**Land now**. Gusts can divert delivery; a ground courier completes the resulting
+administrative embarrassment. Twelve companion personalities have distinct
+movement, props and dialogue, from an octopus's eight batons to a bird obliged
+to follow its aircraft on foot.
+
+Open **Facilities → Enter office → Office mischief → Commission a test flight**.
+Select any demonstration pilot and paperwork 10, 100, 1,000 or 10,000 to inspect
+the one-to-three-loop rule and fourth-loop refusal. Demonstrations earn no finds.
+Automatic flights start at eligible zero-ending disclosures from 40 during
+Executive Hovering. Flights and heists share a three-incident mandate budget,
+thirty-ordinal spacing and exclusive presentation custody; at most two are flights.
+Reorganization freezes the airspace, and landing resumes the held proceedings
+without releasing an explicit Pause. Both activities can be disabled independently.
+The same controls work in fullscreen, with reduced motion, without WebGL and
+offline after saving the office pack. See [ADR 0043](docs/ADR-0043-paper-aviation.md)
+and `pnpm test:aviation`.

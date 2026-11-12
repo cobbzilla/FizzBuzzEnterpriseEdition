@@ -69,6 +69,15 @@ Executive Hovering. The underlying Java operation is already complete; the chase
 does not change its output, companion appointments or audit records. Facilities
 offers an isolated rehearsal. See [ADR 0042](ADR-0042-companion-stamp-heists.md).
 
+Paper airplane flights share the same exclusive presentation hold with heists.
+They carry illustrated copies of disclosed paperwork, use supplied companions,
+and never repeat a numerical operation. Flights and heists share a three-incident
+mandate budget; room moves freeze either incident. Facilities → Office mischief
+provides immediate aviation presets and twelve demonstration personalities.
+The optional graphics bundle consumes snapshots from the single demo owner;
+named controls and a readable route also work without WebGL. The installed office
+pack includes the aircraft offline. See [ADR 0043](ADR-0043-paper-aviation.md).
+
 ```
 SLOPBUZZ_RUNTIME=server SLOPBUZZ_API_BASE_URL=/java-api pnpm build
 ```
