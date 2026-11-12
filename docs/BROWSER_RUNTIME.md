@@ -34,11 +34,20 @@ For an isolated local browser server, set `SLOPBUZZ_BROWSER_WS_ENDPOINT` to its
 loopback WebSocket endpoint. Parity, Playwright tests, public checks and analytics
 checks then use that server; only loopback traffic is forwarded to local preview
 servers. Match the server's Playwright version to `package.json`. Run the server
-with one client, `--init`, a 1,280 MiB memory limit, equal memory-plus-swap limit,
+with one client, `--init`, a 1,536 MiB memory limit, equal memory-plus-swap limit,
 two CPUs and a process limit. Monitor its container separately and stop/remove
 that exact container after completion or failure; the host guard owns only its
 local process tree. This also avoids stale macOS GUI sessions after a desktop
 restart. Do not remove unrelated containers or browser sessions.
+
+The 3,200-row appointment register keeps every row present during accessibility
+audits. Its axe checks run eight rules at a time, using the single-document
+execution path after asserting that no frames exist. This avoids transporting
+large intermediate node records through the browser server. Every rule matching
+the existing WCAG and best-practice tags still runs at both viewport sizes;
+passing-node details are summarized while violations remain complete. Each
+viewport has its own browser context. Batches reuse one injected axe engine and
+request garbage collection after completing their assertions.
 
 Open http://localhost:18090/. Publish `dist/` on any static HTTP(S) host.
 Directory indexes, relative links, and assets support a hosting subdirectory.

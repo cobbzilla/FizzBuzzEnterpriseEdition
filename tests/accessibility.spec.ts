@@ -4,16 +4,45 @@ import AxeBuilder from '@axe-core/playwright';
 // These DOM tests mock fixtures; offline cache behavior has its own lifecycle suite.
 test.use({serviceWorkers:'block'});
 const routes = ['', 'demo/', 'bestiary/', 'department-of-improbable-appointments/', 'api/', 'about/', 'company-history/', 'changelog/', 'continuity-register/', 'validation/', 'response/', 'accessibility/'];
+type PageAxe={
+  getRules(tags:string[]):{ruleId:string}[];
+  run(context:Document,options:{runOnly:{type:'rule';values:string[]};resultTypes:string[]}):ReturnType<AxeBuilder['analyze']>;
+};
 async function audit(page: Page) {
-  const result = await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21a','wcag21aa','wcag22aa','best-practice']).analyze();
-  expect(result.violations.map(v=>({id:v.id,nodes:v.nodes.map(n=>n.target)}))).toEqual([]);
+  const tags=['wcag2a','wcag2aa','wcag21a','wcag21aa','wcag22aa','best-practice'];
+  const largeRegister=await page.locator('#rarity-rows tr').count()>1000;
+  // The single-document path avoids transferring thousands of intermediate node records.
+  // Assert this precondition: legacy execution would omit cross-origin frames.
+  if(largeRegister)expect(page.frames()).toHaveLength(1);
+  const scan=async(rules?:string[])=>{
+    // Summarize passing-node records; retain complete violations and incomplete findings.
+    const builder=new AxeBuilder({page}).options({resultTypes:['violations','incomplete']});
+    if(largeRegister)builder.setLegacyMode();
+    const result=await(rules?builder.withRules(rules):builder.withTags(tags)).analyze();
+    expect(result.violations.map(v=>({id:v.id,nodes:v.nodes.map(n=>n.target)}))).toEqual([]);
+  };
+  if(largeRegister){
+    // Keep the full document intact and run every matching rule, with bounded simultaneous work.
+    await scan(['document-title']);
+    const rules=await page.evaluate(tags=>(window as unknown as {axe:PageAxe}).axe.getRules(tags).map(rule=>rule.ruleId),tags);
+    expect(rules.length).toBeGreaterThan(50);
+    for(let start=0;start<rules.length;start+=8)await test.step(`Archive accessibility rules: ${rules.slice(start,start+8).join(', ')}`,async()=>{
+      // Reuse the injected engine instead of compiling another copy for every batch.
+      const violations=await page.evaluate(async rules=>{
+        const result=await(window as unknown as {axe:PageAxe}).axe.run(document,{runOnly:{type:'rule',values:rules},resultTypes:['violations','incomplete']});
+        return result.violations.map(v=>({id:v.id,nodes:v.nodes.map(n=>n.target)}));
+      },rules.slice(start,start+8));
+      expect(violations).toEqual([]);
+      await page.requestGC();
+    });
+  }else await scan();
 }
 test.beforeEach(({}, info) => {test.skip(info.project.metadata.engine === 'js', 'DOM accessibility is covered once per browser; lifecycle tests cover both Java engines.');});
-for (const route of routes) {
-  test(`accessible shared reception and reflow: /${route}`, async({page, browserName})=>{
-    // Two exhaustive axe scans of all 3,200 archive rows are CPU-bound. Keep
-    // page-readiness limits and the full accessibility/reflow assertions.
-    if(route === 'department-of-improbable-appointments/')test.setTimeout(180000);
+for (const route of routes) for(const registerWidth of route === 'department-of-improbable-appointments/'?[1280,320]:[undefined]) {
+  test(`accessible shared reception and reflow: /${route}${registerWidth?` (${registerWidth}px)`:''}`, async({page, browserName})=>{
+    // Give each exhaustive archive scan its own context so the previous axe tree
+    // is disposed before the next viewport. Keep every row and reflow assertion.
+    if(registerWidth){test.setTimeout(180000);await page.setViewportSize({width:registerWidth,height:800});}
     await page.goto(`/${route}`);
     if(route === 'bestiary/')await expect(page.locator('#bestiary-status')).toContainText('3200 companions');
     if(route === 'department-of-improbable-appointments/')await expect(page.locator('#rarity-status')).toContainText('All 3,200');
@@ -29,8 +58,7 @@ for (const route of routes) {
     await page.keyboard.press('Enter');
     await expect(page.locator('main')).toBeFocused();
     await audit(page);
-    await page.setViewportSize({width:320,height:800});
-    await audit(page);
+    if(!registerWidth){await page.setViewportSize({width:320,height:800});await audit(page);}
     // 320 CSS pixels approximates 400% zoom on a 1280px desktop. Also enlarge text 200%.
     await page.evaluate(()=>{
       const sheet = document.styleSheets[0];
