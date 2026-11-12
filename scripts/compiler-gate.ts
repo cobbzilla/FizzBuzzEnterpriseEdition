@@ -3,6 +3,7 @@ import {createServer} from 'node:http';
 import {readFile} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
 import {chromium} from '@playwright/test';
+import {launchBrowser} from './browser-launch.ts';
 import {execFileSync} from 'node:child_process';
 execFileSync('mvn',['-q','-f','browser/pom.xml','package','-Dbrowser.mainClass=com.seriouscompany.browser.CompilerGate',`-Dbrowser.outputDirectory=${resolve('browser/target/compiler-gate')}`],{stdio:'inherit'});
 execFileSync('pnpm',['exec','tsc','--ignoreConfig','browser/gate-host.ts','--target','ES2022','--module','ES2022','--outDir','browser/target/host','--skipLibCheck'],{stdio:'inherit'});
@@ -25,7 +26,7 @@ for(let number=1;number<=15;number++) {
   output+=payload;
   previous=createHash('sha256').update(`${previous}:${number}:${number}:COMMITTED:${payload.length}:${payload}`).digest('hex');
 }
-const browser=await chromium.launch({headless:true});
+const browser=await launchBrowser(chromium);
 try {
   for(const engine of ['wasm','js']) {
     const page=await browser.newPage();

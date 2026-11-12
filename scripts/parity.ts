@@ -3,6 +3,7 @@ import {readFile,writeFile,mkdir,mkdtemp,rm,cp} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {resolve} from 'node:path';
 import {chromium,firefox,webkit} from '@playwright/test';
+import {launchBrowser} from './browser-launch.ts';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 const run=(cmd:string,args:string[])=>execFileSync(cmd,args,{stdio:'inherit'});
@@ -35,7 +36,7 @@ const results:{browser:string;engine:string;assertions:number;elapsedMillis:numb
 try {
  for(const [name,type] of Object.entries({chromium,firefox,webkit})) for(const engine of ['auto','js'] as const) {
   const started=Date.now();
-  const browser=await type.launch();
+  const browser=await launchBrowser(type);
   try {
    const context=await browser.newContext({serviceWorkers:'block'});
    const page=await context.newPage();

@@ -21,6 +21,12 @@ budget. Preserved numerical custody, explicit Pause authority, room-relocation
 continuity and offline controls. Management projects substantial productivity
 from finally giving paperwork the wings its expense reports always implied.
 
+**Release Qualification Resource Custody.** Required serial browser validation,
+first-failure adjournment, measured process and memory ceilings, and verified
+cleanup of automation descendants. Retained process identities for recovery
+after interrupted qualification, with ordinary employee browser sessions outside
+the termination authority's jurisdiction.
+
 ## 2026-11-10 — `slopbuzz-stamp-heist`
 
 **Companion-Led Approval Mobility and Biscuit-Based Incident Resolution.**

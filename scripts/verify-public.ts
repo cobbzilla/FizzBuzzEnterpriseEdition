@@ -2,6 +2,7 @@ import {demoNavigator} from './demo-navigation.ts';
 import {verifyAnalytics} from './verify-analytics.ts';
 import assert from 'node:assert/strict';
 import {chromium, firefox, webkit, expect} from '@playwright/test';
+import {launchBrowser} from './browser-launch.ts';
 
 /** Exercise the deployed artifact, including HTTPS, CSP and real service workers. */
 export async function verifyPublic(origin: string, revision: string) {
@@ -32,7 +33,7 @@ export async function verifyPublic(origin: string, revision: string) {
  for(const path of ['/reset/','/reset/reset.js','/full-reset/']){const response=await fetch(origin+path,{method:'HEAD'});assert.equal(response.status,200);assert.equal(response.headers.get('cache-control'),'no-store');}
 
  for (const engine of [chromium, firefox, webkit]) {
-  const browser = await engine.launch();
+  const browser = await launchBrowser(engine);
   try {
    const context = await browser.newContext();
    const page = await context.newPage();

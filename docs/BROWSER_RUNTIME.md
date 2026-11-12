@@ -20,6 +20,26 @@ node scripts/build.ts --assets-only
 pnpm preview
 ```
 
+Browser commands run through `scripts/browser-guard.ts`. It admits one guarded
+run per checkout, cleans verified orphaned automation browsers, watches owned
+browser processes and memory every two seconds, and removes its process tree on
+success, failure or interruption. Ordinary user browser sessions are excluded.
+Playwright uses one worker and stops after the first failure. For focused tests,
+use `pnpm test:browser tests/aviation.spec.ts --project=chromium-auto`; do not start
+an overlapping direct Playwright run. A resource-limit stop requires inspection
+and cleanup before retrying. `pnpm test:browser-guard` checks process ownership,
+resource admission and cleanup behavior.
+
+For an isolated local browser server, set `SLOPBUZZ_BROWSER_WS_ENDPOINT` to its
+loopback WebSocket endpoint. Parity, Playwright tests, public checks and analytics
+checks then use that server; only loopback traffic is forwarded to local preview
+servers. Match the server's Playwright version to `package.json`. Run the server
+with one client, `--init`, a 1,280 MiB memory limit, equal memory-plus-swap limit,
+two CPUs and a process limit. Monitor its container separately and stop/remove
+that exact container after completion or failure; the host guard owns only its
+local process tree. This also avoids stale macOS GUI sessions after a desktop
+restart. Do not remove unrelated containers or browser sessions.
+
 Open http://localhost:18090/. Publish `dist/` on any static HTTP(S) host.
 Directory indexes, relative links, and assets support a hosting subdirectory.
 `file://` is not supported. IndexedDB, Web Locks, Web Crypto, workers, and

@@ -3,6 +3,7 @@ import {parseEnv} from 'node:util';
 import {resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {chromium, expect} from '@playwright/test';
+import {launchBrowser} from './browser-launch.ts';
 import assert from 'node:assert/strict';
 import {createStaticServer} from './serve.ts';
 
@@ -10,7 +11,7 @@ import {createStaticServer} from './serve.ts';
 export async function verifyAnalytics(origin: string, expectedRevision?: string, publicToken?: string): Promise<string> {
  origin = new URL(origin).origin;
  const revision = `analytics-smoke-${crypto.randomUUID()}`;
- const browser = await chromium.launch();
+ const browser = await launchBrowser(chromium);
  try {
   const page = await browser.newPage({serviceWorkers:'block', userAgent:'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36',extraHTTPHeaders:{DNT:'1','Sec-GPC':'1'}});
   await page.addInitScript(() => {

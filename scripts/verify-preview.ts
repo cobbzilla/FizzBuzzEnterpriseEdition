@@ -1,5 +1,6 @@
 import {demoNavigator} from './demo-navigation.ts';
 import {chromium,expect} from '@playwright/test';
+import {launchBrowser} from './browser-launch.ts';
 import {execFileSync} from 'node:child_process';
 import assert from 'node:assert/strict';
 const revision=execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim();
@@ -11,7 +12,7 @@ for(const port of [18088,18089]) {
  }
  assert.ok(ready,`Preview ${port} did not identify the merged revision`);
 }
-const browser=await chromium.launch();
+const browser=await launchBrowser(chromium);
 try {
  const page=await browser.newPage();
  await page.goto('http://localhost:18088/demo/');
