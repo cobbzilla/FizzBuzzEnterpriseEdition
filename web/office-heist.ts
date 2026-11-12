@@ -1,4 +1,5 @@
 import {HeistCoordinator,heistEligible,planHeist,heistAntic} from './office-heist-model.ts';
+import {officeIncidents} from './office-incidents';
 import {officeEstate} from './office-estate';
 import {PresentationScheduler} from './presentation-scheduler';
 import {node} from './companion-story';
@@ -6,7 +7,7 @@ import {companionCatalog} from './companions';
 import type {Discovery} from './discovery-model';
 
 /** This singleton stays in demo.js; GPU scenes receive immutable snapshots. */
-export const officeHeist=new HeistCoordinator();
+export const officeHeist=new HeistCoordinator(officeIncidents);
 const scheduler=new PresentationScheduler(()=>!document.hidden&&document.body.dataset.sitePage==='demo');
 function tick(now:number){officeHeist.advance(now,!officeEstate.moving);if(officeHeist.active)scheduler.request(tick);}
 officeHeist.subscribe(()=>{if(officeHeist.active)scheduler.request(tick);else scheduler.cancel();});
@@ -35,16 +36,16 @@ export class StampHeistDesk {
   const ordinal=discovery.assignment.ordinal,key=discovery.strategy+'|'+ordinal;
   this.companions.set(ordinal,discovery);while(this.companions.size>100)this.companions.delete(this.companions.keys().next().value!);
   if(this.seen.has(key))return;this.seen.add(key);while(this.seen.size>1000)this.seen.delete(this.seen.values().next().value!);
-  if(!this.enabled||!this.mayInterrupt()||officeHeist.active||officeEstate.moving||this.count>=3||!heistEligible(ordinal)||BigInt(ordinal)-BigInt(this.last)<30n)return;
+  if(!this.enabled||!this.mayInterrupt()||!officeIncidents.admits('heist',ordinal)||officeEstate.moving||this.count>=3||!heistEligible(ordinal)||BigInt(ordinal)-BigInt(this.last)<30n)return;
   const previous=[...this.companions.values()].filter(d=>d.strategy===discovery.strategy&&BigInt(d.assignment.ordinal)<BigInt(ordinal)).sort((a,b)=>BigInt(a.assignment.ordinal)>BigInt(b.assignment.ordinal)?-1:1);
   const roster=[discovery,...previous].filter((d,i,all)=>all.findIndex(a=>a.companion.id===d.companion.id)===i).slice(0,3).map(d=>d.companion);
-  if(officeHeist.start(planHeist(this.mandate,ordinal,discovery.strategy,roster))){this.count++;this.last=ordinal;}
+  if(officeHeist.start(planHeist(this.mandate,ordinal,discovery.strategy,roster))){this.count++;this.last=ordinal;officeIncidents.record('heist',ordinal);}
  }
  private async rehearse(){
-  if(officeHeist.active)return;const serial=++this.rehearsalSerial,button=document.getElementById('heist-rehearse') as HTMLButtonElement,status=document.getElementById('heist-rehearsal-status')!;
+  if(officeIncidents.active||officeEstate.moving){document.getElementById('heist-rehearsal-status')!.textContent='The office is busy. Finish its current incident or room move first.';return;}const serial=++this.rehearsalSerial,button=document.getElementById('heist-rehearse') as HTMLButtonElement,status=document.getElementById('heist-rehearsal-status')!;
   button.disabled=true;status.textContent='Security is recruiting three entirely fictional suspects…';
   try{
-   const catalog=await companionCatalog();if(serial!==this.rehearsalSerial)return;
+   const catalog=await companionCatalog();if(serial!==this.rehearsalSerial)return;if(officeIncidents.active||officeEstate.moving){status.textContent='The office became busy while the suspects assembled. Try again when its current incident or room move finishes.';return;}
    const choice=(document.getElementById('heist-suspect') as HTMLSelectElement).value;
    const glyphs=[choice,...['🐌','👻','🐙'].filter(g=>g!==choice)];
    // The nonhuman catalog excludes faces. This visiting ghost is explicitly a
@@ -52,7 +53,7 @@ export class StampHeistDesk {
    const actors=glyphs.map(g=>g==='👻'?{id:'security-ghost-v1',name:'Ghost of Pending Approval',emoji:g}:catalog.entries.find(c=>c.emoji===g)).filter((c):c is NonNullable<typeof c>=>!!c);
    if(actors.length!==3)throw new Error('The complete rehearsal cast is unavailable.');
    const plan=planHeist('111','33','security-rehearsal-v1',actors,'rehearsal');
-   if(officeHeist.start(plan)){status.textContent='Rehearsal in progress. These stand-ins earn no companion discoveries.';document.getElementById('office-stage')!.scrollIntoView({block:'nearest',behavior:'instant'});}
+   if(officeHeist.start(plan)){status.textContent='Rehearsal in progress. These stand-ins earn no companion discoveries.';if((document.getElementById('office-fullscreen') as HTMLDialogElement).open)document.getElementById('office-fullscreen-drawer-close')!.click();document.getElementById('office-stage')!.scrollIntoView({block:'nearest',behavior:'instant'});}
   }catch(error){if(serial===this.rehearsalSerial)status.textContent='The rehearsal could not start: '+(error as Error).message;}
   finally{button.disabled=false;}
  }

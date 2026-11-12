@@ -443,69 +443,20 @@ officeEstate.subscribe((event) => {
   }
 });
 
-// web/office-heist-model.ts
-var heistChaseMs = 15e3;
-var heistReturnMs = 3e3;
-var destinations = ["reception", "personnel", "procurement", "premises", "memory", "publication", "executive"];
-function heistEligible(ordinal) {
-  return /^[1-9][0-9]+$/.test(ordinal) && ordinal === Array.from(ordinal).reverse().join("");
-}
-function heistTactic(emoji) {
-  return emoji.includes("\u{1F40C}") ? "snail" : emoji.includes("\u{1F47B}") ? "ghost" : emoji.includes("\u{1F419}") ? "octopus" : "runner";
-}
-function seed(text2) {
-  let value = 2166136261;
-  for (const character of text2) value = Math.imul(value ^ character.charCodeAt(0), 16777619) >>> 0;
-  return value;
-}
-function planHeist(mandate, ordinal, authority, companions2, source = "encounter") {
-  if (!/^[1-9][0-9]*$/.test(mandate) || !heistEligible(ordinal) || !authority || companions2.length < 1) throw new Error("The heist requires a positive mandate, a multi-digit palindrome and a named accomplice.");
-  const unique = [...new Map(companions2.map((c) => [c.id, c])).values()].slice(0, 3);
-  if (unique.some((c) => !c.id || !c.name || !c.emoji)) throw new Error("Anonymous suspects must first report to Personnel.");
-  const actors = Object.freeze(unique.map((c) => Object.freeze({ ...c, tactic: heistTactic(c.emoji) })));
-  const key2 = ["stamp-heist-v1", source, mandate, ordinal, authority, ...actors.map((a) => a.id)].join("|");
-  let random2 = seed(key2);
-  const pool = [...destinations];
-  for (let i = pool.length - 1; i > 0; i--) {
-    random2 = Math.imul(random2, 1664525) + 1013904223 >>> 0;
-    const j = random2 % (i + 1);
-    [pool[i], pool[j]] = [pool[j], pool[i]];
-  }
-  return Object.freeze({ key: key2, ordinal, mandate, source, actors, rooms: Object.freeze(["notary", ...pool.slice(0, 3)]) });
-}
-function heistFinding(resolution) {
-  return {
-    intercepted: "Stamp recovered. The suspect claims this was a cross-departmental delivery.",
-    biscuit: "Amnesty accepted. One biscuit has outperformed the entire security budget.",
-    automatic: "The accomplices returned the stamp after discovering that stolen approval still requires approval.",
-    skipped: "The chase was waived. The stamp returned through an undisclosed administrative shortcut.",
-    cancelled: "The chase was adjourned and the stamp returned. No numerical work was repeated.",
-    disabled: "Companion mischief is disabled. The stamp has reluctantly resumed its ordinary employment."
-  }[resolution];
-}
-function heistAntic(actor) {
-  return {
-    snail: "An extremely slow getaway. Security has requested a slower pursuit.",
-    ghost: "The ghost uses the wall. Its pursuing paperwork must use the door.",
-    octopus: "Eight apparent stamps. Seven are unauthorized impressions of confidence.",
-    runner: "The suspect is carrying approval without permission to carry approval."
-  }[actor.tactic];
-}
-var HeistCoordinator = class {
+// web/office-incident-model.ts
+var OfficeIncidentCoordinator = class {
   serial = 0;
-  pending;
-  last;
-  allowed = false;
+  owner;
   listeners = /* @__PURE__ */ new Set();
-  records = [];
+  endings = /* @__PURE__ */ new Map();
+  total = 0;
+  flights = 0;
+  last = "0";
   get active() {
-    return !!this.pending;
+    return !!this.owner;
   }
-  get snapshot() {
-    const p = this.pending;
-    if (!p) return;
-    const chase = p.returnFrom ?? Math.min(p.elapsed, heistChaseMs), leg = Math.min(2, Math.floor(chase / 5e3));
-    return Object.freeze({ ...p, leg, holder: leg % p.plan.actors.length, legProgress: Math.min(1, (chase - leg * 5e3) / 5e3), returning: p.elapsed >= heistChaseMs, returnProgress: Math.max(0, (p.elapsed - heistChaseMs) / heistReturnMs) });
+  get kind() {
+    return this.owner?.kind;
   }
   subscribe(listener) {
     this.listeners.add(listener);
@@ -514,9 +465,140 @@ var HeistCoordinator = class {
   notify() {
     for (const listener of this.listeners) listener();
   }
+  register(kind, end) {
+    this.endings.set(kind, end);
+  }
+  acquire(kind) {
+    if (this.owner) return;
+    const id = ++this.serial;
+    this.owner = { kind, id };
+    this.notify();
+    return id;
+  }
+  release(kind, id) {
+    if (this.owner?.id !== id || this.owner.kind !== kind) return false;
+    this.owner = void 0;
+    this.notify();
+    return true;
+  }
+  finish(reason = "cancelled") {
+    if (this.owner) this.endings.get(this.owner.kind)?.(reason);
+  }
+  begin() {
+    this.finish();
+    this.total = 0;
+    this.flights = 0;
+    this.last = "0";
+  }
+  admits(kind, ordinal) {
+    return ordinal.trim() === ordinal && /^[1-9][0-9]*$/.test(ordinal) && !this.active && this.total < 3 && (kind !== "flight" || this.flights < 2 && BigInt(ordinal) >= 40n) && BigInt(ordinal) - BigInt(this.last) >= 30n;
+  }
+  record(kind, ordinal) {
+    this.total++;
+    if (kind === "flight") this.flights++;
+    this.last = ordinal;
+  }
+};
+
+// web/office-incidents.ts
+var officeIncidents = new OfficeIncidentCoordinator();
+
+// web/office-flight-model.ts
+var flightPersonalities = [
+  { id: "snail", glyph: "\u{1F40C}", match: ["\u{1F40C}"], name: "Runway Due Diligence Officer", brief: "Inspects every millimetre of runway before accepting a very effective tailwind.", fold: "The snail is checking whether the runway has moved since its last inspection.", cruise: "Tailwind accepted. Security has requested permission to be astonished.", land: "The snail requests a slower round of applause." },
+  { id: "octopus", glyph: "\u{1F419}", match: ["\u{1F419}", "\u{1F991}"], name: "Eight Conflicting Clearances", brief: "Waves eight landing batons while the runway indicator provides the actual instruction.", fold: "Eight arms have approved eight mutually exclusive departures.", cruise: "Seven batons advise caution. The eighth has declared itself management.", land: "All eight arms claim sole credit for the landing." },
+  { id: "cat", glyph: "\u{1F408}", match: ["\u{1F408}", "\u{1F431}"], name: "Unscheduled Wing Inspector", brief: "Crouches, pounces and swats the plane into a theatrical bank.", fold: "The cat has mistaken the flight plan for something that should be on the floor.", cruise: "One paw has introduced an unsolicited course correction.", land: "The cat sits on the arrival paperwork. Custody is technically established." },
+  { id: "dog", glyph: "\u{1F415}", match: ["\u{1F415}", "\u{1F436}", "\u{1F9AE}", "\u{1F429}"], name: "Director of Fetch", brief: "Bounds after the plane and carries an oversized return receipt.", fold: "The dog is certain this is a fetch contract.", cruise: "The aircraft is being enthusiastically followed by its return department.", land: "Delivery complete. The dog would like to commission exactly the same flight again." },
+  { id: "bee", glyph: "\u{1F41D}", match: ["\u{1F41D}"], name: "Buzz Air", brief: "Flies a little hexagonal inspection around the aircraft.", fold: "The bee has invoiced the company for use of the word Buzz.", cruise: "Six-sided due diligence confirms the plane is neither flower nor competitor.", land: "The bee files a pollen-weight baggage claim." },
+  { id: "butterfly", glyph: "\u{1F98B}", match: ["\u{1F98B}"], name: "Crosswind Appreciation Society", brief: "Flutters between the wings while the plane makes a gentle slalom.", fold: "The butterfly has selected a departure based on how lovely it might be.", cruise: "The scenic route has discovered an even more scenic route.", land: "Arrival has been classified as a particularly successful flutter." },
+  { id: "turtle", glyph: "\u{1F422}", match: ["\u{1F422}"], name: "Portable Control Tower", brief: "Retracts behind a tiny shield during takeoff, then peeks out to supervise.", fold: "The turtle has brought its own terminal and would prefer to remain inside it.", cruise: "A cautious head emerges to certify that outside still exists.", land: "The turtle declares the journey acceptable in retrospect." },
+  { id: "penguin", glyph: "\u{1F427}", match: ["\u{1F427}"], name: "Runway Belly-Slide Specialist", brief: "Slides along the departure strip and supervises a very low approach.", fold: "The penguin requests a runway polished to executive standards.", cruise: "Takeoff has been delegated. Sliding remains an internal competency.", land: "The penguin has arrived first and is pretending this was the plan." },
+  { id: "crab", glyph: "\u{1F980}", match: ["\u{1F980}", "\u{1F99E}"], name: "Lateral Movement Consultant", brief: "Side-steps the aircraft while insisting sideways is a strategic direction.", fold: "The crab has approved departure subject to a ninety-degree reinterpretation.", cruise: "Forward progress is being delivered through lateral expertise.", land: "The crab accepts the landing on a strictly sideways basis." },
+  { id: "fox", glyph: "\u{1F98A}", match: ["\u{1F98A}"], name: "Shortcut Procurement Specialist", brief: "Takes a shortcut beneath the route and waits smugly at the arrival desk.", fold: "The fox has already found a more interesting route to the destination.", cruise: "The fox is cutting across the paperwork while the paperwork follows the process.", land: "The fox was here first. Its expense claim was here yesterday." },
+  { id: "owl", glyph: "\u{1F989}", match: ["\u{1F989}"], name: "Night Shift Navigation Scholar", brief: "Orbits a floating compass and studies the route with excessive care.", fold: "The owl has annotated the departure clearance in three margins.", cruise: "A rotating compass has become the subject of a peer review.", land: "The owl publishes a brief twelve-volume account of this arrival." },
+  { id: "bird", glyph: "\u{1F426}", match: ["\u{1F426}", "\u{1F99C}", "\u{1F986}", "\u{1F985}", "\u{1F9A2}", "\u{1F99A}", "\u{1F9A9}", "\u{1F54A}"], name: "Grounded Aviation Expert", brief: "Hops along beneath the plane: personal flight is not approved for business travel.", fold: "The bird has been informed that only the paperwork may fly.", cruise: "The bird follows on foot under the Personal Aviation Exclusion Policy.", land: "The bird declines to comment on the efficiency of this arrangement." },
+  { id: "clerk", glyph: "\u{1F4CE}", match: [], name: "Acting Assistant to the Pilot", brief: "Bobs beside the aircraft and waves an excessively large boarding pass.", fold: "The pilot is checking the boarding pass of the boarding pass.", cruise: "The passenger manifest contains one document and several expectations.", land: "One complete piece of paperwork has successfully changed departments." }
+];
+function personalityFor(emoji) {
+  return flightPersonalities.find((p) => p.match.some((g) => emoji.includes(g))) || flightPersonalities.at(-1);
+}
+function personality(id) {
+  return flightPersonalities.find((p) => p.id === id);
+}
+var foldMs = 1800;
+var cruiseMs = 6e3;
+var loopMs = 2e3;
+var landingMs = 2500;
+function flightEligible(ordinal) {
+  return ordinal.endsWith("0") && /^[1-9][0-9]*0$/.test(ordinal);
+}
+function holdingLoops(ordinal) {
+  if (!flightEligible(ordinal)) throw new Error("Only positive, zero-ending ordinals have departure clearance.");
+  return Math.min(3, ordinal.length - ordinal.replace(/0+$/, "").length);
+}
+function hash2(value) {
+  let n = 2166136261;
+  for (const c of value) n = Math.imul(n ^ c.charCodeAt(0), 16777619) >>> 0;
+  return n;
+}
+function planFlight(mandate, ordinal, text2, authority, cast, source = "encounter") {
+  if (mandate.trim() !== mandate || !/^[1-9][0-9]*$/.test(mandate) || !authority || !text2 || !cast.length) throw new Error("A flight needs an exact mandate, supplied text, authority and pilot.");
+  const actors = [...new Map(cast.map((a) => [a.id, a])).values()].slice(0, 3);
+  if (actors.some((a) => !a.id || !a.name || !a.emoji)) throw new Error("Anonymous pilots must first report to Personnel.");
+  const loops = holdingLoops(ordinal), key2 = ["paper-aviation-v1", source, mandate, ordinal, text2, authority, ...actors.map((a) => a.id)].join("|");
+  const alternatives = rooms.map((r) => r.id).filter((id) => id !== "publication").sort((a, b) => hash2(key2 + a) - hash2(key2 + b) || a.localeCompare(b));
+  return Object.freeze({ key: key2, ordinal, mandate, text: text2, loops, overflow: /0000$/.test(ordinal), tactic: personalityFor(actors[0].emoji).id, actors: Object.freeze(actors.map((a) => Object.freeze({ ...a }))), source, alternatives: Object.freeze(alternatives) });
+}
+function flightFinding(resolution, arrival) {
+  return {
+    landed: "The paperwork has landed. Its contents remain precisely as important as before.",
+    redirected: arrival === "executive" ? "Executive received the document and declined to become operationally involved. A ground courier completed delivery." : "Crosswind delivered the paperwork to " + rooms.find((r) => r.id === arrival).short + ". A ground courier corrected the departmental enthusiasm.",
+    expedited: "Direct delivery authorized. Several committees have been deprived of a loop.",
+    skipped: "The remaining aviation ceremony was waived. The paperwork arrived by administrative shortcut.",
+    cancelled: "Flight cancelled. Its illustrated copy was filed; no numerical work was repeated.",
+    disabled: "Paper aviation is disabled. The document has reluctantly resumed travelling flat."
+  }[resolution];
+}
+var FlightCoordinator = class {
+  serial = 0;
+  lease;
+  last;
+  allowed = false;
+  listeners = /* @__PURE__ */ new Set();
+  pending;
+  records = [];
+  gate;
+  constructor(gate) {
+    this.gate = gate;
+    gate?.register("flight", (reason) => this.finish(reason));
+  }
+  get active() {
+    return !!this.pending;
+  }
+  subscribe(listener) {
+    this.listeners.add(listener);
+    return () => this.listeners.delete(listener);
+  }
+  notify() {
+    for (const listener of this.listeners) listener();
+  }
+  get snapshot() {
+    const p = this.pending;
+    if (!p) return;
+    const landingAt = foldMs + cruiseMs + p.plan.loops * loopMs;
+    const phase = p.elapsed < foldMs ? "folding" : p.elapsed < foldMs + cruiseMs ? "cruise" : p.elapsed < landingAt ? "holding" : "landing";
+    const start = phase === "folding" ? 0 : phase === "cruise" ? foldMs : phase === "holding" ? foldMs + cruiseMs : landingAt, duration2 = phase === "folding" ? foldMs : phase === "cruise" ? cruiseMs : phase === "holding" ? p.plan.loops * loopMs : landingMs;
+    const drift = p.applied.reduce((a, b) => a + b, 0), alternatives = p.plan.alternatives.filter((r) => r !== p.destination), arrival = p.expedited || !drift ? p.destination : alternatives[drift < 0 ? 0 : 1];
+    const person = personality(p.plan.tactic), announcement2 = p.notice || (phase === "folding" ? person.fold : phase === "landing" ? person.land : person.cruise);
+    return Object.freeze({ ...p, phase, progress: Math.min(1, (p.elapsed - start) / duration2), arrival, announcement: announcement2, fans: Object.freeze([...p.fans]), applied: Object.freeze([...p.applied]) });
+  }
   start(plan) {
     if (this.active) return false;
-    this.pending = { id: ++this.serial, plan, elapsed: 0, footprints: false, announcement: plan.actors[0].name + " has stolen the approval stamp." };
+    if (this.gate) {
+      this.lease = this.gate.acquire("flight");
+      if (this.lease === void 0) return false;
+    }
+    this.pending = { id: ++this.serial, plan, elapsed: 0, destination: "memory", fans: [0, 0, 0], applied: [0, 0, 0], passed: 0, expedited: false, notice: "" };
     this.last = void 0;
     this.allowed = false;
     this.notify();
@@ -524,62 +606,66 @@ var HeistCoordinator = class {
   }
   advance(now, allow, id = this.pending?.id) {
     const p = this.pending;
-    if (!p || id !== p.id) return;
-    if (!Number.isFinite(now)) throw new Error("A pursuit requires a finite clock.");
+    if (!p || p.id !== id) return;
+    if (!Number.isFinite(now)) throw new Error("Air traffic requires a finite clock.");
     const delta = this.last === void 0 || !this.allowed || !allow ? 0 : Math.max(0, now - this.last);
     this.last = Math.max(this.last ?? now, now);
     this.allowed = allow;
-    if (!allow) return;
-    const before = this.snapshot;
-    p.elapsed = Math.min(heistChaseMs + heistReturnMs, p.elapsed + delta);
-    if (p.elapsed >= heistChaseMs && !p.resolution) {
-      p.resolution = "automatic";
-      p.returnFrom = heistChaseMs;
-      p.announcement = heistFinding("automatic");
-    } else if (!this.snapshot.returning && before.holder !== this.snapshot.holder) p.announcement = p.plan.actors[this.snapshot.holder].name + " now holds the stamp. " + heistAntic(p.plan.actors[this.snapshot.holder]);
-    if (p.elapsed >= heistChaseMs + heistReturnMs) {
-      this.finish(p.resolution || "automatic");
+    if (!allow || !delta) return;
+    const before = this.snapshot.phase;
+    p.elapsed = Math.min(foldMs + cruiseMs + p.plan.loops * loopMs + landingMs, p.elapsed + delta);
+    if (!p.expedited) {
+      for (let i = p.passed; i < 3; i++) if (p.elapsed >= foldMs + cruiseMs * (i + 1) / 4) {
+        p.applied[i] = p.fans[i];
+        p.passed = i + 1;
+      }
+    }
+    if (before !== this.snapshot.phase) p.notice = "";
+    if (p.elapsed >= foldMs + cruiseMs + p.plan.loops * loopMs + landingMs) {
+      const s = this.snapshot;
+      this.finish(p.expedited ? "expedited" : s.arrival === s.destination ? "landed" : "redirected");
       return;
     }
-    if (delta) this.notify();
-  }
-  intercept(index, id = this.pending?.id) {
-    const s = this.snapshot;
-    if (!s || s.id !== id || s.returning || !Number.isInteger(index) || !s.plan.actors[index]) return false;
-    if (index !== s.holder) {
-      this.pending.announcement = s.plan.actors[index].name + " objects: \u201CI was attending a meeting about my whereabouts.\u201D";
-      this.notify();
-      return false;
-    }
-    this.recover("intercepted");
-    return true;
-  }
-  follow() {
-    const s = this.snapshot;
-    if (!s || s.returning) return;
-    this.pending.footprints = true;
-    this.pending.announcement = "Footprints lead from " + s.plan.rooms[Math.min(2, Math.floor(s.elapsed / 5e3))] + " toward " + s.plan.rooms[Math.min(3, Math.floor(s.elapsed / 5e3) + 1)] + ". The trail has not applied for confidentiality.";
     this.notify();
   }
-  recover(resolution) {
+  destination(room, id = this.pending?.id) {
     const p = this.pending;
-    if (!p || p.resolution) return;
-    p.resolution = resolution;
-    p.returnFrom = p.elapsed;
-    p.elapsed = heistChaseMs;
-    p.announcement = heistFinding(resolution);
+    if (!p || p.id !== id || this.snapshot.phase === "landing" || !rooms.some((r) => r.id === room)) return false;
+    p.destination = room;
+    p.notice = "Runway reassigned to " + rooms.find((r) => r.id === room).short + ". The destination has been notified of its promotion.";
+    this.notify();
+    return true;
+  }
+  turn(index, id = this.pending?.id) {
+    const p = this.pending;
+    if (!p || p.id !== id || !Number.isInteger(index) || index < 0 || index > 2 || this.snapshot.phase === "landing") return false;
+    p.fans[index] = p.fans[index] === 0 ? 1 : p.fans[index] === 1 ? -1 : 0;
+    if (index < p.passed) p.applied[index] = p.fans[index];
+    p.notice = "Fan " + (index + 1) + ": " + (p.fans[index] === 0 ? "straight" : p.fans[index] < 0 ? "left" : "right") + ". Wind direction is now official policy.";
+    this.notify();
+    return true;
+  }
+  land(id = this.pending?.id) {
+    const p = this.pending;
+    if (!p || p.id !== id || this.snapshot.phase === "landing") return false;
+    p.expedited = true;
+    p.elapsed = foldMs + cruiseMs + p.plan.loops * loopMs;
+    p.notice = "Direct delivery authorized. The remaining circular activity has been cancelled.";
     this.last = void 0;
     this.allowed = false;
     this.notify();
+    return true;
   }
   finish(resolution = "skipped") {
-    const p = this.pending;
-    if (!p) return;
-    this.records.push(Object.freeze({ id: p.id, plan: p.plan, resolution, finding: heistFinding(resolution) }));
+    const s = this.snapshot;
+    if (!s) return;
+    this.records.push(Object.freeze({ id: s.id, plan: s.plan, destination: s.destination, arrival: s.arrival, resolution, finding: flightFinding(resolution, s.arrival) }));
     if (this.records.length > 10) this.records.shift();
     this.pending = void 0;
     this.last = void 0;
     this.allowed = false;
+    if (this.lease !== void 0) this.gate?.release("flight", this.lease);
+    this.lease = void 0;
     this.notify();
   }
 };
@@ -1301,20 +1387,400 @@ var CompanionDesk = class {
   }
 };
 
-// web/office-heist.ts
-var officeHeist = new HeistCoordinator();
+// web/office-flight.ts
+var officeFlight = new FlightCoordinator(officeIncidents);
 var scheduler = new PresentationScheduler(() => !document.hidden && document.body.dataset.sitePage === "demo");
 function tick(now) {
-  officeHeist.advance(now, !officeEstate.moving);
-  if (officeHeist.active) scheduler.request(tick);
+  officeFlight.advance(now, !officeEstate.moving);
+  if (officeFlight.active) scheduler.request(tick);
 }
-officeHeist.subscribe(() => {
-  if (officeHeist.active) scheduler.request(tick);
+officeFlight.subscribe(() => {
+  if (officeFlight.active) scheduler.request(tick);
   else scheduler.cancel();
 });
 for (const event of ["visibilitychange", "site-page-change", "demo-desk-change", "office-fullscreen-change"]) document.addEventListener(event, () => scheduler.refresh());
 addEventListener("pagehide", () => {
   scheduler.cancel();
+  officeFlight.finish("cancelled");
+}, { once: true });
+var PaperAviationDesk = class {
+  constructor(mayInterrupt) {
+    this.mayInterrupt = mayInterrupt;
+    try {
+      this.enabled = sessionStorage.getItem("slopbuzz:paper-aviation:v1") !== "off";
+    } catch {
+    }
+    for (const checkbox of document.querySelectorAll("[data-flight-enabled]")) {
+      checkbox.checked = this.enabled;
+      checkbox.addEventListener("change", () => {
+        this.enabled = checkbox.checked;
+        for (const other of document.querySelectorAll("[data-flight-enabled]")) other.checked = this.enabled;
+        try {
+          sessionStorage.setItem("slopbuzz:paper-aviation:v1", this.enabled ? "on" : "off");
+        } catch {
+        }
+        if (!this.enabled) {
+          ++this.serial;
+          officeFlight.finish("disabled");
+        }
+      });
+    }
+    for (const prefix of ["office", "supervision"]) new FlightPanel(prefix);
+    const select = document.getElementById("flight-pilot");
+    for (const p of flightPersonalities.filter((p2) => p2.id !== "clerk")) {
+      const option = node("option", p.glyph + " \xB7 " + p.name);
+      option.value = p.glyph;
+      select.append(option);
+    }
+    document.getElementById("flight-rehearse").addEventListener("click", () => void this.rehearse());
+    document.getElementById("office-close").addEventListener("click", () => {
+      ++this.serial;
+    });
+    officeFlight.subscribe(() => this.records());
+  }
+  mayInterrupt;
+  mandate = "";
+  active = false;
+  enabled = true;
+  serial = 0;
+  seen = /* @__PURE__ */ new Set();
+  companions = /* @__PURE__ */ new Map();
+  begin(mandate) {
+    this.cancel();
+    this.mandate = mandate;
+    this.active = true;
+    this.seen.clear();
+    this.companions.clear();
+  }
+  complete() {
+    this.active = false;
+  }
+  cancel() {
+    this.active = false;
+    ++this.serial;
+    officeFlight.finish("cancelled");
+  }
+  clear() {
+    this.companions.clear();
+    ++this.serial;
+    officeFlight.finish("cancelled");
+  }
+  remember(d) {
+    if (!this.active || d.mandate !== this.mandate) return;
+    const ordinal = d.assignment.ordinal, key2 = d.strategy + "|" + ordinal;
+    this.companions.set(ordinal, d);
+    while (this.companions.size > 100) this.companions.delete(this.companions.keys().next().value);
+    if (this.seen.has(key2)) return;
+    this.seen.add(key2);
+    while (this.seen.size > 1e3) this.seen.delete(this.seen.values().next().value);
+    if (!this.enabled || !this.mayInterrupt() || officeEstate.moving || !flightEligible(ordinal) || !officeIncidents.admits("flight", ordinal)) return;
+    const previous = [...this.companions.values()].filter((p) => p.strategy === d.strategy && BigInt(p.assignment.ordinal) < BigInt(ordinal)).reverse();
+    const cast = [d, ...previous].filter((p, i, all) => all.findIndex((a) => a.companion.id === p.companion.id) === i).slice(0, 3).map((p) => p.companion);
+    if (officeFlight.start(planFlight(this.mandate, ordinal, d.assignment.flavor, d.strategy, cast))) officeIncidents.record("flight", ordinal);
+  }
+  async rehearse() {
+    const status = document.getElementById("flight-rehearsal-status"), button = document.getElementById("flight-rehearse");
+    if (officeIncidents.active || officeEstate.moving) {
+      status.textContent = "Airspace occupied. Finish the current incident or room move before commissioning a flight.";
+      return;
+    }
+    const serial = ++this.serial;
+    button.disabled = true;
+    status.textContent = "Recruiting a demonstration crew. These flights award no discoveries\u2026";
+    try {
+      const catalog = await companionCatalog();
+      if (serial !== this.serial) return;
+      const glyph = document.getElementById("flight-pilot").value, ordinal = document.getElementById("flight-ordinal").value;
+      const cast = [glyph, ...["\u{1F426}", "\u{1F419}"].filter((g) => g !== glyph)].map((g) => catalog.entries.find((c) => c.emoji === g)).filter((c) => !!c);
+      if (cast[0]?.emoji !== glyph) throw new Error("The selected demonstration pilot is unavailable.");
+      if (officeIncidents.active || officeEstate.moving) {
+        status.textContent = "The office became busy while the crew was assembling. Commission another flight when it is clear.";
+        return;
+      }
+      if (officeFlight.start(planFlight(ordinal, ordinal, "Buzz", "aviation-rehearsal-v1", cast, "rehearsal"))) {
+        status.textContent = "Demonstration crew only; no discoveries, audit entries or numerical mandates are awarded.";
+        if (document.getElementById("office-fullscreen").open) document.getElementById("office-fullscreen-drawer-close").click();
+        document.getElementById("office-stage").scrollIntoView({ block: "nearest", behavior: "instant" });
+      }
+    } catch (error) {
+      if (serial === this.serial) status.textContent = "Flight rehearsal unavailable: " + error.message;
+    } finally {
+      button.disabled = false;
+    }
+  }
+  records() {
+    const target = document.getElementById("flight-records"), key2 = officeFlight.records.map((r) => r.id + ":" + r.resolution).join("|");
+    if (target.dataset.records === key2) return;
+    target.dataset.records = key2;
+    target.replaceChildren(...officeFlight.records.slice().reverse().map((r) => node("li", `${r.plan.source === "rehearsal" ? "Test flight" : "Flight"} ${r.plan.ordinal} \xB7 ${r.plan.actors[0].name} \xB7 ${r.plan.loops} holding pattern${r.plan.loops === 1 ? "" : "s"}. ${r.finding}`)));
+    const last = officeFlight.records.at(-1);
+    if (last) document.getElementById("flight-rehearsal-status").textContent = last.finding;
+  }
+};
+var FlightPanel = class {
+  constructor(prefix) {
+    this.prefix = prefix;
+    this.root.id = prefix + "-flight";
+    this.root.className = "flight-panel";
+    this.root.hidden = true;
+    this.root.setAttribute("aria-label", "Paper Airplane Air-Traffic Control");
+    this.status.setAttribute("role", "status");
+    this.status.setAttribute("aria-live", "polite");
+    this.status.setAttribute("aria-atomic", "true");
+    this.map.className = "flight-route";
+    this.map.setAttribute("aria-label", "Readable flight route");
+    const controls = node("div");
+    controls.className = "flight-controls";
+    const label = node("label", "Landing department");
+    this.destination.id = prefix + "-flight-destination";
+    label.htmlFor = this.destination.id;
+    for (const room of rooms) {
+      const option = node("option", room.short);
+      option.value = room.id;
+      this.destination.append(option);
+    }
+    this.destination.addEventListener("change", () => {
+      if (!officeEstate.moving) officeFlight.destination(this.destination.value);
+      this.render();
+    });
+    controls.append(label, this.destination);
+    for (let i = 0; i < 3; i++) {
+      const b = node("button");
+      b.type = "button";
+      b.dataset.fan = String(i);
+      b.addEventListener("click", () => {
+        if (!officeEstate.moving) officeFlight.turn(i);
+      });
+      this.fans.push(b);
+      controls.append(b);
+    }
+    this.land.type = "button";
+    this.land.addEventListener("click", () => {
+      if (!officeEstate.moving) officeFlight.land();
+    });
+    controls.append(this.land);
+    this.root.append(this.label, this.status, this.map, controls);
+    document.getElementById(prefix === "office" ? "office-stage" : "supervision-stage").append(this.root);
+    officeFlight.subscribe(() => this.render());
+    officeEstate.subscribe((event) => {
+      if (event.kind !== "progress") this.render();
+    });
+  }
+  prefix;
+  root = node("section");
+  label = node("strong");
+  status = node("p");
+  map = node("p");
+  destination = node("select");
+  fans = [];
+  land = node("button", "Land now");
+  lastStatus = "";
+  render() {
+    const s = officeFlight.snapshot;
+    if (!s) {
+      if (this.root.contains(document.activeElement)) document.getElementById(document.getElementById("office-fullscreen").open ? "office-fullscreen-exit" : this.prefix === "office" ? "office-close" : "supervision-pause")?.focus({ preventScroll: true });
+      this.root.hidden = true;
+      this.root.removeAttribute("data-active");
+      return;
+    }
+    this.root.hidden = false;
+    this.root.dataset.active = "true";
+    this.root.dataset.phase = s.phase;
+    this.root.dataset.flightId = String(s.id);
+    this.root.dataset.tactic = s.plan.tactic;
+    this.root.dataset.elapsed = String(Math.floor(s.elapsed));
+    this.root.dataset.arrival = s.arrival;
+    const pilot = personality(s.plan.tactic), title2 = `${s.plan.source === "rehearsal" ? "Test flight" : "Flight"} ${s.plan.text.toUpperCase()}-${s.plan.ordinal} \xB7 ${s.plan.loops} holding pattern${s.plan.loops === 1 ? "" : "s"}`;
+    if (this.label.textContent !== title2) this.label.textContent = title2;
+    const status = (officeEstate.moving ? "Airspace frozen while Facilities moves the rooms. " : pilot.name + ". ") + s.announcement + (s.plan.overflow ? " Additional circular activity exceeds the circular-activity budget." : "");
+    if (status !== this.lastStatus) {
+      this.status.textContent = status;
+      this.lastStatus = status;
+    }
+    const destination = rooms.find((r) => r.id === s.destination), arrival = rooms.find((r) => r.id === s.arrival), address = officeEstate.current.placements.find((p) => p.room === s.destination).address;
+    const route = `Publication \u2192 ${s.phase} \u2192 ${destination.short} (${address})${s.arrival !== s.destination ? " \xB7 Crosswind diversion: " + arrival.short + " \u2192 ground courier" : ""}`;
+    if (this.map.textContent !== route) this.map.textContent = route;
+    if (this.destination.value !== s.destination) this.destination.value = s.destination;
+    this.destination.setAttribute("aria-disabled", String(s.phase === "landing" || officeEstate.moving));
+    for (const [i, b] of this.fans.entries()) {
+      const direction = s.fans[i] === 0 ? "straight" : s.fans[i] < 0 ? "left" : "right";
+      b.textContent = `${i + 1} ${s.fans[i] === 0 ? "\u2191" : s.fans[i] < 0 ? "\u2190" : "\u2192"}`;
+      b.setAttribute("aria-label", `Turn fan ${i + 1}, currently ${direction}`);
+      b.title = `Fan ${i + 1}: ${direction}`;
+      b.dataset.direction = direction;
+      b.setAttribute("aria-disabled", String(s.phase === "landing" || officeEstate.moving));
+    }
+    this.land.setAttribute("aria-disabled", String(s.phase === "landing" || officeEstate.moving));
+  }
+};
+
+// web/office-heist-model.ts
+var heistChaseMs = 15e3;
+var heistReturnMs = 3e3;
+var destinations = ["reception", "personnel", "procurement", "premises", "memory", "publication", "executive"];
+function heistEligible(ordinal) {
+  return /^[1-9][0-9]+$/.test(ordinal) && ordinal === Array.from(ordinal).reverse().join("");
+}
+function heistTactic(emoji) {
+  return emoji.includes("\u{1F40C}") ? "snail" : emoji.includes("\u{1F47B}") ? "ghost" : emoji.includes("\u{1F419}") ? "octopus" : "runner";
+}
+function seed(text2) {
+  let value = 2166136261;
+  for (const character of text2) value = Math.imul(value ^ character.charCodeAt(0), 16777619) >>> 0;
+  return value;
+}
+function planHeist(mandate, ordinal, authority, companions2, source = "encounter") {
+  if (!/^[1-9][0-9]*$/.test(mandate) || !heistEligible(ordinal) || !authority || companions2.length < 1) throw new Error("The heist requires a positive mandate, a multi-digit palindrome and a named accomplice.");
+  const unique = [...new Map(companions2.map((c) => [c.id, c])).values()].slice(0, 3);
+  if (unique.some((c) => !c.id || !c.name || !c.emoji)) throw new Error("Anonymous suspects must first report to Personnel.");
+  const actors = Object.freeze(unique.map((c) => Object.freeze({ ...c, tactic: heistTactic(c.emoji) })));
+  const key2 = ["stamp-heist-v1", source, mandate, ordinal, authority, ...actors.map((a) => a.id)].join("|");
+  let random2 = seed(key2);
+  const pool = [...destinations];
+  for (let i = pool.length - 1; i > 0; i--) {
+    random2 = Math.imul(random2, 1664525) + 1013904223 >>> 0;
+    const j = random2 % (i + 1);
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+  return Object.freeze({ key: key2, ordinal, mandate, source, actors, rooms: Object.freeze(["notary", ...pool.slice(0, 3)]) });
+}
+function heistFinding(resolution) {
+  return {
+    intercepted: "Stamp recovered. The suspect claims this was a cross-departmental delivery.",
+    biscuit: "Amnesty accepted. One biscuit has outperformed the entire security budget.",
+    automatic: "The accomplices returned the stamp after discovering that stolen approval still requires approval.",
+    skipped: "The chase was waived. The stamp returned through an undisclosed administrative shortcut.",
+    cancelled: "The chase was adjourned and the stamp returned. No numerical work was repeated.",
+    disabled: "Companion mischief is disabled. The stamp has reluctantly resumed its ordinary employment."
+  }[resolution];
+}
+function heistAntic(actor) {
+  return {
+    snail: "An extremely slow getaway. Security has requested a slower pursuit.",
+    ghost: "The ghost uses the wall. Its pursuing paperwork must use the door.",
+    octopus: "Eight apparent stamps. Seven are unauthorized impressions of confidence.",
+    runner: "The suspect is carrying approval without permission to carry approval."
+  }[actor.tactic];
+}
+var HeistCoordinator = class {
+  lease;
+  gate;
+  constructor(gate) {
+    this.gate = gate;
+    gate?.register("heist", (reason) => this.finish(reason));
+  }
+  serial = 0;
+  pending;
+  last;
+  allowed = false;
+  listeners = /* @__PURE__ */ new Set();
+  records = [];
+  get active() {
+    return !!this.pending;
+  }
+  get snapshot() {
+    const p = this.pending;
+    if (!p) return;
+    const chase = p.returnFrom ?? Math.min(p.elapsed, heistChaseMs), leg = Math.min(2, Math.floor(chase / 5e3));
+    return Object.freeze({ ...p, leg, holder: leg % p.plan.actors.length, legProgress: Math.min(1, (chase - leg * 5e3) / 5e3), returning: p.elapsed >= heistChaseMs, returnProgress: Math.max(0, (p.elapsed - heistChaseMs) / heistReturnMs) });
+  }
+  subscribe(listener) {
+    this.listeners.add(listener);
+    return () => this.listeners.delete(listener);
+  }
+  notify() {
+    for (const listener of this.listeners) listener();
+  }
+  start(plan) {
+    if (this.active) return false;
+    if (this.gate) {
+      this.lease = this.gate.acquire("heist");
+      if (this.lease === void 0) return false;
+    }
+    this.pending = { id: ++this.serial, plan, elapsed: 0, footprints: false, announcement: plan.actors[0].name + " has stolen the approval stamp." };
+    this.last = void 0;
+    this.allowed = false;
+    this.notify();
+    return true;
+  }
+  advance(now, allow, id = this.pending?.id) {
+    const p = this.pending;
+    if (!p || id !== p.id) return;
+    if (!Number.isFinite(now)) throw new Error("A pursuit requires a finite clock.");
+    const delta = this.last === void 0 || !this.allowed || !allow ? 0 : Math.max(0, now - this.last);
+    this.last = Math.max(this.last ?? now, now);
+    this.allowed = allow;
+    if (!allow) return;
+    const before = this.snapshot;
+    p.elapsed = Math.min(heistChaseMs + heistReturnMs, p.elapsed + delta);
+    if (p.elapsed >= heistChaseMs && !p.resolution) {
+      p.resolution = "automatic";
+      p.returnFrom = heistChaseMs;
+      p.announcement = heistFinding("automatic");
+    } else if (!this.snapshot.returning && before.holder !== this.snapshot.holder) p.announcement = p.plan.actors[this.snapshot.holder].name + " now holds the stamp. " + heistAntic(p.plan.actors[this.snapshot.holder]);
+    if (p.elapsed >= heistChaseMs + heistReturnMs) {
+      this.finish(p.resolution || "automatic");
+      return;
+    }
+    if (delta) this.notify();
+  }
+  intercept(index, id = this.pending?.id) {
+    const s = this.snapshot;
+    if (!s || s.id !== id || s.returning || !Number.isInteger(index) || !s.plan.actors[index]) return false;
+    if (index !== s.holder) {
+      this.pending.announcement = s.plan.actors[index].name + " objects: \u201CI was attending a meeting about my whereabouts.\u201D";
+      this.notify();
+      return false;
+    }
+    this.recover("intercepted");
+    return true;
+  }
+  follow() {
+    const s = this.snapshot;
+    if (!s || s.returning) return;
+    this.pending.footprints = true;
+    this.pending.announcement = "Footprints lead from " + s.plan.rooms[Math.min(2, Math.floor(s.elapsed / 5e3))] + " toward " + s.plan.rooms[Math.min(3, Math.floor(s.elapsed / 5e3) + 1)] + ". The trail has not applied for confidentiality.";
+    this.notify();
+  }
+  recover(resolution) {
+    const p = this.pending;
+    if (!p || p.resolution) return;
+    p.resolution = resolution;
+    p.returnFrom = p.elapsed;
+    p.elapsed = heistChaseMs;
+    p.announcement = heistFinding(resolution);
+    this.last = void 0;
+    this.allowed = false;
+    this.notify();
+  }
+  finish(resolution = "skipped") {
+    const p = this.pending;
+    if (!p) return;
+    this.records.push(Object.freeze({ id: p.id, plan: p.plan, resolution, finding: heistFinding(resolution) }));
+    if (this.records.length > 10) this.records.shift();
+    this.pending = void 0;
+    this.last = void 0;
+    this.allowed = false;
+    if (this.lease !== void 0) this.gate?.release("heist", this.lease);
+    this.lease = void 0;
+    this.notify();
+  }
+};
+
+// web/office-heist.ts
+var officeHeist = new HeistCoordinator(officeIncidents);
+var scheduler2 = new PresentationScheduler(() => !document.hidden && document.body.dataset.sitePage === "demo");
+function tick2(now) {
+  officeHeist.advance(now, !officeEstate.moving);
+  if (officeHeist.active) scheduler2.request(tick2);
+}
+officeHeist.subscribe(() => {
+  if (officeHeist.active) scheduler2.request(tick2);
+  else scheduler2.cancel();
+});
+for (const event of ["visibilitychange", "site-page-change", "demo-desk-change", "office-fullscreen-change"]) document.addEventListener(event, () => scheduler2.refresh());
+addEventListener("pagehide", () => {
+  scheduler2.cancel();
   officeHeist.finish("cancelled");
 }, { once: true });
 var StampHeistDesk = class {
@@ -1394,22 +1860,30 @@ var StampHeistDesk = class {
     if (this.seen.has(key2)) return;
     this.seen.add(key2);
     while (this.seen.size > 1e3) this.seen.delete(this.seen.values().next().value);
-    if (!this.enabled || !this.mayInterrupt() || officeHeist.active || officeEstate.moving || this.count >= 3 || !heistEligible(ordinal) || BigInt(ordinal) - BigInt(this.last) < 30n) return;
+    if (!this.enabled || !this.mayInterrupt() || !officeIncidents.admits("heist", ordinal) || officeEstate.moving || this.count >= 3 || !heistEligible(ordinal) || BigInt(ordinal) - BigInt(this.last) < 30n) return;
     const previous = [...this.companions.values()].filter((d) => d.strategy === discovery.strategy && BigInt(d.assignment.ordinal) < BigInt(ordinal)).sort((a, b) => BigInt(a.assignment.ordinal) > BigInt(b.assignment.ordinal) ? -1 : 1);
     const roster = [discovery, ...previous].filter((d, i, all) => all.findIndex((a) => a.companion.id === d.companion.id) === i).slice(0, 3).map((d) => d.companion);
     if (officeHeist.start(planHeist(this.mandate, ordinal, discovery.strategy, roster))) {
       this.count++;
       this.last = ordinal;
+      officeIncidents.record("heist", ordinal);
     }
   }
   async rehearse() {
-    if (officeHeist.active) return;
+    if (officeIncidents.active || officeEstate.moving) {
+      document.getElementById("heist-rehearsal-status").textContent = "The office is busy. Finish its current incident or room move first.";
+      return;
+    }
     const serial = ++this.rehearsalSerial, button = document.getElementById("heist-rehearse"), status = document.getElementById("heist-rehearsal-status");
     button.disabled = true;
     status.textContent = "Security is recruiting three entirely fictional suspects\u2026";
     try {
       const catalog = await companionCatalog();
       if (serial !== this.rehearsalSerial) return;
+      if (officeIncidents.active || officeEstate.moving) {
+        status.textContent = "The office became busy while the suspects assembled. Try again when its current incident or room move finishes.";
+        return;
+      }
       const choice = document.getElementById("heist-suspect").value;
       const glyphs = [choice, ...["\u{1F40C}", "\u{1F47B}", "\u{1F419}"].filter((g) => g !== choice)];
       const actors = glyphs.map((g) => g === "\u{1F47B}" ? { id: "security-ghost-v1", name: "Ghost of Pending Approval", emoji: g } : catalog.entries.find((c) => c.emoji === g)).filter((c) => !!c);
@@ -1417,6 +1891,7 @@ var StampHeistDesk = class {
       const plan = planHeist("111", "33", "security-rehearsal-v1", actors, "rehearsal");
       if (officeHeist.start(plan)) {
         status.textContent = "Rehearsal in progress. These stand-ins earn no companion discoveries.";
+        if (document.getElementById("office-fullscreen").open) document.getElementById("office-fullscreen-drawer-close").click();
         document.getElementById("office-stage").scrollIntoView({ block: "nearest", behavior: "instant" });
       }
     } catch (error) {
@@ -1935,8 +2410,8 @@ function parseOfficeManifest(x) {
   return m;
 }
 async function verifyOfficePackage(manifest, bytes) {
-  const hash2 = [...new Uint8Array(await crypto.subtle.digest("SHA-256", bytes))].map((x) => x.toString(16).padStart(2, "0")).join("");
-  if (bytes.byteLength !== manifest.bytes || hash2 !== manifest.sha256) throw new Error("The delivered building does not match its manifest.");
+  const hash3 = [...new Uint8Array(await crypto.subtle.digest("SHA-256", bytes))].map((x) => x.toString(16).padStart(2, "0")).join("");
+  if (bytes.byteLength !== manifest.bytes || hash3 !== manifest.sha256) throw new Error("The delivered building does not match its manifest.");
 }
 
 // web/office-pack-key.ts
@@ -1999,6 +2474,7 @@ var OfficeTourDesk = class {
   directory = /* @__PURE__ */ new Map();
   constructor() {
     officeHeist.subscribe(() => this.syncRenderer());
+    officeFlight.subscribe(() => this.syncRenderer());
     officeEstate.subscribe((event) => {
       this.syncRenderer();
       if (event.kind === "committed") {
@@ -2308,7 +2784,7 @@ var OfficeTourDesk = class {
       let readiness;
       this.canvas.removeAttribute("data-rendered");
       this.canvas.dataset.module = releaseAsset("office-world.js").href;
-      this.renderer = module.createOffice({ canvas: this.canvas, state: this.sceneState(), onHeistSuspect: (index, id) => officeHeist.intercept(index, id), onHeistFootprint: () => officeHeist.follow(), onRoom: (id) => this.select(id), onAmenity: () => document.dispatchEvent(new CustomEvent("office-amenity", { detail: "office" })), onProp: (room, prop2) => {
+      this.renderer = module.createOffice({ canvas: this.canvas, state: this.sceneState(), onHeistSuspect: (index, id) => officeHeist.intercept(index, id), onHeistFootprint: () => officeHeist.follow(), onFlightFan: (index, id) => officeFlight.turn(index, id), onFlightRunway: (room, id) => officeFlight.destination(room, id), onRoom: (id) => this.select(id), onAmenity: () => document.dispatchEvent(new CustomEvent("office-amenity", { detail: "office" })), onProp: (room, prop2) => {
         this.select(room);
         const p = roomById(room)?.props.find((x) => x.id === prop2);
         if (p) this.inspectProp(p);
@@ -2364,7 +2840,7 @@ var OfficeTourDesk = class {
     else this.canvas.setAttribute("aria-hidden", "true");
   }
   close(target = this.enter) {
-    officeHeist.finish("skipped");
+    officeIncidents.finish("skipped");
     if (officeFullscreen().mode === "facilities") officeFullscreen().close(false);
     officeEstate.finish();
     this.exitFocus = target;
@@ -2561,7 +3037,7 @@ var OfficeTourDesk = class {
   }
   sceneState() {
     const file = this.archive.current(), d = file ? this.archive.companions.get(file.ordinal) : void 0;
-    return { room: this.room, route: routeFor(file), ordinal: file?.ordinal || "", text: file?.text || "", emoji: d?.companion.emoji, companionName: d?.companion.name, paused: this.paused, followRoute: byId2("office-follow-route").checked, reducedMotion: !this.motion.checked, quality: byId2("office-quality").value, seed: tourSeed(this.archive.mandate), layout: officeEstate.displayed, relocation: officeEstate.relocation, heist: officeHeist.snapshot };
+    return { room: this.room, route: routeFor(file), ordinal: file?.ordinal || "", text: file?.text || "", emoji: d?.companion.emoji, companionName: d?.companion.name, paused: this.paused, followRoute: byId2("office-follow-route").checked, reducedMotion: !this.motion.checked, quality: byId2("office-quality").value, seed: tourSeed(this.archive.mandate), layout: officeEstate.displayed, relocation: officeEstate.relocation, heist: officeHeist.snapshot, flight: officeFlight.snapshot };
   }
   syncRenderer() {
     try {
@@ -2831,6 +3307,7 @@ var OfficeSupervisionDesk = class {
   constructor(authority) {
     this.authority = authority;
     officeHeist.subscribe(() => this.updateScene());
+    officeFlight.subscribe(() => this.updateScene());
     officeEstate.subscribe((event) => {
       this.updateScene();
       if (event.kind === "committed") {
@@ -2855,7 +3332,7 @@ var OfficeSupervisionDesk = class {
       if (this.authority.reading()) this.authority.pause(!this.authority.paused());
     });
     element("supervision-next").addEventListener("click", () => {
-      if (!this.authority.reading() || !this.authority.paused() || officeEstate.moving || officeHeist.active) return;
+      if (!this.authority.reading() || !this.authority.paused() || officeEstate.moving || officeIncidents.active) return;
       if (!element("office-fullscreen").open) element("mandate-output").scrollIntoView({ block: "start", behavior: "instant" });
       this.credits = 1;
       this.authority.wake();
@@ -2933,7 +3410,7 @@ var OfficeSupervisionDesk = class {
     return this.credits > 0;
   }
   disable() {
-    officeHeist.finish("skipped");
+    officeIncidents.finish("skipped");
     officeEstate.finish();
     if (!this.enabled) return;
     this.checkbox.checked = false;
@@ -2967,9 +3444,10 @@ var OfficeSupervisionDesk = class {
     playbackIcon(button, paused2 ? "play" : "pause", paused2 ? "Resume" : "Pause");
     button.setAttribute("aria-disabled", String(!reading2));
     button.setAttribute("aria-pressed", String(paused2));
-    element("supervision-next").setAttribute("aria-disabled", String(!reading2 || !paused2 || officeEstate.moving || officeHeist.active));
+    element("supervision-next").setAttribute("aria-disabled", String(!reading2 || !paused2 || officeEstate.moving || officeIncidents.active));
     if (officeEstate.moving && reading2) this.authority.notice("Facilities has suspended disclosure while all eight departments reconsider their addresses. Your pause and current decision are retained.");
-    else if (officeHeist.active && reading2) this.authority.notice("The approval stamp is missing. Proceedings will resume at this decision when the chase resolves. Your Pause setting is retained.");
+    else if (officeIncidents.kind === "flight" && reading2) this.authority.notice("Paperwork is airborne. Proceedings will resume here after landing. Your Pause setting is retained.");
+    else if (officeIncidents.active && reading2) this.authority.notice("The approval stamp is missing. Proceedings will resume at this decision when the chase resolves. Your Pause setting is retained.");
   }
   begin(mandate, mode = "mandate") {
     this.interrupt();
@@ -2993,7 +3471,7 @@ var OfficeSupervisionDesk = class {
     this.syncControls();
   }
   interrupt() {
-    officeHeist.finish("cancelled");
+    officeIncidents.finish("cancelled");
     officeEstate.finish();
     this.epoch++;
     this.credits = 0;
@@ -3077,7 +3555,7 @@ var OfficeSupervisionDesk = class {
     element("supervision-current").textContent = text2;
   }
   sceneState(step = this.activeStep || this.lastStep) {
-    return { room: step?.shot.room || "reception", route: [], ordinal: this.folio?.ordinal || "", text: this.published ? this.folio?.text || "" : "PENDING", emoji: this.companion?.companion.emoji, companionName: this.companion?.companion.name, paused: true, reducedMotion: this.media.matches, quality: this.governor.quality, seed: tourSeed(this.mandate), layout: officeEstate.displayed, relocation: officeEstate.relocation, heist: officeHeist.snapshot };
+    return { room: step?.shot.room || "reception", route: [], ordinal: this.folio?.ordinal || "", text: this.published ? this.folio?.text || "" : "PENDING", emoji: this.companion?.companion.emoji, companionName: this.companion?.companion.name, paused: true, reducedMotion: this.media.matches, quality: this.governor.quality, seed: tourSeed(this.mandate), layout: officeEstate.displayed, relocation: officeEstate.relocation, heist: officeHeist.snapshot, flight: officeFlight.snapshot };
   }
   painted(frame) {
     this.paintedAt = frame.now;
@@ -3143,7 +3621,7 @@ var OfficeSupervisionDesk = class {
         }, onProp: () => {
         }, onStep: () => {
         }, onView: () => {
-        }, onHeistSuspect: (index, id) => officeHeist.intercept(index, id), onHeistFootprint: () => officeHeist.follow(), onFrame: (frame) => this.painted(frame), onReady: () => {
+        }, onHeistSuspect: (index, id) => officeHeist.intercept(index, id), onHeistFootprint: () => officeHeist.follow(), onFlightFan: (index, id) => officeFlight.turn(index, id), onFlightRunway: (room, id) => officeFlight.destination(room, id), onFrame: (frame) => this.painted(frame), onReady: () => {
           this.ready = true;
           if (this.latestCue) this.renderer?.direct(this.latestCue);
           clearTimeout(this.readiness);
@@ -3256,7 +3734,7 @@ var OfficeSupervisionDesk = class {
           this.updateScene(step);
         }
         this.activity();
-        const moving = officeEstate.moving || officeHeist.active, paused2 = this.authority.paused();
+        const moving = officeEstate.moving || officeIncidents.active, paused2 = this.authority.paused();
         if (!shown) {
           if (!moving && (!paused2 || this.credits > 0)) {
             shown = true;
@@ -3291,7 +3769,7 @@ var OfficeSupervisionDesk = class {
               return;
             }
             this.activity();
-            if (officeEstate.moving || officeHeist.active || this.sceneActive && this.ready && !this.fallback && !manual && (this.paintedCue?.step.id !== step.id || !this.paintedCue.complete)) {
+            if (officeEstate.moving || officeIncidents.active || this.sceneActive && this.ready && !this.fallback && !manual && (this.paintedCue?.step.id !== step.id || !this.paintedCue.complete)) {
               this.scheduler.request(acknowledge);
               return;
             }
@@ -3325,26 +3803,26 @@ function visible() {
     return r.width > 0 && Math.min(r.bottom, innerHeight) - Math.max(r.top, 0) > Math.min(60, r.height * 0.2);
   });
 }
-var scheduler2 = new PresentationScheduler(visible);
-function tick2(now) {
+var scheduler3 = new PresentationScheduler(visible);
+function tick3(now) {
   if (!officeEstate.moving) return;
   if (reduced.matches || document.getElementById("office-motion")?.checked === false) {
     officeEstate.finish();
     return;
   }
   officeEstate.advance(now, true);
-  if (officeEstate.moving) scheduler2.request(tick2);
+  if (officeEstate.moving) scheduler3.request(tick3);
 }
 officeEstate.subscribe((event) => {
-  if (event.kind === "staged") scheduler2.request(tick2);
-  else if (event.kind === "committed" || event.kind === "cancelled") scheduler2.cancel();
+  if (event.kind === "staged") scheduler3.request(tick3);
+  else if (event.kind === "committed" || event.kind === "cancelled") scheduler3.cancel();
 });
-for (const event of ["visibilitychange", "site-page-change", "demo-desk-change", "demo-watch-layout", "office-fullscreen-change"]) document.addEventListener(event, () => scheduler2.refresh());
+for (const event of ["visibilitychange", "site-page-change", "demo-desk-change", "demo-watch-layout", "office-fullscreen-change"]) document.addEventListener(event, () => scheduler3.refresh());
 reduced.addEventListener("change", () => {
   if (reduced.matches) officeEstate.finish();
 });
 addEventListener("pagehide", () => {
-  scheduler2.cancel();
+  scheduler3.cancel();
   officeEstate.finish();
 }, { once: true });
 function requestReorganization() {
@@ -5471,10 +5949,10 @@ var DemoWorkspace = class {
       } else this.fit();
     });
     visualViewport?.addEventListener("resize", () => this.fit());
-    const hash2 = location.hash;
-    if (hash2.startsWith("#precedent")) this.select("evidence-view").value = "precedent";
-    if (hash2.startsWith("#personnel")) this.select("evidence-view").value = "personnel";
-    if (hash2.startsWith("#premises")) this.select("experiment-view").value = "premises";
+    const hash3 = location.hash;
+    if (hash3.startsWith("#precedent")) this.select("evidence-view").value = "precedent";
+    if (hash3.startsWith("#personnel")) this.select("evidence-view").value = "personnel";
+    if (hash3.startsWith("#premises")) this.select("experiment-view").value = "premises";
     this.restoreDraft();
     this.draftSummary();
     this.sections("experiment");
@@ -5863,6 +6341,7 @@ new PrecedentView("experiment-");
 new PremisesDesk();
 var workspace;
 var heists;
+var aviation;
 var office = new OfficeTourDesk();
 var supervision = new OfficeSupervisionDesk({ reading: () => reading, paused: () => paused, pause: setReadingPaused, wake: () => {
   wakeReading?.();
@@ -5879,11 +6358,13 @@ var companions = new CompanionDesk({ remember: (discovery) => {
   supervision.remember(discovery);
   workspace?.remember(discovery);
   heists?.remember(discovery);
+  aviation?.remember(discovery);
 }, clearCompanions: () => {
   office.clearCompanions();
   supervision.clearCompanions();
   workspace?.clearCompanions();
   heists?.clear();
+  aviation?.clear();
 } });
 var currentLimit = "15";
 var receivedPacket;
@@ -5894,6 +6375,11 @@ var personnel = new PersonnelProceedings({ rehearse: () => {
 new PersonnelExperiment();
 workspace = new DemoWorkspace({ placeChronicle: (target) => chronicle.place(target) });
 heists = new StampHeistDesk(() => reading && productionActive && supervision.enabled && !revealAll, () => {
+  wakeReading?.();
+  readingControls();
+});
+aviation = new PaperAviationDesk(() => reading && productionActive && supervision.enabled && !revealAll);
+officeIncidents.subscribe(() => {
   wakeReading?.();
   readingControls();
 });
@@ -5920,13 +6406,13 @@ async function observeLine(folio, sequence, publish) {
     if (generation === supervision.generation || !supervision.enabled) break;
   }
   if (sequence !== mandateSequence) return false;
-  while ((officeEstate.moving || officeHeist.active || paused && !supervision.enabled) && sequence === mandateSequence) await waitForPace();
+  while ((officeEstate.moving || officeIncidents.active || paused && !supervision.enabled) && sequence === mandateSequence) await waitForPace();
   if (sequence !== mandateSequence) return false;
   release();
   return true;
 }
 function readingControls() {
-  workspace?.runActivity(productionActive || reading, reading && paused, activityMode, officeHeist.active ? "Approval stamp missing \xB7 proceedings held" : "");
+  workspace?.runActivity(productionActive || reading, reading && paused, activityMode, officeIncidents.kind === "flight" ? "Paperwork airborne \xB7 proceedings held" : officeIncidents.active ? "Approval stamp missing \xB7 proceedings held" : "");
   for (const panel of reorganizationPanels) panel.setReading(reading);
   stopButton.setAttribute("aria-disabled", String(!reading));
   revealButton.textContent = activityMode === "replay" ? "Reveal completed proceedings" : streaming ? "Waive disclosure delays" : "Reveal complete output";
@@ -5964,6 +6450,7 @@ function finishProduction() {
   productionActive = false;
   companions.completeRun();
   heists?.complete();
+  aviation?.complete();
 }
 var autocorrect = byId("numeric-autocorrect");
 var warnedValue = "";
@@ -6022,6 +6509,7 @@ function validateLimit() {
 stopButton.addEventListener("click", () => {
   if (!reading) return;
   heists?.cancel();
+  aviation?.cancel();
   officeEstate.finish(), ++mandateSequence;
   reading = false;
   streaming = false;
@@ -6073,7 +6561,7 @@ async function revealOutput(text2, sequence, serviceMillis) {
   if (supervision.enabled) await supervision.prelude(() => sequence === mandateSequence);
   for (let index = 0; index < lines2.length; index++) {
     if (sequence !== mandateSequence) return;
-    while ((officeEstate.moving || officeHeist.active || paused && !supervision.enabled) && sequence === mandateSequence) await waitForPace();
+    while ((officeEstate.moving || officeIncidents.active || paused && !supervision.enabled) && sequence === mandateSequence) await waitForPace();
     if (sequence !== mandateSequence) return;
     if (immediate()) {
       discloseLines(String(index + 1), lines2.slice(index));
@@ -6094,7 +6582,7 @@ async function revealOutput(text2, sequence, serviceMillis) {
     if (index < lines2.length - 1 && !supervision.enabled && !revealAll) await waitForPace(Number(speedControl.value));
   }
   if (supervision.enabled) await supervision.finishPacket(() => sequence === mandateSequence);
-  while (officeHeist.active && sequence === mandateSequence) await waitForPace();
+  while (officeIncidents.active && sequence === mandateSequence) await waitForPace();
   if (sequence === mandateSequence) {
     setText("output-count", `${lines2.length} ${lines2.length === 1 ? "line" : "lines"}`);
     reading = false;
@@ -6136,7 +6624,7 @@ async function streamMandate(limit, sequence, started) {
     setText("output-count", `${disclosed} of ${bound} lines \xB7 latest ${Math.min(1e3, output.childNodes.length)} retained`);
   }
   while (sequence === mandateSequence) {
-    while ((officeHeist.active || officeEstate.moving || paused && (!supervision.enabled || !supervision.hasStepCredit)) && sequence === mandateSequence) await waitForPace();
+    while ((officeIncidents.active || officeEstate.moving || paused && (!supervision.enabled || !supervision.hasStepCredit)) && sequence === mandateSequence) await waitForPace();
     if (sequence !== mandateSequence) return;
     const count = windowCount(next, limit);
     const answer = await proclamation(`/fizzbuzz/window?start=${next}&count=${count}`);
@@ -6167,7 +6655,7 @@ async function streamMandate(limit, sequence, started) {
     }
     if (!answer.ok) throw new Error(`Extended proclamation desk returned ${answer.status}.`);
     for (let i = 0; i < lines2.length; ) {
-      while ((officeHeist.active || officeEstate.moving || paused && !supervision.enabled) && sequence === mandateSequence) await waitForPace();
+      while ((officeIncidents.active || officeEstate.moving || paused && !supervision.enabled) && sequence === mandateSequence) await waitForPace();
       if (sequence !== mandateSequence) return;
       if (immediate()) {
         append(lines2.slice(i));
@@ -6180,7 +6668,7 @@ async function streamMandate(limit, sequence, started) {
       }
     }
     if (supervision.enabled) await supervision.finishPacket(() => sequence === mandateSequence);
-    while (officeHeist.active && sequence === mandateSequence) await waitForPace();
+    while (officeIncidents.active && sequence === mandateSequence) await waitForPace();
     if (sequence !== mandateSequence) return;
     if (disclosed === limit) break;
     next = addOrdinals(next, count);
@@ -6203,11 +6691,14 @@ async function runMandate(event) {
   if (limit === null) return;
   const sequence = ++mandateSequence;
   heists?.cancel();
+  aviation?.cancel();
   if (productionActive) companions.withdrawRun();
   workspace.commitDraft(String(limit));
   companions.beginRun(String(limit));
   productionActive = true;
+  officeIncidents.begin();
   heists?.begin(String(limit));
+  aviation?.begin(String(limit));
   wakeReading?.();
   reading = false;
   streaming = false;
@@ -6290,6 +6781,7 @@ async function runMandate(event) {
 }
 function beginPersonnelActivity(mode) {
   heists?.cancel();
+  aviation?.cancel();
   finishProduction();
   workspace?.beginDisclosure();
   const sequence = ++mandateSequence;
@@ -6328,7 +6820,7 @@ async function replayPersonnel() {
     if (supervision.enabled) await supervision.prelude(() => sequence === mandateSequence);
   }
   for (let i = 0; i < saved.folios.length; ) {
-    while ((officeHeist.active || officeEstate.moving || paused && !supervision.enabled) && sequence === mandateSequence) await waitForPace();
+    while ((officeIncidents.active || officeEstate.moving || paused && !supervision.enabled) && sequence === mandateSequence) await waitForPace();
     if (sequence !== mandateSequence) return;
     const batch = immediate() ? saved.folios.slice(i) : saved.folios.slice(i, i + 1), shown = i + batch.length;
     const publish = () => {

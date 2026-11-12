@@ -30,7 +30,8 @@
     "test:supervision": "node --test scripts/office-supervision.test.ts scripts/office-cadence.test.ts",
     "test:layout": "node --test scripts/office-layout.test.ts scripts/office-partition.test.ts scripts/office-relocation.test.ts scripts/office-estate-records.test.ts",
     "test:heist": "node --test scripts/office-heist.test.ts",
-    "test:workspace": "node --test scripts/demo-workspace.test.ts"
+    "test:workspace": "node --test scripts/demo-workspace.test.ts",
+    "test:aviation": "node --test scripts/office-flight.test.ts"
   },
   "dependencies": {
     "@babylonjs/core": "9.33.2",

@@ -5,7 +5,9 @@ Status: accepted, 10 November 2026.
 Emoji companions can steal the notary's illustrated stamp during Executive
 Hovering. A live encounter must be a multi-digit decimal palindrome, be disclosed
 by the current mandate, and have an actual Java companion assignment. At most
-three heists occur per mandate, separated by at least thirty ordinals. With the
+three incidents occur per mandate, shared with paper aviation and separated by
+at least thirty ordinals. The common incident lease prevents overlapping flights
+and chases. With the
 ordinary sequence, the first opportunity is 33. Companions and heists must both
 be enabled. Ordinary immediate reading and retained replay do not introduce
 new automatic incidents.

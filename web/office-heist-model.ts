@@ -1,4 +1,5 @@
 import type {RoomId} from './office-content.ts';
+import type {OfficeIncidentCoordinator} from './office-incident-model.ts';
 
 export type HeistTactic='snail'|'ghost'|'octopus'|'runner';
 export interface HeistCompanion {id:string;name:string;emoji:string}
@@ -50,6 +51,9 @@ export function heistAntic(actor:HeistActor){return {
  }[actor.tactic];}
 /** Owns fictional stamp custody only. It never owns a numerical record or a user pause. */
 export class HeistCoordinator {
+ private lease?:number;
+ private readonly gate?:OfficeIncidentCoordinator;
+ constructor(gate?:OfficeIncidentCoordinator){this.gate=gate;gate?.register('heist',reason=>this.finish(reason));}
  private serial=0;private pending?:{id:number;plan:HeistPlan;elapsed:number;footprints:boolean;announcement:string;resolution?:HeistResolution;returnFrom?:number};
  private last?:number;private allowed=false;private listeners=new Set<()=>void>();
  readonly records:HeistRecord[]=[];
@@ -61,7 +65,7 @@ export class HeistCoordinator {
  }
  subscribe(listener:()=>void){this.listeners.add(listener);return()=>this.listeners.delete(listener);}
  private notify(){for(const listener of this.listeners)listener();}
- start(plan:HeistPlan){if(this.active)return false;this.pending={id:++this.serial,plan,elapsed:0,footprints:false,announcement:plan.actors[0].name+' has stolen the approval stamp.'};this.last=undefined;this.allowed=false;this.notify();return true;}
+ start(plan:HeistPlan){if(this.active)return false;if(this.gate){this.lease=this.gate.acquire('heist');if(this.lease===undefined)return false;}this.pending={id:++this.serial,plan,elapsed:0,footprints:false,announcement:plan.actors[0].name+' has stolen the approval stamp.'};this.last=undefined;this.allowed=false;this.notify();return true;}
  advance(now:number,allow:boolean,id=this.pending?.id){
   const p=this.pending;if(!p||id!==p.id)return;if(!Number.isFinite(now))throw new Error('A pursuit requires a finite clock.');
   const delta=this.last===undefined||!this.allowed||!allow?0:Math.max(0,now-this.last);this.last=Math.max(this.last??now,now);this.allowed=allow;
@@ -80,6 +84,6 @@ export class HeistCoordinator {
  follow(){const s=this.snapshot;if(!s||s.returning)return;this.pending!.footprints=true;this.pending!.announcement='Footprints lead from '+s.plan.rooms[Math.min(2,Math.floor(s.elapsed/5000))]+' toward '+s.plan.rooms[Math.min(3,Math.floor(s.elapsed/5000)+1)]+'. The trail has not applied for confidentiality.';this.notify();}
  recover(resolution:'biscuit'|'intercepted') {const p=this.pending;if(!p||p.resolution)return;p.resolution=resolution;p.returnFrom=p.elapsed;p.elapsed=heistChaseMs;p.announcement=heistFinding(resolution);this.last=undefined;this.allowed=false;this.notify();}
  finish(resolution:HeistResolution='skipped'){
-  const p=this.pending;if(!p)return;this.records.push(Object.freeze({id:p.id,plan:p.plan,resolution,finding:heistFinding(resolution)}));if(this.records.length>10)this.records.shift();this.pending=undefined;this.last=undefined;this.allowed=false;this.notify();
+  const p=this.pending;if(!p)return;this.records.push(Object.freeze({id:p.id,plan:p.plan,resolution,finding:heistFinding(resolution)}));if(this.records.length>10)this.records.shift();this.pending=undefined;this.last=undefined;this.allowed=false;if(this.lease!==undefined)this.gate?.release('heist',this.lease);this.lease=undefined;this.notify();
  }
 }
