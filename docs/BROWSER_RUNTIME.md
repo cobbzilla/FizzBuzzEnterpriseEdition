@@ -46,8 +46,9 @@ execution path after asserting that no frames exist. This avoids transporting
 large intermediate node records through the browser server. Every rule matching
 the existing WCAG and best-practice tags still runs at both viewport sizes;
 passing-node details are summarized while violations remain complete. Each
-viewport has its own browser context. Batches reuse one injected axe engine and
-request garbage collection after completing their assertions.
+rule batch has its own test context and, under the isolated gate, its own browser
+process. This retires the full axe tree before the next batch starts. Separate
+checks retain navigation, keyboard focus and enlarged-text reflow at both widths.
 
 Open http://localhost:18090/. Publish `dist/` on any static HTTP(S) host.
 Directory indexes, relative links, and assets support a hosting subdirectory.
