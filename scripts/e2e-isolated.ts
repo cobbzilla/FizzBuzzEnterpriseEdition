@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import {execFileSync,spawn} from 'node:child_process';
 import {readFile,writeFile,readdir,mkdir} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
+import {createConnection} from 'node:net';
 import {sourceIdentity} from './source-identity.ts';
 
 interface Result {status:string;errors:unknown[]}
@@ -19,6 +20,7 @@ export async function isolatedE2E(selection:string[]=[]){
  assert(name&&process.env.SLOPBUZZ_BROWSER_WS_ENDPOINT,'Isolated qualification requires the explicitly owned browser container and endpoint');
  const identity=JSON.parse(docker('inspect',name))[0],container=identity.Id as string;
  assert.equal(identity.Config.Labels['slopbuzz.task'],'paper-aviation');
+ for(const bindings of Object.values(identity.HostConfig.PortBindings) as {HostPort:string}[][])assert(bindings.every(binding=>binding.HostPort),'Use explicit loopback host ports so browser-server restarts preserve the endpoint');
  const limit=identity.HostConfig.Memory as number;assert(limit>0&&limit<=1536*1024*1024,'Use a browser container capped at 1.5 GiB');
  const release=await json<{revision:string;sourceDigest:string;build:string}>('dist/release.json');
  const revision=()=>execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim();
@@ -33,8 +35,26 @@ export async function isolatedE2E(selection:string[]=[]){
  let checkpoint:{sourceDigest:string;assetDigest:string;ids:string[];completed:{id:string;hash:string}[]};
  try{checkpoint=await json(checkpointPath);}catch(error){if((error as NodeJS.ErrnoException).code!=='ENOENT')throw error;checkpoint={sourceDigest:release.sourceDigest,assetDigest,ids,completed:[]};}
  assert.equal(checkpoint.sourceDigest,release.sourceDigest);assert.equal(checkpoint.assetDigest,assetDigest);assert.deepEqual(checkpoint.ids,ids);
- function pressure(){const lines=docker('exec',container,'cat','/sys/fs/cgroup/memory.current','/sys/fs/cgroup/memory.events').trim().split('\n');assert(Number(lines[0])<limit*.95,'Browser container is approaching its memory cap');for(const line of lines.slice(1))if(/^(max|oom|oom_kill|oom_group_kill) /.test(line))assert.equal(Number(line.split(' ')[1]),0,'Browser memory pressure: '+line);}
+ function pressure(){const lines=docker('exec',container,'cat','/sys/fs/cgroup/memory.current','/sys/fs/cgroup/memory.events').trim().split('\n');assert(Number(lines[0])<limit*.95,'Browser container is approaching its memory cap: '+lines[0]+' bytes');for(const line of lines.slice(1))if(/^(max|oom|oom_kill|oom_group_kill) /.test(line))assert.equal(Number(line.split(' ')[1]),0,'Browser memory pressure: '+line);return Number(lines[0]);}
  async function clean(){for(let i=0;i<20;i++){if(!/\/ms-playwright\//.test(docker('top',container,'-eo','pid,ppid,args'))){pressure();return;}await new Promise(resolve=>setTimeout(resolve,250));}throw new Error('Prior browser has not exited; refusing to start another case');}
+ let residency=0;
+ async function prepare(){
+  await clean();
+  if(residency===0||residency>=20||pressure()>384*1024*1024){
+   // Retire the server, display and charged file cache as well as each browser.
+   // Restart only after verified browser exit, never as a retry of a failed case.
+   docker('restart','--timeout','5',container);residency=0;
+   assert.deepEqual(JSON.parse(docker('inspect',container))[0].NetworkSettings.Ports,identity.NetworkSettings.Ports);
+   const endpoint=new URL(process.env.SLOPBUZZ_BROWSER_WS_ENDPOINT!);let ready=false;
+   for(let i=0;i<50&&!ready;i++){
+    ready=await new Promise<boolean>(resolve=>{const socket=createConnection({host:endpoint.hostname,port:Number(endpoint.port)});socket.setTimeout(500);socket.once('connect',()=>{socket.destroy();resolve(true);});socket.once('error',()=>resolve(false));socket.once('timeout',()=>{socket.destroy();resolve(false);});});
+    if(!ready)await new Promise(resolve=>setTimeout(resolve,100));
+   }
+   assert(ready,'Renewed browser server did not become ready');await clean();
+   console.log('Browser server residency renewed; '+Math.ceil(pressure()/1024**2)+' MiB before the next case.');
+  }
+  residency++;
+ }
  async function runCase(report:string,selected:string){
   await new Promise<void>((resolve,reject)=>{
    const child=spawn('pnpm',['exec','playwright','test',...selection,'--last-failed','--trace=off','--output='+report.replace(/\.json$/,'-artifacts'),'--reporter=line,json'],{stdio:'inherit',env:{...process.env,PLAYWRIGHT_LAST_RUN_OUTPUT_FILE:selected,PLAYWRIGHT_JSON_OUTPUT_FILE:report}});
@@ -48,7 +68,7 @@ export async function isolatedE2E(selection:string[]=[]){
   for(const [i,id]of ids.entries()){
    assert(/^[a-zA-Z0-9-]+$/.test(id));const path=folder+'/'+id+'.json',saved=checkpoint.completed[i];
    if(saved){assert.equal(saved.id,id);assert.equal(hash(await readFile(path)),saved.hash);}else{
-    await clean();const selected=folder+'/selected.json';await writeFile(selected,JSON.stringify({status:'failed',failedTests:[id]}));
+    await prepare();const selected=folder+'/selected.json';await writeFile(selected,JSON.stringify({status:'failed',failedTests:[id]}));
     console.log(`Isolated browser case ${i+1}/${ids.length}: ${specs(inventory)[i].title}`);await runCase(path,selected);await clean();
    }
    const report=await json<Report>(path),cases=specs(report);assert.equal(cases.length,1);assert.equal(cases[0].id,id);assert.deepEqual(report.errors,[]);assert.equal(report.stats.unexpected,0);assert.equal(report.stats.flaky,0);

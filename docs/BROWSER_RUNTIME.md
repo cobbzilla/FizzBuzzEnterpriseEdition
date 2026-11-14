@@ -242,6 +242,11 @@ must carry `slopbuzz.task=paper-aviation` and a memory limit no higher than 1.5 
 The gate starts a fresh browser process for each case, verifies its exit before
 continuing, monitors container pressure, and stops after any failure. A failure
 also removes that verified container; unrelated containers remain untouched.
+Publish explicit loopback host ports, rather than dynamically assigned ports.
+Between successful cases the gate restarts its verified container after twenty
+cases or when idle residency exceeds 384 MiB. This retires server/display state
+and charged file cache; the fixed endpoints and 1.5 GiB cap remain unchanged.
+It never restarts a failed test automatically.
 
 Completed case reports can be resumed only with identical source and artifact
 digests. Every collected test ID must have a passing result or an explicit skip
