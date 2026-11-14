@@ -6,7 +6,7 @@ import axe from 'axe-core';
 test.use({serviceWorkers:'block'});
 const routes = ['', 'demo/', 'bestiary/', 'department-of-improbable-appointments/', 'api/', 'about/', 'company-history/', 'changelog/', 'continuity-register/', 'validation/', 'response/', 'accessibility/'];
 const tags=['wcag2a','wcag2aa','wcag21a','wcag21aa','wcag22aa','best-practice'];
-const archiveRules=axe.getRules(tags).map(rule=>rule.ruleId);
+const archiveRules=axe.getRules(tags).map(rule=>rule.ruleId).filter(rule=>rule!=='color-contrast');
 if(archiveRules.length<=50)throw new Error('Archive accessibility rule inventory is incomplete');
 async function audit(page: Page) {
   const result=await new AxeBuilder({page}).options({resultTypes:['violations','incomplete']}).withTags(tags).analyze();
@@ -26,6 +26,18 @@ for(const width of [1280,320])for(let start=0;start<archiveRules.length;start+=8
   expect(page.frames()).toHaveLength(1);
   const result=await new AxeBuilder({page}).setLegacyMode().options({resultTypes:['violations','incomplete']}).withRules(rules).analyze();
   expect(result.violations.map(v=>({id:v.id,nodes:v.nodes.map(n=>n.target)}))).toEqual([]);
+ });
+}
+// Contrast retains rendered geometry for every inspected text node. Keep all
+// rows rendered, but partition inspected rows so narrow-screen scans stay bounded.
+for(const width of [1280,320])for(const start of [-1,0,400,800,1200,1600,2000,2400,2800]){
+ test(`archive contrast at ${width}px: ${start<0?'page chrome':`rows ${start+1}–${start+400}`}`,async({page})=>{
+  await page.setViewportSize({width,height:800});await page.goto('/department-of-improbable-appointments/');
+  await expect(page.locator('#rarity-status')).toContainText('All 3,200');await expect(page.locator('#rarity-rows tr')).toHaveCount(3200);expect(page.frames()).toHaveLength(1);
+  let builder=new AxeBuilder({page}).setLegacyMode().options({resultTypes:['violations','incomplete']}).withRules(['color-contrast']);
+  if(start<0)builder=builder.exclude('#rarity-rows');
+  else{const selector=`#rarity-rows > tr:nth-child(n+${start+1}):nth-child(-n+${start+400})`;await expect(page.locator(selector)).toHaveCount(400);builder=builder.include(selector);}
+  const result=await builder.analyze();expect(result.violations.map(v=>({id:v.id,nodes:v.nodes.map(n=>n.target)}))).toEqual([]);
  });
 }
 for (const route of routes) for(const registerWidth of route === 'department-of-improbable-appointments/'?[1280,320]:[undefined]) {

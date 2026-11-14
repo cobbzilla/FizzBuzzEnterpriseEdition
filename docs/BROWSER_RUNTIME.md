@@ -49,6 +49,9 @@ passing-node details are summarized while violations remain complete. Each
 rule batch has its own test context and, under the isolated gate, its own browser
 process. This retires the full axe tree before the next batch starts. Separate
 checks retain navigation, keyboard focus and enlarged-text reflow at both widths.
+Contrast runs separately over page chrome and eight disjoint groups of 400 rows,
+with all 3,200 rows still rendered in each case. Every text node remains covered;
+only the inspected node set is bounded to limit retained contrast geometry.
 
 Open http://localhost:18090/. Publish `dist/` on any static HTTP(S) host.
 Directory indexes, relative links, and assets support a hosting subdirectory.
