@@ -26,7 +26,7 @@ export class OfficeSupervisionDesk {
  private readonly canvas=element<HTMLCanvasElement>('supervision-canvas');
  private readonly media=matchMedia('(prefers-reduced-motion: reduce)');
  private readonly normalPaceHelp=element('pace-help').textContent||'';
- private readonly governor=new OfficeCadenceGovernor();private paintedAt=0;private paintedCue?:OfficeCue;
+ private readonly governor=new OfficeCadenceGovernor();private paintedAt=0;private paintCompletedAt=0;private paintedCue?:OfficeCue;
  private renderer?:OfficeRenderer;private module?:Promise<typeof import('./office-world')>;private loading?:Promise<void>;
  private ready=false;private fallback=false;private sceneActive=false;private sceneStartedAt=0;private readiness?:ReturnType<typeof setTimeout>;
  private epoch=0;private serial=0;private cancelFrame?:()=>void;private credits=0;
@@ -117,7 +117,7 @@ export class OfficeSupervisionDesk {
  complete(){if(this.enabled){this.pane.dataset.state='complete';this.current('Observation is complete. The company is still withholding trust.');}this.syncControls();}
  private current(text:string){element('supervision-current').textContent=text;}
  private sceneState(step=this.activeStep||this.lastStep):OfficeSceneState{return {room:step?.shot.room||'reception',route:[],ordinal:this.folio?.ordinal||'',text:this.published?this.folio?.text||'':'PENDING',emoji:this.companion?.companion.emoji,companionName:this.companion?.companion.name,paused:true,reducedMotion:this.media.matches,quality:this.governor.quality,seed:tourSeed(this.mandate),layout:officeEstate.displayed,relocation:officeEstate.relocation,heist:officeHeist.snapshot,flight:officeFlight.snapshot};}
- private painted(frame:OfficeRenderFrame){this.paintedAt=frame.now;this.paintedCue=frame.cue;if(this.governor.observeFrame(frame.intervalMs,frame.renderMs)){this.pane.dataset.renderQuality=this.governor.quality;this.updateScene();}}
+ private painted(frame:OfficeRenderFrame){this.paintedAt=frame.now;this.paintedCue=frame.cue;if(this.governor.observeFrame(frame.intervalMs,frame.renderMs)){this.pane.dataset.renderQuality=this.governor.quality;this.updateScene();}this.paintCompletedAt=performance.now();}
  private updateScene(step=this.activeStep||this.lastStep){try{this.renderer?.update(this.sceneState(step));}catch{this.graphicsFailure();}}
  private visible(){
   if(!this.enabled||document.hidden||document.querySelector('dialog[open]:not(#office-fullscreen)'))return false;
@@ -127,10 +127,14 @@ export class OfficeSupervisionDesk {
  }
  private activity(force=false){
   const rect=this.canvas.getBoundingClientRect(),active=this.visible()&&!this.canvas.hidden&&rect.width>0&&rect.height>0;
-  if(force||active!==this.sceneActive){this.sceneActive=active;this.sceneStartedAt=performance.now();if(force&&active)this.renderer?.active(false);this.renderer?.active(active);if(active)this.renderer?.resize();}
-  if(active&&this.ready&&!this.fallback&&performance.now()-Math.max(this.sceneStartedAt,this.paintedAt)>3000){this.graphicsFailure();return;}
+  if(force||active!==this.sceneActive){this.sceneActive=active;this.sceneStartedAt=performance.now();if(force&&active)this.renderer?.active(false);this.renderer?.active(active);if(active){this.renderer?.resize();if(this.renderer&&!this.ready)this.armReadiness();}}
+  // A slow shader compilation still produced a frame. Watch for missing completed
+  // frames, rather than declaring that just-completed work stale from its start time.
+  if(active&&this.ready&&!this.fallback&&performance.now()-Math.max(this.sceneStartedAt,this.paintCompletedAt)>3000){this.graphicsFailure();return;}
   this.scheduler.refresh();
  }
+ // Activation rearms this allowance: time spent in another view is not a failed
+ // graphics attempt, and must not consume the first visible frame's deadline.
  private armReadiness(){clearTimeout(this.readiness);this.readiness=setTimeout(()=>{if(this.ready||!this.enabled)return;if(this.sceneActive)this.graphicsFailure();else this.armReadiness();},20000);}
  private async ensureScene(){
   if(this.renderer){this.activity();this.renderer.resize();return;}if(this.fallback)return;if(this.loading)return this.loading;

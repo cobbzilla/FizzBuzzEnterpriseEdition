@@ -3380,6 +3380,7 @@ var OfficeSupervisionDesk = class {
   normalPaceHelp = element("pace-help").textContent || "";
   governor = new OfficeCadenceGovernor();
   paintedAt = 0;
+  paintCompletedAt = 0;
   paintedCue;
   renderer;
   module;
@@ -3572,6 +3573,7 @@ var OfficeSupervisionDesk = class {
       this.pane.dataset.renderQuality = this.governor.quality;
       this.updateScene();
     }
+    this.paintCompletedAt = performance.now();
   }
   updateScene(step = this.activeStep || this.lastStep) {
     try {
@@ -3593,14 +3595,19 @@ var OfficeSupervisionDesk = class {
       this.sceneStartedAt = performance.now();
       if (force && active) this.renderer?.active(false);
       this.renderer?.active(active);
-      if (active) this.renderer?.resize();
+      if (active) {
+        this.renderer?.resize();
+        if (this.renderer && !this.ready) this.armReadiness();
+      }
     }
-    if (active && this.ready && !this.fallback && performance.now() - Math.max(this.sceneStartedAt, this.paintedAt) > 3e3) {
+    if (active && this.ready && !this.fallback && performance.now() - Math.max(this.sceneStartedAt, this.paintCompletedAt) > 3e3) {
       this.graphicsFailure();
       return;
     }
     this.scheduler.refresh();
   }
+  // Activation rearms this allowance: time spent in another view is not a failed
+  // graphics attempt, and must not consume the first visible frame's deadline.
   armReadiness() {
     clearTimeout(this.readiness);
     this.readiness = setTimeout(() => {

@@ -20,6 +20,8 @@ and relocations. Every departure receives an automatic office spotlight,
 closer camera, named pilot, bounded flight trail and explicit phase reporting.
 Landing restores the prior view and preserves executive Pause. Numerical
 results, audit receipts and discovery rules retain their existing authority.
+Deferred office visibility and slow successful graphics initialization no longer
+cause premature reassignment to the evidence-only observation desk.
 
 ## 2026-11-12 — `slopbuzz-paper-aviation`
 

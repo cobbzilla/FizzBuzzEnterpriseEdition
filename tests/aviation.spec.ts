@@ -77,7 +77,17 @@ test('room moves freeze flight time and resume the selected runway in fullscreen
 });
 
 test('mobile fullscreen makes the pilot and controls readable with reduced motion and keyboard input',async({page},info)=>{
- test.skip(info.project.metadata.engine==='js','Shared accessibility and visual check.');test.setTimeout(180000);await page.setViewportSize({width:390,height:844});await page.emulateMedia({reducedMotion:'reduce'});await ready(page);await naturalFlight(page);
+ test.skip(info.project.metadata.engine==='js','Shared accessibility and visual check.');test.setTimeout(180000);await page.setViewportSize({width:390,height:844});await page.emulateMedia({reducedMotion:'reduce'});
+ // Simulate one expensive first draw: its completion must refresh the graphics
+ // heartbeat, even when compilation took longer than the missing-frame timeout.
+ await page.addInitScript(()=>{
+  let delayed=false;
+  for(const type of [globalThis.WebGLRenderingContext,globalThis.WebGL2RenderingContext].filter(Boolean))for(const name of ['drawElements','drawArrays','drawElementsInstanced','drawArraysInstanced']){
+   const prototype=type.prototype as unknown as Record<string,(...args:number[])=>void>,draw=prototype[name];if(!draw)continue;
+   prototype[name]=function(...args:number[]){if(!delayed){delayed=true;document.documentElement.dataset.slowOfficeDraw='true';const until=performance.now()+3200;while(performance.now()<until){/* One bounded cold shader simulation. */}}return draw.apply(this,args);};
+  }
+ });
+ await ready(page);await naturalFlight(page);await expect(page.locator('html')).toHaveAttribute('data-slow-office-draw','true');await expect(page.locator('#supervision-canvas')).toHaveAttribute('data-rendered','true');await expect(page.locator('#supervision-canvas')).toBeVisible();
  const inlineCanvas=await page.locator('#supervision-canvas').boundingBox(),inlinePanel=await page.locator('#supervision-flight').boundingBox();expect(inlineCanvas!.y+inlineCanvas!.height).toBeLessThanOrEqual(inlinePanel!.y+1);await page.screenshot({path:test.info().outputPath('mobile-flight-inline.png')});
  await page.click('#supervision-fullscreen');await expect(page.locator('#supervision-flight')).toBeVisible();
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);const canvas=await page.locator('#supervision-canvas').boundingBox(),panel=await page.locator('#supervision-flight').boundingBox();expect(canvas!.height).toBeGreaterThan(100);

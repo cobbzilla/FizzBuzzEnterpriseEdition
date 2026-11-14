@@ -42,6 +42,10 @@ and takes camera priority until the rooms settle. Explicit Pause survives.
 
 Reduced motion retains static scene positions and readable phase announcements.
 Graphics refusal keeps the automatic viewing transition and HTML flight desk.
+The first-frame allowance starts again when a hidden office becomes visible;
+hidden time does not consume graphics initialization time. The stall heartbeat
+records completed paints, so a slow successful draw is not treated as a missing
+frame. A delayed-first-draw regression covers the mobile flight in all browsers.
 The immutable numerical record, audit chain and discovery policy remain intact.
 
 ## Verification
