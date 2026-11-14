@@ -1,3 +1,4 @@
+import {naturalFlight} from './flight-navigation.ts';
 import {demoNavigator} from './demo-navigation.ts';
 import {verifyAnalytics} from './verify-analytics.ts';
 import assert from 'node:assert/strict';
@@ -33,17 +34,22 @@ export async function verifyPublic(origin: string, revision: string) {
  for(const path of ['/reset/','/reset/reset.js','/full-reset/']){const response=await fetch(origin+path,{method:'HEAD'});assert.equal(response.status,200);assert.equal(response.headers.get('cache-control'),'no-store');}
 
  for (const engine of [chromium, firefox, webkit]) {
-  const browser = await launchBrowser(engine);
+  let browser = await launchBrowser(engine);
   try {
-   const context = await browser.newContext();
-   const page = await context.newPage();
-   const demo=demoNavigator(page);
+   let context = await browser.newContext();
+   let page = await context.newPage();
+   let demo=demoNavigator(page);
    page.setDefaultTimeout(60000);
    const businessRequests: string[] = [];
-   page.on('request', request => {
+   const observeRequests=()=>page.on('request', request => {
     const url = new URL(request.url());
     if (url.origin === origin && /^\/(fizzbuzz|healthz|readyz|audit|operations|capacity|cache|procurement|onboarding|precedent|companions|premises)(\/|\?|$)/.test(url.pathname)) businessRequests.push(url.pathname);
    });
+   observeRequests();
+   const freshBrowser=async()=>{
+    assert.deepEqual(businessRequests,[]);await browser.close();browser=await launchBrowser(engine);
+    context=await browser.newContext();page=await context.newPage();page.setDefaultTimeout(60000);demo=demoNavigator(page);observeRequests();
+   };
    await page.goto(origin + '/demo/');
    // Playwright assertions have their own timeout; honor the runtime's cold-start budget.
    await expect(page.locator('#health-value')).toHaveText('LIVE',{timeout:60000});
@@ -127,18 +133,21 @@ export async function verifyPublic(origin: string, revision: string) {
     if (route === 'api') await expect(page.locator('#api-total')).toContainText('ratified operations');
     if ((route === 'about'||route === 'company-history')) await expect(page.getByRole('heading',{name:'Confounding the courage to convene'})).toBeVisible();
    }
-   await page.goto(origin+'/demo/#office-tour');await expect(page.locator('#health-value')).toHaveText('LIVE');await demo.desk('facilities');await page.click('#office-enter');await expect(page.locator('#office-canvas')).toHaveAttribute('data-renderer','babylon');await expect(page.locator('#office-canvas')).toHaveAttribute('data-rendered','true');
+   console.log(`${engine.name()}: public controls, numerical runtime and navigation passed; releasing that browser.`);
+   await freshBrowser();
+   await page.goto(origin+'/demo/#office-tour');await expect(page.locator('#health-value')).toHaveText('LIVE',{timeout:60000});await demo.desk('facilities');await page.click('#office-enter');await expect(page.locator('#office-canvas')).toHaveAttribute('data-renderer','babylon');await expect(page.locator('#office-canvas')).toHaveAttribute('data-rendered','true');
    await page.click('#office-fullscreen-enter');await expect(page.locator('#office-fullscreen #office-canvas')).toBeVisible();await page.click('#office-fullscreen-inspect');await expect(page.locator('#office-fullscreen #office-directory')).toBeVisible();await page.click('#office-fullscreen-exit');await expect(page.locator('#office-fullscreen-enter')).toBeFocused();
    await page.locator('#office-directory').getByRole('button',{name:/Executive$/}).click();await page.locator('#office-props').getByRole('button',{name:'The Exit Strategy',exact:true}).click();await page.locator('#office-story-actions').getByRole('button',{name:'Inspect the strategy'}).click();await expect(page.locator('#office-story-answer')).toContainText('cupboard');
    if(!await page.locator('#heist-suspect').isVisible())await page.locator('.heist-security>summary').click();await page.selectOption('#heist-suspect','🐙');await page.click('#heist-rehearse');await expect(page.locator('#office-heist')).toContainText('Eight apparent stamps');await page.locator('#office-heist').getByRole('button',{name:'Offer an amnesty biscuit'}).click();await expect(page.locator('#office-heist')).toBeHidden();await expect(page.locator('#heist-records')).toContainText('One biscuit');
-   await page.selectOption('#flight-pilot','🐙');await page.selectOption('#flight-ordinal','1000');await page.click('#flight-rehearse');await expect(page.locator('#office-flight')).toContainText('3 holding patterns');await page.selectOption('#office-flight-destination','executive');await page.locator('#office-flight [data-fan="0"]').click();await page.locator('#office-flight').getByRole('button',{name:'Land now',exact:true}).click();await expect(page.locator('#office-flight')).toBeHidden();await expect(page.locator('#flight-records')).toContainText('Direct delivery');
+   await naturalFlight(page,{limit:'55'});await page.selectOption('#supervision-flight-destination','executive');await page.locator('#supervision-flight [data-fan="0"]').click();await page.locator('#supervision-flight').getByRole('button',{name:'Land now',exact:true}).click();await expect(page.locator('#supervision-flight')).toBeHidden();await expect(page.locator('#flight-records')).toContainText('Direct delivery');await demo.options(()=>page.click('#reveal-all'));await expect(page.locator('#run-status')).toContainText('Mandate complete');await demo.desk('facilities');
+   await page.waitForFunction(()=>!!navigator.serviceWorker.controller,null,{timeout:120000});
    await page.locator('.office-options summary').click();await page.click('#office-offline');await expect(page.locator('#office-offline-status')).toContainText('saved for offline');await page.click('#office-close');
    await context.setOffline(true);
    await page.goto(origin + '/demo/');
    await expect(page.locator('#health-value')).toHaveText('LIVE');await demo.desk('facilities');await page.click('#office-enter');await expect(page.locator('#office-canvas')).toHaveAttribute('data-rendered','true');await page.click('#office-fullscreen-enter');await expect(page.locator('#office-fullscreen #office-canvas')).toBeVisible();await page.click('#office-fullscreen-exit');await expect(page.locator('#office-fullscreen-enter')).toBeFocused();await page.click('#office-close');
    await expect(page.locator('#health-value')).toHaveText('LIVE');
    await page.click('#office-enter');if(!await page.locator('#heist-suspect').isVisible())await page.locator('.heist-security>summary').click();await page.selectOption('#heist-suspect','👻');await page.click('#heist-rehearse');await expect(page.locator('#office-heist')).toContainText('ghost uses the wall');await page.locator('#office-heist').getByRole('button',{name:'Skip the chase'}).click();await expect(page.locator('#office-heist')).toBeHidden();await page.click('#office-close');
-   await page.click('#office-enter');if(!await page.locator('#flight-pilot').isVisible())await page.locator('.office-mischief>summary').click();await page.selectOption('#flight-pilot','🐢');await page.click('#flight-rehearse');await expect(page.locator('#office-flight')).toContainText('Portable Control Tower');await page.locator('#office-flight').getByRole('button',{name:'Land now',exact:true}).click();await expect(page.locator('#office-flight')).toBeHidden();await page.click('#office-close');
+   await naturalFlight(page,{limit:'55'});await expect(page.locator('#supervision-flight')).toContainText('Proceedings held until landing');await page.locator('#supervision-flight').getByRole('button',{name:'Land now',exact:true}).click();await expect(page.locator('#supervision-flight')).toBeHidden();await demo.options(()=>page.click('#reveal-all'));await expect(page.locator('#run-status')).toContainText('Mandate complete');
    await demo.run('16');
    await demo.experiment('personnel');await page.selectOption('#experiment-speed','0');await page.click('[data-personnel-scenario="missing-induction"]');await expect(page.locator('#experiment-personnel-verdict')).toHaveText('Application rejected');await expect(page.locator('#experiment-personnel-status')).toContainText('Probation Review');assert.equal((await page.locator('#output').textContent())?.trim().split('\n').at(-1),'16');
    await demo.experiment('precedent');await page.selectOption('#experiment-precedent-scenario','wrong-mandate');await page.click('#experiment-precedent-submit');await expect(page.locator('#experiment-precedent-status')).toContainText('Reuse rejected by Mandate Jurisdiction Chamber');
@@ -149,6 +158,8 @@ export async function verifyPublic(origin: string, revision: string) {
    await page.goto(origin+'/demo/');await page.locator('#authorize-companion-help a').click();await expect(page).toHaveURL(/\/bestiary\/$/);await expect(page.locator('#bestiary-status')).toContainText('3200 companions');await page.selectOption('#bestiary-kind','single');await page.fill('#bestiary-search','unicorn');await expect(page.locator('#bestiary-results article')).toHaveCount(1);
    await page.goto(origin + '/api/');
    await expect(page.locator('#api-total')).toContainText('ratified operations');
+   console.log(`${engine.name()}: public aviation and offline execution passed; releasing graphics before reset checks.`);
+   await freshBrowser();await page.goto(origin+'/demo/');await expect(page.locator('#health-value')).toHaveText('LIVE',{timeout:60000});await demo.run('15');await expect(page.locator('#discovery-list li')).toHaveCount(5);await page.waitForFunction(()=>!!navigator.serviceWorker.controller,null,{timeout:120000});await context.setOffline(true);
    await page.goto(origin+'/demo/');await expect(page.locator('#health-value')).toHaveText('LIVE');await page.uncheck('#authorize-executive-hovering');await page.selectOption('#authorize-display-speed','225');await page.fill('#limit','1000');await page.click('#run-button');await demo.desk('authorize');await expect(page.locator('#mandate-collision-warning')).toBeVisible();await demo.run('0');await demo.desk('authorize');await expect(page.locator('#mandate-collision-warning')).toBeHidden();await expect(page.locator('#output')).toContainText('produces no lines');
    const savedFinds=await page.evaluate(()=>localStorage.getItem('slopbuzz:extraordinary-appointments:v1'));
    await context.setOffline(false);await page.goto(origin+'/reset/');await expect(page).toHaveURL(origin+'/',{timeout:90000});await expect(page.getByRole('link',{name:'Live demo',exact:true})).toBeVisible();

@@ -9,6 +9,7 @@ import {officeFullscreen} from './office-fullscreen';
 import {playbackIcon} from './playback-controls';
 import {onDemoPage,openSitePage} from './site-navigation';
 import {scope} from './release-assets';
+import {officeFlight} from './office-flight';
 
 export interface RunPresentation {
  placeChronicle(target:HTMLElement):void;
@@ -19,14 +20,18 @@ export class DemoWorkspace {
  private readonly watch=byId<HTMLSelectElement>('watch-view');
  private readonly mainLinks=document.querySelectorAll<HTMLAnchorElement>('[data-site-main-link]');
  private readonly stage=byId('mandate-output');
- private readonly policyIds=['display-speed','emoji-companions','companion-strategy','require-companion-roll-call','executive-hovering'];
+ private readonly policyIds=['display-speed','emoji-companions','companion-strategy','require-companion-roll-call','executive-hovering','stamp-heists','paper-flights'];
  private activeMandate='';private readonly recent=new RecentAppointments();
  private committed=false;private applying=false;private manualView=false;
  private running=false;private held=false;private activity='mandate';private interruption='';private latestValue?:{ordinal:string;text:string};private bannerAnnouncement='';
  private preferredAuthority=new URL(location.href).searchParams.get('authority')||'';
  private scroll=new Map<DemoDesk,number>();
+ private flightView?:{id:number;desk:DemoDesk;watch:string;manual:boolean;settings:boolean;x:number;y:number;focus:Element|null;positions:{node:HTMLElement;top:number;left:number}[]};
+ private arrivalTimer?:ReturnType<typeof setTimeout>;
  constructor(private readonly run:RunPresentation){
   const immersive=officeFullscreen();immersive.placeChronicle=target=>this.run.placeChronicle(target);
+  const arrival=document.createElement('p');arrival.id='flight-arrival-notice';arrival.className='flight-arrival-notice';arrival.hidden=true;arrival.setAttribute('role','status');byId('desk-observe').append(arrival);
+  officeFlight.subscribe(()=>this.flightSpotlight());
   byId('supervision-fullscreen').addEventListener('click',()=>immersive.open('observe',byId('supervision-fullscreen')));
   document.querySelectorAll<HTMLAnchorElement>('[data-desk-link]').forEach(link=>link.addEventListener('click',event=>{
    if(event.metaKey||event.ctrlKey||event.shiftKey||event.altKey)return;
@@ -73,8 +78,8 @@ export class DemoWorkspace {
    const draft=byId<HTMLSelectElement>('authorize-companion-strategy'),selected=draft.value;
    draft.replaceChildren(...[...registry.options].map(option=>option.cloneNode(true)));
    const wanted=this.preferredAuthority||selected;if([...draft.options].some(option=>option.value===wanted)){draft.value=wanted;this.preferredAuthority='';}
-   draft.disabled=registry.disabled;this.draftSummary();
-  }).observe(registry,{childList:true,attributes:true,attributeFilter:['disabled']});
+   draft.disabled=registry.dataset.registryReady!=='true';this.draftSummary();
+  }).observe(registry,{childList:true,attributes:true,attributeFilter:['data-registry-ready']});
   document.querySelectorAll<HTMLElement>('[data-open-personnel]').forEach(button=>button.addEventListener('click',()=>{
    // The actual opener is visible again before the native dialog restores focus.
    const trigger=byId('personnel-documents');trigger.dispatchEvent(new MouseEvent('click')); 
@@ -85,6 +90,7 @@ export class DemoWorkspace {
   const sitePageChanged=()=>{
    if(onDemoPage()){const url=new URL(location.href),explicit=url.searchParams.has('desk')||url.searchParams.has('limit')||url.searchParams.has('tour')||!!url.hash,desk=explicit?readDesk(url):this.running?'observe':this.desk;this.show(desk,false,false);}
    else{this.updateRunBanner();document.dispatchEvent(new Event('demo-watch-layout'));}
+   this.flightSpotlight();
   };
   document.addEventListener('site-page-change',sitePageChanged);document.addEventListener('site-page-ready',sitePageChanged);
   const resize=new ResizeObserver(()=>this.fit());resize.observe(document.querySelector('.site-header')!);resize.observe(byId('discovery-register'));
@@ -92,10 +98,39 @@ export class DemoWorkspace {
   addEventListener('resize',()=>{if(!this.manualView&&this.committed){this.watch.value=initialWatchView(matchMedia('(max-width: 700px), (max-height: 500px)').matches,this.live().hovering);this.layout();}else this.fit();});
   visualViewport?.addEventListener('resize',()=>this.fit());
   const hash=location.hash;if(hash.startsWith('#precedent'))this.select('evidence-view').value='precedent';if(hash.startsWith('#personnel'))this.select('evidence-view').value='personnel';if(hash.startsWith('#premises'))this.select('experiment-view').value='premises';
+  for(const id of ['stamp-heists','paper-flights'])this.input('authorize-'+id).checked=this.input(id).checked;
   this.restoreDraft();this.draftSummary();this.sections('experiment');this.sections('evidence');
   this.show(readDesk(new URL(location.href)),false,false);
  }
  get observing(){return onDemoPage()&&this.desk==='observe';}
+ private flightSpotlight(){
+  const flight=officeFlight.snapshot;
+  if(flight){
+   if(this.flightView||!this.committed||!onDemoPage())return;
+   this.flightView={id:flight.id,desk:this.desk,watch:this.watch.value,manual:this.manualView,settings:!byId('watch-settings').hidden,x:scrollX,y:scrollY,focus:document.activeElement,positions:['output','chronicle-scroll','companion-scroll','watch-prose'].map(id=>{const node=byId(id);return {node,top:node.scrollTop,left:node.scrollLeft};})};
+   document.body.dataset.flightSpotlight='true';clearTimeout(this.arrivalTimer);byId('flight-arrival-notice').hidden=true;
+   this.watch.disabled=true;this.settings(false);officeFullscreen().inspection(false);
+   const facilities=officeFullscreen().mode==='facilities'||this.desk==='facilities'&&!byId('office-experience').hidden;
+   if(!facilities){this.watch.value='office';if(!officeFullscreen().mode)this.show('observe',false,false);else this.layout();}
+   if(!officeFullscreen().mode)byId(facilities?'office-stage':'supervision-stage').scrollIntoView({block:'nearest',behavior:'instant'});
+   const panel=byId(facilities?'office-flight':'supervision-flight');panel.tabIndex=-1;panel.focus({preventScroll:true});
+   return;
+  }
+  const saved=this.flightView;if(!saved)return;this.flightView=undefined;
+  delete document.body.dataset.flightSpotlight;this.watch.disabled=false;this.watch.value=saved.watch;this.manualView=saved.manual;
+  if(onDemoPage()){
+   if(!officeFullscreen().mode)this.show(saved.desk,false,false);else this.layout();
+   this.settings(saved.settings);
+   for(const position of saved.positions){position.node.scrollTop=position.top;position.node.scrollLeft=position.left;}
+   if(saved.focus instanceof HTMLElement&&saved.focus.getClientRects().length)saved.focus.focus({preventScroll:true});
+   if(!officeFullscreen().mode)window.scrollTo({left:saved.x,top:saved.y,behavior:'instant'});
+   const result=officeFlight.records.find(r=>r.id===saved.id);
+   if(result&&['landed','redirected','expedited'].includes(result.resolution)){
+    const notice=byId('flight-arrival-notice');notice.textContent=result.plan.actors[0].emoji+' Flight '+result.plan.ordinal+' arrived. '+result.finding;notice.hidden=false;
+    this.arrivalTimer=setTimeout(()=>{notice.hidden=true;},4500);
+   }
+  }
+ }
  runActivity(active:boolean,paused=false,mode='mandate',interruption=''){
   this.running=active;this.held=paused;this.activity=mode;this.interruption=interruption;
   const warning=byId('mandate-collision-warning');
@@ -115,14 +150,14 @@ export class DemoWorkspace {
  }
  private input(id:string){return byId<HTMLInputElement>(id);}
  private select(id:string){return byId<HTMLSelectElement>(id);}
- private policy(prefix=''):PresentationPolicy{return {cadence:this.select(prefix+'display-speed').value,companions:this.input(prefix+'emoji-companions').checked,authority:this.select(prefix+'companion-strategy').value,roll:this.input(prefix+'require-companion-roll-call').checked,hovering:this.input(prefix+'executive-hovering').checked};}
+ private policy(prefix=''):PresentationPolicy{return {cadence:this.select(prefix+'display-speed').value,companions:this.input(prefix+'emoji-companions').checked,authority:this.select(prefix+'companion-strategy').value,roll:this.input(prefix+'require-companion-roll-call').checked,hovering:this.input(prefix+'executive-hovering').checked,heists:this.input(prefix+'stamp-heists').checked,flights:this.input(prefix+'paper-flights').checked};}
  live(){return this.policy();}
  private copyLiveToDraft(){for(const id of this.policyIds){const source=byId<HTMLInputElement|HTMLSelectElement>(id),draft=byId<HTMLInputElement|HTMLSelectElement>('authorize-'+id);if(source instanceof HTMLInputElement)(draft as HTMLInputElement).checked=source.checked;else draft.value=source.value;}this.draftSummary();}
  commitDraft(mandate:string){
   const policy=this.policy('authorize-');this.applying=true;
   const hover=this.input('executive-hovering');
   this.select('display-speed').value=policy.cadence;this.select('display-speed').dispatchEvent(new Event('change'));
-  for(const [id,value]of [['emoji-companions',policy.companions],['require-companion-roll-call',policy.roll]] as const){const input=this.input(id);if(input.checked!==value){input.checked=value;input.dispatchEvent(new Event('change'));}}
+  for(const [id,value]of [['emoji-companions',policy.companions],['require-companion-roll-call',policy.roll],['stamp-heists',policy.heists],['paper-flights',policy.flights]] as const){const input=this.input(id);if(input.checked!==value){input.checked=value;input.dispatchEvent(new Event('change'));}}
   const authority=this.select('companion-strategy');if(authority.value!==policy.authority){authority.value=policy.authority;authority.dispatchEvent(new Event('change'));}
   if(hover.checked!==policy.hovering){hover.checked=policy.hovering;hover.dispatchEvent(new Event('change'));}this.applying=false;
   this.activeMandate=mandate;this.recent.clear();this.committed=true;this.manualView=false;
@@ -178,7 +213,7 @@ export class DemoWorkspace {
   this.run.placeChronicle(byId(officeFullscreen().mode==='observe'?'office-fullscreen-log-slot':watch?'watch-chronicle-slot':'evidence-chronicle-slot'));
  }
  private layout(){
-  const policy=this.live(),view=watchView(this.watch.value,policy.hovering,policy.companions&&policy.roll);
+  const policy=this.live(),view=watchView(this.flightView?'office':this.watch.value,policy.hovering,policy.companions&&policy.roll);
   this.watch.value=view;this.stage.dataset.watchView=view;this.stage.dataset.companions=String(policy.companions);this.stage.dataset.office=String(policy.hovering);
   const officeOption=this.watch.querySelector<HTMLOptionElement>('[value="office"]')!,companionOption=this.watch.querySelector<HTMLOptionElement>('[value="companions"]')!;
   officeOption.disabled=!policy.hovering;officeOption.textContent=policy.hovering?'Office':'Office — enable Executive Hovering';
@@ -212,12 +247,12 @@ export class DemoWorkspace {
   if(discovery.mandate===this.activeMandate)this.recent.remember(discovery);
  }
  private draftSummary(){const p=this.policy('authorize-');byId('authorization-summary').textContent=(this.input('limit').value||'Unspecified')+' numbers · '+(p.companions?'companions commissioned':'no companion appointments')+' · '+(p.hovering?'executive supervision authorized':'ordinary disclosure');this.select('authorize-display-speed').disabled=false;byId('authorize-pace-help').textContent=p.hovering?'Full Board Ratification doubles each deliberation. Interdepartmental Sign-Off preserves established ceremony; Emergency Delegated Authority halves it. Executive Fiat uses the fastest pace the office can present smoothly.':'Choose the ceremonial reading pace. Executive Fiat introduces no delay.';}
- private saveDraft(){try{sessionStorage.setItem('slopbuzz:authorization-draft:v2',JSON.stringify(this.policy('authorize-')));}catch{/* A configuration remains usable without storage. */}}
+ private saveDraft(){try{sessionStorage.setItem('slopbuzz:authorization-draft:v3',JSON.stringify(this.policy('authorize-')));}catch{/* A configuration remains usable without storage. */}}
  private restoreDraft(){
   try{
-   const current=sessionStorage.getItem('slopbuzz:authorization-draft:v2');
+   const current=sessionStorage.getItem('slopbuzz:authorization-draft:v3')||sessionStorage.getItem('slopbuzz:authorization-draft:v2');
    const p=JSON.parse(current||sessionStorage.getItem('slopbuzz:authorization-draft:v1')||'null') as PresentationPolicy|null;if(!p)return;
-   for(const [id,value]of [['emoji-companions',p.companions],['require-companion-roll-call',p.roll],['executive-hovering',current?p.hovering:true]] as const)if(typeof value==='boolean')this.input('authorize-'+id).checked=value;
+   for(const [id,value]of [['emoji-companions',p.companions],['require-companion-roll-call',p.roll],['executive-hovering',current?p.hovering:true],['stamp-heists',p.heists],['paper-flights',p.flights]] as const)if(typeof value==='boolean')this.input('authorize-'+id).checked=value;
    if(['1800','800','225','0'].includes(p.cadence))this.select('authorize-display-speed').value=p.cadence;
    if(!this.preferredAuthority&&typeof p.authority==='string')this.preferredAuthority=p.authority;
   }catch{/* Invalid preferences are discarded, never executed. */}

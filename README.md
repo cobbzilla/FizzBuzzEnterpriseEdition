@@ -358,12 +358,18 @@ administrative embarrassment. Twelve companion personalities have distinct
 movement, props and dialogue, from an octopus's eight batons to a bird obliged
 to follow its aircraft on foot.
 
-Open **Facilities → Enter office → Office mischief → Commission a test flight**.
-Select any demonstration pilot and paperwork 10, 100, 1,000 or 10,000 to inspect
-the one-to-three-loop rule and fourth-loop refusal. Demonstrations earn no finds.
-Automatic flights start at eligible zero-ending disclosures from 40 during
-Executive Hovering. Flights and heists share a three-incident mandate budget,
-thirty-ordinal spacing and exclusive presentation custody; at most two are flights.
+Flights happen naturally during Executive Hovering with companions enabled.
+The first opportunity is ordinal 30; subsequent opportunities are 60–100 numbers
+after the previous departure, determined by the mandate and flight sequence.
+There is no flight quota. Flights and heists retain thirty-ordinal spacing and
+exclusive presentation custody; a due flight takes priority over another heist.
+Heists retain their own three-incident allowance. There is no public flight launcher.
+
+Setup and live controls both expose companion policy, heists and aviation.
+Setup edits apply to the next mandate; live edits affect the current presentation.
+Companion allocation is temporarily locked during antics and room moves.
+Flights automatically take the office view, with a close camera, bounded trail,
+pilot announcement and readable phases; landing restores the earlier view.
 Reorganization freezes the airspace, and landing resumes the held proceedings
 without releasing an explicit Pause. Both activities can be disabled independently.
 The same controls work in fullscreen, with reduced motion, without WebGL and

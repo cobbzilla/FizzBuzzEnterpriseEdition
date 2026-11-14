@@ -1,7 +1,7 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {FlightCoordinator,flightEligible,holdingLoops,planFlight,flightPersonalities,personalityFor,flightFinding,foldMs,cruiseMs,loopMs,landingMs,type FlightResolution} from '../web/office-flight-model.ts';
-import {OfficeIncidentCoordinator} from '../web/office-incident-model.ts';
+import {OfficeIncidentCoordinator,flightInterval} from '../web/office-incident-model.ts';
 import {HeistCoordinator,planHeist} from '../web/office-heist-model.ts';
 import {ObservationClock,planOfficeSteps} from '../web/office-supervision-model.ts';
 import {bestiary} from '../catalog/bestiary.ts';
@@ -29,6 +29,32 @@ for(const end of ['skipped','cancelled','disabled'] as const)test(end+' releases
 test('hundreds of completed sorties retain only ten flight findings',()=>{const c=new FlightCoordinator();for(let i=0;i<500;i++){c.start(plan());c.finish();c.finish();}assert.equal(c.records.length,10);assert.equal(c.records[0].id,491);});
 test('a flight and a heist cannot hold the same office simultaneously',()=>{const gate=new OfficeIncidentCoordinator(),a=new FlightCoordinator(gate),h=new HeistCoordinator(gate);a.start(plan());assert.equal(gate.kind,'flight');assert.equal(h.start(planHeist('111','33','authority',cast)),false);gate.finish('skipped');assert.equal(a.active,false);assert.equal(gate.active,false);assert.equal(h.start(planHeist('111','33','authority',cast)),true);assert.equal(a.start(plan()),false);gate.finish('cancelled');assert.equal(h.active,false);});
 test('a stale lease cannot release a newer incident',()=>{const gate=new OfficeIncidentCoordinator(),first=gate.acquire('flight')!;gate.release('flight',first);const next=gate.acquire('heist')!;assert.equal(gate.release('flight',first),false);assert.equal(gate.release('flight',next),false);assert.equal(gate.kind,'heist');});
-test('admission preserves short demos, caps three shared incidents, two flights and thirty-ordinal spacing',()=>{const gate=new OfficeIncidentCoordinator();assert.equal(gate.admits('flight','10'),false);assert.equal(gate.admits('flight','30'),false);assert.equal(gate.admits('flight','40\n'),false);assert.equal(gate.admits('heist','33'),true);gate.record('heist','33');assert.equal(gate.admits('flight','60'),false);assert.equal(gate.admits('flight','70'),true);gate.record('flight','70');assert.equal(gate.admits('flight','100'),true);gate.record('flight','100');assert.equal(gate.admits('heist','131'),false);gate.begin();assert.equal(gate.admits('flight','40'),true);gate.record('flight','40');gate.record('flight','70');assert.equal(gate.admits('flight','100'),false);assert.equal(gate.admits('heist','111'),true);});
+test('flights start at thirty and preserve exact admission boundaries',()=>{
+ const gate=new OfficeIncidentCoordinator();for(const n of ['10','20','0','030','30\n',' 30','30 ','3e1','31','-30'])assert.equal(gate.admits('flight',n),false,n);
+ assert.equal(gate.admits('flight','30'),true);gate.record('flight','30');for(const n of ['30','40','50','60','70','80'])assert.equal(gate.admits('flight',n),false,n);
+});
+test('heists cannot consume a due flight and disabled aviation does not reserve the airspace',()=>{
+ const gate=new OfficeIncidentCoordinator();gate.flightsAvailable=true;assert.equal(gate.admits('heist','33'),false);assert.equal(gate.admits('flight','40'),true);
+ gate.flightsAvailable=false;assert.equal(gate.admits('heist','33'),true);gate.record('heist','33');assert.equal(gate.admits('flight','60'),false);assert.equal(gate.admits('flight','70'),true);
+});
+test('hundreds of natural flights share custody and spacing without consuming the heist allowance',()=>{
+ const gate=new OfficeIncidentCoordinator();gate.begin('100000');gate.flightsAvailable=true;let flights=0,heists=0,last=0,lastFlight=0;
+ for(let n=1;n<=100000;n++){
+  const ordinal=String(n),kind=gate.admits('flight',ordinal)?'flight':ordinal===ordinal.split('').reverse().join('')&&n%3===0&&gate.admits('heist',ordinal)?'heist':undefined;
+  if(!kind)continue;assert.ok(n-last>=30);if(kind==='flight'){assert.ok(!lastFlight||n-lastFlight>=60);lastFlight=n;flights++;}else heists++;
+  const lease=gate.acquire(kind)!;assert.equal(gate.admits('flight',String(n+100)),false);gate.record(kind,ordinal);gate.release(kind,lease);last=n;
+ }
+ assert.ok(flights>1000);assert.equal(heists,3);
+});
+test('spacing is reproducible, varied, bounded, and exact beyond machine integers',()=>{
+ const intervals=new Set<bigint>();for(let i=1n;i<=1000n;i++){const gap=flightInterval('90071992547409931234567890',i);assert.equal(gap,flightInterval('90071992547409931234567890',i));assert.ok(gap>=60n&&gap<=100n&&gap%10n===0n);intervals.add(gap);}assert.equal(intervals.size,5);
+ const gate=new OfficeIncidentCoordinator(),n=10n**1000n;gate.begin(String(n));gate.record('flight',String(n));const next=n+flightInterval(String(n),1n);assert.equal(gate.admits('flight',String(next-10n)),false);assert.equal(gate.admits('flight',String(next)),true);
+});
+test('busy departures defer one opportunity and the next interval starts from the actual flight',()=>{
+ const gate=new OfficeIncidentCoordinator();gate.begin('1000');gate.flightsAvailable=true;const lease=gate.acquire('heist')!;
+ for(let n=30;n<=200;n+=10)assert.equal(gate.admits('flight',String(n)),false);
+ gate.release('heist',lease);assert.equal(gate.admits('flight','210'),true);gate.record('flight','210');assert.equal(gate.admits('flight','220'),false);assert.equal(gate.admits('flight',String(210n+flightInterval('1000',1n))),true);
+ gate.begin('1000');assert.equal(gate.admits('flight','30'),true);
+});
 test('incident release does not release an independent explicit observation pause',()=>{const [step]=planOfficeSteps([{ordinal:'100',kind:'PUBLICATION',office:'Printer',finding:'Print',document:'Buzz'}],{id:'airborne'}),clock=new ObservationClock(step),gate=new OfficeIncidentCoordinator(),c=new FlightCoordinator(gate);clock.tick(0,true);clock.tick(100,true);c.start(plan());clock.tick(5000,!gate.active);assert.equal(clock.elapsed,100);c.finish();const userPaused=true;clock.tick(6000,!gate.active&&!userPaused);assert.equal(clock.elapsed,100);clock.tick(7000,true);clock.tick(7100,true);assert.ok(clock.elapsed>100);});
 for(const r of ['landed','redirected','expedited','skipped','cancelled','disabled'] as FlightResolution[])test('readable flight finding '+r,()=>assert.ok(flightFinding(r,'executive').length>30));

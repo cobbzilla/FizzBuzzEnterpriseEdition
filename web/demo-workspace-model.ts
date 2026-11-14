@@ -20,4 +20,4 @@ export function initialWatchView(mobile:boolean,office:boolean):WatchView{return
 export function deskURL(source:URL,desk:DemoDesk):URL {
  const next=new URL(source);next.searchParams.set('desk',desk);next.hash='';return next;
 }
-export interface PresentationPolicy {cadence:string;companions:boolean;authority:string;roll:boolean;hovering:boolean}
+export interface PresentationPolicy {cadence:string;companions:boolean;authority:string;roll:boolean;hovering:boolean;heists:boolean;flights:boolean}

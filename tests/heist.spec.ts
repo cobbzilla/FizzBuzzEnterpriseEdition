@@ -52,7 +52,7 @@ test('an unattended chase returns its stamp while the visitor is on another page
 });
 
 test('a live palindrome freezes disclosure, preserves an explicit pause, and resumes without duplicate output',async({page})=>{
- test.setTimeout(180000);await ready(page);await page.fill('#limit','45');await page.uncheck('#authorize-executive-hovering');await page.selectOption('#authorize-display-speed','225');await page.click('#run-button');
+ test.setTimeout(180000);await ready(page);await page.fill('#limit','45');await page.uncheck('#authorize-paper-flights');await page.uncheck('#authorize-executive-hovering');await page.selectOption('#authorize-display-speed','225');await page.click('#run-button');
  await expect.poll(async()=>Number((await page.locator('#output-count').textContent())!.split(' ')[0])).toBeGreaterThanOrEqual(28);
  await demoAction(page,'check','#executive-hovering');await demoAction(page,'selectOption','#display-speed','0');await page.selectOption('#watch-view','office');
  await expect(page.locator('#supervision-heist')).toBeVisible({timeout:120000});await expect(page.locator('#supervision-heist')).toContainText('33');

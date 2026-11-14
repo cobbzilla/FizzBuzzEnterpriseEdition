@@ -5,6 +5,22 @@ portfolio. Each iteration branch receives its own entry before integration,
 so future generations can trace how a modest numerical exercise became a
 strategic operating capability.
 
+## 2026-11-14 — `slopbuzz-natural-flight-cadence`
+
+**Continuous Paper-Airways Capacity and Mandatory Spectator Alignment.**
+The board has retired the lifetime sortie quota and ratified deterministic,
+mandate-specific departure intervals. Due aircraft receive priority over
+competing stamp investigations, while exclusive airspace custody and minimum
+incident spacing remain binding. Aviation must arise from disclosed business;
+public discretionary launch privileges have been withdrawn.
+
+Pre-authorization and operational panels now offer matching antic permissions.
+Companion appointment policy remains interchangeable outside active incidents
+and relocations. Every departure receives an automatic office spotlight,
+closer camera, named pilot, bounded flight trail and explicit phase reporting.
+Landing restores the prior view and preserves executive Pause. Numerical
+results, audit receipts and discovery rules retain their existing authority.
+
 ## 2026-11-12 — `slopbuzz-paper-aviation`
 
 **Interdepartmental Paper Aviation and Governed Crosswind Procurement.**

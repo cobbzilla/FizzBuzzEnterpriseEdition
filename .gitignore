@@ -183,6 +183,7 @@ playwright-report/
 test-results/
 
 validation/*.json
+validation/isolated-*/
 
 .env*
 **/.env*

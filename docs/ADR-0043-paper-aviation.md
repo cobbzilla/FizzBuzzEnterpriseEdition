@@ -2,6 +2,10 @@
 
 Status: accepted, 12 November 2026.
 
+Scheduling, controls and presentation below describe the original release.
+[ADR 0044](ADR-0044-natural-flight-cadence.md) supersedes its quotas, public
+rehearsals and optional flight viewing as of 14 November 2026.
+
 Companions fly illustrated delivery copies of completed numerical paperwork.
 Java retains all numerical decisions, companion assignments and audit custody.
 Flight rules are TypeScript presentation policy; no copy is published as another

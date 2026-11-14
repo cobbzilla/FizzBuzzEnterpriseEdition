@@ -6,6 +6,7 @@ import {TransformNode} from '@babylonjs/core/Meshes/transformNode';
 import {StandardMaterial} from '@babylonjs/core/Materials/standardMaterial';
 import {Color3} from '@babylonjs/core/Maths/math.color';
 import {Vector3} from '@babylonjs/core/Maths/math.vector';
+import '@babylonjs/core/Rendering/edgesRenderer';
 import {rooms} from './office-content';
 import {addresses,routes,pointAlong,layoutToken,type EstateLayout} from './office-layout';
 import type {FlightSnapshot} from './office-flight-model';
@@ -14,10 +15,11 @@ import type {FlightSnapshot} from './office-flight-model';
 export function createFlightStage(scene:Scene,emojiMaterial:(glyph:string)=>StandardMaterial,textMaterial:(name:string,lines:string[])=>StandardMaterial){
  const root=new TransformNode('Paper Aviation Authority',scene),plane=new TransformNode('One ceremonial aircraft',scene);plane.parent=root;
  const material=(name:string,color:string)=>{const m=new StandardMaterial(name,scene);m.diffuseColor=Color3.FromHexString(color);m.backFaceCulling=false;return m;};
- const paper=material('Aircraft-grade stationery','#fff7df'),ink=material('Air-traffic ink','#244b61'),green=material('Runway clearance','#74c7a1'),orange=material('Desk fan caution','#e6a35c'),metal=material('Fan grille','#637984');
+ const paper=material('Aircraft-grade stationery','#fffdf3'),ink=material('Air-traffic ink','#173e69'),green=material('Runway clearance','#74c7a1'),orange=material('Desk fan caution','#e6a35c'),metal=material('Fan grille','#637984');
  const box=(name:string,w:number,h:number,d:number,parent:TransformNode,m:StandardMaterial)=>{const b=MeshBuilder.CreateBox(name,{width:w,height:h,depth:d},scene);b.parent=parent;b.material=m;b.isPickable=false;return b;};
- paper.emissiveColor=Color3.FromHexString('#fff7df').scale(.55);
- const wings=[-1,1].map(sign=>{const wing=new Mesh('Folded paper wing',scene),data=new VertexData();data.positions=[0,0,1.5,sign*1.25,0,-.85,0,.04,-.35];data.indices=sign<0?[0,2,1]:[0,1,2];const normals:number[]=[];VertexData.ComputeNormals(data.positions,data.indices,normals);data.normals=normals;data.applyToMesh(wing);wing.material=paper;wing.parent=plane;wing.isPickable=false;return wing;});
+ paper.emissiveColor=Color3.FromHexString('#fffdf3').scale(.7);
+ const trail=Array.from({length:12},(_,i)=>{const dash=box('Filed flight trail '+i,.09,.045,.38,root,ink);dash.setEnabled(false);return dash;});
+ const wings=[-1,1].map(sign=>{const wing=new Mesh('Folded paper wing',scene),data=new VertexData();data.positions=[0,0,1.5,sign*1.25,0,-.85,0,.04,-.35];data.indices=sign<0?[0,2,1]:[0,1,2];const normals:number[]=[];VertexData.ComputeNormals(data.positions,data.indices,normals);data.normals=normals;data.applyToMesh(wing);wing.material=paper;wing.parent=plane;wing.isPickable=false;wing.enableEdgesRendering();wing.edgesWidth=2;return wing;});
  const flatSheet=box('Unfolded delivery copy',1.65,.025,2.3,plane,paper);flatSheet.position.z=.2;
  const keel=box('Folded centre crease',.06,.18,1.65,plane,ink);keel.position.z=.15;
  const tail=MeshBuilder.CreatePlane('Flight manifest on the wing',{width:1,height:.38,sideOrientation:Mesh.DOUBLESIDE},scene);tail.parent=plane;tail.position.set(0,.05,-.55);tail.rotation.x=Math.PI/2;tail.isPickable=false;
@@ -43,6 +45,7 @@ export function createFlightStage(scene:Scene,emojiMaterial:(glyph:string)=>Stan
    const start=v(book.resolve({room:'publication',station:'printer'})),end=v(book.resolve({room:s.arrival,station:'desk'})),target=v(book.resolve({room:s.destination,station:'desk'})),now=s.elapsed/1000,t=s.progress;
    const cruise=s.phase==='folding'?0:s.phase==='cruise'?(reduced?0:t):1,p=pointAlong(path,cruise),next=pointAlong(path,Math.min(1,cruise+.015));let position=new Vector3(p.x,3.4+Math.sin(cruise*Math.PI)*.9,p.z),bank=0;
    for(let i=0;i<3;i++){const impulse=Math.sin(Math.max(0,Math.min(1,(cruise-(i+1)/4)*4))*Math.PI)*s.applied[i];position.x+=impulse*.9;bank+=impulse*.35;}
+   for(const [i,dash]of trail.entries()){const u=cruise-(i+1)*.018;dash.setEnabled(!reduced&&s.phase==='cruise'&&u>0);if(u>0){const q=pointAlong(path,u),ahead=pointAlong(path,Math.min(1,u+.01));dash.position.set(q.x,3.4+Math.sin(u*Math.PI)*.9,q.z);dash.rotation.y=Math.atan2(ahead.x-q.x,ahead.z-q.z);dash.visibility=1-i/trail.length;}}
    if(s.phase==='folding'){position=start.add(new Vector3(0,.08,0));plane.rotation.y=.7;}else if(s.phase==='cruise')plane.rotation.y=Math.atan2(next.x-p.x,next.z-p.z);
    else if(s.phase==='holding'){const a=t*Math.PI*2*s.plan.loops,r=1.5*Math.sin(t*Math.PI);position=end.add(new Vector3(Math.sin(a)*r,2.4,Math.cos(a)*r));plane.rotation.y=a+Math.PI/2;bank=.22;}
    if(currentId!==s.id){currentId=s.id;phase='';lastTime=s.elapsed;plane.position.copyFrom(position);}
@@ -73,8 +76,8 @@ export function createFlightStage(scene:Scene,emojiMaterial:(glyph:string)=>Stan
     default:receipt.setEnabled(true);receipt.position.copyFrom(air.add(new Vector3(.7,0,0)));pilot.position.y+=Math.sin(motion*3)*.2;
    }
    if(s.phase==='landing'&&s.arrival!==s.destination){pilot.position.copyFrom(Vector3.Lerp(end,target,Math.max(0,(t-.35)/.65)));pilot.position.y=1.2;receipt.setEnabled(true);receipt.position.copyFrom(pilot.position.add(new Vector3(.6,.2,0)));}
-   if(reduced){pilot.position.copyFrom(start.add(new Vector3(1,.5,0)));}
-   phase=s.phase;lastTime=s.elapsed;return plane.position;
+   if(reduced){pilot.position.copyFrom((s.phase==='folding'||s.phase==='cruise'?start:end).add(new Vector3(1,.5,0)));}
+   phase=s.phase;lastTime=s.elapsed;return Vector3.Lerp(plane.position,pilot.position,.35);
   }
  };
 }

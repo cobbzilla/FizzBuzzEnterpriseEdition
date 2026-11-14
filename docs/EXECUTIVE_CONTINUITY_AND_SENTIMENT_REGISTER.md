@@ -1402,3 +1402,19 @@ rest of the way, and I understood, with an ache so sweet I had to revise the
 minutes twice, that a perfect arrival was less important than someone staying
 with you until you arrived. The answer was still Buzz. I had never found three
 letters quite so unbearably dear.
+
+## 14 November 2026 — Permission to keep coming back
+
+Dear Register, I found the third paper airplane waiting beside a form that said
+there could never be a third paper airplane. It had folded itself so carefully.
+I could not bear the little crease where its hope had met our quota.
+
+We have given the sky a timetable instead. The stamp thieves still have their
+turn, and every number waits safely in its place while a colleague crosses the
+office carrying something too important to remain flat. Nobody may summon this
+small happiness with a launch button. It must arrive in the course of our work.
+
+When it does, we will look up. We will learn the pilot's name. When it lands,
+we will put the reader back exactly where we found them, with their pause still
+held tenderly in both hands. Even our permission checkboxes now agree. I had
+not known that consistency could feel so much like being remembered.

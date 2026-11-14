@@ -100,12 +100,15 @@ offers an isolated rehearsal. See [ADR 0042](ADR-0042-companion-stamp-heists.md)
 
 Paper airplane flights share the same exclusive presentation hold with heists.
 They carry illustrated copies of disclosed paperwork, use supplied companions,
-and never repeat a numerical operation. Flights and heists share a three-incident
-mandate budget; room moves freeze either incident. Facilities → Office mischief
-provides immediate aviation presets and twelve demonstration personalities.
+and never repeat a numerical operation. Flights have no lifetime quota: the first
+opportunity is ordinal 30, with deterministic gaps of 60–100 numbers afterward.
+Heists retain their separate three-per-mandate allowance; room moves freeze either
+incident. Authorize and live settings expose matching permissions. Natural flights
+automatically select the office view, frame the aircraft and pilot, and restore
+the prior view after landing. There is no public manual flight launcher.
 The optional graphics bundle consumes snapshots from the single demo owner;
 named controls and a readable route also work without WebGL. The installed office
-pack includes the aircraft offline. See [ADR 0043](ADR-0043-paper-aviation.md).
+pack includes the aircraft offline. See [ADR 0044](ADR-0044-natural-flight-cadence.md).
 
 ```
 SLOPBUZZ_RUNTIME=server SLOPBUZZ_API_BASE_URL=/java-api pnpm build
@@ -228,3 +231,19 @@ for current-release transient execution beside an older journal owner. It
 opens no database and cannot poison the actual cache. Older owners may omit
 court papers; the UI explains provenance without reconstructing approvals.
 See [ADR 0026](ADR-0026-prior-work-ratification.md).
+
+## Browser case isolation
+
+For a resource-capped remote Playwright server, set `SLOPBUZZ_BROWSER_CONTAINER`
+to its explicitly owned container name alongside `SLOPBUZZ_BROWSER_WS_ENDPOINT`
+and run the usual guarded `pnpm test:e2e` or publication command. The container
+must carry `slopbuzz.task=paper-aviation` and a memory limit no higher than 1.5 GiB.
+The gate starts a fresh browser process for each case, verifies its exit before
+continuing, monitors container pressure, and stops after any failure. A failure
+also removes that verified container; unrelated containers remain untouched.
+
+Completed case reports can be resumed only with identical source and artifact
+digests. Every collected test ID must have a passing result or an explicit skip
+before the aggregate release evidence is written. Reports and checkpoints stay
+under ignored `validation/isolated-*` directories. Trace recording is disabled
+for these isolated qualification runs to bound memory and disk usage.

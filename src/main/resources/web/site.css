@@ -874,3 +874,5 @@ html:has(.demo-page[data-desk=authorize]) { scroll-padding-bottom: calc(var(--di
 /* Retained pages keep their controllers, but expose only the active document. */
 [data-site-page][hidden] { display: none !important; }
 .site-navigation-notice { margin: 1rem auto; max-width: 72rem; padding: .75rem 1rem; }
+.office-antics{display:grid;gap:8px;min-width:0;margin:12px 0;padding:10px;border:1px solid var(--line)}
+.office-antics legend{font-weight:700}.office-antics label{display:flex;align-items:center;gap:8px;font-size:.85rem}.office-antics input{flex:none;width:20px;height:20px}.office-antics p{margin:0}

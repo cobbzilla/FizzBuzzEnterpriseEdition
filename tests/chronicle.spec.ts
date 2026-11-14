@@ -37,7 +37,10 @@ test('scrolling up pauses automatic following and reaching the bottom resumes it
  await page.goto('/demo/');await demoAction(page,'selectOption','#display-speed','225');await demoAction(page,'fill','#limit','100');await demoAction(page,'click','#run-button');await expect(page.locator('#chronicle-ordinal option[value="3"]')).toHaveCount(1);await bottom(page);
  const scroll=page.locator('#chronicle-scroll');
  await expect.poll(async()=>{await scroll.hover();await page.mouse.wheel(0,-260);await scroll.evaluate(()=>new Promise<void>(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>resolve()))));return scroll.evaluate(e=>e.scrollHeight-e.clientHeight-e.scrollTop>100);}).toBe(true);
- await scroll.evaluate(()=>new Promise<void>(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>resolve()))));
+ // Native wheel animation can continue after two paints, especially in WebKit.
+ // Establish a settled reading position before asking whether later layout preserves it.
+ let previous=-1,stable=0;
+ await expect.poll(async()=>{const top=await scroll.evaluate(e=>e.scrollTop);stable=Math.abs(top-previous)<.5?stable+1:0;previous=top;return stable;},{intervals:[100],timeout:3000}).toBeGreaterThanOrEqual(3);
  const before={top:await scroll.evaluate(e=>e.scrollTop),text:await page.locator('#chronicle-entries').textContent()};await expect(page.locator('#follow-chronicle')).toBeChecked();
  await demoAction(page,'selectOption','#display-speed','0');await expect(page.locator('#run-status')).toContainText('Mandate complete');
  expect(await scroll.evaluate(e=>e.scrollTop)).toBeCloseTo(before.top,0);expect(await page.locator('#chronicle-entries').textContent()).toBe(before.text);
