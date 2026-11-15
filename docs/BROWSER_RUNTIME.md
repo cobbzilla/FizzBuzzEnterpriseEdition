@@ -251,6 +251,11 @@ cases or when idle residency exceeds 384 MiB. This retires server/display state
 and charged file cache; the fixed endpoints and 1.5 GiB cap remain unchanged.
 It never restarts a failed test automatically.
 
+Atrium and breakroom reload checks are separate cases. Each still renders its
+chosen layout, reloads it, and compares the full estate before and after. This
+lets the browser exit between independent amenities instead of retaining four
+large scene initializations in one process.
+
 Completed case reports can be resumed only with identical source and artifact
 digests. Every collected test ID must have a passing result or an explicit skip
 before the aggregate release evidence is written. Reports and checkpoints stay

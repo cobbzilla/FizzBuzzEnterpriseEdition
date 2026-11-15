@@ -38,8 +38,10 @@ test('all twelve original partition geometries render through real shared layout
  }
  expect([...seen].sort()).toEqual(partitionStyles.map(p=>p.id).sort());
 });
-test('atrium and breakroom occupy their chosen ninth cell and reproduce on reload',async({page})=>{
- for(const kind of ['atrium','breakroom']){let n=0;while(estate(seed(n),1).amenity!.kind!==kind)n++;await reception(page,n,1);await open(page);const before=await scene(page);expect(before.estate.amenity?.kind).toBe(kind);await page.reload();await expect(page.locator('#health-value')).toHaveText('LIVE');await open(page);const after=await scene(page);expect(after.estate).toEqual(before.estate);}
+// Each amenity has independent before/reload/after evidence. Separate cases let
+// the guarded runner retire the browser between these expensive scene reloads.
+for(const kind of ['atrium','breakroom'] as const)test(`${kind} occupies its chosen ninth cell and reproduces on reload`,async({page})=>{
+ let n=0;while(estate(seed(n),1).amenity!.kind!==kind)n++;await reception(page,n,1);await open(page);const before=await scene(page);expect(before.estate.amenity?.kind).toBe(kind);await page.reload();await expect(page.locator('#health-value')).toHaveText('LIVE');await open(page);const after=await scene(page);expect(after.estate).toEqual(before.estate);
 });
 test('reorganized room picking and walking use relocated frames',async({page})=>{
  await reception(page,5,1);await open(page);await page.locator('#office-directory').getByRole('button',{name:/Procurement$/}).click();await expect(page.locator('#office-room-title')).toContainText('Glyph Procurement');await demoAction(page,'click','#office-walk');await expect(page.locator('#office-walk')).toHaveText('Return to cutaway');const before=await scene(page);await (await demoControl(page,'[data-office-move="right"]')).click();await expect.poll(async()=>{const current=await scene(page);return Math.hypot(current.camera.x-before.camera.x,current.camera.z-before.camera.z);}).toBeGreaterThan(.05);await expect.poll(()=>page.locator('#office-stage').evaluate(e=>{const r=e.getBoundingClientRect();return Math.min(r.bottom,innerHeight)-Math.max(r.top,0)>=Math.min(r.height,200);})).toBe(true);await demoAction(page,'click','#office-walk');await page.locator('#office-directory').getByRole('button',{name:/Premises$/}).click();await expect(page.locator('#office-room-title')).toContainText('Vacant String');
