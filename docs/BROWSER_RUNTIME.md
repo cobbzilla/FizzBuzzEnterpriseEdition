@@ -255,6 +255,9 @@ Atrium and breakroom reload checks are separate cases. Each still renders its
 chosen layout, reloads it, and compares the full estate before and after. This
 lets the browser exit between independent amenities instead of retaining four
 large scene initializations in one process.
+Public verification also closes its online office/aviation browser before
+installing the offline building pack in a fresh browser. Installation and the
+offline checks share that new browser's real service-worker and cache state.
 
 Completed case reports can be resumed only with identical source and artifact
 digests. Every collected test ID must have a passing result or an explicit skip
