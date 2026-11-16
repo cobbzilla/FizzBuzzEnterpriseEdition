@@ -30,6 +30,13 @@ an overlapping direct Playwright run. A resource-limit stop requires inspection
 and cleanup before retrying. `pnpm test:browser-guard` checks process ownership,
 resource admission and cleanup behavior.
 
+On macOS the guard stops on the kernel's warning or critical memory-pressure
+signal, even with low compressed-memory usage. Compressed inactive pages can
+remain while memory pressure is normal, so compression alone does not veto an
+otherwise healthy host. Missing or unrecognized pressure readings stop the run.
+Browser process/RSS ceilings and the remote container's 1.5 GiB cap still apply.
+See [Apple's memory-pressure implementation](https://github.com/apple-oss-distributions/xnu/blob/main/bsd/kern/kern_memorystatus_notify.c).
+
 For an isolated local browser server, set `SLOPBUZZ_BROWSER_WS_ENDPOINT` to its
 loopback WebSocket endpoint. Parity, Playwright tests, public checks and analytics
 checks then use that server; only loopback traffic is forwarded to local preview

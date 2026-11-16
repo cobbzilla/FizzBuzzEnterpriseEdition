@@ -23,14 +23,25 @@ export function isOrphanBrowser(row:ProcessRow){return row.parent===1&&isTestBro
 export function descendants(rows:ProcessRow[],root:number){const ids=new Set([root]);let changed=true;while(changed){changed=false;for(const row of rows)if(ids.has(row.parent)&&!ids.has(row.pid)){ids.add(row.pid);changed=true;}}return rows.filter(row=>ids.has(row.pid));}
 export function sameProcess(a:ProcessRow,b:ProcessRow){return a.pid===b.pid&&a.started===b.started&&a.command===b.command;}
 export function compressedBytes(text:string){const size=Number(text.match(/page size of (\d+) bytes/)?.[1]),pages=Number(text.match(/Pages occupied by compressor:\s+(\d+)/)?.[1]);if(!size||!Number.isFinite(pages))throw new Error('Cannot read macOS compressed-memory usage');return size*pages;}
-export function resourceProblem(rows:ProcessRow[],compressed:number,memory=totalmem()){
+export type MemoryPressure='normal'|'warning'|'critical';
+/** The sysctl returns dispatch pressure flags, not XNU's internal enum values. */
+export function macMemoryPressure(text:string):MemoryPressure{
+ switch(text.trim()){case '1':return 'normal';case '2':return 'warning';case '4':return 'critical';default:throw new Error('Cannot read macOS memory pressure');}
+}
+export function resourceProblem(rows:ProcessRow[],compressed:number,memory=totalmem(),pressure?:MemoryPressure){
  const browsers=rows.filter(isTestBrowser),rss=browsers.reduce((n,p)=>n+p.rss,0);
  if(browsers.length>30)return `Too many test browser processes (${browsers.length})`;
  if(rss>Math.min(3*1024**3,memory/8))return `Test browsers exceed their memory budget (${Math.ceil(rss/1024**2)} MiB RSS)`;
- if(compressed>memory/5)return 'System compressed memory exceeds 20% of physical RAM';
+ if(pressure!==undefined&&pressure!=='normal')return `System memory pressure is ${pressure}`;
+ // Compressed inactive pages can remain after pressure has cleared. Prefer the
+ // live kernel signal; retain the conservative fallback for callers without it.
+ if(pressure===undefined&&compressed>memory/5)return 'System compressed memory exceeds 20% of physical RAM';
 }
 function processes(){return parseProcesses(execFileSync('ps',['-axo','pid=,ppid=,rss=,lstart=,command='],{encoding:'utf8',timeout:5000,maxBuffer:8*1024**2}));}
-function compressed(){return process.platform==='darwin'?compressedBytes(execFileSync('vm_stat',{encoding:'utf8',timeout:5000})):0;}
+function systemMemory():{compressed:number;pressure?:MemoryPressure}{
+ if(process.platform!=='darwin')return {compressed:0};
+ return {compressed:compressedBytes(execFileSync('vm_stat',{encoding:'utf8',timeout:5000})),pressure:macMemoryPressure(execFileSync('sysctl',['-n','kern.memorystatus_vm_pressure_level'],{encoding:'utf8',timeout:5000}))};
+}
 const pause=(ms:number)=>new Promise<void>(r=>setTimeout(r,ms));
 function signal(row:ProcessRow,kind:NodeJS.Signals){const current=processes().find(p=>p.pid===row.pid);if(current&&sameProcess(row,current))try{process.kill(row.pid,kind);}catch(e){if((e as NodeJS.ErrnoException).code!=='ESRCH')throw e;}}
 async function cleanup(rows:ProcessRow[]){
@@ -71,7 +82,7 @@ export async function guarded(command:string,args:string[]){
  try{
   const stale=initial.filter(isOrphanBrowser);if(stale.length){console.log(`Browser guard: cleaning ${stale.length} orphaned automation browser(s)`);await cleanup(stale.flatMap(p=>descendants(initial,p.pid)));}
   const existing=processes().filter(isTestBrowser);if(existing.length)throw new Error('An existing Playwright browser is still running; resolve its ownership before starting another suite');
-  const problem=resourceProblem([],compressed());if(problem)throw new Error(problem);
+  const memory=systemMemory(),problem=resourceProblem([],memory.compressed,totalmem(),memory.pressure);if(problem)throw new Error(problem);
   workspace=await mkdtemp(join(directory,'run-'));
   child=spawn(command,args,{stdio:'inherit',detached:true,env:{...process.env,TMPDIR:workspace,TMP:workspace,TEMP:workspace,SLOPBUZZ_BROWSER_GUARD_PID:String(process.pid)}});
   const exited=new Promise<number>((res,rej)=>{child!.once('error',rej);child!.once('exit',code=>res(code??1));});
@@ -79,8 +90,8 @@ export async function guarded(command:string,args:string[]){
   timer=setInterval(()=>{
    try{
     const rows=capture();
-    const memory=compressed(),problem=resourceProblem(rows,memory);if(problem)abort(problem);
-    if(++ticks%15===0){const browsers=rows.filter(isTestBrowser);console.log(`Browser guard: ${browsers.length} browser processes; ${Math.ceil(browsers.reduce((n,p)=>n+p.rss,0)/1024**2)} MiB browser RSS; ${Math.ceil(memory/1024**2)} MiB compressed`);}
+    const memory=systemMemory(),problem=resourceProblem(rows,memory.compressed,totalmem(),memory.pressure);if(problem)abort(problem);
+    if(++ticks%15===0){const browsers=rows.filter(isTestBrowser);console.log(`Browser guard: ${browsers.length} browser processes; ${Math.ceil(browsers.reduce((n,p)=>n+p.rss,0)/1024**2)} MiB browser RSS; ${Math.ceil(memory.compressed/1024**2)} MiB compressed${memory.pressure?`; pressure ${memory.pressure}`:''}`);}
     const next=lock+'.next';writeFileSync(next,JSON.stringify({...self,owned:[...tracked.values()]}));renameSync(next,lock);
    }catch(error){abort('Cannot monitor browser resources: '+(error as Error).message);if(child?.pid)try{process.kill(-child.pid,'SIGKILL');}catch{};}
   },2000);

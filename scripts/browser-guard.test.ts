@@ -4,7 +4,7 @@ import {spawn} from 'node:child_process';
 import {mkdtemp,readFile,rm,writeFile} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join,resolve} from 'node:path';
-import {parseProcesses,isTestBrowser,isOrphanBrowser,descendants,sameProcess,compressedBytes,resourceProblem,type ProcessRow} from './browser-guard.ts';
+import {parseProcesses,isTestBrowser,isOrphanBrowser,descendants,sameProcess,compressedBytes,macMemoryPressure,resourceProblem,type ProcessRow} from './browser-guard.ts';
 const browser=(pid=20,parent=10):ProcessRow=>({pid,parent,rss:300*1024**2,started:'Thu Nov 12 08:00:00 2026',command:'/Users/example/Library/Caches/ms-playwright/chromium-100/chrome-mac/Chrome for Testing.app/Contents/MacOS/Chrome --remote-debugging-pipe --user-data-dir=/tmp/playwright_chromium_profile-abc'});
 test('process parser preserves spaced executable paths and exact start identity',()=>{const row=browser();assert.deepEqual(parseProcesses(` 20 10 307200 Thu Nov 12 08:00:00 2026 ${row.command}`),[row]);assert.deepEqual(parseProcesses('not a process'),[]);});
 test('ordinary user browsers and shell commands mentioning Playwright are excluded',()=>{for(const command of ['/Applications/Google Chrome.app/Contents/MacOS/Google Chrome --remote-debugging-pipe','/Applications/Firefox.app/Contents/MacOS/firefox','/bin/bash -c /Users/example/Library/Caches/ms-playwright/chromium-100/chrome --remote-debugging-pipe'])assert.equal(isTestBrowser({...browser(),command}),false);});
@@ -14,6 +14,19 @@ test('descendant traversal admits only the owned tree regardless of row order',(
 test('normal browser multiprocess operation stays within budget',()=>assert.equal(resourceProblem([browser()],512*1024**2,32*1024**3),undefined));
 test('accumulating browser processes, excessive RSS and compression each stop the run',()=>{assert.match(resourceProblem(Array.from({length:31},(_,i)=>({...browser(i),rss:1})),0,32*1024**3)!,/Too many/);assert.match(resourceProblem([{...browser(),rss:4*1024**3}],0,32*1024**3)!,/memory budget/);assert.match(resourceProblem([],7*1024**3,32*1024**3)!,/compressed memory/);});
 test('compressed memory is measured in the hosts page size and invalid readings fail closed',()=>{assert.equal(compressedBytes('Mach Virtual Memory Statistics: (page size of 16384 bytes)\nPages occupied by compressor: 123.'),123*16384);assert.throws(()=>compressedBytes('no reading'));});
+test('retained compressed pages do not veto normal kernel pressure or relax browser budgets',()=>{
+ const memory=32*1024**3,compressed=8*1024**3;
+ assert.equal(resourceProblem([browser()],compressed,memory,'normal'),undefined);
+ assert.match(resourceProblem([{...browser(),rss:4*1024**3}],compressed,memory,'normal')!,/memory budget/);
+ assert.match(resourceProblem(Array.from({length:31},(_,i)=>({...browser(i),rss:1})),compressed,memory,'normal')!,/Too many/);
+});
+test('warning and critical kernel pressure stop admission even with little compressed memory',()=>{
+ for(const pressure of ['warning','critical'] as const)assert.match(resourceProblem([],0,32*1024**3,pressure)!,new RegExp('pressure is '+pressure));
+});
+test('macOS dispatch pressure flags are recognized and unknown or missing signals fail closed',()=>{
+ assert.equal(macMemoryPressure('1\n'),'normal');assert.equal(macMemoryPressure('2'),'warning');assert.equal(macMemoryPressure('4'),'critical');
+ for(const text of ['','0','3','5','1 2','unavailable'])assert.throws(()=>macMemoryPressure(text),/Cannot read macOS memory pressure/);
+});
 test('a failed nested command cleans an orphaned child that ignores termination',{timeout:20000},async()=>{
  const dir=await mkdtemp(join(tmpdir(),'slopbuzz-guard-fixture-')),pidFile=join(dir,'child.pid');let pid=0;
  try{
