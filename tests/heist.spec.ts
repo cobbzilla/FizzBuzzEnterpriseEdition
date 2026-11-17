@@ -52,10 +52,15 @@ test('an unattended chase returns its stamp while the visitor is on another page
 });
 
 test('a live palindrome freezes disclosure, preserves an explicit pause, and resumes without duplicate output',async({page})=>{
- test.setTimeout(180000);await ready(page);await page.fill('#limit','45');await page.uncheck('#authorize-paper-flights');await page.uncheck('#authorize-executive-hovering');await page.selectOption('#authorize-display-speed','225');await page.click('#run-button');
- await expect.poll(async()=>Number((await page.locator('#output-count').textContent())!.split(' ')[0])).toBeGreaterThanOrEqual(28);
+ test.setTimeout(240000);await ready(page);await page.fill('#limit','45');await page.uncheck('#authorize-paper-flights');await page.uncheck('#authorize-executive-hovering');await page.selectOption('#authorize-display-speed','800');await page.click('#run-button');
+ await expect.poll(async()=>Number((await page.locator('#output-count').textContent())!.split(' ')[0]),{timeout:45000}).toBeGreaterThanOrEqual(28);
+ // Hold disclosure while the real controls and cold renderer are prepared;
+ // otherwise their native-input waits can let ordinal 33 pass unobserved.
+ await page.click('#pause-reading');await expect(page.locator('#pause-reading')).toHaveAttribute('aria-pressed','true');
+ const held=await page.locator('#output').textContent();expect(Number((await page.locator('#output-count').textContent())!.split(' ')[0])).toBeLessThan(33);
  await demoAction(page,'check','#executive-hovering');await demoAction(page,'selectOption','#display-speed','0');await page.selectOption('#watch-view','office');
- await expect(page.locator('#supervision-heist')).toBeVisible({timeout:120000});await expect(page.locator('#supervision-heist')).toContainText('33');
+ await expect(page.locator('#supervision-canvas')).toHaveAttribute('data-rendered','true');await expect(page.locator('#output')).toHaveText(held!);await page.click('#supervision-pause');
+ await expect(page.locator('#supervision-heist')).toBeVisible({timeout:180000});await expect(page.locator('#supervision-heist')).toContainText('33');
  const output=await page.locator('#output').textContent(),observed=await page.locator('#supervision-pane').getAttribute('data-observed-steps'),before=await audit(page);
  await page.waitForTimeout(500);expect(await page.locator('#output').textContent()).toBe(output);expect(await page.locator('#supervision-pane').getAttribute('data-observed-steps')).toBe(observed);
  await page.locator('#supervision-pause').click();await page.locator('#supervision-heist').getByRole('button',{name:'Skip the chase'}).click();await expect(page.locator('#supervision-pause')).toHaveAttribute('aria-pressed','true');await page.waitForTimeout(250);expect(await page.locator('#output').textContent()).toBe(output);
