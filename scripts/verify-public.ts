@@ -58,6 +58,8 @@ export async function verifyPublic(origin: string, revision: string) {
    assert.deepEqual(await page.getByRole('navigation',{name:'Demo departments'}).getByRole('link').allTextContents(),['Authorize','Observe','Experiment','Facilities','Evidence']);
    await expect(page.locator('#authorize-require-companion-roll-call')).toBeChecked();await expect(page.locator('#authorize-executive-hovering')).toBeChecked();
    await demo.run();await expect(page.locator('#observe-title')).toBeFocused();
+   await expect(page.locator('#portfolio-open [data-portfolio-points]')).toHaveAttribute('data-exact','190');
+   await page.click('#portfolio-open');await expect(page.locator('#portfolio-record')).toBeVisible();await expect(page.locator('#portfolio-appearances')).toHaveText('7');await expect(page.locator('#portfolio-total')).toHaveText('190');await demo.watch('overview');
    await demo.options(()=>page.check('#executive-hovering'));await expect(page.locator('#display-speed')).toBeEnabled();await expect(page.locator('#display-speed')).toHaveValue('0');await demo.watch('office');await expect(page.locator('#supervision-canvas')).toHaveAttribute('data-rendered','true');
    await page.setViewportSize({width:390,height:667});
    await expect.poll(()=>page.evaluate(()=>{
@@ -104,6 +106,7 @@ export async function verifyPublic(origin: string, revision: string) {
    await demo.options(()=>page.selectOption('#companion-strategy','factor-resonance-v1'));
    await demo.run();
    await expect(page.locator('#cache-result')).toHaveText('HIT');
+   await expect(page.locator('#portfolio-open [data-portfolio-points]')).toHaveAttribute('data-exact','190');
    await expect(page.locator('#personnel-origin')).toHaveText('Institutional memory answered. No new HR proceedings.');
    await expect(page.locator('#chronicle-entries')).toContainText('No fresh recruitment');
    await expect(page.locator('#precedent-status')).toContainText('Certificate of Authorized Non-Performance issued for 15 lines');
@@ -151,6 +154,7 @@ export async function verifyPublic(origin: string, revision: string) {
    await page.click('#office-enter');if(!await page.locator('#heist-suspect').isVisible())await page.locator('.heist-security>summary').click();await page.selectOption('#heist-suspect','👻');await page.click('#heist-rehearse');await expect(page.locator('#office-heist')).toContainText('ghost uses the wall');await page.locator('#office-heist').getByRole('button',{name:'Skip the chase'}).click();await expect(page.locator('#office-heist')).toBeHidden();await page.click('#office-close');
    await naturalFlight(page,{limit:'55'});await expect(page.locator('#supervision-flight')).toContainText('Proceedings held until landing');await page.locator('#supervision-flight').getByRole('button',{name:'Land now',exact:true}).click();await expect(page.locator('#supervision-flight')).toBeHidden();await demo.options(()=>page.click('#reveal-all'));await expect(page.locator('#run-status')).toContainText('Mandate complete');
    await demo.run('16');
+   await expect(page.locator('#portfolio-open [data-portfolio-points]')).not.toHaveAttribute('data-exact','0');
    await demo.experiment('personnel');await page.selectOption('#experiment-speed','0');await page.click('[data-personnel-scenario="missing-induction"]');await expect(page.locator('#experiment-personnel-verdict')).toHaveText('Application rejected');await expect(page.locator('#experiment-personnel-status')).toContainText('Probation Review');assert.equal((await page.locator('#output').textContent())?.trim().split('\n').at(-1),'16');
    await demo.experiment('precedent');await page.selectOption('#experiment-precedent-scenario','wrong-mandate');await page.click('#experiment-precedent-submit');await expect(page.locator('#experiment-precedent-status')).toContainText('Reuse rejected by Mandate Jurisdiction Chamber');
    await demo.experiment('premises');await page.selectOption('#premises-scenario','bell');await page.click('#premises-submit');await expect(page.locator('#premises-status')).toContainText('U+0007');await page.selectOption('#premises-scenario','borrowed-lease');await page.click('#premises-submit');await expect(page.locator('#premises-status')).toContainText('Occupancy refused');await expect(page.locator('#premises-result')).toContainText('Reinspection confirmed 0 characters');
@@ -164,10 +168,13 @@ export async function verifyPublic(origin: string, revision: string) {
    await freshBrowser();await page.goto(origin+'/demo/');await expect(page.locator('#health-value')).toHaveText('LIVE',{timeout:60000});await demo.run('15');await expect(page.locator('#discovery-list li')).toHaveCount(5);await page.waitForFunction(()=>!!navigator.serviceWorker.controller,null,{timeout:120000});await context.setOffline(true);
    await page.goto(origin+'/demo/');await expect(page.locator('#health-value')).toHaveText('LIVE');await page.uncheck('#authorize-executive-hovering');await page.selectOption('#authorize-display-speed','225');await page.fill('#limit','1000');await page.click('#run-button');await demo.desk('authorize');await expect(page.locator('#mandate-collision-warning')).toBeVisible();await demo.run('0');await demo.desk('authorize');await expect(page.locator('#mandate-collision-warning')).toBeHidden();await expect(page.locator('#output')).toContainText('produces no lines');
    const savedFinds=await page.evaluate(()=>localStorage.getItem('slopbuzz:extraordinary-appointments:v1'));
+   const savedScore=await page.evaluate(()=>localStorage.getItem('slopbuzz:companion-portfolio:v1'));assert.ok(savedScore);
    await context.setOffline(false);await page.goto(origin+'/reset/');await expect(page).toHaveURL(origin+'/',{timeout:90000});await expect(page.getByRole('link',{name:'Live demo',exact:true})).toBeVisible();
    assert.equal(await page.evaluate(()=>localStorage.getItem('slopbuzz:extraordinary-appointments:v1')),savedFinds);
+   assert.equal(await page.evaluate(()=>localStorage.getItem('slopbuzz:companion-portfolio:v1')),savedScore);
    await page.getByRole('link',{name:'Live demo',exact:true}).click();await expect(page.getByRole('navigation',{name:'Demo departments'}).getByRole('link')).toHaveCount(5);
    await page.goto(origin+'/full-reset/');await expect(page).toHaveURL(origin+'/',{timeout:90000});assert.equal(await page.evaluate(()=>localStorage.getItem('slopbuzz:extraordinary-appointments:v1')),null);
+   assert.equal(await page.evaluate(()=>localStorage.getItem('slopbuzz:companion-portfolio:v1')),null);
    assert.deepEqual(businessRequests, []);
    console.log(`${engine.name()}: public runtime, cache, recovery, navigation and offline execution passed.`);
   } finally {

@@ -5,6 +5,23 @@ portfolio. Each iteration branch receives its own entry before integration,
 so future generations can trace how a modest numerical exercise became a
 strategic operating capability.
 
+## 2026-11-18 — `slopbuzz-companion-portfolio`
+
+**Recurring Appointment Revenue and Exact Portfolio Custody.** Ratified a
+five-tier compensation schedule of 10, 25, 100, 400 and 1,000 Portfolio Points.
+Every newly disclosed companion appointment receives its full rate, including
+repeat personnel and paired appointments. Management has declined to impose an
+earnings ceiling, duplicate discount, attendance dividend or diversification bonus.
+
+Commissioned compact Observe and running-mandate counters, with an Evidence
+statement itemizing tier counts, payments, distinct personnel and the highest-value
+appointment. Adopted exact integer accounting, bounded disclosure checkpoints and
+catalog-sized inventories. Stopped and replaced proceedings retain earned points;
+replays, reassignment and office theatrics receive no additional remuneration.
+The browser retains the latest run and previous banked statement, with versioned
+scoring conditions for subsequent high-score governance. Browser qualification
+now retires its isolated server between every case to release retained file cache.
+
 ## 2026-11-14 — `slopbuzz-natural-flight-cadence`
 
 **Continuous Paper-Airways Capacity and Mandatory Spectator Alignment.**

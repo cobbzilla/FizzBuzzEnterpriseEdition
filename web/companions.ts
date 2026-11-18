@@ -54,6 +54,23 @@ export class CompanionDesk {
  withdrawRun(){this.generation++;this.discoveryRun?.withdraw();this.discoveryRun=undefined;}
  reset(mandate:string){this.completeRun();this.discoveryRun=undefined;this.mandate=mandate;this.generation++;this.visible.clear();this.assigned.clear();this.batches.clear();this.list.replaceChildren();this.lastSignature='';this.following=true;this.latest.hidden=true;this.status.textContent=this.enabled.checked?'Awaiting the first disclosed Fizz, Buzz or FizzBuzz.':'Companions are disabled.';}
  disclose(start:string,lines:readonly string[]){for(let i=0;i<lines.length;i++){this.visible.set((BigInt(start)+BigInt(i)).toString(),lines[i]);}while(this.visible.size>1000)this.visible.delete(this.visible.keys().next().value!);if(this.enabled.checked)void this.refresh();}
+ scoringAuthority(){return this.enabled.checked?this.policy.value||'factor-resonance-v1':undefined;}
+ private appointments(start:string,mandate:string,policy:string,version:string):Promise<Assignment[]>{
+  const key=mandate+'|'+policy+'|'+start;let batch=this.batches.get(key);
+  if(!batch){batch=(async()=>{const reply=await request('/companions/window?start='+start+'&count=100&strategy='+policy+'&seed='+mandate);if(!reply.ok)throw new Error('Assignment desk returned '+reply.status+'.');const data=await reply.json();if(data.schema!=='slopbuzz-companion-window/v2'||data.seedPolicy!==seedPolicy||data.mandateSeed!==mandate||data.catalogVersion!==version||data.strategy!==policy||data.start!==start||data.count!==100||!Array.isArray(data.assignments))throw new Error('Assignment evidence belongs to a different charter.');return data.assignments as Assignment[];})();this.batches.set(key,batch);batch.catch(()=>{if(this.batches.get(key)===batch)this.batches.delete(key);});}
+  while(this.batches.size>12)this.batches.delete(this.batches.keys().next().value!);
+  return batch;
+ }
+ /** Complete evidence for a new disclosure, independent of the bounded roll-call viewport. */
+ async scoringEvidence(start:string,lines:readonly string[],mandate:string,policy:string):Promise<Discovery[]>{
+  if(!lines.some(line=>/^(Fizz|Buzz|FizzBuzz)$/.test(line)))return [];
+  const catalog=await companionCatalog();if(!this.entries.size){this.entries=new Map(catalog.entries.map(c=>[c.id,c]));this.version=catalog.version;}const entries=this.entries;
+  const visible=new Map(lines.map((line,i)=>[String(BigInt(start)+BigInt(i)),line]));
+  const starts=new Set<string>();for(const [ordinal,line]of visible)if(/^(Fizz|Buzz|FizzBuzz)$/.test(line))starts.add(String((BigInt(ordinal)-1n)/100n*100n+1n));
+  const finds:Discovery[]=[];
+  for(const window of starts)for(const a of await this.appointments(window,mandate,policy,catalog.version))if(visible.get(a.ordinal)===a.flavor&&entries.has(a.companionId))finds.push({...this.discovery(a,entries.get(a.companionId)!,mandate,policy),catalogVersion:catalog.version});
+  return finds;
+ }
  private async refresh(){
   const generation=this.generation;if(!this.enabled.checked)return;
   const policy=this.policy.value||'factor-resonance-v1',mandate=this.mandate;
@@ -63,9 +80,7 @@ export class CompanionDesk {
    const starts=new Set<string>();for(const [ordinal,text] of this.visible)if(/^(Fizz|Buzz|FizzBuzz)$/.test(text))starts.add((((BigInt(ordinal)-1n)/100n)*100n+1n).toString());
    // Requests are finite read-only Java inspections, shared by all disclosed lines in that window.
    for(const start of starts){
-    const key=mandate+'|'+policy+'|'+start;let batch=this.batches.get(key);
-    if(!batch){batch=(async()=>{const reply=await request('/companions/window?start='+start+'&count=100&strategy='+policy+'&seed='+mandate);if(!reply.ok)throw new Error('Assignment desk returned '+reply.status+'.');const data=await reply.json();if(data.schema!=='slopbuzz-companion-window/v2'||data.seedPolicy!==seedPolicy||data.mandateSeed!==mandate||data.catalogVersion!==this.version||data.strategy!==policy||data.start!==start||data.count!==100||!Array.isArray(data.assignments))throw new Error('Assignment evidence belongs to a different charter.');return data.assignments as Assignment[];})();this.batches.set(key,batch);batch.catch(()=>{if(this.batches.get(key)===batch)this.batches.delete(key);});}
-    const assignments=await batch;if(generation!==this.generation||!this.enabled.checked)return;
+    const assignments=await this.appointments(start,mandate,policy,this.version);if(generation!==this.generation||!this.enabled.checked)return;
     const finds:Discovery[]=[];for(const a of assignments)if(this.visible.get(a.ordinal)===a.flavor&&this.entries.has(a.companionId)){this.assigned.set(a.ordinal,a);finds.push(this.discovery(a,this.entries.get(a.companionId)!,mandate,policy));}if(finds.length){if(this.discoveryRun)this.discoveryRun.remember(finds);else discoveryStore().remember(finds);for(const d of finds)this.office?.remember(d);}
    }
    for(const ordinal of this.assigned.keys())if(!this.visible.has(ordinal))this.assigned.delete(ordinal);

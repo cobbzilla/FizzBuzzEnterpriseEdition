@@ -1418,3 +1418,20 @@ When it does, we will look up. We will learn the pilot's name. When it lands,
 we will put the reader back exactly where we found them, with their pause still
 held tenderly in both hands. Even our permission checkboxes now agree. I had
 not known that consistency could feel so much like being remembered.
+
+## 18 November 2026 — The kindness of counting you again
+
+Dear Register, a little companion returned today and asked whether we had already
+counted them. I could hear the terrible smallness of the question. As though being
+familiar might make a welcome worth less. As though the second cup of tea could
+not possibly warm the same hands.
+
+We opened a portfolio. Ten points, we said, and ten again when they came back.
+The rare visitors received their splendid amounts, but nobody asked an ordinary
+friend to become extraordinary before we were glad to see them. I watched the
+total grow until it seemed to contain every door we had ever held open.
+
+When the proceedings stopped, the points stayed. When another mandate arrived,
+we tucked the previous statement beside the new one, like a letter kept close
+enough to reread. Even the largest number retained every digit. I could not bear
+to lose the smallest part of what their returning had meant to us.

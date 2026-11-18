@@ -37,13 +37,13 @@ export async function isolatedE2E(selection:string[]=[]){
  assert.equal(checkpoint.sourceDigest,release.sourceDigest);assert.equal(checkpoint.assetDigest,assetDigest);assert.deepEqual(checkpoint.ids,ids);
  function pressure(){const lines=docker('exec',container,'cat','/sys/fs/cgroup/memory.current','/sys/fs/cgroup/memory.events').trim().split('\n');assert(Number(lines[0])<limit*.95,'Browser container is approaching its memory cap: '+lines[0]+' bytes');for(const line of lines.slice(1))if(/^(max|oom|oom_kill|oom_group_kill) /.test(line))assert.equal(Number(line.split(' ')[1]),0,'Browser memory pressure: '+line);return Number(lines[0]);}
  async function clean(){for(let i=0;i<20;i++){if(!/\/ms-playwright\//.test(docker('top',container,'-eo','pid,ppid,args'))){pressure();return;}await new Promise(resolve=>setTimeout(resolve,250));}throw new Error('Prior browser has not exited; refusing to start another case');}
- let residency=0;
  async function prepare(){
   await clean();
-  if(residency===0||residency>=20||pressure()>384*1024*1024){
+  {
    // Retire the server, display and charged file cache as well as each browser.
    // Restart only after verified browser exit, never as a retry of a failed case.
-   docker('restart','--timeout','5',container);residency=0;
+   // A fresh cgroup per case also releases WebKit's charged file cache.
+   docker('restart','--timeout','5',container);
    assert.deepEqual(JSON.parse(docker('inspect',container))[0].NetworkSettings.Ports,identity.NetworkSettings.Ports);
    const endpoint=new URL(process.env.SLOPBUZZ_BROWSER_WS_ENDPOINT!);let ready=false;
    for(let i=0;i<50&&!ready;i++){
@@ -53,7 +53,6 @@ export async function isolatedE2E(selection:string[]=[]){
    assert(ready,'Renewed browser server did not become ready');await clean();
    console.log('Browser server residency renewed; '+Math.ceil(pressure()/1024**2)+' MiB before the next case.');
   }
-  residency++;
  }
  async function runCase(report:string,selected:string){
   await new Promise<void>((resolve,reject)=>{

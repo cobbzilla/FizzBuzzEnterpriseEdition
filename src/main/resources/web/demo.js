@@ -1686,6 +1686,44 @@ var CompanionDesk = class {
     while (this.visible.size > 1e3) this.visible.delete(this.visible.keys().next().value);
     if (this.enabled.checked) void this.refresh();
   }
+  scoringAuthority() {
+    return this.enabled.checked ? this.policy.value || "factor-resonance-v1" : void 0;
+  }
+  appointments(start, mandate, policy, version) {
+    const key2 = mandate + "|" + policy + "|" + start;
+    let batch = this.batches.get(key2);
+    if (!batch) {
+      batch = (async () => {
+        const reply = await request("/companions/window?start=" + start + "&count=100&strategy=" + policy + "&seed=" + mandate);
+        if (!reply.ok) throw new Error("Assignment desk returned " + reply.status + ".");
+        const data = await reply.json();
+        if (data.schema !== "slopbuzz-companion-window/v2" || data.seedPolicy !== seedPolicy || data.mandateSeed !== mandate || data.catalogVersion !== version || data.strategy !== policy || data.start !== start || data.count !== 100 || !Array.isArray(data.assignments)) throw new Error("Assignment evidence belongs to a different charter.");
+        return data.assignments;
+      })();
+      this.batches.set(key2, batch);
+      batch.catch(() => {
+        if (this.batches.get(key2) === batch) this.batches.delete(key2);
+      });
+    }
+    while (this.batches.size > 12) this.batches.delete(this.batches.keys().next().value);
+    return batch;
+  }
+  /** Complete evidence for a new disclosure, independent of the bounded roll-call viewport. */
+  async scoringEvidence(start, lines2, mandate, policy) {
+    if (!lines2.some((line) => /^(Fizz|Buzz|FizzBuzz)$/.test(line))) return [];
+    const catalog = await companionCatalog();
+    if (!this.entries.size) {
+      this.entries = new Map(catalog.entries.map((c) => [c.id, c]));
+      this.version = catalog.version;
+    }
+    const entries = this.entries;
+    const visible2 = new Map(lines2.map((line, i) => [String(BigInt(start) + BigInt(i)), line]));
+    const starts = /* @__PURE__ */ new Set();
+    for (const [ordinal, line] of visible2) if (/^(Fizz|Buzz|FizzBuzz)$/.test(line)) starts.add(String((BigInt(ordinal) - 1n) / 100n * 100n + 1n));
+    const finds = [];
+    for (const window2 of starts) for (const a of await this.appointments(window2, mandate, policy, catalog.version)) if (visible2.get(a.ordinal) === a.flavor && entries.has(a.companionId)) finds.push({ ...this.discovery(a, entries.get(a.companionId), mandate, policy), catalogVersion: catalog.version });
+    return finds;
+  }
   async refresh() {
     const generation = this.generation;
     if (!this.enabled.checked) return;
@@ -1700,22 +1738,7 @@ var CompanionDesk = class {
       const starts = /* @__PURE__ */ new Set();
       for (const [ordinal, text2] of this.visible) if (/^(Fizz|Buzz|FizzBuzz)$/.test(text2)) starts.add(((BigInt(ordinal) - 1n) / 100n * 100n + 1n).toString());
       for (const start of starts) {
-        const key2 = mandate + "|" + policy + "|" + start;
-        let batch = this.batches.get(key2);
-        if (!batch) {
-          batch = (async () => {
-            const reply = await request("/companions/window?start=" + start + "&count=100&strategy=" + policy + "&seed=" + mandate);
-            if (!reply.ok) throw new Error("Assignment desk returned " + reply.status + ".");
-            const data = await reply.json();
-            if (data.schema !== "slopbuzz-companion-window/v2" || data.seedPolicy !== seedPolicy || data.mandateSeed !== mandate || data.catalogVersion !== this.version || data.strategy !== policy || data.start !== start || data.count !== 100 || !Array.isArray(data.assignments)) throw new Error("Assignment evidence belongs to a different charter.");
-            return data.assignments;
-          })();
-          this.batches.set(key2, batch);
-          batch.catch(() => {
-            if (this.batches.get(key2) === batch) this.batches.delete(key2);
-          });
-        }
-        const assignments = await batch;
+        const assignments = await this.appointments(start, mandate, policy, this.version);
         if (generation !== this.generation || !this.enabled.checked) return;
         const finds = [];
         for (const a of assignments) if (this.visible.get(a.ordinal) === a.flavor && this.entries.has(a.companionId)) {
@@ -4173,6 +4196,248 @@ function prepareSharedEncounter(input) {
   });
 }
 
+// web/portfolio-model.ts
+var portfolioRules = "companion-portfolio/v1";
+var portfolioStorageKey = "slopbuzz:companion-portfolio:v1";
+var pointRates = Object.freeze({ Common: 10n, Uncommon: 25n, Rare: 100n, Legendary: 400n, Mythic: 1000n });
+var scoreRarities = Object.keys(pointRates);
+var scorePolicies = ["factor-resonance-v1", "ordinal-constellation-v1"];
+var decimal2 = (value) => typeof value === "string" && /^(0|[1-9][0-9]*)$/.test(value);
+var appointmentCount = (r) => scoreRarities.reduce((sum, tier) => sum + BigInt(r.counts[tier]), 0n);
+var portfolioPoints = (r) => scoreRarities.reduce((sum, tier) => sum + BigInt(r.counts[tier]) * pointRates[tier], 0n);
+function compactPoints(value) {
+  const digits = value.toString();
+  if (digits.length <= 6) return digits.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  const group = Math.floor((digits.length - 1) / 3), whole = digits.length - group * 3;
+  return digits.slice(0, whole) + "." + digits.slice(whole, whole + 2) + (group < 5 ? ["", "K", "M", "B", "T"][group] : " \xD7 10^" + group * 3);
+}
+var exactPoints = (value) => value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+function newPortfolio(id, mandate, authority, now) {
+  if (!decimal2(mandate) || !scorePolicies.includes(authority)) throw Error("Invalid portfolio mandate or authority");
+  return { rules: portfolioRules, id, mandate, seedPolicy, catalogVersion: "", startedAt: now, updatedAt: now, status: "active", through: "0", counts: { Common: "0", Uncommon: "0", Rare: "0", Legendary: "0", Mythic: "0" }, seen: [], disabled: "0", unscored: "0", initialAuthority: authority, lastAuthority: authority, authorityChanges: "0", authorities: {} };
+}
+function decodePortfolio(value) {
+  try {
+    const r = value;
+    if (!r || r.rules !== portfolioRules || r.seedPolicy !== seedPolicy || typeof r.id !== "string" || !r.id || !decimal2(r.mandate) || !decimal2(r.through) || BigInt(r.through) > BigInt(r.mandate)) return;
+    if (!["active", "completed", "stopped", "replaced", "interrupted"].includes(r.status) || ![r.startedAt, r.updatedAt].every((d) => typeof d === "string" && Number.isFinite(Date.parse(d)))) return;
+    if (typeof r.catalogVersion !== "string" || !scoreRarities.every((tier) => decimal2(r.counts?.[tier])) || !["disabled", "unscored", "authorityChanges"].every((key2) => decimal2(r[key2]))) return;
+    if (![r.initialAuthority, r.lastAuthority].every((p) => scorePolicies.includes(p))) return;
+    if (!r.authorities || Object.entries(r.authorities).some(([key2, count2]) => !scorePolicies.includes(key2) || !decimal2(count2))) return;
+    if (!Array.isArray(r.seen) || r.seen.length > 3200 || r.seen.some((id) => typeof id !== "string" || !id) || new Set(r.seen).size !== r.seen.length) return;
+    const count = appointmentCount(r), through = BigInt(r.through), eligible = through / 3n + through / 5n - through / 15n;
+    if (count + BigInt(r.disabled) + BigInt(r.unscored) !== eligible || BigInt(r.seen.length) > count || Object.values(r.authorities).reduce((n, c) => n + BigInt(c), 0n) !== count) return;
+    if (count > 0n) {
+      const h = r.highest;
+      if (!r.catalogVersion || !h || !r.seen.includes(h.id) || typeof h.name !== "string" || !h.name || typeof h.emoji !== "string" || !h.emoji || !scoreRarities.includes(h.rarity) || !decimal2(h.ordinal) || BigInt(h.ordinal) < 1n || BigInt(h.ordinal) > through) return;
+      if (scoreRarities.some((tier) => BigInt(r.counts[tier]) > 0n && pointRates[tier] > pointRates[h.rarity])) return;
+    } else if (r.highest || r.seen.length) return;
+    return structuredClone(r);
+  } catch {
+    return;
+  }
+}
+var PortfolioRun = class {
+  receipt;
+  constructor(receipt) {
+    this.receipt = structuredClone(receipt);
+  }
+  snapshot() {
+    return structuredClone(this.receipt);
+  }
+  close(status, now) {
+    this.receipt.status = status;
+    this.receipt.updatedAt = now;
+  }
+  disclose(start, lines2, authority, finds, now, unavailable = false) {
+    const old = this.receipt, first = BigInt(start), end = first + BigInt(lines2.length) - 1n;
+    if (!lines2.length || end <= BigInt(old.through)) return false;
+    if (first !== BigInt(old.through) + 1n || end > BigInt(old.mandate)) throw Error("Portfolio disclosure is not the next authorized range");
+    if (authority && !scorePolicies.includes(authority)) throw Error("Unknown portfolio authority");
+    const expected = /* @__PURE__ */ new Map();
+    for (const [i, line] of lines2.entries()) {
+      const n = first + BigInt(i), flavor = n % 15n === 0n ? "FizzBuzz" : n % 3n === 0n ? "Fizz" : n % 5n === 0n ? "Buzz" : String(n);
+      if (line !== flavor) throw Error("Portfolio disclosure is not certified FizzBuzz");
+      if (flavor !== String(n)) expected.set(String(n), flavor);
+    }
+    const next = structuredClone(old);
+    if (authority) {
+      if (authority !== next.lastAuthority) next.authorityChanges = String(BigInt(next.authorityChanges) + 1n);
+      next.lastAuthority = authority;
+    }
+    if (!authority || unavailable) {
+      const key2 = authority ? "unscored" : "disabled";
+      next[key2] = String(BigInt(next[key2]) + BigInt(expected.size));
+    } else {
+      const seen = new Set(next.seen), ordinals = /* @__PURE__ */ new Set();
+      if (finds.length !== expected.size) throw Error("Incomplete companion scoring evidence");
+      for (const d of finds) {
+        if (!validDiscovery(d) || d.mandate !== old.mandate || d.strategy !== authority || expected.get(d.assignment.ordinal) !== d.assignment.flavor || ordinals.has(d.assignment.ordinal) || next.catalogVersion && next.catalogVersion !== d.catalogVersion) throw Error("Companion scoring evidence belongs to a different appointment");
+        next.catalogVersion = d.catalogVersion;
+        ordinals.add(d.assignment.ordinal);
+        seen.add(d.companion.id);
+        const c = d.companion;
+        next.counts[c.rarity] = String(BigInt(next.counts[c.rarity]) + 1n);
+        if (!next.highest || pointRates[c.rarity] > pointRates[next.highest.rarity]) next.highest = { id: c.id, name: c.name, emoji: c.emoji, rarity: c.rarity, ordinal: d.assignment.ordinal };
+      }
+      if (seen.size > 3200) throw Error("Companion scoring exceeded the catalog");
+      next.seen = [...seen];
+      next.authorities[authority] = String(BigInt(next.authorities[authority] || "0") + BigInt(finds.length));
+    }
+    next.through = String(end);
+    next.updatedAt = now;
+    this.receipt = next;
+    return true;
+  }
+};
+
+// web/portfolio-store.ts
+var PortfolioStore = class {
+  current;
+  saved;
+  active;
+  persistent;
+  listeners = /* @__PURE__ */ new Set();
+  storage;
+  now;
+  id;
+  constructor(storage, now = () => (/* @__PURE__ */ new Date()).toISOString(), id = () => crypto.randomUUID()) {
+    this.storage = storage;
+    this.now = now;
+    this.id = id;
+    this.persistent = !!storage;
+    try {
+      const data = JSON.parse(storage?.getItem(portfolioStorageKey) || "null");
+      if (data?.schema === portfolioStorageKey) {
+        const current = decodePortfolio(data.current), saved = decodePortfolio(data.saved);
+        if (current) {
+          this.current = new PortfolioRun(current);
+          if (current.status === "active") this.current.close("interrupted", this.now());
+        }
+        if (saved) this.saved = new PortfolioRun(saved);
+      }
+    } catch {
+      this.persistent = false;
+    }
+  }
+  snapshot() {
+    return { current: this.current?.snapshot(), saved: this.saved?.snapshot(), persistent: this.persistent };
+  }
+  subscribe(listener) {
+    this.listeners.add(listener);
+    return () => this.listeners.delete(listener);
+  }
+  publish() {
+    try {
+      if (!this.storage) throw Error("Storage unavailable");
+      this.storage.setItem(portfolioStorageKey, JSON.stringify({ schema: portfolioStorageKey, current: this.current?.snapshot(), saved: this.saved?.snapshot() }));
+      this.persistent = true;
+    } catch {
+      this.persistent = false;
+    }
+    for (const listener of this.listeners) listener();
+  }
+  begin(mandate, authority) {
+    this.finish("replaced");
+    this.saved = this.current || this.saved;
+    this.current = this.active = new PortfolioRun(newPortfolio(this.id(), mandate, authority, this.now()));
+    this.publish();
+  }
+  finish(status) {
+    if (this.active) {
+      this.active.close(status, this.now());
+      this.active = void 0;
+      this.publish();
+    }
+  }
+  /** Capture ownership before awaiting Java: a late response can never credit a newer run. */
+  async disclose(start, lines2, authority, load) {
+    const run = this.active;
+    if (!run) return;
+    try {
+      const finds = authority ? await load() : [];
+      run.disclose(start, lines2, authority, finds, this.now());
+    } catch {
+      run.disclose(start, lines2, authority, [], this.now(), true);
+    }
+    if (run === this.current || run === this.saved) this.publish();
+  }
+};
+
+// web/portfolio.ts
+var PortfolioDesk = class extends PortfolioStore {
+  selected = document.querySelector("#portfolio-run");
+  constructor() {
+    let storage;
+    try {
+      storage = localStorage;
+    } catch {
+    }
+    super(storage);
+    this.subscribe(() => this.render());
+    this.selected.addEventListener("change", () => this.render());
+    addEventListener("pagehide", () => this.finish("interrupted"));
+    this.render();
+  }
+  render() {
+    const { current, saved, persistent } = this.snapshot(), points = current ? portfolioPoints(current) : 0n;
+    for (const element4 of document.querySelectorAll("[data-portfolio-points]")) {
+      element4.textContent = compactPoints(points);
+      element4.title = exactPoints(points) + " Portfolio Points";
+      element4.dataset.exact = String(points);
+    }
+    const button = document.querySelector("#portfolio-open");
+    button.setAttribute("aria-label", "Portfolio Points: " + exactPoints(points) + ". Open score breakdown");
+    const selected = this.selected.value;
+    this.selected.replaceChildren();
+    const option = node("option", current?.status === "active" ? "Current run" : "Latest banked run");
+    option.value = "current";
+    this.selected.append(option);
+    if (saved) {
+      const previous = node("option", "Previous banked run");
+      previous.value = "saved";
+      this.selected.append(previous);
+    }
+    this.selected.value = selected === "saved" && saved ? "saved" : "current";
+    this.selected.disabled = !saved;
+    const receipt = this.selected.value === "saved" ? saved : current;
+    const set = (id, value) => {
+      document.getElementById(id).textContent = value;
+    };
+    const status = { active: "Earning points", completed: "Mandate complete \xB7 points banked", stopped: "Proceedings stopped \xB7 points banked", replaced: "Replaced mandate \xB7 points banked", interrupted: "Saved proceedings \xB7 points banked" };
+    set("portfolio-status", receipt ? status[receipt.status] : "Authorize a mandate to start earning.");
+    set("portfolio-total", exactPoints(receipt ? portfolioPoints(receipt) : 0n));
+    set("portfolio-appearances", exactPoints(receipt ? appointmentCount(receipt) : 0n));
+    set("portfolio-distinct", String(receipt?.seen.length || 0));
+    const rows = document.getElementById("portfolio-tiers");
+    rows.replaceChildren(...scoreRarities.map((tier) => {
+      const row = node("tr"), label = node("th", tier);
+      label.scope = "row";
+      const count = BigInt(receipt?.counts[tier] || "0");
+      row.append(label, node("td", exactPoints(pointRates[tier])), node("td", exactPoints(count)), node("td", exactPoints(count * pointRates[tier])));
+      return row;
+    }));
+    const best = receipt?.highest;
+    set("portfolio-highest", best ? `${best.emoji} ${best.name} \xB7 ${best.rarity} \xB7 ${exactPoints(pointRates[best.rarity])} points at ordinal ${best.ordinal}` : "No appointed companion yet.");
+    set("portfolio-storage", persistent ? "Points are saved in this browser. The latest run and previous banked run are retained; starting another run begins at zero." : "Browser storage is unavailable. Points remain available in this page until it closes.");
+    const missing = BigInt(receipt?.unscored || "0"), disabled = BigInt(receipt?.disabled || "0");
+    set("portfolio-coverage", `${exactPoints(disabled)} appointments disclosed with companions disabled.` + (missing ? ` ${exactPoints(missing)} appointments could not be verified; this is a partial score. Numerical output remains valid.` : ""));
+    document.getElementById("portfolio-incomplete").hidden = !current || current.unscored === "0";
+    const conditions = receipt ? `Mandate / seed: ${receipt.mandate}
+Scored disclosure checkpoint: ${receipt.through}
+Rules: ${receipt.rules}
+Catalog: ${receipt.catalogVersion || "Awaiting appointments"}
+Seed policy: ${receipt.seedPolicy}
+Initial authority: ${receipt.initialAuthority}
+Authority changes: ${receipt.authorityChanges}
+Appointments by authority: ${Object.entries(receipt.authorities).map(([policy, count]) => policy + " = " + count).join("; ") || "None"}
+Run: ${receipt.id}
+Started: ${receipt.startedAt}
+Saved: ${receipt.updatedAt}` : "No run receipt yet.";
+    set("portfolio-receipt", conditions);
+  }
+};
+
 // web/telemetry.ts
 function trackUsage(detail) {
   window.dispatchEvent(new CustomEvent("slopbuzz:usage", { detail }));
@@ -6451,6 +6716,8 @@ var companions = new CompanionDesk({ remember: (discovery) => {
     if (event.kind !== "progress") listener();
   });
 } });
+var portfolio = new PortfolioDesk();
+var pendingPortfolio = Promise.resolve();
 var currentLimit = "15";
 var receivedPacket;
 var lastPlayback;
@@ -6469,6 +6736,8 @@ officeIncidents.subscribe(() => {
   readingControls();
 });
 function discloseLines(start, lines2) {
+  const authority = companions.scoringAuthority(), mandate = currentLimit;
+  pendingPortfolio = portfolio.disclose(start, lines2, authority, () => companions.scoringEvidence(start, lines2, mandate, authority));
   companions.disclose(start, lines2);
   const folios = chronicle.disclose(start, lines2);
   office.disclose(currentLimit, folios);
@@ -6494,7 +6763,8 @@ async function observeLine(folio, sequence, publish) {
   while ((officeEstate.moving || officeIncidents.active || paused && !supervision.enabled) && sequence === mandateSequence) await waitForPace();
   if (sequence !== mandateSequence) return false;
   release();
-  return true;
+  await pendingPortfolio;
+  return sequence === mandateSequence;
 }
 function readingControls() {
   workspace?.runActivity(productionActive || reading, reading && paused, activityMode, officeIncidents.kind === "flight" ? "Paperwork airborne \xB7 proceedings held" : officeIncidents.active ? "Approval stamp missing \xB7 proceedings held" : "");
@@ -6531,8 +6801,9 @@ function followLatest() {
 }
 followOutput.addEventListener("change", followLatest);
 readingControls();
-function finishProduction() {
+function finishProduction(status = "completed") {
   productionActive = false;
+  portfolio.finish(status);
   companions.completeRun();
   heists?.complete();
   aviation?.complete();
@@ -6599,7 +6870,7 @@ stopButton.addEventListener("click", () => {
   reading = false;
   streaming = false;
   paused = false;
-  finishProduction();
+  finishProduction("stopped");
   wakeReading?.();
   readingControls();
   supervision.interrupt();
@@ -6654,6 +6925,8 @@ async function revealOutput(text2, sequence, serviceMillis) {
 `));
       followLatest();
       setText("output-count", `${lines2.length} ${lines2.length === 1 ? "line" : "lines"}`);
+      await pendingPortfolio;
+      if (sequence !== mandateSequence) return;
       break;
     }
     const ordinal = String(index + 1);
@@ -6745,6 +7018,8 @@ async function streamMandate(limit, sequence, started) {
       if (immediate()) {
         append(lines2.slice(i));
         i = lines2.length;
+        await pendingPortfolio;
+        if (sequence !== mandateSequence) return;
       } else {
         const ordinal = String(addOrdinals(disclosed, 1)), line = lines2[i];
         if (!await observeLine(chronicle.folio(ordinal, line), sequence, () => append([line]))) return;
@@ -6780,6 +7055,8 @@ async function runMandate(event) {
   officeEstate.finish();
   if (productionActive) companions.withdrawRun();
   workspace.commitDraft(String(limit));
+  portfolio.begin(String(limit), byId("companion-strategy").value || "factor-resonance-v1");
+  pendingPortfolio = Promise.resolve();
   companions.beginRun(String(limit));
   productionActive = true;
   officeIncidents.begin(String(limit));
@@ -6850,7 +7127,7 @@ async function runMandate(event) {
     if (sequence === mandateSequence) {
       reading = false;
       streaming = false;
-      finishProduction();
+      finishProduction("interrupted");
       readingControls();
       supervision.interrupt();
       personnel.setBusy(false);
@@ -6868,7 +7145,7 @@ async function runMandate(event) {
 function beginPersonnelActivity(mode) {
   heists?.cancel();
   aviation?.cancel();
-  finishProduction();
+  finishProduction("stopped");
   workspace?.beginDisclosure();
   const sequence = ++mandateSequence;
   wakeReading?.();

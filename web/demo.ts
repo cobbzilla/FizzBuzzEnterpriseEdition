@@ -7,6 +7,7 @@ import {OfficeSupervisionDesk} from './office-supervision';
 import {ReorganizationPanel} from './office-reorganization';
 import {prepareSharedEncounter} from './shared-encounter';
 import {CompanionDesk} from './companions';
+import {PortfolioDesk} from './portfolio';
 import {parseMandate,autocorrectMandate,addOrdinals,windowCount,chooseMagnitudeWarning,type MandateInteger} from './mandate-input';
 import {trackUsage} from './telemetry';
 import { request, config,proclamation } from './runtime';
@@ -49,6 +50,8 @@ const supervision=new OfficeSupervisionDesk({reading:()=>reading,paused:()=>paus
 officeEstate.subscribe(event=>{if(event.kind!=='progress'){wakeReading?.();}});
 const reorganizationPanels=[new ReorganizationPanel(byId('supervision-reorganization')),new ReorganizationPanel(byId('office-reorganization'))];
 const companions=new CompanionDesk({remember:discovery=>{office.remember(discovery);supervision.remember(discovery);workspace?.remember(discovery);aviation?.remember(discovery);heists?.remember(discovery);},clearCompanions:()=>{office.clearCompanions();supervision.clearCompanions();workspace?.clearCompanions();heists?.clear();aviation?.clear();},authorityHeld:()=>officeIncidents.active||officeEstate.moving,subscribeAuthority:listener=>{officeIncidents.subscribe(listener);officeEstate.subscribe(event=>{if(event.kind!=='progress')listener();});}});
+const portfolio=new PortfolioDesk();
+let pendingPortfolio:Promise<void>=Promise.resolve();
 let currentLimit='15';
 let receivedPacket:ExecutionPacket|undefined;
 let lastPlayback:{kind:'mandate';folios:Folio[];limit:string;personnel?:PersonnelDossier;packet?:ExecutionPacket}|undefined;
@@ -59,14 +62,14 @@ heists=new StampHeistDesk(()=>reading&&productionActive&&supervision.enabled&&!r
 aviation=new PaperAviationDesk(()=>reading&&productionActive&&supervision.enabled&&!revealAll);
 workspace=new DemoWorkspace({placeChronicle:target=>chronicle.place(target)});
 officeIncidents.subscribe(()=>{wakeReading?.();readingControls();});
-function discloseLines(start:string,lines:readonly string[]){companions.disclose(start,lines);const folios=chronicle.disclose(start,lines);office.disclose(currentLimit,folios);workspace?.disclosed(folios.at(-1));lastPlayback={kind:'mandate',folios:chronicle.records,limit:currentLimit,personnel:personnel.record,packet:receivedPacket};personnel.setPlaybackAvailable(true);}
+function discloseLines(start:string,lines:readonly string[]){const authority=companions.scoringAuthority(),mandate=currentLimit;pendingPortfolio=portfolio.disclose(start,lines,authority,()=>companions.scoringEvidence(start,lines,mandate,authority!));companions.disclose(start,lines);const folios=chronicle.disclose(start,lines);office.disclose(currentLimit,folios);workspace?.disclosed(folios.at(-1));lastPlayback={kind:'mandate',folios:chronicle.records,limit:currentLimit,personnel:personnel.record,packet:receivedPacket};personnel.setPlaybackAvailable(true);}
 const immediate=()=>revealAll||(!supervision.enabled&&Number(speedControl.value)===0);
 async function observeLine(folio:Folio,sequence:number,publish:()=>void){
  let published=false;const release=()=>{if(published||sequence!==mandateSequence)return;published=true;publish();};
  while(supervision.enabled&&!revealAll){const generation=supervision.generation;await supervision.observe(folio,()=>sequence===mandateSequence,release);if(sequence!==mandateSequence)return false;if(generation===supervision.generation||!supervision.enabled)break;}
  if(sequence!==mandateSequence)return false;
  while((officeEstate.moving||officeIncidents.active||paused&&!supervision.enabled)&&sequence===mandateSequence)await waitForPace();
- if(sequence!==mandateSequence)return false;release();return true;
+ if(sequence!==mandateSequence)return false;release();await pendingPortfolio;return sequence===mandateSequence;
 }
 function readingControls() {
   workspace?.runActivity(productionActive||reading,reading&&paused,activityMode,officeIncidents.kind==='flight'?'Paperwork airborne · proceedings held':officeIncidents.active?'Approval stamp missing · proceedings held':'');
@@ -99,7 +102,7 @@ speedControl.addEventListener('change', () => wakeReading?.());
 function followLatest() { if (followOutput.checked) byId('output').scrollTop = byId('output').scrollHeight; }
 followOutput.addEventListener('change', followLatest);
 readingControls();
-function finishProduction(){productionActive=false;companions.completeRun();heists?.complete();aviation?.complete();}
+function finishProduction(status:'completed'|'stopped'|'interrupted'='completed'){productionActive=false;portfolio.finish(status);companions.completeRun();heists?.complete();aviation?.complete();}
 
 
 const autocorrect = byId<HTMLInputElement>('numeric-autocorrect');
@@ -134,7 +137,7 @@ function validateLimit() {
 stopButton.addEventListener('click',()=>{
  if(!reading)return;
  heists?.cancel();aviation?.cancel();
- (officeEstate.finish(),++mandateSequence);reading=false;streaming=false;paused=false;finishProduction();wakeReading?.();readingControls();
+ (officeEstate.finish(),++mandateSequence);reading=false;streaming=false;paused=false;finishProduction('stopped');wakeReading?.();readingControls();
  supervision.interrupt();
  runButton.removeAttribute('aria-disabled');byId('output').removeAttribute('aria-busy');
  personnel.stopReading();
@@ -189,6 +192,8 @@ async function revealOutput(text: string, sequence: number, serviceMillis: numbe
       output.append(document.createTextNode(`${lines.slice(index).join('\n')}\n`));
       followLatest();
       setText('output-count', `${lines.length} ${lines.length === 1 ? 'line' : 'lines'}`);
+      await pendingPortfolio;
+      if(sequence!==mandateSequence)return;
       break;
     }
     const ordinal=String(index+1);
@@ -247,7 +252,7 @@ async function streamMandate(limit: MandateInteger, sequence: number, started: n
   for(let i=0;i<lines.length;) {
    while((officeIncidents.active||officeEstate.moving||paused&&!supervision.enabled)&&sequence===mandateSequence)await waitForPace();
    if(sequence!==mandateSequence)return;
-   if(immediate()) {append(lines.slice(i));i=lines.length;}
+   if(immediate()) {append(lines.slice(i));i=lines.length;await pendingPortfolio;if(sequence!==mandateSequence)return;}
    else {
     const ordinal=String(addOrdinals(disclosed,1)),line=lines[i];
     if(!await observeLine(chronicle.folio(ordinal,line),sequence,()=>append([line])))return;i++;
@@ -279,6 +284,7 @@ async function runMandate(event: Event) {
   heists?.cancel();aviation?.cancel();officeEstate.finish();
   if(productionActive)companions.withdrawRun();
   workspace!.commitDraft(String(limit));
+  portfolio.begin(String(limit),byId<HTMLSelectElement>('companion-strategy').value||'factor-resonance-v1');pendingPortfolio=Promise.resolve();
   companions.beginRun(String(limit));productionActive=true;
   officeIncidents.begin(String(limit));heists?.begin(String(limit));aviation?.begin(String(limit));
   wakeReading?.(); reading = false; streaming=false;activityMode='mandate';manualStep=false;inspection=undefined;lastPlayback=undefined;receivedPacket=undefined;currentLimit=String(limit);supervision.begin(currentLimit);readingControls();personnel.setPlaybackAvailable(false);personnel.loading();chronicle.begin(currentLimit);office.begin(currentLimit);
@@ -316,7 +322,7 @@ async function runMandate(event: Event) {
   } catch (error) {
     trackUsage({event:'slopbuzz_demo_run',outcome:'failure',runtime_mode:config.mode,duration_ms:performance.now()-started});
     if (sequence === mandateSequence) {
-      reading=false;streaming=false;finishProduction();readingControls();
+      reading=false;streaming=false;finishProduction('interrupted');readingControls();
       supervision.interrupt();
       personnel.setBusy(false);
       if(!personnel.record)personnel.clear('The request failed before any personnel record could be inspected.','Evidence unavailable');
@@ -335,7 +341,7 @@ async function runMandate(event: Event) {
 
 function beginPersonnelActivity(mode:'replay'|'inspection'){
  heists?.cancel();aviation?.cancel();
- finishProduction();
+ finishProduction('stopped');
  workspace?.beginDisclosure();
  const sequence=++mandateSequence;wakeReading?.();supervision.interrupt();activityMode=mode;manualStep=mode==='inspection';reading=mode!=='inspection';streaming=false;paused=false;revealAll=false;
  runButton.removeAttribute('aria-disabled');byId('output').removeAttribute('aria-busy');readingControls();
