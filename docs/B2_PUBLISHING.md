@@ -23,6 +23,17 @@ and checks the public HTTPS site in Chromium, Firefox and WebKit, including offl
 execution. A failed check exits nonzero. Existing local preview containers remain
 running; this command publishes the public site only.
 
+For an explicitly authorized continuation under warning-level macOS pressure,
+`SLOPBUZZ_RESOURCE_PROFILE=bounded-release` requires an owned Playwright container
+named by `SLOPBUZZ_BROWSER_CONTAINER` and its verified loopback
+`SLOPBUZZ_BROWSER_WS_ENDPOINT`. The guard verifies a 1.5 GiB memory limit, no extra
+swap and at most two CPUs, refuses native test browsers, caps all owned host
+processes at 2 GiB RSS, and supplies bounded JVM heaps. Critical pressure still
+stops and cleans the run. Container memory events remain monitored by the isolated
+runner and release supervisor. Browser cases stay serial, with fresh server
+residency between cases and identical-artifact checkpoints for continuation.
+The default profile continues to stop on either warning or critical pressure.
+
 The publisher reads `.b2.env`, falling back to `.env.b2` if the first file is absent.
 The current installation uses `.env.b2`. Process environment values override the
 file. Both names and their editor backups are excluded from Git and Docker contexts.

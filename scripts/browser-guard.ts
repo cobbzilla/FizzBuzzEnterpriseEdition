@@ -28,14 +28,22 @@ export type MemoryPressure='normal'|'warning'|'critical';
 export function macMemoryPressure(text:string):MemoryPressure{
  switch(text.trim()){case '1':return 'normal';case '2':return 'warning';case '4':return 'critical';default:throw new Error('Cannot read macOS memory pressure');}
 }
-export function resourceProblem(rows:ProcessRow[],compressed:number,memory=totalmem(),pressure?:MemoryPressure){
+export function resourceProblem(rows:ProcessRow[],compressed:number,memory=totalmem(),pressure?:MemoryPressure,bounded=false){
  const browsers=rows.filter(isTestBrowser),rss=browsers.reduce((n,p)=>n+p.rss,0);
  if(browsers.length>30)return `Too many test browser processes (${browsers.length})`;
  if(rss>Math.min(3*1024**3,memory/8))return `Test browsers exceed their memory budget (${Math.ceil(rss/1024**2)} MiB RSS)`;
- if(pressure!==undefined&&pressure!=='normal')return `System memory pressure is ${pressure}`;
+ if(pressure==='critical'||pressure==='warning'&&!bounded)return `System memory pressure is ${pressure}`;
  // Compressed inactive pages can remain after pressure has cleared. Prefer the
  // live kernel signal; retain the conservative fallback for callers without it.
  if(pressure===undefined&&compressed>memory/5)return 'System compressed memory exceeds 20% of physical RAM';
+}
+export function boundedContainer(identity:any,endpoint:string){
+ const url=new URL(endpoint),config=identity?.HostConfig;
+ if(identity?.Config?.Labels?.['slopbuzz.task']!=='paper-aviation'||!identity.State?.Running)throw Error('Bounded release requires the running, explicitly owned test container');
+ if(!(config.Memory>0&&config.Memory<=1536*1024**2&&config.MemorySwap===config.Memory&&config.NanoCpus>0&&config.NanoCpus<=2e9))throw Error('Bounded release requires at most 1.5 GiB, no additional swap and two CPUs');
+ const bindings=identity.NetworkSettings?.Ports?.['3000/tcp'];
+ if(url.protocol!=='ws:'||url.hostname!=='127.0.0.1'||!bindings?.some((b:any)=>b.HostIp==='127.0.0.1'&&b.HostPort===url.port))throw Error('Bounded release requires its verified loopback browser endpoint');
+ return identity.Id as string;
 }
 function processes(){return parseProcesses(execFileSync('ps',['-axo','pid=,ppid=,rss=,lstart=,command='],{encoding:'utf8',timeout:5000,maxBuffer:8*1024**2}));}
 function systemMemory():{compressed:number;pressure?:MemoryPressure}{
@@ -58,6 +66,13 @@ export async function guarded(command:string,args:string[]){
  // A nested release command shares its live ancestor's monitor and temporary profiles.
  if(initial.some(p=>p.pid===inherited)&&descendants(initial,inherited).some(p=>p.pid===process.pid)){
   const child=spawn(command,args,{stdio:'inherit'});return await new Promise<number>((res,rej)=>{child.once('error',rej);child.once('exit',code=>res(code??1));});
+ }
+ const bounded=process.env.SLOPBUZZ_RESOURCE_PROFILE==='bounded-release';
+ if(bounded){
+  const container=process.env.SLOPBUZZ_BROWSER_CONTAINER,endpoint=process.env.SLOPBUZZ_BROWSER_WS_ENDPOINT;
+  if(!container||!endpoint)throw Error('Bounded release requires a named browser container and endpoint');
+  boundedContainer(JSON.parse(execFileSync('docker',['inspect',container],{encoding:'utf8',timeout:10000}))[0],endpoint);
+  console.log('Browser guard: bounded release profile; warning pressure admitted, critical pressure stops; 2 GiB host process budget and capped Java heaps.');
  }
  const directory=join(tmpdir(),'slopbuzz-browser-guards');await mkdir(directory,{recursive:true});
  const key=createHash('sha256').update(resolve('.')).digest('hex').slice(0,16),lock=join(directory,key+'.json');
@@ -82,15 +97,20 @@ export async function guarded(command:string,args:string[]){
  try{
   const stale=initial.filter(isOrphanBrowser);if(stale.length){console.log(`Browser guard: cleaning ${stale.length} orphaned automation browser(s)`);await cleanup(stale.flatMap(p=>descendants(initial,p.pid)));}
   const existing=processes().filter(isTestBrowser);if(existing.length)throw new Error('An existing Playwright browser is still running; resolve its ownership before starting another suite');
-  const memory=systemMemory(),problem=resourceProblem([],memory.compressed,totalmem(),memory.pressure);if(problem)throw new Error(problem);
+  const memory=systemMemory(),problem=resourceProblem([],memory.compressed,totalmem(),memory.pressure,bounded);if(problem)throw new Error(problem);
   workspace=await mkdtemp(join(directory,'run-'));
-  child=spawn(command,args,{stdio:'inherit',detached:true,env:{...process.env,TMPDIR:workspace,TMP:workspace,TEMP:workspace,SLOPBUZZ_BROWSER_GUARD_PID:String(process.pid)}});
+  child=spawn(command,args,{stdio:'inherit',detached:true,env:{...process.env,...(bounded?{JAVA_TOOL_OPTIONS:'-Xmx512m -XX:ActiveProcessorCount=2',MAVEN_OPTS:'-Xmx768m -XX:ActiveProcessorCount=2'}:{}),TMPDIR:workspace,TMP:workspace,TEMP:workspace,SLOPBUZZ_BROWSER_GUARD_PID:String(process.pid)}});
   const exited=new Promise<number>((res,rej)=>{child!.once('error',rej);child!.once('exit',code=>res(code??1));});
   root=processes().find(p=>p.pid===child!.pid);capture();
   timer=setInterval(()=>{
    try{
     const rows=capture();
-    const memory=systemMemory(),problem=resourceProblem(rows,memory.compressed,totalmem(),memory.pressure);if(problem)abort(problem);
+    const memory=systemMemory(),problem=resourceProblem(rows,memory.compressed,totalmem(),memory.pressure,bounded);if(problem)abort(problem);
+    if(bounded){
+     if(rows.some(isTestBrowser))abort('Bounded release cannot launch a native test browser');
+     const owned=rows.filter(row=>{const prior=tracked.get(row.pid);return prior&&sameProcess(row,prior);});
+     if(owned.reduce((bytes,row)=>bytes+row.rss,0)>2*1024**3)abort('Bounded release exceeded its 2 GiB host process budget');
+    }
     if(++ticks%15===0){const browsers=rows.filter(isTestBrowser);console.log(`Browser guard: ${browsers.length} browser processes; ${Math.ceil(browsers.reduce((n,p)=>n+p.rss,0)/1024**2)} MiB browser RSS; ${Math.ceil(memory.compressed/1024**2)} MiB compressed${memory.pressure?`; pressure ${memory.pressure}`:''}`);}
     const next=lock+'.next';writeFileSync(next,JSON.stringify({...self,owned:[...tracked.values()]}));renameSync(next,lock);
    }catch(error){abort('Cannot monitor browser resources: '+(error as Error).message);if(child?.pid)try{process.kill(-child.pid,'SIGKILL');}catch{};}

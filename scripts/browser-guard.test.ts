@@ -4,7 +4,7 @@ import {spawn} from 'node:child_process';
 import {mkdtemp,readFile,rm,writeFile} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join,resolve} from 'node:path';
-import {parseProcesses,isTestBrowser,isOrphanBrowser,descendants,sameProcess,compressedBytes,macMemoryPressure,resourceProblem,type ProcessRow} from './browser-guard.ts';
+import {parseProcesses,isTestBrowser,isOrphanBrowser,descendants,sameProcess,compressedBytes,macMemoryPressure,resourceProblem,boundedContainer,type ProcessRow} from './browser-guard.ts';
 const browser=(pid=20,parent=10):ProcessRow=>({pid,parent,rss:300*1024**2,started:'Thu Nov 12 08:00:00 2026',command:'/Users/example/Library/Caches/ms-playwright/chromium-100/chrome-mac/Chrome for Testing.app/Contents/MacOS/Chrome --remote-debugging-pipe --user-data-dir=/tmp/playwright_chromium_profile-abc'});
 test('process parser preserves spaced executable paths and exact start identity',()=>{const row=browser();assert.deepEqual(parseProcesses(` 20 10 307200 Thu Nov 12 08:00:00 2026 ${row.command}`),[row]);assert.deepEqual(parseProcesses('not a process'),[]);});
 test('ordinary user browsers and shell commands mentioning Playwright are excluded',()=>{for(const command of ['/Applications/Google Chrome.app/Contents/MacOS/Google Chrome --remote-debugging-pipe','/Applications/Firefox.app/Contents/MacOS/firefox','/bin/bash -c /Users/example/Library/Caches/ms-playwright/chromium-100/chrome --remote-debugging-pipe'])assert.equal(isTestBrowser({...browser(),command}),false);});
@@ -22,6 +22,18 @@ test('retained compressed pages do not veto normal kernel pressure or relax brow
 });
 test('warning and critical kernel pressure stop admission even with little compressed memory',()=>{
  for(const pressure of ['warning','critical'] as const)assert.match(resourceProblem([],0,32*1024**3,pressure)!,new RegExp('pressure is '+pressure));
+});
+test('bounded release admits warning pressure without relaxing critical, browser count or RSS limits',()=>{
+ assert.equal(resourceProblem([],12*1024**3,32*1024**3,'warning',true),undefined);
+ assert.match(resourceProblem([],0,32*1024**3,'critical',true)!,/critical/);
+ assert.match(resourceProblem([{...browser(),rss:4*1024**3}],0,32*1024**3,'warning',true)!,/memory budget/);
+ assert.match(resourceProblem(Array.from({length:31},(_,i)=>({...browser(i),rss:1})),0,32*1024**3,'warning',true)!,/Too many/);
+});
+test('bounded release refuses missing ownership, unbounded resources, swap and unrelated endpoints',()=>{
+ const good={Id:'owned',State:{Running:true},Config:{Labels:{'slopbuzz.task':'paper-aviation'}},HostConfig:{Memory:1536*1024**2,MemorySwap:1536*1024**2,NanoCpus:2e9},NetworkSettings:{Ports:{'3000/tcp':[{HostIp:'127.0.0.1',HostPort:'32820'}]}}};
+ assert.equal(boundedContainer(good,'ws://127.0.0.1:32820/'),'owned');
+ for(const patch of [{State:{Running:false}},{Config:{Labels:{}}},{HostConfig:{...good.HostConfig,Memory:0}},{HostConfig:{...good.HostConfig,Memory:2*1024**3}},{HostConfig:{...good.HostConfig,MemorySwap:-1}},{HostConfig:{...good.HostConfig,NanoCpus:0}},{HostConfig:{...good.HostConfig,NanoCpus:4e9}}])assert.throws(()=>boundedContainer({...good,...patch},'ws://127.0.0.1:32820/'));
+ for(const endpoint of ['ws://example.com:32820/','ws://127.0.0.1:9999/','http://127.0.0.1:32820/'])assert.throws(()=>boundedContainer(good,endpoint));
 });
 test('macOS dispatch pressure flags are recognized and unknown or missing signals fail closed',()=>{
  assert.equal(macMemoryPressure('1\n'),'normal');assert.equal(macMemoryPressure('2'),'warning');assert.equal(macMemoryPressure('4'),'critical');
