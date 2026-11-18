@@ -14,7 +14,8 @@ export class PortfolioDesk extends PortfolioStore {
   const {current,saved,persistent}=this.snapshot(),points=current?portfolioPoints(current):0n;
   for(const element of document.querySelectorAll<HTMLElement>('[data-portfolio-points]')){element.textContent=compactPoints(points);element.title=exactPoints(points)+' Portfolio Points';element.dataset.exact=String(points);}
   const button=document.querySelector<HTMLButtonElement>('#portfolio-open')!;
-  button.setAttribute('aria-label','Portfolio Points: '+exactPoints(points)+'. Open score breakdown');
+  // The visible label is the accessible name, including compact scores and partial status.
+  button.title='Open score breakdown. Exact total: '+exactPoints(points)+' Portfolio Points';
   const selected=this.selected.value;this.selected.replaceChildren();
   const option=node('option',current?.status==='active'?'Current run':'Latest banked run');option.value='current';this.selected.append(option);
   if(saved){const previous=node('option','Previous banked run');previous.value='saved';this.selected.append(previous);}

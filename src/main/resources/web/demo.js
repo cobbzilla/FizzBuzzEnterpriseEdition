@@ -4387,7 +4387,7 @@ var PortfolioDesk = class extends PortfolioStore {
       element4.dataset.exact = String(points);
     }
     const button = document.querySelector("#portfolio-open");
-    button.setAttribute("aria-label", "Portfolio Points: " + exactPoints(points) + ". Open score breakdown");
+    button.title = "Open score breakdown. Exact total: " + exactPoints(points) + " Portfolio Points";
     const selected = this.selected.value;
     this.selected.replaceChildren();
     const option = node("option", current?.status === "active" ? "Current run" : "Latest banked run");
