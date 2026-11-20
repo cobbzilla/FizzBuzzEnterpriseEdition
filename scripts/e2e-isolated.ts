@@ -6,7 +6,7 @@ import {sourceIdentity} from './source-identity.ts';
 import {renewOwnedServer} from './browser-launch.ts';
 
 interface Result {status:string;errors:unknown[]}
-interface Spec {id:string;title:string;tests:{expectedStatus:string;status:string;annotations:{type:string}[];results:Result[]}[]}
+interface Spec {id:string;title:string;file?:string;tests:{expectedStatus:string;status:string;annotations:{type:string}[];results:Result[]}[]}
 interface Suite {specs?:Spec[];suites?:Suite[]}
 interface Report extends Suite {config:unknown;errors:unknown[];stats:{startTime:string;duration:number;expected:number;skipped:number;unexpected:number;flaky:number}}
 const specs=(s:Suite):Spec[]=>[...(s.specs||[]),...(s.suites||[]).flatMap(specs)];
@@ -30,7 +30,13 @@ export async function isolatedE2E(selection:string[]=[]){
  const assetDigest=await assets(),folder='validation/isolated-'+release.sourceDigest.slice(0,16)+'-'+hash(JSON.stringify(selection)).slice(0,8);await mkdir(folder,{recursive:true});
  const collection=folder+'/collection.json';
  execFileSync('pnpm',['exec','playwright','test',...selection,'--list','--reporter=json'],{stdio:'inherit',env:{...process.env,PLAYWRIGHT_JSON_OUTPUT_FILE:collection}});
- const inventory=await json<Report>(collection),ids=specs(inventory).map(s=>s.id);assert.equal(new Set(ids).size,ids.length);assert(ids.length>0);
+ const inventory=await json<Report>(collection);
+ // Exercise the account and its responsive surfaces before long natural-flight
+ // scenarios. Every collected case still runs, with the complete order sealed
+ // into the checkpoint alongside source and artifact hashes.
+ const priority=['portfolio.spec.ts','demo-layout.spec.ts','chronicle.spec.ts','heist.spec.ts'];
+ const rank=(spec:Spec)=>{const index=priority.indexOf(spec.file?.split('/').at(-1)||'');return index<0?priority.length:index;};
+ const ordered=specs(inventory).sort((a,b)=>rank(a)-rank(b)),ids=ordered.map(s=>s.id);assert.equal(new Set(ids).size,ids.length);assert(ids.length>0);
  const checkpointPath=folder+'/checkpoint.json';
  let checkpoint:{sourceDigest:string;assetDigest:string;ids:string[];completed:{id:string;hash:string}[]};
  try{checkpoint=await json(checkpointPath);}catch(error){if((error as NodeJS.ErrnoException).code!=='ENOENT')throw error;checkpoint={sourceDigest:release.sourceDigest,assetDigest,ids,completed:[]};}
@@ -63,7 +69,7 @@ export async function isolatedE2E(selection:string[]=[]){
    assert(/^[a-zA-Z0-9-]+$/.test(id));const path=folder+'/'+id+'.json',saved=checkpoint.completed[i];
    if(saved){assert.equal(saved.id,id);assert.equal(hash(await readFile(path)),saved.hash);}else{
     await prepare();const selected=folder+'/selected.json';await writeFile(selected,JSON.stringify({status:'failed',failedTests:[id]}));
-    console.log(`Isolated browser case ${i+1}/${ids.length}: ${specs(inventory)[i].title}`);await runCase(path,selected);await clean();
+    console.log(`Isolated browser case ${i+1}/${ids.length}: ${ordered[i].title}`);await runCase(path,selected);await clean();
    }
    const report=await json<Report>(path),cases=specs(report);assert.equal(cases.length,1);assert.equal(cases[0].id,id);assert.deepEqual(report.errors,[]);assert.equal(report.stats.unexpected,0);assert.equal(report.stats.flaky,0);
    const test=cases[0].tests[0],result=test.results.at(-1);assert(result);

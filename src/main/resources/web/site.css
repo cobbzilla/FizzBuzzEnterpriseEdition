@@ -928,12 +928,11 @@ html:has(.demo-page[data-desk=authorize]) { scroll-padding-bottom: calc(var(--di
 @media(max-width:700px){
  .demo-page:not([data-expanded-text=true]) .observe-heading{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 8px}
  .demo-page:not([data-expanded-text=true]) .observe-heading>div:first-child{grid-column:1/-1;display:flex;gap:8px;align-items:baseline}
- .demo-page:not([data-expanded-text=true]) .observe-heading h1{font-size:.78rem;white-space:nowrap}
+ .demo-page:not([data-expanded-text=true]) .observe-heading h1{font-size:.78rem;min-width:0}
  .demo-page:not([data-expanded-text=true]) .observe-heading #score-cluster{max-width:none;min-width:0}
  .demo-page:not([data-expanded-text=true]) .observe-heading>label{width:auto;font-size:0}
  .demo-page:not([data-expanded-text=true]) .observe-heading #watch-view{font-size:.75rem;max-width:125px}
  .demo-page:not([data-expanded-text=true]) .observe-heading #score-cluster .portfolio-counter{padding:3px 5px;flex:1}
- .demo-page:not([data-expanded-text=true]) .observe-heading .portfolio-counter span{white-space:nowrap}
 }
 @media(max-width:700px) and (max-height:600px){
  .demo-page:not([data-expanded-text=true]) .watch-workspace[data-office=true]:is([data-watch-view=overview],[data-watch-view=office]) .output-dock{grid-template-rows:64px minmax(0,1fr) 48px}
