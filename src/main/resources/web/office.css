@@ -251,13 +251,13 @@
 .flight-phases{display:flex;flex-wrap:wrap;gap:4px;max-height:none!important}.flight-phases span{padding:3px 5px;border:1px solid #a8b0b4;border-radius:3px}.flight-phases [aria-current=step]{color:white;background:#244b61;border-color:#244b61;font-weight:700}
 .flight-panel[data-active=true] .flight-controls{margin-top:10px}.flight-panel[data-active=true] .flight-route{font-size:12px;max-height:none}
 .flight-arrival-notice{position:fixed;z-index:30;bottom:calc(var(--discovery-height,48px) + 68px);left:50%;transform:translateX(-50%);width:min(36rem,calc(100% - 24px));padding:12px 16px;border:2px solid #244b61;border-radius:6px;background:#fff8e8;color:#243e40;font-size:.85rem;box-shadow:0 4px 16px #243e4026;pointer-events:none}
-body[data-flight-spotlight=true] .watch-workspace .output-dock{display:block!important;height:100%}
-body[data-flight-spotlight=true] .watch-workspace :is(#watch-output,#companion-spotlight,#watch-commentary,#watch-chronicle-slot,.companion-roll,.supervision-caption){display:none!important}
-body[data-flight-spotlight=true] .watch-workspace .supervision-pane{display:flex!important;height:100%;padding:0}
-body[data-flight-spotlight=true] .watch-workspace .supervision-stage{flex:1;height:100%;min-height:0}
-body[data-flight-spotlight=true] .office-fullscreen :is(#office-fullscreen-output,#office-fullscreen-log,#office-fullscreen-companion,#office-fullscreen-current-slot,#office-fullscreen-notice){visibility:hidden}
-body[data-flight-spotlight=true] #office-fullscreen-panel-control{display:none}
-body[data-flight-spotlight=true] .office-fullscreen :is(.office-stage,.supervision-stage):has(>.flight-panel[data-active=true]){padding:calc(var(--immersive-header-height,52px) + 12px) 8px calc(var(--immersive-controls-height,50px) + 20px);box-sizing:border-box}
+body:is([data-flight-spotlight=true],[data-incident-spotlight=heist]) .watch-workspace .output-dock{display:block!important;height:100%}
+body:is([data-flight-spotlight=true],[data-incident-spotlight=heist]) .watch-workspace :is(#watch-output,#companion-spotlight,#watch-commentary,#watch-chronicle-slot,.companion-roll,.supervision-caption){display:none!important}
+body:is([data-flight-spotlight=true],[data-incident-spotlight=heist]) .watch-workspace .supervision-pane{display:flex!important;height:100%;padding:0}
+body:is([data-flight-spotlight=true],[data-incident-spotlight=heist]) .watch-workspace .supervision-stage{flex:1;height:100%;min-height:0}
+body:is([data-flight-spotlight=true],[data-incident-spotlight=heist]) .office-fullscreen :is(#office-fullscreen-output,#office-fullscreen-log,#office-fullscreen-companion,#office-fullscreen-current-slot,#office-fullscreen-notice){visibility:hidden}
+body:is([data-flight-spotlight=true],[data-incident-spotlight=heist]) #office-fullscreen-panel-control{display:none}
+body:is([data-flight-spotlight=true],[data-incident-spotlight=heist]) .office-fullscreen :is(.office-stage,.supervision-stage):has(>.flight-panel[data-active=true]){padding:calc(var(--immersive-header-height,52px) + 12px) 8px calc(var(--immersive-controls-height,50px) + 20px);box-sizing:border-box}
 @keyframes flight-entrance{from{opacity:.4;transform:translateY(4px)}to{opacity:1;transform:none}}
 @media(max-width:700px){
  :is(.office-stage,.supervision-stage):has(>.flight-panel[data-active=true]){grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(110px,1fr) minmax(0,.85fr);gap:0}
@@ -267,3 +267,5 @@ body[data-flight-spotlight=true] .office-fullscreen :is(.office-stage,.supervisi
  .flight-panel[data-active=true] .flight-controls :is(button,select){font-size:12px}
 }
 @media(prefers-reduced-motion:reduce){.flight-panel[data-active=true]{animation:none!important}}
+
+.heist-panel .heist-finance{max-height:none;overflow:visible;font-weight:700}.heist-panel .heist-actions{display:flex;margin:6px 0}.heist-panel .heist-suspects{display:flex;flex-wrap:wrap}

@@ -120,6 +120,7 @@ function companionDialog() {
       }
     });
     body.append(label, link, copy, status2);
+    document.dispatchEvent(new CustomEvent("score-inspection", { detail: { kind: "biography", identity: c.id } }));
     if (!dialog2.open) dialog2.showModal();
     dialog2.querySelector(".companion-dialog-body").scrollTop = 0;
   } };

@@ -4,6 +4,7 @@ import {demoAction,department} from './demo-controls';
 import {naturalFlight} from '../scripts/flight-navigation';
 import {flightInterval} from '../web/office-incident-model';
 import type {OfficeDiagnostics} from '../web/office-world';
+import {scoringStorageKey,type ScoringRun} from '../web/scoring-service';
 const errors=new WeakMap<Page,string[]>();
 test.beforeEach(async({page},info)=>{page.setDefaultTimeout(15000);errors.set(page,[]);page.on('pageerror',e=>errors.get(page)!.push(e.message));await page.route('**/runtime-config.json',async route=>{const r=await route.fetch();await route.fulfill({json:{...await r.json(),engine:info.project.metadata.engine}});});});
 test.afterEach(async({page})=>expect(errors.get(page)).toEqual([]));
@@ -37,6 +38,7 @@ test('automatic flight takes the best view, holds exact proceedings, and restore
  await page.click('#supervision-pause');await page.selectOption('#supervision-flight-destination','executive');await page.locator('#supervision-flight [data-fan="0"]').click();await expect(page.locator('#supervision-flight .flight-route')).toContainText('Executive');await page.waitForTimeout(250);
  expect(await page.locator('#output').textContent()).toBe(output);expect(await page.locator('#supervision-pane').getAttribute('data-observed-steps')).toBe(steps);
  await land(page);await expect(page.locator('#watch-view')).toHaveValue('output');await expect(page.locator('#watch-view')).toBeEnabled();await expect(page.locator('#supervision-pause')).toHaveAttribute('aria-pressed','true');await expect(page.locator('#flight-arrival-notice')).toContainText('arrived');expect(await page.locator('#output').textContent()).toBe(output);
+ const score=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)!).current as ScoringRun,scoringStorageKey);expect(score.counters.flights).toBe('1');expect(Object.keys(score.buckets).some(key=>key.startsWith('flightManifest|'))).toBe(true);expect(Object.keys(score.buckets).some(key=>key.startsWith('flightDelivery|'))).toBe(true);expect(score.incident).toBeUndefined();
  const after=await audit(page);expect(after.headDigest).toBe(before.headDigest);expect(after.journalEntries).toBe(before.journalEntries);
  await demoAction(page,'click','#reveal-all');await expect(page.locator('#run-status')).toContainText('Mandate complete');await expect(page.locator('#output')).toHaveText(expected(55));
 });

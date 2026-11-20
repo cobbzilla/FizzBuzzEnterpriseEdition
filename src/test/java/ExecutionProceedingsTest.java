@@ -39,7 +39,27 @@ public class ExecutionProceedingsTest {
  @Test public void nestedObserversMustAdjournInOrderAndRestoreTheirParent(){
   BoundedExecutionLedger parent=new BoundedExecutionLedger(),child=new BoundedExecutionLedger();ExecutionCustody.Capture outer=ExecutionCustody.capture(parent);try{ExecutionCustody.ordinal("17");ExecutionCustody.record("A","Parent","before");ExecutionCustody.Capture inner=ExecutionCustody.capture(child);try{ExecutionCustody.ordinal("99");ExecutionCustody.record("B","Child","inside");try{outer.close();fail();}catch(IllegalStateException expected){}}finally{inner.close();inner.close();}ExecutionCustody.record("C","Parent","after");}finally{outer.close();}assertFalse(ExecutionCustody.observing());assertEquals(2,parent.snapshot().size());assertEquals("17",parent.snapshot().get(1).getOrdinal());assertEquals("99",child.snapshot().get(0).getOrdinal());
  }
- @Test public void finiteObservationCannotGrowIntoAnUnboundedJournal(){BoundedExecutionLedger ledger=new BoundedExecutionLedger(2);for(int i=0;i<10;i++)ledger.observe(new ExecutionEvent("1","CHECK","Records","finite",null));assertEquals(2,ledger.snapshot().size());assertEquals(8,ledger.omitted());try{ledger.snapshot().clear();fail();}catch(UnsupportedOperationException expected){}assertTrue(ledger.toJson().endsWith("\"omitted\":8}"));}
+ @Test public void finiteObservationCannotGrowIntoAnUnboundedJournal(){BoundedExecutionLedger ledger=new BoundedExecutionLedger(2);for(int i=0;i<10;i++)ledger.observe(new ExecutionEvent("1","CHECK","Records","finite",null));assertEquals(2,ledger.snapshot().size());assertEquals(8,ledger.omitted());try{ledger.snapshot().clear();fail();}catch(UnsupportedOperationException expected){}assertTrue(ledger.toJson().contains("\"omitted\":8,"));}
+ @Test public void completeWorkReceiptsSurviveAnEntirelyCondensedNarrative()throws Exception{
+  BoundedExecutionLedger ledger=new BoundedExecutionLedger(0);try(ExecutionCustody.Capture capture=ExecutionCustody.capture(ledger)){assertEquals(expected(15),dispatcher.dispatch("GET","/fizzbuzz?limit=15").text());}
+  assertTrue(ledger.snapshot().isEmpty());assertTrue(ledger.omitted()>0);String work=ledger.workJson();assertTrue(work.contains("\"complete\":true"));
+  java.util.regex.Matcher group=java.util.regex.Pattern.compile("\"15\":\\{([^}]+)\\}").matcher(work);assertTrue(group.find());String fifteen=group.group(1);
+  for(String fact:new String[]{"\"allocation\":\"8\"","\"acceptedGlyph\":\"8\"","\"placedGlyph\":\"8\"","\"assembly\":\"2\"","\"context\":\"3\"","\"classification\":\"3\"","\"printer\":\"3\"","\"advance\":\"1\""})assertTrue(fact,fifteen.contains(fact));
+  assertTrue(work.contains("\"hrPlanning\":\"1\""));assertTrue(work.contains("\"hrAudit\":\"1\""));
+ }
+ @Test public void cachedWorkReceiptsContainReuseButNeverManufacturing()throws Exception{
+  dispatcher.dispatch("GET","/fizzbuzz/explained?limit=15");String cached=dispatcher.dispatch("GET","/fizzbuzz/explained?limit=15").text();
+  assertTrue(cached.contains("\"priorExam\":\"5\""));assertTrue(cached.contains("\"priorReuse\":\"1\""));assertFalse(cached.contains("\"acceptedGlyph\""));assertFalse(cached.contains("\"hrPlanning\""));
+ }
+ @Test public void extendedWorkReceiptsNameOnlyTheirActualPath()throws Exception{
+  String text=dispatcher.dispatch("GET","/fizzbuzz/window/explained?start=16&count=1").text();
+  for(String fact:new String[]{"\"window\":\"1\"","\"numeral\":\"1\"","\"digit\":\"2\"","\"classification\":\"2\"","\"payload\":\"1\"","\"advance\":\"1\""})assertTrue(fact,text.contains(fact));
+  assertFalse(text.contains("\"transaction\""));assertFalse(text.contains("\"successor\""));assertFalse(text.contains("\"enqueue\""));
+ }
+ @Test public void anUnavailableScoringObserverCannotChangeFizzBuzz()throws Exception{
+  try(ExecutionCustody.Capture capture=ExecutionCustody.capture(new ExecutionWorkObserver(){public void observe(ExecutionEvent event){}public void work(String ordinal,String rule,long quantity){throw new IllegalStateException("Treasury closed");}})){assertEquals(expected(15),dispatcher.dispatch("GET","/fizzbuzz?limit=15").text());}
+ }
+ @Test public void workCounterBoundsAreExplicitRatherThanSilentlyComplete(){BoundedExecutionLedger ledger=new BoundedExecutionLedger(0);for(int i=1;i<=1003;i++)ledger.work(String.valueOf(i),"digit",1);assertTrue(ledger.workJson().contains("\"complete\":false"));}
  @Test public void parallelSpectatorsCannotBorrowEachOthersOrdinals()throws Exception{
   ExecutorService pool=Executors.newFixedThreadPool(4);try{List<Future<String>> jobs=new ArrayList<Future<String>>();for(int i=0;i<100;i++){final String ordinal=String.valueOf(i);jobs.add(pool.submit(new Callable<String>(){public String call(){BoundedExecutionLedger ledger=new BoundedExecutionLedger();try(ExecutionCustody.Capture capture=ExecutionCustody.capture(ledger)){ExecutionCustody.ordinal(ordinal);ExecutionCustody.record("CHECK","Custody","private");}return ledger.snapshot().get(0).getOrdinal();}}));}for(int i=0;i<jobs.size();i++)assertEquals(String.valueOf(i),jobs.get(i).get(5,TimeUnit.SECONDS));}finally{pool.shutdownNow();}
  }

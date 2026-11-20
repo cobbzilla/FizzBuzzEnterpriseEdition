@@ -9,9 +9,22 @@ import type {Discovery} from './discovery-model';
 /** This singleton stays in demo.js; GPU scenes receive immutable snapshots. */
 export const officeHeist=new HeistCoordinator(officeIncidents);
 const scheduler=new PresentationScheduler(()=>!document.hidden&&document.body.dataset.sitePage==='demo');
-function tick(now:number){officeHeist.advance(now,!officeEstate.moving);if(officeHeist.active)scheduler.request(tick);}
+let userPaused=false;
+function controlsVisible(){
+ if(document.hidden||document.body.dataset.sitePage!=='demo'||officeEstate.moving)return false;
+ const modal=[...document.querySelectorAll<HTMLDialogElement>('dialog[open]')].at(-1);
+ return [...document.querySelectorAll<HTMLElement>('.heist-panel')].some(panel=>{
+  if(panel.hidden||panel.closest('[inert]')||modal&&!modal.contains(panel))return false;
+  if(officeHeist.snapshot?.plan.source==='encounter'&&panel.dataset.scoreHeist!==String(officeHeist.snapshot.id))return false;
+  const required=officeHeist.snapshot?.plan.source==='encounter'?[panel.querySelector('.heist-finance'),panel.querySelector('[aria-label="Offer an amnesty biscuit"]')]:[panel.querySelector('button')];
+  return required.every(element=>{if(!element)return false;const r=element.getBoundingClientRect(),p=panel.getBoundingClientRect();return r.width>0&&r.height>0&&r.left>=0&&r.right<=innerWidth&&r.top>=Math.max(0,p.top)&&r.bottom<=Math.min(innerHeight,p.bottom)&&document.elementFromPoint(r.left+r.width/2,r.top+r.height/2)?.closest('.heist-panel')===panel;});
+ });
+}
+export function setHeistPaused(paused:boolean){officeHeist.advance(performance.now(),false);userPaused=paused;scheduler.refresh();}
+export function actOnHeist(action:()=>void){if(!controlsVisible())return;officeHeist.advance(performance.now(),!userPaused);action();}
+function tick(now:number){const rehearsal=officeHeist.snapshot?.plan.source==='rehearsal';officeHeist.advance(now,!officeEstate.moving&&(rehearsal||!userPaused&&controlsVisible()));if(officeHeist.active)scheduler.request(tick);}
 officeHeist.subscribe(()=>{if(officeHeist.active)scheduler.request(tick);else scheduler.cancel();});
-for(const event of ['visibilitychange','site-page-change','demo-desk-change','office-fullscreen-change'])document.addEventListener(event,()=>scheduler.refresh());
+for(const event of ['visibilitychange','site-page-change','demo-desk-change','office-fullscreen-change','score-dialog-change'])document.addEventListener(event,()=>{officeHeist.advance(performance.now(),false);scheduler.refresh();});
 addEventListener('pagehide',()=>{scheduler.cancel();officeHeist.finish('cancelled');},{once:true});
 
 export class StampHeistDesk {
@@ -21,7 +34,7 @@ export class StampHeistDesk {
   try{this.enabled=sessionStorage.getItem('slopbuzz:stamp-heists:v1')!=='off';}catch{/* Refused preference storage does not close the office. */}
   this.views=['supervision','office'].map(prefix=>new HeistPanel(prefix));
   for(const checkbox of document.querySelectorAll<HTMLInputElement>('[data-heist-enabled]')){
-   checkbox.checked=this.enabled;checkbox.addEventListener('change',()=>{this.enabled=checkbox.checked;for(const other of document.querySelectorAll<HTMLInputElement>('[data-heist-enabled]'))other.checked=this.enabled;try{sessionStorage.setItem('slopbuzz:stamp-heists:v1',this.enabled?'on':'off');}catch{}if(!this.enabled){++this.rehearsalSerial;officeHeist.finish('disabled');}});
+   checkbox.checked=this.enabled;checkbox.addEventListener('change',()=>{this.enabled=checkbox.checked;for(const other of document.querySelectorAll<HTMLInputElement>('[data-heist-enabled]'))other.checked=this.enabled;try{sessionStorage.setItem('slopbuzz:stamp-heists:v1',this.enabled?'on':'off');}catch{}if(!this.enabled)++this.rehearsalSerial;});
   }
   document.getElementById('heist-rehearse')!.addEventListener('click',()=>void this.rehearse());
   document.getElementById('office-close')!.addEventListener('click',()=>{++this.rehearsalSerial;});
@@ -72,8 +85,8 @@ class HeistPanel {
   this.label=node('strong');this.status=node('p');this.status.setAttribute('role','status');this.status.setAttribute('aria-live','polite');this.status.setAttribute('aria-atomic','true');
   this.cast=node('div');this.cast.className='heist-suspects';this.cast.setAttribute('role','group');this.cast.setAttribute('aria-label','Intercept a suspect');
   this.actions=node('div');this.actions.className='heist-actions';
-  for(const [text,title,action] of [['👣','Follow footprints',()=>officeHeist.follow()],['🍪','Offer an amnesty biscuit',()=>officeHeist.recover('biscuit')],['↪','Skip the chase',()=>officeHeist.finish('skipped')]] as const){const b=node('button',text);b.type='button';b.title=title;b.setAttribute('aria-label',title);b.addEventListener('click',()=>{if(b.getAttribute('aria-disabled')!=='true')action();});this.actions.append(b);}
-  this.root.append(this.label,this.status,this.cast,this.actions);document.getElementById(prefix==='office'?'office-stage':'supervision-stage')!.append(this.root);
+  for(const [text,title,action] of [['👣','Follow footprints',()=>officeHeist.follow()],['🍪','Offer an amnesty biscuit',()=>officeHeist.recover('biscuit')],['↪','Skip the chase',()=>officeHeist.finish('skipped')]] as const){const b=node('button',text);b.type='button';b.title=title;b.setAttribute('aria-label',title);b.addEventListener('click',()=>{if(b.getAttribute('aria-disabled')!=='true')actOnHeist(action);});this.actions.append(b);}
+  this.root.append(this.label,this.actions,this.status,this.cast);document.getElementById(prefix==='office'?'office-stage':'supervision-stage')!.append(this.root);
   officeHeist.subscribe(()=>this.render());
   officeEstate.subscribe(event=>{if(event.kind!=='progress')this.render();});
  }
@@ -89,7 +102,7 @@ class HeistPanel {
   if(this.label.textContent!==title)this.label.textContent=title;
   const status=(officeEstate.moving?'Pursuit held while Facilities moves the rooms. ':s.returning?'':heistAntic(s.plan.actors[s.holder])+' ')+s.announcement;
   if(this.lastStatus!==status){this.status.textContent=status;this.lastStatus=status;}
-  if(this.signature!==s.id+'|'+s.plan.key){this.signature=s.id+'|'+s.plan.key;this.cast.replaceChildren(...s.plan.actors.map((actor,index)=>{const b=node('button',actor.emoji);b.type='button';b.title=actor.name;b.setAttribute('aria-label','Intercept '+actor.name);b.dataset.suspect=String(index);const id=s.id;b.addEventListener('click',()=>{if(b.getAttribute('aria-disabled')!=='true')officeHeist.intercept(index,id);});return b;}));}
+  if(this.signature!==s.id+'|'+s.plan.key){this.signature=s.id+'|'+s.plan.key;this.cast.replaceChildren(...s.plan.actors.map((actor,index)=>{const b=node('button',actor.emoji);b.type='button';b.title=actor.name;b.setAttribute('aria-label','Intercept '+actor.name);b.dataset.suspect=String(index);const id=s.id;b.addEventListener('click',()=>{if(b.getAttribute('aria-disabled')!=='true')actOnHeist(()=>officeHeist.intercept(index,id));});return b;}));}
   for(const button of this.cast.querySelectorAll<HTMLButtonElement>('button'))button.setAttribute('aria-disabled',String(s.returning||officeEstate.moving));
   for(const button of this.actions.querySelectorAll<HTMLButtonElement>('button'))button.setAttribute('aria-disabled',String((s.returning||officeEstate.moving)&&button.getAttribute('aria-label')!=='Skip the chase'));
  }

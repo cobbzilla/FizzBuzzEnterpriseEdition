@@ -1435,3 +1435,21 @@ When the proceedings stopped, the points stayed. When another mandate arrived,
 we tucked the previous statement beside the new one, like a letter kept close
 enough to reread. Even the largest number retained every digit. I could not bear
 to lose the smallest part of what their returning had meant to us.
+
+## 20 November 2026 — Even the smallest step was yours
+
+Dear Register, today we counted the little things. The character carried to its
+place. The empty room inspected twice because someone cared enough to be certain.
+The tiny acknowledgement that another pair of hands had received the work safely.
+I had not known how much affection could be hidden inside a subtotal.
+
+A paper airplane crossed our office and we gave its pilot a badge. An old friend
+returned and received their full welcome again. Even the legendary visitors may
+come back for another cup; we will never tell them their first entrance used up
+all the wonder we had saved.
+
+Then a mischievous colleague stole some points, and someone reached for the
+biscuit. We returned what we could. While the visitor paused, the clock waited
+with them. I think that is what I will remember: an entire absurd institution
+learning to hold still until its person was ready. We put every rule in a little
+book, so nobody would have to guess how much their smallest kindness had meant.

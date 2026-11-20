@@ -5,6 +5,24 @@ portfolio. Each iteration branch receives its own entry before integration,
 so future generations can trace how a modest numerical exercise became a
 strategic operating capability.
 
+## 2026-11-20 — `slopbuzz-enterprise-scoring`
+
+**Granular Merit Recognition and Recoverable Incident Liabilities.** Established
+an Enterprise Points service recognizing certified procedural work, publication,
+numerical distinctions, recurring companion appointments, extraordinary office
+operations and institutional literacy. Ratified finite cycle-based executive
+multipliers, repeat Legendary and Mythic grants, sixteen illustrated achievement
+credentials and a separately reconciled completion dividend.
+
+Introduced stamp-heist point custody with visible grace, bounded exposure,
+time-dependent recovery and suspension whenever intervention controls are
+unavailable. Consolidated exact locale-formatted balances, categorized receipts,
+run conditions and a browser-retained achievement cabinet behind compact score
+controls. Commissioned a typed scoring charter that generates both calculation
+rules and versioned public guidance. Historical portfolios retain their original
+rates. Structured Java work receipts remain independent of narrative retention,
+and browser qualification continues serially in resource-capped containers.
+
 ## 2026-11-18 — `slopbuzz-companion-portfolio`
 
 **Recurring Appointment Revenue and Exact Portfolio Custody.** Ratified a

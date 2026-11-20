@@ -10,6 +10,7 @@ import {playbackIcon} from './playback-controls';
 import {onDemoPage,openSitePage} from './site-navigation';
 import {scope} from './release-assets';
 import {officeFlight} from './office-flight';
+import {officeHeist} from './office-heist';
 
 export interface RunPresentation {
  placeChronicle(target:HTMLElement):void;
@@ -26,19 +27,20 @@ export class DemoWorkspace {
  private running=false;private held=false;private activity='mandate';private interruption='';private latestValue?:{ordinal:string;text:string};private bannerAnnouncement='';
  private preferredAuthority=new URL(location.href).searchParams.get('authority')||'';
  private scroll=new Map<DemoDesk,number>();
- private flightView?:{id:number;desk:DemoDesk;watch:string;manual:boolean;settings:boolean;x:number;y:number;focus:Element|null;positions:{node:HTMLElement;top:number;left:number}[]};
+ private flightView?:{id:number;kind:'flight'|'heist';desk:DemoDesk;watch:string;manual:boolean;settings:boolean;x:number;y:number;focus:Element|null;positions:{node:HTMLElement;top:number;left:number}[]};
  private arrivalTimer?:ReturnType<typeof setTimeout>;
  constructor(private readonly run:RunPresentation){
   const immersive=officeFullscreen();immersive.placeChronicle=target=>this.run.placeChronicle(target);
   const arrival=document.createElement('p');arrival.id='flight-arrival-notice';arrival.className='flight-arrival-notice';arrival.hidden=true;arrival.setAttribute('role','status');byId('desk-observe').append(arrival);
   officeFlight.subscribe(()=>this.flightSpotlight());
+  officeHeist.subscribe(()=>this.flightSpotlight());
   byId('supervision-fullscreen').addEventListener('click',()=>immersive.open('observe',byId('supervision-fullscreen')));
   document.querySelectorAll<HTMLAnchorElement>('[data-desk-link]').forEach(link=>link.addEventListener('click',event=>{
    if(event.metaKey||event.ctrlKey||event.shiftKey||event.altKey)return;
    event.preventDefault();this.navigate(link.dataset.deskLink as DemoDesk);
   }));
   document.querySelectorAll<HTMLElement>('[data-go-desk]').forEach(button=>button.addEventListener('click',()=>this.navigate(button.dataset.goDesk as DemoDesk)));
-  document.querySelectorAll<HTMLElement>('[data-evidence]').forEach(button=>button.addEventListener('click',()=>this.evidence(button.dataset.evidence!)));
+  document.querySelectorAll<HTMLElement>('[data-evidence]').forEach(button=>button.addEventListener('click',()=>{if(button.dataset.evidence!=='portfolio')this.evidence(button.dataset.evidence!);}));
   this.watch.addEventListener('change',()=>{this.manualView=true;this.layout();});
   document.addEventListener('demo-presentation-change',()=>this.layout());
   // A draft describes a future presentation; it does not control live regions yet.
@@ -47,7 +49,7 @@ export class DemoWorkspace {
   byId<HTMLSelectElement>('experiment-view').addEventListener('change',()=>this.sections('experiment'));
   byId<HTMLSelectElement>('evidence-view').addEventListener('change',()=>this.sections('evidence'));
   byId('resume-current').addEventListener('click',()=>this.navigate('observe'));
-  byId('active-run-banner').addEventListener('click',()=>{if(onDemoPage())this.navigate('observe');else void openSitePage(new URL('demo/?desk=observe',scope));});
+  byId('active-run-return').addEventListener('click',()=>{if(onDemoPage())this.navigate('observe');else void openSitePage(new URL('demo/?desk=observe',scope));});
   byId('office-choose-mandate').addEventListener('click',()=>{this.navigate('authorize');byId('limit').focus();});
   byId('watch-settings-toggle').addEventListener('click',()=>this.settings(byId('watch-settings').hidden===true));
   byId('watch-settings-close').addEventListener('click',()=>{this.settings(false);byId('watch-settings-toggle').focus();});
@@ -104,27 +106,27 @@ export class DemoWorkspace {
  }
  get observing(){return onDemoPage()&&this.desk==='observe';}
  private flightSpotlight(){
-  const flight=officeFlight.snapshot;
+  const flight=officeFlight.snapshot||officeHeist.snapshot,kind=officeFlight.snapshot?'flight':'heist';
   if(flight){
    if(this.flightView||!this.committed||!onDemoPage())return;
-   this.flightView={id:flight.id,desk:this.desk,watch:this.watch.value,manual:this.manualView,settings:!byId('watch-settings').hidden,x:scrollX,y:scrollY,focus:document.activeElement,positions:['output','chronicle-scroll','companion-scroll','watch-prose'].map(id=>{const node=byId(id);return {node,top:node.scrollTop,left:node.scrollLeft};})};
-   document.body.dataset.flightSpotlight='true';clearTimeout(this.arrivalTimer);byId('flight-arrival-notice').hidden=true;
+   this.flightView={id:flight.id,kind,desk:this.desk,watch:this.watch.value,manual:this.manualView,settings:!byId('watch-settings').hidden,x:scrollX,y:scrollY,focus:document.activeElement,positions:['output','chronicle-scroll','companion-scroll','watch-prose'].map(id=>{const node=byId(id);return {node,top:node.scrollTop,left:node.scrollLeft};})};
+   document.body.dataset.flightSpotlight=String(kind==='flight');document.body.dataset.incidentSpotlight=kind;clearTimeout(this.arrivalTimer);byId('flight-arrival-notice').hidden=true;
    this.watch.disabled=true;this.settings(false);officeFullscreen().inspection(false);
    const facilities=officeFullscreen().mode==='facilities'||this.desk==='facilities'&&!byId('office-experience').hidden;
    if(!facilities){this.watch.value='office';if(!officeFullscreen().mode)this.show('observe',false,false);else this.layout();}
    if(!officeFullscreen().mode)byId(facilities?'office-stage':'supervision-stage').scrollIntoView({block:'nearest',behavior:'instant'});
-   const panel=byId(facilities?'office-flight':'supervision-flight');panel.tabIndex=-1;panel.focus({preventScroll:true});
+   const panel=byId((facilities?'office-':'supervision-')+kind);panel.tabIndex=-1;panel.focus({preventScroll:true});
    return;
   }
   const saved=this.flightView;if(!saved)return;this.flightView=undefined;
-  delete document.body.dataset.flightSpotlight;this.watch.disabled=false;this.watch.value=saved.watch;this.manualView=saved.manual;
+  delete document.body.dataset.flightSpotlight;delete document.body.dataset.incidentSpotlight;this.watch.disabled=false;this.watch.value=saved.watch;this.manualView=saved.manual;
   if(onDemoPage()){
    if(!officeFullscreen().mode)this.show(saved.desk,false,false);else this.layout();
    this.settings(saved.settings);
    for(const position of saved.positions){position.node.scrollTop=position.top;position.node.scrollLeft=position.left;}
    if(saved.focus instanceof HTMLElement&&saved.focus.getClientRects().length)saved.focus.focus({preventScroll:true});
    if(!officeFullscreen().mode)window.scrollTo({left:saved.x,top:saved.y,behavior:'instant'});
-   const result=officeFlight.records.find(r=>r.id===saved.id);
+   const result=saved.kind==='flight'?officeFlight.records.find(r=>r.id===saved.id):undefined;
    if(result&&['landed','redirected','expedited'].includes(result.resolution)){
     const notice=byId('flight-arrival-notice');notice.textContent=result.plan.actors[0].emoji+' Flight '+result.plan.ordinal+' arrived. '+result.finding;notice.hidden=false;
     this.arrivalTimer=setTimeout(()=>{notice.hidden=true;},4500);

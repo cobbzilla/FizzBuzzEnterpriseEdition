@@ -2,6 +2,7 @@ import {test,expect,type Page} from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 import {demoAction,department} from './demo-controls';
 import type {OfficeDiagnostics} from '../web/office-world';
+import {scoringStorageKey,type ScoringRun} from '../web/scoring-service';
 
 const errors=new WeakMap<Page,string[]>();
 test.beforeEach(async({page},info)=>{
@@ -14,6 +15,7 @@ async function office(page:Page,graphics=true){await demoAction(page,'click','#o
 async function rehearse(page:Page,actor='🐌'){await page.selectOption('#heist-suspect',actor);await page.click('#heist-rehearse');await expect(page.locator('#office-heist')).toBeVisible();}
 async function scene(page:Page,selector='#office-canvas'):Promise<OfficeDiagnostics>{return page.locator(selector).evaluate(async c=>{const canvas=c as HTMLCanvasElement,m=await import(canvas.dataset.module!);return m.inspectOffice(canvas);});}
 async function audit(page:Page){return page.evaluate(async()=>{const m=await import(new URL('/assets/tribunal.js',location.href).href),client=new m.BrowserRuntimeClient();try{return await(await client.request('/audit/evidence')).json();}finally{client.close();}});}
+async function account(page:Page){return page.evaluate(key=>JSON.parse(localStorage.getItem(key)!).current as ScoringRun,scoringStorageKey);}
 const expected=(n:number)=>Array.from({length:n},(_,i)=>{const v=i+1;return v%15===0?'FizzBuzz':v%3===0?'Fizz':v%5===0?'Buzz':String(v);}).join('\n')+'\n';
 
 test('suspects, footprints, alibis and biscuit amnesty work without awarding discoveries or writing audit entries',async({page})=>{
@@ -63,7 +65,13 @@ test('a live palindrome freezes disclosure, preserves an explicit pause, and res
  await expect(page.locator('#supervision-heist')).toBeVisible({timeout:180000});await expect(page.locator('#supervision-heist')).toContainText('33');
  const output=await page.locator('#output').textContent(),observed=await page.locator('#supervision-pane').getAttribute('data-observed-steps'),before=await audit(page);
  await page.waitForTimeout(500);expect(await page.locator('#output').textContent()).toBe(output);expect(await page.locator('#supervision-pane').getAttribute('data-observed-steps')).toBe(observed);
- await page.locator('#supervision-pause').click();await page.locator('#supervision-heist').getByRole('button',{name:'Skip the chase'}).click();await expect(page.locator('#supervision-pause')).toHaveAttribute('aria-pressed','true');await page.waitForTimeout(250);expect(await page.locator('#output').textContent()).toBe(output);
+ await expect.poll(async()=>Number((await account(page)).incident!.elapsed),{timeout:12000}).toBeGreaterThan(6000);
+ await page.locator('#supervision-pause').click();const paused=await account(page);expect(BigInt(paused.stolen)).toBeGreaterThan(0n);
+ await page.waitForTimeout(350);expect((await account(page)).incident!.elapsed).toBe(paused.incident!.elapsed);
+ await page.click('#portfolio-open');await expect(page.locator('#score-reconciliation')).toContainText('stolen');await page.waitForTimeout(350);expect((await account(page)).stolen).toBe(paused.stolen);await page.click('#score-close');
+ await page.locator('#supervision-heist').getByRole('button',{name:'Offer an amnesty biscuit'}).click();const rescued=await account(page);expect(BigInt(rescued.recovered)).toBeGreaterThan(0n);expect(BigInt(rescued.recovered)).toBeLessThan(BigInt(rescued.stolen));
+ await expect(page.locator('#supervision-pause')).toHaveAttribute('aria-pressed','true');await page.waitForTimeout(250);expect(await page.locator('#output').textContent()).toBe(output);
+ await page.locator('#supervision-pause').click();await expect(page.locator('#supervision-heist')).toBeHidden();
  await demoAction(page,'click','#reveal-all');await expect(page.locator('#run-status')).toContainText('Mandate complete');await expect(page.locator('#output')).toHaveText(expected(45));const after=await audit(page);expect(after.journalEntries).toBe(45);expect(after.headDigest).toBe(before.headDigest);
 });
 

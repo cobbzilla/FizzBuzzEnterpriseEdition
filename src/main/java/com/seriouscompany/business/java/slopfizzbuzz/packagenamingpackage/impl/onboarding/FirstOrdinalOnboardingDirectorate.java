@@ -68,6 +68,6 @@ public final class FirstOrdinalOnboardingDirectorate {
    return new PersonnelDossier(scope.getReference(),purpose,candidate,null,decisions);
   }
  }
- private static void pass(List<PersonnelDecision> decisions,int stage,String received,String finding,String document){ExecutionCustody.record("HR_APPROVED",OFFICES[stage],finding,document);decisions.add(new PersonnelDecision(OFFICES[stage],"APPROVED",RULES[stage],received,finding,document));}
+ private static void pass(List<PersonnelDecision> decisions,int stage,String received,String finding,String document){ExecutionCustody.work(new String[]{"hrPlanning","hrRecruitment","hrIdentity","hrOffer","hrInduction","hrProbation","hrAudit"}[stage],1);ExecutionCustody.record("HR_APPROVED",OFFICES[stage],finding,document);decisions.add(new PersonnelDecision(OFFICES[stage],"APPROVED",RULES[stage],received,finding,document));}
  private static String join(String[] values){StringBuilder out=new StringBuilder();for(int i=0;i<values.length;i++){if(i>0)out.append(", ");out.append(values[i]);}return out.toString();}
 }

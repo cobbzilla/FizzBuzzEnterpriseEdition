@@ -4,6 +4,8 @@ import {verifyAnalytics} from './verify-analytics.ts';
 import assert from 'node:assert/strict';
 import {chromium, firefox, webkit, expect} from '@playwright/test';
 import {launchBrowser} from './browser-launch.ts';
+import {scoringStorageKey,cabinetStorageKey,netPoints,type ScoringRun} from '../web/scoring-service.ts';
+import {guidePath,rulesIdentity} from '../web/scoring-rules.ts';
 
 /** Exercise the deployed artifact, including HTTPS, CSP and real service workers. */
 export async function verifyPublic(origin: string, revision: string) {
@@ -58,8 +60,9 @@ export async function verifyPublic(origin: string, revision: string) {
    assert.deepEqual(await page.getByRole('navigation',{name:'Demo departments'}).getByRole('link').allTextContents(),['Authorize','Observe','Experiment','Facilities','Evidence']);
    await expect(page.locator('#authorize-require-companion-roll-call')).toBeChecked();await expect(page.locator('#authorize-executive-hovering')).toBeChecked();
    await demo.run();await expect(page.locator('#observe-title')).toBeFocused();
-   await expect(page.locator('#portfolio-open [data-portfolio-points]')).toHaveAttribute('data-exact','190');
-   await page.click('#portfolio-open');await expect(page.locator('#portfolio-record')).toBeVisible();await expect(page.locator('#portfolio-appearances')).toHaveText('7');await expect(page.locator('#portfolio-total')).toHaveText('190');await demo.watch('overview');
+   const firstScore=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)!).current as ScoringRun,scoringStorageKey);assert.equal(firstScore.identity,rulesIdentity);assert.equal(firstScore.partial,false);assert.equal(firstScore.categories.Publication,'253');assert.equal(firstScore.categories['Numerical distinctions'],'691');assert(BigInt(firstScore.dividend)>0n);
+   await expect(page.locator('#portfolio-open [data-portfolio-points]')).toHaveAttribute('data-exact',String(netPoints(firstScore)));
+   await page.click('#portfolio-open');await expect(page.locator('#portfolio-record')).toBeVisible();await expect(page.locator('#portfolio-appearances')).toHaveText('7');await expect(page.locator('#portfolio-total')).toHaveText(netPoints(firstScore).toLocaleString('en-US'));await expect(page.locator('#score-rules-link')).toHaveAttribute('href',origin+'/'+guidePath);await page.click('[data-score-tab="badges"]');await expect(page.locator('.score-badge svg')).toHaveCount(16);await expect(page.locator('[data-badge="bingo"]')).toHaveAttribute('data-earned','true');await page.click('#score-close');await demo.watch('overview');
    await demo.options(()=>page.check('#executive-hovering'));await expect(page.locator('#display-speed')).toBeEnabled();await expect(page.locator('#display-speed')).toHaveValue('0');await demo.watch('office');await expect(page.locator('#supervision-canvas')).toHaveAttribute('data-rendered','true');
    await page.setViewportSize({width:390,height:667});
    await expect.poll(()=>page.evaluate(()=>{
@@ -106,7 +109,7 @@ export async function verifyPublic(origin: string, revision: string) {
    await demo.options(()=>page.selectOption('#companion-strategy','factor-resonance-v1'));
    await demo.run();
    await expect(page.locator('#cache-result')).toHaveText('HIT');
-   await expect(page.locator('#portfolio-open [data-portfolio-points]')).toHaveAttribute('data-exact','190');
+   const cachedScore=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)!).current as ScoringRun,scoringStorageKey);assert.equal(cachedScore.categories.Companions,firstScore.categories.Companions);assert.equal(cachedScore.buckets['acceptedGlyph|1'],undefined);assert.equal(cachedScore.buckets['priorExam|1'].quantity,'5');await expect(page.locator('#portfolio-open [data-portfolio-points]')).toHaveAttribute('data-exact',String(netPoints(cachedScore)));
    await expect(page.locator('#personnel-origin')).toHaveText('Institutional memory answered. No new HR proceedings.');
    await expect(page.locator('#chronicle-entries')).toContainText('No fresh recruitment');
    await expect(page.locator('#precedent-status')).toContainText('Certificate of Authorized Non-Performance issued for 15 lines');
@@ -126,7 +129,7 @@ export async function verifyPublic(origin: string, revision: string) {
    await page.click('#recovery-button');
    await expect(page.locator('#recovery-value')).toHaveText('COPY MATCHED');
    await page.waitForFunction(() => !!navigator.serviceWorker.controller, null, {timeout: 120000});
-   for (const route of ['demo', 'bestiary', 'department-of-improbable-appointments', 'api', 'about', 'company-history', 'changelog', 'continuity-register', 'accessibility', 'validation', 'response']) {
+   for (const route of ['demo', 'bestiary', 'department-of-improbable-appointments', 'api', 'about', 'company-history', 'changelog', 'continuity-register', 'accessibility', 'validation', 'response','scoring',guidePath.slice(0,-1)]) {
     await page.goto(`${origin}/${route}/`);
     await expect(page.locator('main h1:visible')).toHaveCount(1);
     await expect(page.getByRole('navigation',{name:'Primary navigation',exact:true}).getByRole('link',{name:'Companion bestiary',exact:true})).toHaveCount(0);
@@ -134,6 +137,7 @@ export async function verifyPublic(origin: string, revision: string) {
     if (route === 'bestiary') await expect(page.locator('#bestiary-status')).toContainText('3200 companions');
     if (route === 'department-of-improbable-appointments') await expect(page.locator('#rarity-rows tr')).toHaveCount(3200);
     if (route === 'api') await expect(page.locator('#api-total')).toContainText('ratified operations');
+    if(route.startsWith('scoring'))await expect(page.locator('#main')).toContainText(rulesIdentity);
     if ((route === 'about'||route === 'company-history')) await expect(page.getByRole('heading',{name:'Confounding the courage to convene'})).toBeVisible();
    }
    console.log(`${engine.name()}: public controls, numerical runtime and navigation passed; releasing that browser.`);
@@ -155,6 +159,7 @@ export async function verifyPublic(origin: string, revision: string) {
    await naturalFlight(page,{limit:'55'});await expect(page.locator('#supervision-flight')).toContainText('Proceedings held until landing');await page.locator('#supervision-flight').getByRole('button',{name:'Land now',exact:true}).click();await expect(page.locator('#supervision-flight')).toBeHidden();await demo.options(()=>page.click('#reveal-all'));await expect(page.locator('#run-status')).toContainText('Mandate complete');
    await demo.run('16');
    await expect(page.locator('#portfolio-open [data-portfolio-points]')).not.toHaveAttribute('data-exact','0');
+   await page.click('#portfolio-open');await page.click('#score-rules-link');await expect(page.locator('#rule-appointment')).toBeVisible();await expect(page.locator('#main')).toContainText(rulesIdentity);await page.locator('#main').getByRole('link',{name:'Return to the office',exact:true}).click();await expect(page.locator('#health-value')).toHaveText('LIVE');
    await demo.experiment('personnel');await page.selectOption('#experiment-speed','0');await page.click('[data-personnel-scenario="missing-induction"]');await expect(page.locator('#experiment-personnel-verdict')).toHaveText('Application rejected');await expect(page.locator('#experiment-personnel-status')).toContainText('Probation Review');assert.equal((await page.locator('#output').textContent())?.trim().split('\n').at(-1),'16');
    await demo.experiment('precedent');await page.selectOption('#experiment-precedent-scenario','wrong-mandate');await page.click('#experiment-precedent-submit');await expect(page.locator('#experiment-precedent-status')).toContainText('Reuse rejected by Mandate Jurisdiction Chamber');
    await demo.experiment('premises');await page.selectOption('#premises-scenario','bell');await page.click('#premises-submit');await expect(page.locator('#premises-status')).toContainText('U+0007');await page.selectOption('#premises-scenario','borrowed-lease');await page.click('#premises-submit');await expect(page.locator('#premises-status')).toContainText('Occupancy refused');await expect(page.locator('#premises-result')).toContainText('Reinspection confirmed 0 characters');
@@ -168,13 +173,13 @@ export async function verifyPublic(origin: string, revision: string) {
    await freshBrowser();await page.goto(origin+'/demo/');await expect(page.locator('#health-value')).toHaveText('LIVE',{timeout:60000});await demo.run('15');await expect(page.locator('#discovery-list li')).toHaveCount(5);await page.waitForFunction(()=>!!navigator.serviceWorker.controller,null,{timeout:120000});await context.setOffline(true);
    await page.goto(origin+'/demo/');await expect(page.locator('#health-value')).toHaveText('LIVE');await page.uncheck('#authorize-executive-hovering');await page.selectOption('#authorize-display-speed','225');await page.fill('#limit','1000');await page.click('#run-button');await demo.desk('authorize');await expect(page.locator('#mandate-collision-warning')).toBeVisible();await demo.run('0');await demo.desk('authorize');await expect(page.locator('#mandate-collision-warning')).toBeHidden();await expect(page.locator('#output')).toContainText('produces no lines');
    const savedFinds=await page.evaluate(()=>localStorage.getItem('slopbuzz:extraordinary-appointments:v1'));
-   const savedScore=await page.evaluate(()=>localStorage.getItem('slopbuzz:companion-portfolio:v1'));assert.ok(savedScore);
+   const savedScore=await page.evaluate(key=>localStorage.getItem(key),scoringStorageKey),savedBadges=await page.evaluate(key=>localStorage.getItem(key),cabinetStorageKey);assert.ok(savedScore);assert.ok(savedBadges);
    await context.setOffline(false);await page.goto(origin+'/reset/');await expect(page).toHaveURL(origin+'/',{timeout:90000});await expect(page.getByRole('link',{name:'Live demo',exact:true})).toBeVisible();
    assert.equal(await page.evaluate(()=>localStorage.getItem('slopbuzz:extraordinary-appointments:v1')),savedFinds);
-   assert.equal(await page.evaluate(()=>localStorage.getItem('slopbuzz:companion-portfolio:v1')),savedScore);
+   assert.equal(await page.evaluate(key=>localStorage.getItem(key),scoringStorageKey),savedScore);assert.equal(await page.evaluate(key=>localStorage.getItem(key),cabinetStorageKey),savedBadges);
    await page.getByRole('link',{name:'Live demo',exact:true}).click();await expect(page.getByRole('navigation',{name:'Demo departments'}).getByRole('link')).toHaveCount(5);
    await page.goto(origin+'/full-reset/');await expect(page).toHaveURL(origin+'/',{timeout:90000});assert.equal(await page.evaluate(()=>localStorage.getItem('slopbuzz:extraordinary-appointments:v1')),null);
-   assert.equal(await page.evaluate(()=>localStorage.getItem('slopbuzz:companion-portfolio:v1')),null);
+   assert.equal(await page.evaluate(key=>localStorage.getItem(key),scoringStorageKey),null);assert.equal(await page.evaluate(key=>localStorage.getItem(key),cabinetStorageKey),null);
    assert.deepEqual(businessRequests, []);
    console.log(`${engine.name()}: public runtime, cache, recovery, navigation and offline execution passed.`);
   } finally {

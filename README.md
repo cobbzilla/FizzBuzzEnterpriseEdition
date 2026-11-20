@@ -250,26 +250,31 @@ different limits, retain your five rarest disclosed friends in the shared footer
 and open a saved biography to copy its reproducible encounter link. Referrals
 can be inspected without running the entire mandate. See [ADR 0029](docs/ADR-0029-mandate-seeded-discoveries.md).
 
-**Companion Portfolio** pays 10 / 25 / 100 / 400 / 1,000 points for each newly
-disclosed Common / Uncommon / Rare / Legendary / Mythic appointment. Repeated
-characters earn the full rate; pairs are one appointment. There are no bonuses,
-multipliers or score caps. Observe and the running-mandate bar show the total;
-select the Observe counter or Evidence → Companion Portfolio for tier payments,
-appearance and distinct counts, the highest-value appointment and run conditions.
+**Enterprise Points** pays for actual procedural work, disclosed output, numerical
+distinctions, every companion appointment, natural paper flights, stamp-heist
+interventions, room reorganizations and office exploration. Repeated companions
+receive full salaries and rarity grants. Temporary boosts last a fixed number of
+output cycles; large factors last fewer cycles and never accumulate permanently.
+A heist can steal points after a visible grace period. Prompt intervention stops
+losses and returns a declining share of what was stolen; Pause, hidden pages,
+covered controls and room moves freeze its clock.
 
-Points are banked as earned, including when a run is stopped or replaced. The
-browser keeps its latest run and previous banked run; a new mandate starts from
-zero, including a cache hit. Reload restores a saved score without resuming the
-mandate. Ordinary installation reset preserves it; full reset erases it. Replays,
-biographies, reassignment and incidental actors never mint points. Turning on
-companions later does not backdate payments. Allocation authority is captured at
-each new disclosure. Missing appointment evidence is reported as a partial score;
-unavailable storage falls back to the current page. Exact integer counters, a
-single disclosure checkpoint and at most 3,200 distinct identities per run keep
-long-running score memory bounded. The receipt records scoring/catalog versions,
-mandate seed, authority totals and changes; it is local evidence, not a verified
-public leaderboard. `pnpm test:portfolio` exercises this accounting independently
-of browser presentation.
+Select the persistent score counter for reconciled categories, individual rates,
+recent receipts and run conditions. The adjacent badge button opens sixteen SVG
+achievements, with locked progress and a persistent browser cabinet. The
+[complete scoring guide](https://fizzbuzz.biz/scoring/) is generated from the same
+typed rules as the accounting service, including exact formulas, examples and
+immutable archived editions. Browser locale formatting preserves every digit.
+
+Each mandate starts at zero. Stopped or replaced runs retain earnings; completed
+positive-length mandates earn one dividend. The browser keeps the latest and
+previous receipt, and preserves original companion-only portfolios without
+recalculating them. Ordinary installation reset preserves records; full reset
+erases them. Bounded aggregates and deduplicated receipts keep long runs within a
+fixed accounting footprint. Scores include conditions for future comparison;
+there is no public leaderboard yet. See [ADR 0045](docs/ADR-0045-enterprise-scoring.md).
+Run `pnpm test:scoring` for the rules/service suite and `pnpm test:portfolio` for
+underlying appointment validation and legacy custody.
 
 On mobile, an empty register is hidden and an occupied register starts as a compact
 expandable bar. Discoveries from an unfinished run are provisional. Authorize warns

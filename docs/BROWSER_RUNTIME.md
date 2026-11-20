@@ -271,3 +271,18 @@ digests. Every collected test ID must have a passing result or an explicit skip
 before the aggregate release evidence is written. Reports and checkpoints stay
 under ignored `validation/isolated-*` directories. Trace recording is disabled
 for these isolated qualification runs to bound memory and disk usage.
+
+## Enterprise Points receipts
+
+The browser scoring service consumes the optional `trace.work` envelope with
+schema `slopbuzz-work/v1`. Java emits price-free quantities keyed by ordinal (or
+`global`) through `ExecutionWorkObserver`; these counters remain complete when
+the human-readable trace reaches its retention limit. The browser does not parse
+narration to manufacture scoring events. Missing or invalid counters produce a
+partial score while preserving valid numerical output.
+
+Scoring formulas, temporary boosts, badge criteria and heist custody share one
+typed manifest. The static build generates the public scoring guide and retained
+versioned editions from that source; these routes are included in offline
+installation. Score and badge storage are separate from numerical audit evidence.
+See [ADR 0045](ADR-0045-enterprise-scoring.md) and `pnpm test:scoring`.

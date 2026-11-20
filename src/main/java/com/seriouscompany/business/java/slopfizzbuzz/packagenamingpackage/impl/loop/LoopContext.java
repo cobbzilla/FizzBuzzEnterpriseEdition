@@ -63,6 +63,7 @@ public final class LoopContext implements LoopContextStateManipulation, LoopCont
 	public void proceed() {
 		this.myCurrentControlParameterValue =
 				this.myLoopStep.stepLoop(this.myCurrentControlParameterValue);
+        ExecutionCustody.work("advance",1);
 	}
 
 	/**

@@ -78,6 +78,7 @@ public final class OutputTransactionCoordinator {
 			this.journal.record(transaction.number, payload, OutputDisposition.COMMITTED);
             ExecutionCustody.record("TRANSACTION_COMMIT","Output Transaction Coordinator","The numerical line and its committed audit entry completed their transaction.");
 		} catch (final RuntimeException failure) {
+			ExecutionCustody.work("rejection",1);ExecutionCustody.work("rollback",1);
 			this.journal.record(transaction.number, transaction.payload.text(), OutputDisposition.ABORTED);
 			LOGGER.warning("Output transaction aborted for number " + transaction.number);
 			throw failure;
@@ -104,6 +105,7 @@ public final class OutputTransactionCoordinator {
 	public void abort() {
 		final PendingOutput transaction = this.pending.get();
 		if (transaction != null) {
+			ExecutionCustody.work("rollback",1);
 			try { this.journal.record(transaction.number, transaction.payload.text(), OutputDisposition.ABORTED); }
 			finally { transaction.payload.close(); this.pending.remove(); }
 			LOGGER.warning("Output transaction aborted for number " + transaction.number);

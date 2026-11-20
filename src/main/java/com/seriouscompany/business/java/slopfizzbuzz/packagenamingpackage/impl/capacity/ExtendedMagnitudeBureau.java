@@ -30,7 +30,7 @@ public final class ExtendedMagnitudeBureau {
    try(com.seriouscompany.business.java.slopfizzbuzz.packagenamingpackage.impl.premises.PremisesDocuments.Lease room=premises.lease(number.toString())) {
    if(number.mod(THREE).signum()==0) room.append(procurement.procure("Fizz").text());
    if(number.mod(FIVE).signum()==0) room.append(procurement.procure("Buzz").text());
-   if(room.length()==0) room.append(number.toString());
+   if(room.length()==0) {room.append(number.toString());ExecutionCustody.work("numeral",1);ExecutionCustody.work("digit",number.toString().length());}
    String text=room.text();
    // Independent lexical witness does not source its answer from procurement.
    String expected=number.remainder(FIFTEEN).signum()==0?"FizzBuzz":number.remainder(THREE).signum()==0?"Fizz":number.remainder(FIVE).signum()==0?"Buzz":number.toString();
@@ -38,9 +38,11 @@ public final class ExtendedMagnitudeBureau {
    room.append("\n");
    if(ExecutionCustody.observing())ExecutionCustody.record("EXTENDED_NOTARY","Independent Lexical Witness","Independently verified the exact text and appended LF to this finite response window.",room.text());
    output.append(room.text());
+   ExecutionCustody.work("payload",1);
    }
    if(ExecutionCustody.observing())ExecutionCustody.record("EXTENDED_SUCCESSION","BigInteger Advancement Office","Advanced exactly from "+number+" to "+number.add(BigInteger.ONE)+". This path does not issue bounded-integer succession certificates.");
    number=number.add(BigInteger.ONE);
+   ExecutionCustody.work("advance",1);
   }
   return output.toString();
  }

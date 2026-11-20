@@ -213,7 +213,7 @@ function routes(layout) {
     return compact([...exit(from), ...graphRoute(graph, book.outside(from.room), book.outside(to.room)), ...exit(to).reverse()]);
   } };
 }
-var routeLength = (points) => points.slice(1).reduce((sum, p, i) => sum + distance(points[i], p), 0);
+var routeLength = (points) => points.slice(1).reduce((sum2, p, i) => sum2 + distance(points[i], p), 0);
 function pointAlong(points, fraction) {
   if (!points.length) throw new Error("A journey requires an address.");
   if (fraction >= 1) return points.at(-1);
@@ -614,7 +614,7 @@ var FlightCoordinator = class {
       this.lease = this.gate.acquire("flight");
       if (this.lease === void 0) return false;
     }
-    this.pending = { id: ++this.serial, plan, elapsed: 0, destination: "memory", fans: [0, 0, 0], applied: [0, 0, 0], passed: 0, expedited: false, notice: "" };
+    this.pending = { id: ++this.serial, plan, elapsed: 0, flown: 0, destination: "memory", fans: [0, 0, 0], applied: [0, 0, 0], passed: 0, expedited: false, notice: "" };
     this.last = void 0;
     this.allowed = false;
     this.notify();
@@ -630,6 +630,7 @@ var FlightCoordinator = class {
     if (!allow || !delta) return;
     const before = this.snapshot.phase;
     p.elapsed = Math.min(foldMs + cruiseMs + p.plan.loops * loopMs + landingMs, p.elapsed + delta);
+    if (!p.expedited) p.flown = p.elapsed;
     if (!p.expedited) {
       for (let i = p.passed; i < 3; i++) if (p.elapsed >= foldMs + cruiseMs * (i + 1) / 4) {
         p.applied[i] = p.fans[i];
@@ -675,7 +676,7 @@ var FlightCoordinator = class {
   finish(resolution = "skipped") {
     const s = this.snapshot;
     if (!s) return;
-    this.records.push(Object.freeze({ id: s.id, plan: s.plan, destination: s.destination, arrival: s.arrival, resolution, finding: flightFinding(resolution, s.arrival) }));
+    this.records.push(Object.freeze({ id: s.id, plan: s.plan, destination: s.destination, arrival: s.arrival, resolution, finding: flightFinding(resolution, s.arrival), snapshot: s }));
     if (this.records.length > 10) this.records.shift();
     this.pending = void 0;
     this.last = void 0;
@@ -958,8 +959,274 @@ var FlightPanel = class {
   }
 };
 
+// web/scoring-language.ts
+var integer = (value) => ({ constant: String(value) });
+var field = (variable) => ({ variable });
+var operation = (op, ...args) => ({ op, args });
+var lookup = (table, key2) => ({ lookup: table, key: key2 });
+var sum = (...args) => operation("add", ...args);
+var product = (...args) => operation("multiply", ...args);
+var clamp = (value, low, high) => operation("min", high, operation("max", low, value));
+var arities = { add: [1, 100], subtract: [2, 2], multiply: [1, 100], floorDivide: [2, 2], ceilDivide: [2, 2], min: [2, 100], max: [2, 100], mod: [2, 2], equal: [2, 2], atLeast: [2, 2], digits: [1, 1], digitSum: [1, 1], trailingZeroes: [1, 1], palindrome: [1, 1], identicalDigits: [1, 1], powerOfTen: [1, 1] };
+function validateExpression(e, tables) {
+  if ("constant" in e) {
+    if (!/^-?\d+$/.test(e.constant)) throw Error("Non-integer scoring constant");
+    return;
+  }
+  if ("variable" in e) {
+    if (!/^[a-zA-Z][a-zA-Z0-9]*$/.test(e.variable)) throw Error("Invalid scoring variable");
+    return;
+  }
+  if ("lookup" in e) {
+    if (!tables[e.lookup] || !e.key) throw Error("Missing scoring table");
+    return;
+  }
+  const arity = arities[e.op];
+  if (!arity || e.args.length < arity[0] || e.args.length > arity[1]) throw Error("Undocumented scoring operator");
+  for (const arg of e.args) validateExpression(arg, tables);
+}
+function evaluate(e, facts, tables = {}) {
+  if ("constant" in e) return BigInt(e.constant);
+  if ("variable" in e) {
+    if (facts[e.variable] === void 0) throw Error("Missing scoring fact: " + e.variable);
+    return BigInt(facts[e.variable]);
+  }
+  if ("lookup" in e) {
+    const value = tables[e.lookup]?.[String(facts[e.key])];
+    if (value === void 0) throw Error("Unknown scoring table entry");
+    return BigInt(value);
+  }
+  const a = e.args.map((arg) => evaluate(arg, facts, tables)), [x, y] = a, s = x.toString();
+  switch (e.op) {
+    case "add":
+      return a.reduce((n, v) => n + v, 0n);
+    case "subtract":
+      return x - y;
+    case "multiply":
+      return a.reduce((n, v) => n * v, 1n);
+    case "floorDivide":
+      if (x < 0n || y <= 0n) throw Error("Invalid floor division");
+      return x / y;
+    case "ceilDivide":
+      if (x < 0n || y <= 0n) throw Error("Invalid ceiling division");
+      return (x + y - 1n) / y;
+    case "min":
+      return a.reduce((n, v) => v < n ? v : n);
+    case "max":
+      return a.reduce((n, v) => v > n ? v : n);
+    case "mod":
+      if (y <= 0n) throw Error("Invalid modulus");
+      return x % y;
+    case "equal":
+      return x === y ? 1n : 0n;
+    case "atLeast":
+      return x >= y ? 1n : 0n;
+    case "digits":
+      return BigInt(s.length);
+    case "digitSum":
+      return [...s].reduce((n, d) => n + BigInt(d), 0n);
+    case "trailingZeroes":
+      return BigInt(s.length - s.replace(/0+$/, "").length);
+    case "palindrome":
+      return s.length > 1 && s === [...s].reverse().join("") ? 1n : 0n;
+    case "identicalDigits":
+      return s.length > 1 && /^(\d)\1+$/.test(s) ? 1n : 0n;
+    case "powerOfTen":
+      return /^10+$/.test(s) ? BigInt(s.length - 1) : 0n;
+  }
+}
+function describe(e, number = String) {
+  if ("constant" in e) return number(BigInt(e.constant));
+  if ("variable" in e) return e.variable.replace(/[A-Z]/g, (c) => " " + c.toLowerCase());
+  if ("lookup" in e) return e.lookup + " for " + e.key;
+  const a = e.args.map((arg) => describe(arg, number));
+  const infix = { add: " + ", subtract: " \u2212 ", multiply: " \xD7 ", equal: " = ", atLeast: " \u2265 ", mod: " mod " };
+  if (infix[e.op]) return "(" + a.join(infix[e.op]) + ")";
+  if (e.op === "floorDivide" || e.op === "ceilDivide") return (e.op === "floorDivide" ? "floor" : "ceil") + "(" + a.join(" \xF7 ") + ")";
+  return e.op.replace(/[A-Z]/g, (c) => " " + c.toLowerCase()) + "(" + a.join(", ") + ")";
+}
+
+// web/scoring-rules.ts
+var scoringVersion = "enterprise-v2";
+var rates = (category, scope2, items) => items.map(([id, title2, rate, eligibility, cap]) => ({ id, title: title2, category, scope: scope2, formula: product(integer(rate), field("quantity")), eligibility: eligibility || "Each actual completed occurrence, once per unique receipt.", ...cap === void 0 ? {} : { cap } }));
+var rarityTables = { salary: { Common: "100", Uncommon: "250", Rare: "1000", Legendary: "10000", Mythic: "100000" }, rarity: { Common: "1", Uncommon: "2", Rare: "5", Legendary: "10", Mythic: "25" }, entrance: { Common: "0", Uncommon: "0", Rare: "0", Legendary: "250000", Mythic: "2500000" } };
+var boostSchedule = [{ every: "5000", factor: 10, cycles: 1 }, { every: "1000", factor: 5, cycles: 4 }, { every: "500", factor: 3, cycles: 10 }, { every: "250", factor: 2, cycles: 20 }];
+var scoringPolicy = { recentReceipts: 100, companionIdentities: 3200, reorganizationEvery: "100", initialWarrants: "1", graceMs: 3e3, chaseMs: 15e3, fullRecoveryThroughMs: 4e3, minimumRecoveryFromMs: 14e3, heistLimit: 3, flightPersonalities: 13, partitionStyles: 12, departments: 8, loyaltyEvery: "10" };
+var financialRules = {
+  budget: operation("floorDivide", product(field("openingScore"), integer(800)), integer(1e4)),
+  stolen: operation("floorDivide", product(field("budget"), clamp(operation("subtract", field("elapsedMs"), integer(scoringPolicy.graceMs)), integer(0), integer(scoringPolicy.chaseMs - scoringPolicy.graceMs))), integer(scoringPolicy.chaseMs - scoringPolicy.graceMs)),
+  recoveryBasisPoints: clamp(operation("subtract", integer(1e4), operation("floorDivide", product(integer(9), operation("max", integer(0), operation("subtract", field("elapsedMs"), integer(scoringPolicy.fullRecoveryThroughMs)))), integer(10))), integer(1e3), integer(1e4)),
+  recovery: operation("min", field("stolen"), operation("ceilDivide", product(field("stolen"), field("recoveryBasisPoints")), integer(1e4)))
+};
+var meritRules = [
+  ...rates("Procedural work", "cycle", [
+    ["runtime", "Runtime readiness confirmed", 2],
+    ["ownership", "Execution ownership confirmed", 2],
+    ["mandate", "Mandate accepted", 5],
+    ["bounds", "Bounds validated", 2],
+    ["boundDigit", "Canonical bound digit validated", 1],
+    ["cacheLookup", "Cache lookup", 2],
+    ["cacheDisposition", "Cache hit, miss or bypass established", 3],
+    ["priorExam", "Prior-work authority examination", 5],
+    ["priorReuse", "Prior-work reuse authorized", 10],
+    ["window", "New extended window admitted", 5],
+    ["hrPlanning", "Headcount Planning approval", 5],
+    ["hrRecruitment", "Recruitment approval", 5],
+    ["hrIdentity", "Identity approval", 5],
+    ["hrOffer", "Offer approval", 5],
+    ["hrInduction", "Induction approval", 5],
+    ["hrProbation", "Probation approval", 5],
+    ["hrAudit", "Independent personnel audit", 5],
+    ["ballot", "Continuation ballot", 1],
+    ["continuation", "Continuation certified", 2],
+    ["context", "Fizz, Buzz or numeral context appointed", 2],
+    ["visitor", "Shared visitor convened", 2],
+    ["classification", "Classification vote", 2],
+    ["witness", "Arithmetic witness", 3],
+    ["printer", "Printer consultation, including correct refusal", 2],
+    ["premises", "Request-owned premises allocation", 2],
+    ["vacancy", "Initial vacancy inspection", 2],
+    ["hiddenGlyph", "Hidden character identified", 1],
+    ["evictionDecision", "Eviction decision, including not required", 3],
+    ["evictedGlyph", "Hidden character removed", 1],
+    ["reinspection", "Vacancy reinspection", 3],
+    ["lease", "Single-use lease", 3],
+    ["premisesAudit", "Independent premises audit", 5],
+    ["vacancyCertificate", "Vacancy certificate filed", 3],
+    ["transaction", "Transaction opened", 3],
+    ["requisition", "Product requisition", 4],
+    ["allocation", "Position-specific glyph allocated", 1],
+    ["delivery", "Product delivered", 3],
+    ["acceptedGlyph", "Glyph accepted", 4],
+    ["placedGlyph", "Accepted glyph placed", 1],
+    ["assembly", "Completed word assembly certified", 8],
+    ["numeral", "Numeral conversion", 3],
+    ["digit", "Decimal digit placed", 1],
+    ["fragment", "Output fragment staged", 2],
+    ["notary", "Independent arithmetic or lexical notarization", 8],
+    ["payload", "Complete payload published", 10],
+    ["audit", "Audit record appended", 8],
+    ["enqueue", "Queue entry created", 2],
+    ["acknowledge", "Consumer acknowledgement", 3],
+    ["commit", "Transaction committed", 5],
+    ["release", "Occupancy released", 2],
+    ["cleanup", "Staging cleanup", 2],
+    ["successionPetition", "Succession petition", 1],
+    ["successor", "Successor certified", 2],
+    ["advance", "Ordinal advanced", 1],
+    ["complete", "Mandate completion recorded", 10],
+    ["rejection", "Certified rejection", 3, "First certified rejection per logical operation; retries do not pay again."],
+    ["rollback", "Certified rollback", 4, "Once per rejected logical operation. Errors themselves earn nothing."]
+  ]),
+  ...rates("Publication", "cycle", [["line", "New output line", 5], ["character", "Visible output character", 1], ["separator", "Line separator", 1], ["fizz", "Fizz classification", 10, "Exclusive of Buzz and FizzBuzz."], ["buzz", "Buzz classification", 15, "Exclusive of Fizz and FizzBuzz."], ["fizzbuzz", "FizzBuzz classification", 50, "Exclusive of Fizz and Buzz."]]),
+  ...[
+    ["digitSum", "Decimal digit sum", operation("digitSum", field("ordinal"))],
+    ["zeroes", "Trailing decimal zeroes", product(integer(25), operation("trailingZeroes", field("ordinal")))],
+    ["palindrome", "Multi-digit palindrome", product(integer(100), operation("digits", field("ordinal")), operation("palindrome", field("ordinal")))],
+    ["identical", "Multi-digit identical digits", product(integer(150), operation("digits", field("ordinal")), operation("identicalDigits", field("ordinal")))],
+    ["powerTen", "Exact power of ten", product(integer(100), operation("powerOfTen", field("ordinal")))]
+  ].map(([id, title2, formula]) => ({ id, title: title2, formula, category: "Numerical distinctions", scope: "cycle", eligibility: "Once per newly disclosed ordinal. Qualifying numerical distinctions stack." })),
+  { id: "appointment", title: "Companion salary and supplements", category: "Companions", scope: "cycle", formula: sum(product(lookup("rarity", "rarity"), sum(lookup("salary", "rarity"), product(integer(250), field("paired")), product(integer(500), field("loyalty")))), product(integer(1e3), field("first"))), eligibility: "Every genuine appointment, including repeats. Pair supplement once per appointment; loyalty every tenth appointment of the identity; first identity once per run." },
+  { id: "entrance", title: "Legendary or Mythic entrance grant", category: "Companions", scope: "flat", formula: lookup("entrance", "rarity"), eligibility: "Every genuine appointment, including repeats. Never multiplied." },
+  ...rates("Extraordinary operations", "incident", [
+    ["flightManifest", "Flight manifest registered", 100],
+    ["flightCrew", "Actual crew boarded", 50, "Actual crew only; no companion appointment awarded.", 3],
+    ["flightFold", "Aircraft folded", 200],
+    ["flightDeparture", "Departure completed", 300],
+    ["flightCheckpoint", "Fan checkpoint passed", 100, void 0, 3],
+    ["flightLoop", "Authorized holding loop completed", 150, void 0, 3],
+    ["flightPersonality", "Signature personality maneuver completed", 300],
+    ["flightApproach", "Final approach", 200],
+    ["flightLanding", "Landing completed", 1e3],
+    ["flightFinding", "Delivery finding recorded", 500],
+    ["flightDelivery", "Successful direct, courier or expedited delivery", 500],
+    ["flightFan", "Final effective non-default fan policy", 100, "Once per fan; repeated adjustment does not repay.", 3],
+    ["flightDestination", "Non-default destination actually served", 200],
+    ["flightFirstPilot", "First completed flight by this personality", 500, "Once per personality per run."],
+    ["flightResume", "Flight continued after reorganization", 500, "Once per flight, after actual progress resumes."],
+    ["heistCase", "Heist case registered", 100],
+    ["heistSuspect", "Actual suspect registered", 50, void 0, 3],
+    ["heistTactic", "Signature tactic identified", 300, "Once at identification; waiting for escape earns nothing."],
+    ["heistFootprints", "Footprints inspected", 200, "Once per case."],
+    ["heistAlibi", "Distinct innocent alibi", 100, void 0, 2],
+    ["heistCatch", "Successful player interception or amnesty", 1e3, "No award for automatic return, skip, disable or cancellation."],
+    ["heistReturn", "Stamp returned", 500],
+    ["heistReport", "Case report filed", 250],
+    ["heistResume", "Heist continued after reorganization", 500, "Once per case, after actual progress resumes."]
+  ]),
+  ...rates("Extraordinary operations", "flat", [
+    ["moveCharter", "Reorganization charter", 100],
+    ["movePack", "Room packed", 25, void 0, 8],
+    ["moveRoom", "Room moved", 50, void 0, 8],
+    ["moveUnpack", "Room unpacked", 25, void 0, 8],
+    ["moveAddress", "Room address rebound", 10, void 0, 8],
+    ["movePartition", "Room partition certified", 25, void 0, 8],
+    ["moveRoute", "Directed route validated", 1, void 0, 56],
+    ["moveAmenity", "Ninth amenity accommodated", 100],
+    ["moveMinutes", "Reorganization minutes filed", 100],
+    ["moveResume", "Interrupted work advanced afterward", 250]
+  ]),
+  ...rates("Office literacy", "flat", [
+    ["biography", "Appointed companion biography inspected", 25, "First inspection of each actually appointed identity in this run."],
+    ["evidence", "Procedural evidence kind inspected", 5, "First inspection of each kind of actual evidence in this run."],
+    ["department", "Department inspected", 10, "First inspection of each department in this run."],
+    ["curiosity", "Authored curiosity response inspected", 20, "First inspection of each authored response in this run."]
+  ]),
+  ...rates("Achievements", "flat", [
+    ["bingo", "Bureaucratic Bingo", 500, "Every fresh set of numeral, Fizz, Buzz and FizzBuzz; collection resets after award."],
+    ["century", "Century of Consequences", 1e4, "Every 100 newly disclosed lines."],
+    ["committee", "Appointment Committee", 2500, "Every ten appointments, including repeats."],
+    ["airline", "Paper Airline", 25e3, "Every five successful natural flights."],
+    ["affairs", "Internal Affairs", 15e3, "Three player-resolved natural heists, once per run."],
+    ["spectrum", "Full Spectrum of Improbability", 1e5, "All five rarities appointed, once per run."],
+    ["census", "Personality Census", 25e4, "All thirteen pilot personalities completed, once per run."],
+    ["partitions", "Partition Connoisseur", 25e3, "All twelve styles installed through scored reorganizations, once per run."],
+    ["departments", "Departmental Completionist", 2e3, "All eight departments inspected, once per run."]
+  ]),
+  { id: "magnitude", title: "Orders of Magnitude", category: "Achievements", scope: "flat", formula: product(integer(1e3), field("threshold")), eligibility: "Once at each completed-line count 10, 100, 1,000 and subsequent powers of ten." },
+  { id: "dividend", title: "Completion dividend", category: "Completion dividend", scope: "flat", formula: sum(integer(5e3), product(integer(100), field("completed")), operation("floorDivide", field("netScore"), integer(10))), eligibility: "Once after a positive-length mandate finishes and its incidents settle. Uses net score before this dividend; abandoned runs do not qualify." }
+];
+var ruleById = new Map(meritRules.map((rule) => [rule.id, rule]));
+var badgeRules = [
+  { id: "bingo", title: "Bureaucratic Bingo", counter: "bingo", target: "1", repeat: true, award: "bingo", description: "Complete a fresh set of numeral, Fizz, Buzz and FizzBuzz." },
+  { id: "century", title: "Century of Consequences", counter: "lines", target: "100", repeat: true, award: "century", description: "Disclose a century of output lines." },
+  { id: "committee", title: "Appointment Committee", counter: "appointments", target: "10", repeat: true, award: "committee", description: "Appoint ten companions. Repeats count." },
+  { id: "airline", title: "Paper Airline", counter: "flights", target: "5", repeat: true, award: "airline", description: "Complete five successful natural flights." },
+  { id: "affairs", title: "Internal Affairs", counter: "heists", target: "3", repeat: false, award: "affairs", description: "Resolve three natural heists by interception or amnesty." },
+  { id: "spectrum", title: "Full Spectrum of Improbability", counter: "rarities", target: "5", repeat: false, award: "spectrum", description: "Appoint all five rarities." },
+  { id: "census", title: "Personality Census", counter: "pilots", target: String(scoringPolicy.flightPersonalities), repeat: false, award: "census", description: "Complete flights with every pilot personality, including the acting clerk." },
+  { id: "partitions", title: "Partition Connoisseur", counter: "partitions", target: String(scoringPolicy.partitionStyles), repeat: false, award: "partitions", description: "Install every partition style through scored moves." },
+  { id: "departments", title: "Departmental Completionist", counter: "departments", target: String(scoringPolicy.departments), repeat: false, award: "departments", description: "Inspect every department." },
+  { id: "magnitude", title: "Orders of Magnitude", counter: "magnitude", target: "1", repeat: true, description: "Cross a power-of-ten completed-line milestone; award is 1,000 times the threshold." },
+  { id: "untouched", title: "Not One Point", counter: "untouched", target: "1", repeat: false, description: "Stop a heist with a positive budget before its first debit. Recognition only." },
+  { id: "reappropriation", title: "Reappropriation", counter: "reappropriation", target: "1", repeat: false, description: "Recover stolen points. Recognition only." },
+  { id: "authority", title: "Temporary Executive Powers", counter: "boosted", target: "1", repeat: false, description: "Complete a boosted cycle. Recognition only." },
+  { id: "ratified", title: "Ratified at Last", counter: "completed", target: "1", repeat: false, description: "Earn a completion dividend. Recognition only." },
+  { id: "legendary", title: "Legendary Appointment", counter: "legendary", target: "1", repeat: false, description: "Receive a Legendary appointment. Recognition only." },
+  { id: "mythic", title: "Mythic Appointment", counter: "mythic", target: "1", repeat: false, description: "Receive a Mythic appointment. Recognition only." }
+];
+var rulesManifest = { version: scoringVersion, tables: rarityTables, boosts: boostSchedule, policy: scoringPolicy, financial: financialRules, rules: meritRules, badges: badgeRules };
+function validateRules() {
+  if (ruleById.size !== meritRules.length || new Set(badgeRules.map((b) => b.id)).size !== badgeRules.length) throw Error("Duplicate rule or badge");
+  for (const rule of meritRules) {
+    validateExpression(rule.formula, rarityTables);
+    if (!rule.eligibility || !rule.title || rule.cap !== void 0 && rule.cap < 1) throw Error("Incomplete rule");
+  }
+  for (const formula of Object.values(financialRules)) validateExpression(formula, rarityTables);
+  for (const badge of badgeRules) if (badge.award && !ruleById.has(badge.award) || BigInt(badge.target) < 1n) throw Error("Invalid badge criterion");
+  for (const boost of boostSchedule) if (boost.cycles < 1 || boost.cycles >= Number(boost.every) || boost.factor <= 1) throw Error("Unbounded boost");
+}
+validateRules();
+function manifestIdentity() {
+  let hash3 = 2166136261;
+  for (const c of JSON.stringify(rulesManifest)) hash3 = Math.imul(hash3 ^ c.charCodeAt(0), 16777619) >>> 0;
+  return hash3.toString(16).padStart(8, "0");
+}
+var rulesIdentity = manifestIdentity();
+var guidePath = `scoring/${scoringVersion}/${rulesIdentity}/`;
+
 // web/office-heist-model.ts
-var heistChaseMs = 15e3;
+var heistChaseMs = scoringPolicy.chaseMs;
 var heistReturnMs = 3e3;
 var destinations = ["reception", "personnel", "procurement", "premises", "memory", "publication", "executive"];
 function heistEligible(ordinal) {
@@ -1026,7 +1293,7 @@ var HeistCoordinator = class {
     const p = this.pending;
     if (!p) return;
     const chase = p.returnFrom ?? Math.min(p.elapsed, heistChaseMs), leg = Math.min(2, Math.floor(chase / 5e3));
-    return Object.freeze({ ...p, leg, holder: leg % p.plan.actors.length, legProgress: Math.min(1, (chase - leg * 5e3) / 5e3), returning: p.elapsed >= heistChaseMs, returnProgress: Math.max(0, (p.elapsed - heistChaseMs) / heistReturnMs) });
+    return Object.freeze({ ...p, chaseElapsed: chase, alibis: Object.freeze([...p.alibis]), leg, holder: leg % p.plan.actors.length, legProgress: Math.min(1, (chase - leg * 5e3) / 5e3), returning: p.elapsed >= heistChaseMs, returnProgress: Math.max(0, (p.elapsed - heistChaseMs) / heistReturnMs) });
   }
   subscribe(listener) {
     this.listeners.add(listener);
@@ -1041,7 +1308,7 @@ var HeistCoordinator = class {
       this.lease = this.gate.acquire("heist");
       if (this.lease === void 0) return false;
     }
-    this.pending = { id: ++this.serial, plan, elapsed: 0, footprints: false, announcement: plan.actors[0].name + " has stolen the approval stamp." };
+    this.pending = { id: ++this.serial, plan, elapsed: 0, footprints: false, alibis: [], announcement: plan.actors[0].name + " has stolen the approval stamp." };
     this.last = void 0;
     this.allowed = false;
     this.notify();
@@ -1072,6 +1339,7 @@ var HeistCoordinator = class {
     const s = this.snapshot;
     if (!s || s.id !== id || s.returning || !Number.isInteger(index) || !s.plan.actors[index]) return false;
     if (index !== s.holder) {
+      if (!this.pending.alibis.includes(index)) this.pending.alibis.push(index);
       this.pending.announcement = s.plan.actors[index].name + " objects: \u201CI was attending a meeting about my whereabouts.\u201D";
       this.notify();
       return false;
@@ -1100,7 +1368,7 @@ var HeistCoordinator = class {
   finish(resolution = "skipped") {
     const p = this.pending;
     if (!p) return;
-    this.records.push(Object.freeze({ id: p.id, plan: p.plan, resolution, finding: heistFinding(resolution) }));
+    this.records.push(Object.freeze({ id: p.id, plan: p.plan, resolution, finding: heistFinding(resolution), snapshot: this.snapshot }));
     if (this.records.length > 10) this.records.shift();
     this.pending = void 0;
     this.last = void 0;
@@ -1389,6 +1657,7 @@ function companionDialog() {
       }
     });
     body.append(label, link, copy, status);
+    document.dispatchEvent(new CustomEvent("score-inspection", { detail: { kind: "biography", identity: c.id } }));
     if (!dialog.open) dialog.showModal();
     dialog.querySelector(".companion-dialog-body").scrollTop = 0;
   } };
@@ -1801,15 +2070,44 @@ var CompanionDesk = class {
 // web/office-heist.ts
 var officeHeist = new HeistCoordinator(officeIncidents);
 var scheduler2 = new PresentationScheduler(() => !document.hidden && document.body.dataset.sitePage === "demo");
+var userPaused = false;
+function controlsVisible() {
+  if (document.hidden || document.body.dataset.sitePage !== "demo" || officeEstate.moving) return false;
+  const modal = [...document.querySelectorAll("dialog[open]")].at(-1);
+  return [...document.querySelectorAll(".heist-panel")].some((panel) => {
+    if (panel.hidden || panel.closest("[inert]") || modal && !modal.contains(panel)) return false;
+    if (officeHeist.snapshot?.plan.source === "encounter" && panel.dataset.scoreHeist !== String(officeHeist.snapshot.id)) return false;
+    const required = officeHeist.snapshot?.plan.source === "encounter" ? [panel.querySelector(".heist-finance"), panel.querySelector('[aria-label="Offer an amnesty biscuit"]')] : [panel.querySelector("button")];
+    return required.every((element4) => {
+      if (!element4) return false;
+      const r = element4.getBoundingClientRect(), p = panel.getBoundingClientRect();
+      return r.width > 0 && r.height > 0 && r.left >= 0 && r.right <= innerWidth && r.top >= Math.max(0, p.top) && r.bottom <= Math.min(innerHeight, p.bottom) && document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2)?.closest(".heist-panel") === panel;
+    });
+  });
+}
+function setHeistPaused(paused2) {
+  officeHeist.advance(performance.now(), false);
+  userPaused = paused2;
+  scheduler2.refresh();
+}
+function actOnHeist(action) {
+  if (!controlsVisible()) return;
+  officeHeist.advance(performance.now(), !userPaused);
+  action();
+}
 function tick2(now) {
-  officeHeist.advance(now, !officeEstate.moving);
+  const rehearsal = officeHeist.snapshot?.plan.source === "rehearsal";
+  officeHeist.advance(now, !officeEstate.moving && (rehearsal || !userPaused && controlsVisible()));
   if (officeHeist.active) scheduler2.request(tick2);
 }
 officeHeist.subscribe(() => {
   if (officeHeist.active) scheduler2.request(tick2);
   else scheduler2.cancel();
 });
-for (const event of ["visibilitychange", "site-page-change", "demo-desk-change", "office-fullscreen-change"]) document.addEventListener(event, () => scheduler2.refresh());
+for (const event of ["visibilitychange", "site-page-change", "demo-desk-change", "office-fullscreen-change", "score-dialog-change"]) document.addEventListener(event, () => {
+  officeHeist.advance(performance.now(), false);
+  scheduler2.refresh();
+});
 addEventListener("pagehide", () => {
   scheduler2.cancel();
   officeHeist.finish("cancelled");
@@ -1832,10 +2130,7 @@ var StampHeistDesk = class {
           sessionStorage.setItem("slopbuzz:stamp-heists:v1", this.enabled ? "on" : "off");
         } catch {
         }
-        if (!this.enabled) {
-          ++this.rehearsalSerial;
-          officeHeist.finish("disabled");
-        }
+        if (!this.enabled) ++this.rehearsalSerial;
       });
     }
     document.getElementById("heist-rehearse").addEventListener("click", () => void this.rehearse());
@@ -1965,11 +2260,11 @@ var HeistPanel = class {
       b.title = title2;
       b.setAttribute("aria-label", title2);
       b.addEventListener("click", () => {
-        if (b.getAttribute("aria-disabled") !== "true") action();
+        if (b.getAttribute("aria-disabled") !== "true") actOnHeist(action);
       });
       this.actions.append(b);
     }
-    this.root.append(this.label, this.status, this.cast, this.actions);
+    this.root.append(this.label, this.actions, this.status, this.cast);
     document.getElementById(prefix === "office" ? "office-stage" : "supervision-stage").append(this.root);
     officeHeist.subscribe(() => this.render());
     officeEstate.subscribe((event) => {
@@ -2023,7 +2318,7 @@ var HeistPanel = class {
         b.dataset.suspect = String(index);
         const id = s.id;
         b.addEventListener("click", () => {
-          if (b.getAttribute("aria-disabled") !== "true") officeHeist.intercept(index, id);
+          if (b.getAttribute("aria-disabled") !== "true") actOnHeist(() => officeHeist.intercept(index, id));
         });
         return b;
       }));
@@ -2316,6 +2611,7 @@ var OfficeFullscreen = class {
     this.adapt();
     this.panels.value = this.surface.dataset.largeText === "true" ? "none" : innerWidth < 360 || innerHeight < 450 ? "log" : "both";
     if (mode === "observe") {
+      this.move(byId("score-cluster"), "office-fullscreen-header");
       this.move(byId("supervision-pane"), "office-fullscreen-stage");
       this.move(byId("watch-output"), "office-fullscreen-output-slot");
       this.move(byId("supervision-caption"), "office-fullscreen-current-slot");
@@ -2344,7 +2640,7 @@ var OfficeFullscreen = class {
       else notice.setAttribute("tabindex", previousTabIndex);
     });
     this.move(notice, "office-fullscreen-notice");
-    for (const id of ["companion-dialog", "personnel-dialog"]) this.move(byId(id), this.surface);
+    for (const id of ["companion-dialog", "personnel-dialog", "score-dialog"]) this.move(byId(id), this.surface);
     this.inspection(false);
     this.layout();
     this.dialog.showModal();
@@ -2815,7 +3111,7 @@ var OfficeTourDesk = class {
       let readiness;
       this.canvas.removeAttribute("data-rendered");
       this.canvas.dataset.module = releaseAsset("office-world.js").href;
-      this.renderer = module.createOffice({ canvas: this.canvas, state: this.sceneState(), onHeistSuspect: (index, id) => officeHeist.intercept(index, id), onHeistFootprint: () => officeHeist.follow(), onFlightFan: (index, id) => officeFlight.turn(index, id), onFlightRunway: (room, id) => officeFlight.destination(room, id), onRoom: (id) => this.select(id), onAmenity: () => document.dispatchEvent(new CustomEvent("office-amenity", { detail: "office" })), onProp: (room, prop2) => {
+      this.renderer = module.createOffice({ canvas: this.canvas, state: this.sceneState(), onHeistSuspect: (index, id) => actOnHeist(() => officeHeist.intercept(index, id)), onHeistFootprint: () => actOnHeist(() => officeHeist.follow()), onFlightFan: (index, id) => officeFlight.turn(index, id), onFlightRunway: (room, id) => officeFlight.destination(room, id), onRoom: (id) => this.select(id), onAmenity: () => document.dispatchEvent(new CustomEvent("office-amenity", { detail: "office" })), onProp: (room, prop2) => {
         this.select(room);
         const p = roomById(room)?.props.find((x) => x.id === prop2);
         if (p) this.inspectProp(p);
@@ -2894,6 +3190,7 @@ var OfficeTourDesk = class {
   }
   select(id, user = true) {
     if (user) {
+      document.dispatchEvent(new CustomEvent("score-inspection", { detail: { kind: "department", identity: id } }));
       this.retainFile();
       if (officeFullscreen().mode === "facilities") officeFullscreen().inspection(true);
     }
@@ -2974,6 +3271,7 @@ var OfficeTourDesk = class {
     const action = this.selectedProp?.actions[index];
     if (!action) return;
     this.selectedAction = index;
+    document.dispatchEvent(new CustomEvent("score-inspection", { detail: { kind: "curiosity", identity: this.selectedProp.id + ":" + index } }));
     byId2("office-story-answer").textContent = action.answer;
     this.renderer?.react(this.selectedProp.id, index);
     this.tone();
@@ -3659,7 +3957,7 @@ var OfficeSupervisionDesk = class {
         }, onProp: () => {
         }, onStep: () => {
         }, onView: () => {
-        }, onHeistSuspect: (index, id) => officeHeist.intercept(index, id), onHeistFootprint: () => officeHeist.follow(), onFlightFan: (index, id) => officeFlight.turn(index, id), onFlightRunway: (room, id) => officeFlight.destination(room, id), onFrame: (frame) => this.painted(frame), onReady: () => {
+        }, onHeistSuspect: (index, id) => actOnHeist(() => officeHeist.intercept(index, id)), onHeistFootprint: () => actOnHeist(() => officeHeist.follow()), onFlightFan: (index, id) => officeFlight.turn(index, id), onFlightRunway: (room, id) => officeFlight.destination(room, id), onFrame: (frame) => this.painted(frame), onReady: () => {
           this.ready = true;
           if (this.latestCue) this.renderer?.direct(this.latestCue);
           clearTimeout(this.readiness);
@@ -4203,15 +4501,8 @@ var pointRates = Object.freeze({ Common: 10n, Uncommon: 25n, Rare: 100n, Legenda
 var scoreRarities = Object.keys(pointRates);
 var scorePolicies = ["factor-resonance-v1", "ordinal-constellation-v1"];
 var decimal2 = (value) => typeof value === "string" && /^(0|[1-9][0-9]*)$/.test(value);
-var appointmentCount = (r) => scoreRarities.reduce((sum, tier) => sum + BigInt(r.counts[tier]), 0n);
-var portfolioPoints = (r) => scoreRarities.reduce((sum, tier) => sum + BigInt(r.counts[tier]) * pointRates[tier], 0n);
-function compactPoints(value) {
-  const digits = value.toString();
-  if (digits.length <= 6) return digits.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-  const group = Math.floor((digits.length - 1) / 3), whole = digits.length - group * 3;
-  return digits.slice(0, whole) + "." + digits.slice(whole, whole + 2) + (group < 5 ? ["", "K", "M", "B", "T"][group] : " \xD7 10^" + group * 3);
-}
-var exactPoints = (value) => value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+var appointmentCount = (r) => scoreRarities.reduce((sum2, tier) => sum2 + BigInt(r.counts[tier]), 0n);
+var portfolioPoints = (r) => scoreRarities.reduce((sum2, tier) => sum2 + BigInt(r.counts[tier]) * pointRates[tier], 0n);
 function newPortfolio(id, mandate, authority, now) {
   if (!decimal2(mandate) || !scorePolicies.includes(authority)) throw Error("Invalid portfolio mandate or authority");
   return { rules: portfolioRules, id, mandate, seedPolicy, catalogVersion: "", startedAt: now, updatedAt: now, status: "active", through: "0", counts: { Common: "0", Uncommon: "0", Rare: "0", Legendary: "0", Mythic: "0" }, seen: [], disabled: "0", unscored: "0", initialAuthority: authority, lastAuthority: authority, authorityChanges: "0", authorities: {} };
@@ -4291,82 +4582,434 @@ var PortfolioRun = class {
   }
 };
 
-// web/portfolio-store.ts
-var PortfolioStore = class {
+// web/scoring-service.ts
+var scoringStorageKey = "slopbuzz:enterprise-score:v2";
+var cabinetStorageKey = "slopbuzz:badge-cabinet:v2";
+var increment = (object, key2, amount) => object[key2] = String(BigInt(object[key2] || "0") + amount);
+var netPoints = (r) => BigInt(r.gross) - BigInt(r.stolen) + BigInt(r.recovered) + BigInt(r.dividend);
+function cycleAuthority(cycle) {
+  const value = BigInt(cycle);
+  if (value <= 1n) return { factor: 1, remaining: 0, milestone: "0" };
+  const interval = BigInt(boostSchedule.at(-1).every), latest = (value - 1n) / interval * interval;
+  if (latest > 0n) {
+    const policy = boostSchedule.find((p) => latest % BigInt(p.every) === 0n);
+    const offset = value - latest;
+    if (offset <= BigInt(policy.cycles)) return { factor: policy.factor, remaining: policy.cycles - Number(offset) + 1, milestone: String(latest) };
+  }
+  return { factor: 1, remaining: 0, milestone: "0" };
+}
+function heistFinancials(opening, elapsed, successful = false) {
+  const time = Math.max(0, Math.floor(elapsed)), budget = evaluate(financialRules.budget, { openingScore: opening }), stolen = evaluate(financialRules.stolen, { budget, elapsedMs: time });
+  const recoveryBasisPoints = time >= scoringPolicy.chaseMs ? 0n : evaluate(financialRules.recoveryBasisPoints, { elapsedMs: time });
+  const recovery = successful ? evaluate(financialRules.recovery, { stolen, recoveryBasisPoints }) : 0n;
+  return { budget, stolen, recoveryBasisPoints, recovery };
+}
+var decimal3 = (s) => typeof s === "string" && /^(0|[1-9][0-9]*)$/.test(s);
+function decodeScoringRun(value) {
+  try {
+    const r = value;
+    if (!r || r.rules !== scoringVersion || !/^[a-f0-9]{8}$/.test(r.identity) || !r.id || !decodePortfolio(r.verification) || r.verification.id !== r.id || r.verification.status !== r.status || ![r.startedAt, r.updatedAt].every((d) => Number.isFinite(Date.parse(d)))) return;
+    if (!["gross", "stolen", "recovered", "dividend", "warrants", "pendingResume"].every((k) => decimal3(r[k])) || BigInt(r.recovered) > BigInt(r.stolen) || netPoints(r) < 0n) return;
+    if (!Array.isArray(r.recent) || r.recent.length > scoringPolicy.recentReceipts || !Array.isArray(r.inspections) || r.inspections.length > 1e4 || Object.keys(r.identities).length > scoringPolicy.companionIdentities) return;
+    for (const map of [r.counters, r.badges, r.identities, r.categories]) if (!map || Object.values(map).some((v) => !decimal3(v))) return;
+    if (!r.buckets || Object.keys(r.buckets).length > 2e3 || Object.entries(r.buckets).some(([id, b]) => !/^\w+\|[1-9][0-9]*$/.test(id) || ![b.points, b.quantity, b.awards].every(decimal3))) return;
+    const total = BigInt(r.gross) + BigInt(r.dividend);
+    if (Object.values(r.buckets).reduce((sum2, b) => sum2 + BigInt(b.points), 0n) !== total || Object.values(r.categories).reduce((sum2, p) => sum2 + BigInt(p), 0n) !== total) return;
+    if (r.recent.some((x) => !/^\w+$/.test(x.rule) || ![x.points, x.quantity, x.factor].every(decimal3))) return;
+    if (![r.rarities, r.pilots, r.partitions, r.departments, r.bingo].every((a) => Array.isArray(a) && a.length <= 3200 && a.every((v) => typeof v === "string"))) return;
+    if (r.incident && (![r.incident.opening, r.incident.budget, r.incident.stolen, r.incident.recovered].every(decimal3) || !Number.isFinite(r.incident.elapsed) || r.incident.elapsed < 0 || BigInt(r.incident.budget) > BigInt(r.incident.opening) || BigInt(r.incident.stolen) > BigInt(r.incident.budget) || BigInt(r.incident.recovered) > BigInt(r.incident.stolen))) return;
+    return structuredClone(r);
+  } catch {
+    return;
+  }
+}
+var EnterpriseScoringService = class {
   current;
   saved;
+  legacy;
   active;
+  verification;
+  adjudicating;
+  evidence;
+  evidenceThrough = "0";
+  lastEvidenceStart = "0";
+  cabinet = {};
   persistent;
   listeners = /* @__PURE__ */ new Set();
   storage;
-  now;
+  clock;
   id;
-  constructor(storage, now = () => (/* @__PURE__ */ new Date()).toISOString(), id = () => crypto.randomUUID()) {
+  constructor(storage, clock = () => (/* @__PURE__ */ new Date()).toISOString(), id = () => crypto.randomUUID()) {
     this.storage = storage;
-    this.now = now;
+    this.clock = clock;
     this.id = id;
     this.persistent = !!storage;
     try {
-      const data = JSON.parse(storage?.getItem(portfolioStorageKey) || "null");
-      if (data?.schema === portfolioStorageKey) {
-        const current = decodePortfolio(data.current), saved = decodePortfolio(data.saved);
-        if (current) {
-          this.current = new PortfolioRun(current);
-          if (current.status === "active") this.current.close("interrupted", this.now());
-        }
-        if (saved) this.saved = new PortfolioRun(saved);
+      const data = JSON.parse(storage?.getItem(scoringStorageKey) || "null");
+      this.current = decodeScoringRun(data?.current);
+      this.saved = decodeScoringRun(data?.saved);
+      const old = JSON.parse(storage?.getItem(portfolioStorageKey) || "null");
+      this.legacy = decodePortfolio(old?.current) || decodePortfolio(old?.saved);
+      this.mergeCabinet(JSON.parse(storage?.getItem(cabinetStorageKey) || "{}"), false);
+      if (this.current?.status === "active") {
+        this.current.status = "interrupted";
+        this.current.verification.status = "interrupted";
+        this.current.incident = void 0;
+        this.current.updatedAt = this.clock();
       }
     } catch {
       this.persistent = false;
     }
   }
   snapshot() {
-    return { current: this.current?.snapshot(), saved: this.saved?.snapshot(), persistent: this.persistent };
+    return structuredClone({ current: this.current, saved: this.saved, legacy: this.legacy, cabinet: this.cabinet, persistent: this.persistent });
+  }
+  get runId() {
+    return this.active?.id;
+  }
+  get through() {
+    return this.active?.verification.through || "0";
+  }
+  get incident() {
+    return this.active?.incident ? structuredClone(this.active.incident) : void 0;
   }
   subscribe(listener) {
     this.listeners.add(listener);
     return () => this.listeners.delete(listener);
   }
+  mergeCabinet(value, publish = true) {
+    if (value && typeof value === "object") for (const badge of badgeRules) {
+      const candidate = value[badge.id];
+      if (!candidate || !decimal3(candidate.tier) || !Number.isFinite(Date.parse(candidate.firstEarned))) continue;
+      const old = this.cabinet[badge.id];
+      this.cabinet[badge.id] = { tier: old && BigInt(old.tier) > BigInt(candidate.tier) ? old.tier : candidate.tier, firstEarned: old && old.firstEarned < candidate.firstEarned ? old.firstEarned : candidate.firstEarned };
+    }
+    if (publish) this.publish();
+  }
   publish() {
+    if (this.active) this.active.updatedAt = this.clock();
     try {
       if (!this.storage) throw Error("Storage unavailable");
-      this.storage.setItem(portfolioStorageKey, JSON.stringify({ schema: portfolioStorageKey, current: this.current?.snapshot(), saved: this.saved?.snapshot() }));
+      this.mergeCabinet(JSON.parse(this.storage.getItem(cabinetStorageKey) || "{}"), false);
+      this.storage.setItem(scoringStorageKey, JSON.stringify({ current: this.current, saved: this.saved }));
+      this.storage.setItem(cabinetStorageKey, JSON.stringify(this.cabinet));
       this.persistent = true;
     } catch {
       this.persistent = false;
     }
     for (const listener of this.listeners) listener();
   }
-  begin(mandate, authority) {
+  begin(mandate, authority, conditions = {}) {
     this.finish("replaced");
     this.saved = this.current || this.saved;
-    this.current = this.active = new PortfolioRun(newPortfolio(this.id(), mandate, authority, this.now()));
+    const now = this.clock(), verification = newPortfolio(this.id(), mandate, authority, now);
+    this.verification = new PortfolioRun(verification);
+    this.current = this.active = { rules: scoringVersion, identity: rulesIdentity, id: verification.id, status: "active", startedAt: now, updatedAt: now, verification, conditions, gross: "0", stolen: "0", recovered: "0", dividend: "0", categories: {}, buckets: {}, recent: [], counters: {}, badges: {}, identities: {}, rarities: [], pilots: [], partitions: [], departments: [], inspections: [], bingo: [], warrants: scoringPolicy.initialWarrants, pendingResume: "0", lastIncidents: {}, partial: false };
+    this.evidence = void 0;
+    this.evidenceThrough = "0";
+    this.lastEvidenceStart = "0";
+    this.award("mandate");
+    this.award("bounds");
+    this.award("boundDigit", { quantity: mandate.length });
     this.publish();
   }
-  finish(status) {
+  markPartial() {
     if (this.active) {
-      this.active.close(status, this.now());
-      this.active = void 0;
+      this.active.partial = true;
       this.publish();
     }
   }
-  /** Capture ownership before awaiting Java: a late response can never credit a newer run. */
-  async disclose(start, lines2, authority, load) {
-    const run = this.active;
-    if (!run) return;
-    try {
-      const finds = authority ? await load() : [];
-      run.disclose(start, lines2, authority, finds, this.now());
-    } catch {
-      run.disclose(start, lines2, authority, [], this.now(), true);
+  /** Receipts are request-local, uncapped by the narrative trace, and released with their output. */
+  receive(evidence, runId = this.runId) {
+    const r = this.active;
+    if (!r || runId !== r.id || BigInt(evidence.end) < BigInt(evidence.start) - 1n || BigInt(evidence.start) <= BigInt(this.evidenceThrough) || evidence.start === this.lastEvidenceStart) return;
+    this.evidence = evidence;
+    this.evidenceThrough = evidence.end;
+    this.lastEvidenceStart = evidence.start;
+    if (!evidence.complete) r.partial = true;
+    this.work(evidence.global, 1);
+    if (evidence.end === "0") this.work(evidence.closing, 1);
+    this.publish();
+  }
+  work(receipt, factor) {
+    const run = this.adjudicating || this.active;
+    for (const [id, quantity] of Object.entries(receipt)) {
+      const rule = ruleById.get(id);
+      if (!rule || rule.category !== "Procedural work" || !decimal3(quantity)) {
+        run.partial = true;
+        continue;
+      }
+      if (["runtime", "ownership"].includes(id) && run.buckets[id + "|1"]) continue;
+      this.award(id, { quantity }, factor);
     }
-    if (run === this.current || run === this.saved) this.publish();
+  }
+  /** Capture ownership before asynchronous companion evidence; old work never enters a newer run. */
+  async disclose(start, lines2, authority, load) {
+    const run = this.active, verification = this.verification, packet = this.evidence;
+    if (!run || !verification) return;
+    let finds = [];
+    let unavailable = false;
+    try {
+      finds = authority ? await load() : [];
+    } catch {
+      unavailable = true;
+    }
+    if (run !== this.current && run !== this.saved || run.status === "completed") return;
+    try {
+      if (!verification.disclose(start, lines2, authority, finds, this.clock(), unavailable)) return;
+    } catch {
+      unavailable = true;
+      finds = [];
+      if (!verification.disclose(start, lines2, authority, [], this.clock(), true)) return;
+    }
+    const byOrdinal = new Map(finds.map((d) => [d.assignment.ordinal, d]));
+    this.adjudicating = run;
+    try {
+      for (const [index, text2] of lines2.entries()) {
+        const ordinal = BigInt(start) + BigInt(index), factor = cycleAuthority(ordinal).factor;
+        const facts = packet?.cycles[String(ordinal)];
+        if (facts) this.work(facts, factor);
+        else if (packet?.complete !== true) run.partial = true;
+        this.award("line", {}, factor);
+        this.award("character", { quantity: text2.length }, factor);
+        this.award("separator", {}, factor);
+        const flavor = ["Fizz", "Buzz", "FizzBuzz"].includes(text2) ? text2.toLowerCase() : "numeral";
+        if (flavor !== "numeral") this.award(flavor, {}, factor);
+        for (const id of ["digitSum", "zeroes", "palindrome", "identical", "powerTen"]) this.award(id, { ordinal }, factor);
+        if (!run.bingo.includes(flavor)) run.bingo.push(flavor);
+        if (run.bingo.length === 4) {
+          run.bingo = [];
+          this.count("bingo");
+        }
+        const discovery = byOrdinal.get(String(ordinal));
+        if (discovery && !unavailable) {
+          const c = discovery.companion, count = BigInt(run.identities[c.id] || "0") + 1n;
+          run.identities[c.id] = String(count);
+          this.award("appointment", { rarity: c.rarity, paired: c.kind === "pair" ? 1 : 0, loyalty: count % BigInt(scoringPolicy.loyaltyEvery) === 0n ? 1 : 0, first: count === 1n ? 1 : 0 }, factor);
+          this.award("entrance", { rarity: c.rarity });
+          this.count("appointments");
+          if (!run.rarities.includes(c.rarity)) {
+            run.rarities.push(c.rarity);
+            this.count("rarities");
+          }
+          if (c.rarity === "Legendary") this.count("legendary");
+          if (c.rarity === "Mythic") this.count("mythic");
+        }
+        this.count("lines");
+        if (factor > 1) this.count("boosted");
+        if (ordinal % BigInt(scoringPolicy.reorganizationEvery) === 0n) run.warrants = String(BigInt(run.warrants) + 1n);
+        if (/^10+$/.test(String(ordinal))) {
+          this.award("magnitude", { threshold: ordinal });
+          this.count("magnitude");
+        }
+        if (BigInt(run.pendingResume) > 0n) {
+          this.award("moveResume", { quantity: run.pendingResume });
+          run.pendingResume = "0";
+        }
+        if (packet && String(ordinal) === packet.end) this.work(packet.closing, 1);
+      }
+      run.verification = verification.snapshot();
+      run.updatedAt = this.clock();
+      if (unavailable) run.partial = true;
+    } finally {
+      this.adjudicating = void 0;
+    }
+    this.publish();
+  }
+  award(id, facts = {}, factor = 1) {
+    const r = this.adjudicating || this.active, rule = ruleById.get(id);
+    if (!r || !rule) return;
+    const quantity = BigInt(facts.quantity ?? 1);
+    if (quantity < 0n) throw Error("Negative award quantity");
+    const multiplier = rule.scope === "flat" ? 1 : factor, points = evaluate(rule.formula, { quantity, ...facts }, rarityTables) * BigInt(multiplier);
+    if (points <= 0n) return;
+    if (rule.category === "Completion dividend") r.dividend = String(BigInt(r.dividend) + points);
+    else r.gross = String(BigInt(r.gross) + points);
+    increment(r.categories, rule.category, points);
+    const key2 = id + "|" + multiplier, bucket = r.buckets[key2] ??= { quantity: "0", points: "0", awards: "0" };
+    increment(bucket, "quantity", quantity);
+    increment(bucket, "points", points);
+    increment(bucket, "awards", 1n);
+    r.recent.push({ rule: id, quantity: String(quantity), factor: String(multiplier), points: String(points), at: this.clock(), detail: Object.entries(facts).filter(([key3]) => key3 !== "quantity").map(([key3, value]) => key3 + "=" + value).join("; ") });
+    if (r.recent.length > scoringPolicy.recentReceipts) r.recent.splice(0, r.recent.length - scoringPolicy.recentReceipts);
+  }
+  count(counter, amount = 1n) {
+    const r = this.adjudicating || this.active;
+    increment(r.counters, counter, amount);
+    for (const badge of badgeRules.filter((b) => b.counter === counter)) {
+      const progress = BigInt(r.counters[counter]), tier = badge.repeat ? progress / BigInt(badge.target) : progress >= BigInt(badge.target) ? 1n : 0n, previous = BigInt(r.badges[badge.id] || "0");
+      if (tier <= previous) continue;
+      r.badges[badge.id] = String(tier);
+      if (badge.award) this.award(badge.award, { quantity: tier - previous });
+      const old = this.cabinet[badge.id];
+      this.cabinet[badge.id] = { firstEarned: old?.firstEarned || this.clock(), tier: old && BigInt(old.tier) > tier ? old.tier : String(tier) };
+    }
+  }
+  startIncident(kind, id, ordinal, rarity, runId = this.runId) {
+    const r = this.active;
+    if (!r || runId !== r.id || r.incident || BigInt(ordinal) > BigInt(r.verification.through) || !rarityTables.rarity[rarity] || BigInt(id) <= BigInt(r.lastIncidents[kind] || "0")) return false;
+    r.lastIncidents[kind] = id;
+    const opening = netPoints(r);
+    r.incident = { kind, id, ordinal, rarity, boost: cycleAuthority(ordinal).factor, counts: {}, opening: String(opening), budget: String(kind === "heist" ? heistFinancials(opening, 0).budget : 0), stolen: "0", recovered: "0", elapsed: 0, settled: false, recoveryBasisPoints: "10000", resumed: false };
+    this.publish();
+    return true;
+  }
+  incidentWork(id, work, runId = this.runId) {
+    const r = this.active, i = r?.incident;
+    if (!r || !i || i.id !== id || r.id !== runId) return;
+    let changed = false;
+    for (const [ruleId, quantity] of Object.entries(work)) {
+      const rule = ruleById.get(ruleId);
+      if (!rule || !ruleId.startsWith(i.kind) || !Number.isSafeInteger(quantity) || quantity < 0) continue;
+      const count = BigInt(Math.min(quantity, rule.cap ?? 1)), before = BigInt(i.counts[ruleId] || "0");
+      if (count > before) {
+        i.counts[ruleId] = String(count);
+        this.award(ruleId, { quantity: count - before }, i.boost * Number(rarityTables.rarity[i.rarity]));
+        changed = true;
+      }
+    }
+    if (changed) this.publish();
+  }
+  advanceHeist(id, elapsed, resolution, runId = this.runId) {
+    const r = this.active, i = r?.incident;
+    if (!r || !i || i.kind !== "heist" || i.id !== id || r.id !== runId || i.settled) return;
+    if (!Number.isFinite(elapsed) || elapsed < i.elapsed) return;
+    const f = heistFinancials(BigInt(i.opening), elapsed, resolution === "player"), delta = f.stolen - BigInt(i.stolen);
+    i.elapsed = elapsed;
+    i.stolen = String(f.stolen);
+    i.recoveryBasisPoints = String(f.recoveryBasisPoints);
+    r.stolen = String(BigInt(r.stolen) + delta);
+    if (resolution) {
+      i.settled = true;
+      if (resolution === "player" && elapsed < scoringPolicy.chaseMs) {
+        i.recovered = String(f.recovery);
+        r.recovered = String(BigInt(r.recovered) + f.recovery);
+        this.incidentWork(id, { heistCatch: 1 }, runId);
+        if (f.budget > 0n && f.stolen === 0n) this.count("untouched");
+        if (f.recovery > 0n) this.count("reappropriation");
+        this.count("heists");
+      }
+    }
+    this.publish();
+  }
+  finishIncident(id, successful, personality2, runId = this.runId) {
+    const r = this.active, i = r?.incident;
+    if (!r || !i || i.id !== id || r.id !== runId) return;
+    if (i.kind === "flight" && successful) {
+      if (personality2 && !r.pilots.includes(personality2)) {
+        r.pilots.push(personality2);
+        this.incidentWork(id, { flightFirstPilot: 1 }, runId);
+        this.count("pilots");
+      }
+      this.count("flights");
+    }
+    r.incident = void 0;
+    this.publish();
+  }
+  reorganized(partitions, amenity, interrupted, runId = this.runId) {
+    const r = this.active;
+    if (!r || r.id !== runId || BigInt(r.warrants) < 1n) return false;
+    r.warrants = String(BigInt(r.warrants) - 1n);
+    for (const [id, quantity] of Object.entries({ moveCharter: 1, movePack: 8, moveRoom: 8, moveUnpack: 8, moveAddress: 8, movePartition: 8, moveRoute: 56, moveAmenity: amenity ? 1 : 0, moveMinutes: 1 })) this.award(id, { quantity });
+    for (const style of partitions) if (!r.partitions.includes(style)) {
+      r.partitions.push(style);
+      this.count("partitions");
+    }
+    if (interrupted) r.pendingResume = String(BigInt(r.pendingResume) + 1n);
+    if (r.incident) r.incident.resumed = true;
+    this.publish();
+    return true;
+  }
+  resumedIncident(id, runId = this.runId) {
+    const r = this.active, i = r?.incident;
+    if (!r || !i || i.id !== id || r.id !== runId || !i.resumed) return;
+    i.resumed = false;
+    this.incidentWork(id, { [i.kind + "Resume"]: 1 }, runId);
+    if (BigInt(r.pendingResume) > 0n) {
+      this.award("moveResume", { quantity: r.pendingResume });
+      r.pendingResume = "0";
+    }
+    this.publish();
+  }
+  inspect(kind, identity) {
+    const r = this.active;
+    if (!r || !identity || identity.length > 200 || kind === "biography" && !r.identities[identity]) return;
+    const key2 = kind + "|" + identity;
+    if (r.inspections.includes(key2) || r.inspections.length >= 1e4) return;
+    r.inspections.push(key2);
+    this.award(kind);
+    if (kind === "department" && !r.departments.includes(identity)) {
+      r.departments.push(identity);
+      this.count("departments");
+    }
+    this.publish();
+  }
+  finish(status) {
+    const r = this.active;
+    if (!r) return;
+    if (status === "completed" && (r.incident || r.verification.through !== r.verification.mandate)) throw Error("Cannot bank unfinished proceedings");
+    if (status === "completed" && BigInt(r.verification.through) > 0n) {
+      this.award("dividend", { completed: r.verification.through, netScore: netPoints(r) });
+      this.count("completed");
+    }
+    r.status = status;
+    r.updatedAt = this.clock();
+    this.verification?.close(status, this.clock());
+    r.verification = this.verification.snapshot();
+    r.incident = void 0;
+    this.active = void 0;
+    this.verification = void 0;
+    this.evidence = void 0;
+    this.publish();
   }
 };
+var scoreCategories = [...new Set(meritRules.map((r) => r.category))];
+
+// web/scoring-badges.ts
+var plane = '<path d="m12 28 42-16-15 37-7-15-20-6Zm20 6 22-22M32 34l-3 14 10-9"/>';
+var badgeArtwork = {
+  bingo: '<rect x="11" y="11" width="42" height="42" rx="5"/><path d="M32 11v42M11 32h42M16 41l10 10 25-30"/><path d="M20 18v7M39 18h8m-8 0v10m0-5h6"/>',
+  century: '<path d="M16 9h32v46H16zM16 17h32M23 9V5m18 4V5"/><rect x="9" y="24" width="46" height="20" rx="4"/><path d="M21 29v10m9-10h6v10h-6zm13 0h6v10h-6zM23 49h18"/>',
+  committee: '<path d="m10 17 31-6 8 39-31 6zM19 10h34v39H19z"/><circle cx="35" cy="24" r="5"/><path d="M26 36c1-9 17-9 18 0"/><circle cx="45" cy="46" r="11"/><path d="M41 41v10m5-10h4v10h-4z"/>',
+  airline: plane + '<path d="M13 39c-9 9 2 20 12 13M18 38h-8v7h6c7 0 7 10 0 10h-5"/>',
+  affairs: '<rect x="9" y="9" width="46" height="46" rx="7"/><path d="M14 16v32m8-9h22v8H22zM27 39v-8h12v8M32 31V20"/><circle cx="32" cy="18" r="5"/><path d="m44 17 2 2m2 4 2 2m-3 4 2 2"/>',
+  spectrum: '<path d="M32 7c12 0 9 14 9 14s14-5 17 7-12 15-12 15 9 12-2 17-16-8-16-8-9 11-19 3 2-20 2-20-12-8-4-18 19-1 19-1S21 7 32 7Z"/><path d="m20 25 7 6 5-11 5 11 7-6-3 17H23z"/>',
+  census: plane + '<path d="M11 17v-8l7 4zM25 10V3l7 4zM43 5v7l7-3zM56 25h6l-3 6zM53 41h7l-4 6zM45 53v7l-6-4zM25 55v7l-6-4zM9 47H3l3-6zM8 30H2l3-6z"/><path d="M18 43v9m5-9h5l-3 4 3 5h-5"/>',
+  partitions: '<path d="m5 16 13-6 14 6 14-6 13 6v35l-13-6-14 6-14-6-13 6zM18 10v35m14-29v35m14-41v35M23 22v15m5-15v15M49 23h8m-8 7h8m-8 7h8m-5-17v20"/><path d="M11 27c-9-8-8 5 0 10 8-5 9-18 0-10Z"/><circle cx="39" cy="24" r="2"/><circle cx="38" cy="36" r="3"/>',
+  departments: '<path d="m23 7 18 0 16 16v18L41 57H23L7 41V23zM23 7v11m18-11v11m16 5H46m11 18H46M41 57V46M23 57V46M7 41h11M7 23h11"/><circle cx="30" cy="30" r="11"/><path d="m38 38 13 13"/>',
+  magnitude: '<path d="M7 55h50M10 55V39h12v16m0-16V25h12v30m0-30V11h12v44m0-44V5h9v50"/><path d="m6 29 8-8 7 3 13-15M27 9h7v7"/>',
+  untouched: '<path d="m32 6 23 9-3 22c-2 10-14 17-20 21-6-4-18-11-20-21L9 15z"/><circle cx="32" cy="32" r="13"/><path d="M26 29h12m-12 6h12M32 21v22"/>',
+  reappropriation: '<path d="M8 32V12h29v40H8V39m0-17h29M15 29h9m-9 8h9m-9 8h9M49 13v23c0 13-9 16-19 16m6-7-7 7 7 6"/><circle cx="49" cy="13" r="8"/><path d="M46 13h6m-3-4v8"/>',
+  authority: '<path d="M9 36h46v18l-6-4-6 4-6-4-6 4-6-4-6 4-10-4zM15 36v-8h34v8M25 28V15h14v13"/><ellipse cx="32" cy="11" rx="12" ry="7"/><path d="m26 8 12 6m-12 0 12-6M17 41v5m10-5v5m10-5v5m10-5v5"/>',
+  ratified: '<path d="M17 10h34v35c0 12-9 12-9 5H9c-8 0-8-10 0-10h8zM17 17H9c-8 0-8-7 0-7h8M24 20h18m-18 8h13m-13 8h9"/><circle cx="44" cy="42" r="10"/><path d="m38 42 4 4 8-9m-13 14-2 10 9-5 8 5-1-12"/>',
+  legendary: '<rect x="9" y="29" width="46" height="26" rx="5"/><path d="M9 39h46M26 38v7h12v-7M22 29v-7h20v7m-10-25 4 9 10 1-8 7 2 10-8-5-8 5 2-10-8-7 10-1z"/>',
+  mythic: '<path d="m32 5 5 13 13-6-3 14 14 5-13 6 5 14-14-4-7 13-6-13-14 5 5-14L3 31l14-5-4-14 13 6z"/><path d="m22 25 10-6 10 6v14l-10 6-10-6zm0 0 20 14m0-14L22 39"/><ellipse cx="32" cy="32" rx="31" ry="12" transform="rotate(-32 32 32)"/>'
+};
+function badgeSVG(id) {
+  const artwork = badgeArtwork[id];
+  if (!artwork) throw Error("Missing achievement artwork: " + id);
+  return `<svg viewBox="0 0 64 64" width="64" height="64" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${artwork}</svg>`;
+}
+for (const badge of badgeRules) if (!badgeArtwork[badge.id]) throw Error("Badge has no SVG");
+
+// web/scoring-format.ts
+function pointsFormatter(locales) {
+  return new Intl.NumberFormat(locales, { useGrouping: true, maximumFractionDigits: 0 });
+}
+var formatPoints = (value, locales) => pointsFormatter(locales || (typeof navigator === "undefined" ? void 0 : [...navigator.languages])).format(value);
 
 // web/portfolio.ts
-var PortfolioDesk = class extends PortfolioStore {
-  selected = document.querySelector("#portfolio-run");
+var PortfolioDesk = class extends EnterpriseScoringService {
+  dialog = document.createElement("dialog");
+  selected;
+  invoker;
+  tab = "breakdown";
+  cabinetMode = false;
+  timer;
+  lastMilestone = "";
+  inventory = "";
+  restoreFocus = true;
+  lastFinancialStage = "";
   constructor() {
     let storage;
     try {
@@ -4374,69 +5017,385 @@ var PortfolioDesk = class extends PortfolioStore {
     } catch {
     }
     super(storage);
-    this.subscribe(() => this.render());
+    this.dialog.id = "score-dialog";
+    this.dialog.className = "score-dialog";
+    this.dialog.setAttribute("aria-labelledby", "score-title");
+    this.dialog.innerHTML = `<header class="score-dialog-heading"><div><p class="eyebrow">Department of Earned Importance</p><h2 id="score-title" tabindex="-1">Enterprise Points</h2></div><button type="button" id="score-close" aria-label="Close score and badges">\xD7</button></header>
+   <div class="score-tabs" role="group" aria-label="Score view"><button type="button" data-score-tab="breakdown" aria-pressed="true">Score breakdown</button><button type="button" data-score-tab="badges" aria-pressed="false">Achievement cabinet</button><a id="score-rules-link">Scoring rules \u2197</a></div>
+   <section id="portfolio-record" aria-label="Score breakdown"><label class="portfolio-run-control" for="portfolio-run">Run <select id="portfolio-run"></select></label><p id="portfolio-status"></p>
+   <dl class="portfolio-totals"><div><dt>Net Enterprise Points</dt><dd id="portfolio-total">0</dd></div><div><dt>Paid appointments</dt><dd id="portfolio-appearances">0</dd></div><div><dt>Different companions</dt><dd id="portfolio-distinct">0</dd></div></dl>
+   <p id="score-reconciliation"></p><p id="portfolio-coverage"></p><div id="score-components"></div>
+   <h3>Companion appointment register</h3><div class="portfolio-table" tabindex="0" role="region" aria-label="Companion appointment rates and counts"><table><caption>Every appointment pays, including repeats</caption><thead><tr><th scope="col">Rarity</th><th scope="col">Salary</th><th scope="col">Rarity factor</th><th scope="col">Entrance grant</th><th scope="col">Appointments</th></tr></thead><tbody id="portfolio-tiers"></tbody></table></div>
+   <p id="portfolio-highest"></p><p id="portfolio-storage"></p><details><summary>Run receipt and conditions</summary><pre id="portfolio-receipt" tabindex="0" role="region" aria-label="Scoring run receipt"></pre></details>
+   <details><summary>Recent award receipts</summary><ol id="score-recent"></ol></details></section>
+   <section id="score-badges" aria-labelledby="badges-title" hidden><h3 id="badges-title">The Cabinet of Disproportionate Recognition</h3><div class="score-tabs" role="group" aria-label="Badge collection"><button type="button" id="badges-run" aria-pressed="true">This run</button><button type="button" id="badges-cabinet" aria-pressed="false">My cabinet</button></div><p id="badges-help"></p><div id="badge-grid" class="badge-grid"></div></section>`;
+    document.querySelector("#portfolio-record")?.remove();
+    document.body.append(this.dialog);
+    this.selected = this.dialog.querySelector("#portfolio-run");
+    for (const badge of badgeRules) {
+      const article = node("article");
+      article.className = "score-badge";
+      article.dataset.badge = badge.id;
+      const icon = node("span");
+      icon.className = "badge-art";
+      icon.innerHTML = badgeSVG(badge.id);
+      const progress = node("p");
+      progress.dataset.badgeProgress = "";
+      article.append(icon, node("h4", badge.title), node("p", badge.description), progress);
+      this.dialog.querySelector("#badge-grid").append(article);
+    }
+    for (const category of scoreCategories) {
+      const details = node("details");
+      details.dataset.scoreCategory = category;
+      const summary = node("summary"), total = node("strong");
+      total.dataset.categoryTotal = "";
+      summary.append(node("span", category), total);
+      const container = node("div");
+      container.className = "portfolio-table";
+      container.tabIndex = 0;
+      container.setAttribute("role", "region");
+      container.setAttribute("aria-label", category + " award details");
+      const table = node("table");
+      table.innerHTML = '<thead><tr><th scope="col">Completed work and base formula</th><th scope="col">Quantity</th><th scope="col">Factor</th><th scope="col">Points</th></tr></thead><tbody></tbody>';
+      container.append(table);
+      details.append(summary, container);
+      this.dialog.querySelector("#score-components").append(details);
+    }
+    document.addEventListener("click", (event) => {
+      const target = event.target instanceof Element ? event.target.closest('[data-score-open],#portfolio-open,[data-evidence="portfolio"]') : null;
+      if (!target) return;
+      event.preventDefault();
+      this.open(target.dataset.scoreOpen === "badges" ? "badges" : "breakdown", target);
+    });
+    this.dialog.querySelector("#score-close").addEventListener("click", () => this.dialog.close());
+    document.addEventListener("site-page-leaving", () => {
+      if (this.dialog.open) this.restoreFocus = false;
+    });
+    this.dialog.addEventListener("close", () => {
+      document.dispatchEvent(new Event("score-dialog-change"));
+      if (this.restoreFocus && this.invoker?.getClientRects().length) this.invoker.focus({ preventScroll: true });
+    });
+    for (const button of this.dialog.querySelectorAll("[data-score-tab]")) button.addEventListener("click", () => {
+      this.tab = button.dataset.scoreTab;
+      this.render();
+    });
+    this.dialog.querySelector("#badges-run").addEventListener("click", () => {
+      this.cabinetMode = false;
+      this.render();
+    });
+    this.dialog.querySelector("#badges-cabinet").addEventListener("click", () => {
+      this.cabinetMode = true;
+      this.render();
+    });
     this.selected.addEventListener("change", () => this.render());
-    addEventListener("pagehide", () => this.finish("interrupted"));
+    this.subscribe(() => this.schedule());
+    document.addEventListener("score-inspection", (event) => {
+      const { kind, identity } = event.detail || {};
+      if (["biography", "evidence", "department", "curiosity"].includes(kind) && typeof identity === "string") this.inspect(kind, identity);
+    });
+    window.addEventListener("storage", (event) => {
+      if (event.key === cabinetStorageKey) try {
+        this.mergeCabinet(JSON.parse(event.newValue || "{}"));
+      } catch {
+      }
+    });
+    addEventListener("pagehide", () => {
+      clearTimeout(this.timer);
+      this.finish("interrupted");
+    });
+    for (const button of document.querySelectorAll('.score-badge-button[data-score-open="badges"]')) {
+      button.innerHTML = badgeSVG("ratified");
+      button.setAttribute("aria-label", "Open achievement badges");
+      button.title = "Achievement cabinet";
+    }
     this.render();
   }
+  schedule() {
+    if (this.timer) return;
+    this.timer = setTimeout(() => {
+      this.timer = void 0;
+      this.render();
+    }, 250);
+  }
+  open(tab, invoker) {
+    this.tab = tab;
+    this.invoker = invoker;
+    this.restoreFocus = true;
+    if (!this.dialog.open) this.dialog.showModal();
+    this.render();
+    this.dialog.querySelector("#score-title").focus();
+    document.dispatchEvent(new Event("score-dialog-change"));
+  }
   render() {
-    const { current, saved, persistent } = this.snapshot(), points = current ? portfolioPoints(current) : 0n;
+    const { current, saved, legacy, cabinet, persistent } = this.snapshot(), points = current ? netPoints(current) : legacy ? portfolioPoints(legacy) : 0n;
     for (const element4 of document.querySelectorAll("[data-portfolio-points]")) {
-      element4.textContent = compactPoints(points);
-      element4.title = exactPoints(points) + " Portfolio Points";
+      const text2 = formatPoints(points);
+      if (element4.textContent !== text2) element4.textContent = text2;
+      element4.title = text2 + " Enterprise Points";
       element4.dataset.exact = String(points);
     }
-    const button = document.querySelector("#portfolio-open");
-    button.title = "Open score breakdown. Exact total: " + exactPoints(points) + " Portfolio Points";
-    const selected = this.selected.value;
-    this.selected.replaceChildren();
-    const option = node("option", current?.status === "active" ? "Current run" : "Latest banked run");
-    option.value = "current";
-    this.selected.append(option);
-    if (saved) {
-      const previous = node("option", "Previous banked run");
-      previous.value = "saved";
-      this.selected.append(previous);
+    const boost = cycleAuthority(BigInt(current?.verification.through || "0") + 1n);
+    for (const element4 of document.querySelectorAll("[data-score-boost]")) {
+      element4.hidden = !current || current.status !== "active" || boost.factor === 1;
+      element4.textContent = `\xD7${formatPoints(BigInt(boost.factor))} \xB7 ${formatPoints(BigInt(boost.remaining))} cycles left`;
     }
-    this.selected.value = selected === "saved" && saved ? "saved" : "current";
-    this.selected.disabled = !saved;
-    const receipt = this.selected.value === "saved" ? saved : current;
-    const set = (id, value) => {
-      document.getElementById(id).textContent = value;
-    };
-    const status = { active: "Earning points", completed: "Mandate complete \xB7 points banked", stopped: "Proceedings stopped \xB7 points banked", replaced: "Replaced mandate \xB7 points banked", interrupted: "Saved proceedings \xB7 points banked" };
-    set("portfolio-status", receipt ? status[receipt.status] : "Authorize a mandate to start earning.");
-    set("portfolio-total", exactPoints(receipt ? portfolioPoints(receipt) : 0n));
-    set("portfolio-appearances", exactPoints(receipt ? appointmentCount(receipt) : 0n));
-    set("portfolio-distinct", String(receipt?.seen.length || 0));
-    const rows = document.getElementById("portfolio-tiers");
-    rows.replaceChildren(...scoreRarities.map((tier) => {
-      const row = node("tr"), label = node("th", tier);
+    const partial = document.getElementById("portfolio-incomplete");
+    if (partial) partial.hidden = !current?.partial;
+    const incident = current?.incident, last = current?.recent.at(-1);
+    let activity = last ? `+${formatPoints(BigInt(last.points))} \xB7 ${ruleById.get(last.rule)?.title || last.rule}` : "Every small step earns its place.";
+    if (incident?.kind === "heist") {
+      const stolen = BigInt(incident.stolen), returned = heistFinancials(BigInt(incident.opening), incident.elapsed, true).recovery;
+      const percent = new Intl.NumberFormat(void 0, { style: "percent", maximumFractionDigits: 2 }).format(Number(incident.recoveryBasisPoints) / 1e4);
+      activity = incident.settled ? `${formatPoints(stolen)} stolen \xB7 ${formatPoints(BigInt(incident.recovered))} recovered` : incident.elapsed < scoringPolicy.graceMs ? `Stamp heist \xB7 ${formatPoints(BigInt(Math.ceil((scoringPolicy.graceMs - incident.elapsed) / 1e3)))}s grace \xB7 ${formatPoints(BigInt(incident.budget))} at risk` : `${formatPoints(stolen)} stolen \xB7 Recover ${percent}: ${formatPoints(returned)} \xB7 ${formatPoints(BigInt(incident.budget) - stolen)} still at risk`;
+    }
+    for (const element4 of document.querySelectorAll("[data-score-activity]")) {
+      element4.textContent = activity;
+      element4.classList.toggle("score-theft", incident?.kind === "heist");
+    }
+    let financialAnnouncer;
+    const modal = [...document.querySelectorAll("dialog[open]")].at(-1);
+    for (const panel of document.querySelectorAll(".heist-panel")) {
+      let finance = panel.querySelector(".heist-finance");
+      if (!finance) {
+        finance = node("p");
+        finance.className = "heist-finance";
+        panel.querySelector("strong").after(finance);
+        const live2 = node("span");
+        live2.className = "workspace-sr";
+        live2.dataset.heistAnnouncement = "";
+        live2.setAttribute("aria-atomic", "true");
+        panel.append(live2);
+      }
+      finance.hidden = incident?.kind !== "heist";
+      finance.textContent = activity;
+      panel.dataset.scoreHeist = incident?.kind === "heist" ? incident.id : "";
+      const live = panel.querySelector("[data-heist-announcement]"), rect = panel.getBoundingClientRect();
+      const visible2 = !financialAnnouncer && !panel.hidden && (!modal || modal.contains(panel)) && rect.width > 0 && rect.height > 0 && rect.bottom > 0 && rect.top < innerHeight;
+      live.setAttribute("aria-live", visible2 ? "polite" : "off");
+      if (visible2) financialAnnouncer = live;
+    }
+    if (incident?.kind === "heist" && financialAnnouncer) {
+      const stage = incident.settled ? "settled" : incident.elapsed < scoringPolicy.graceMs ? "grace" : Number(incident.recoveryBasisPoints) <= 1e3 ? "minimum" : Number(incident.recoveryBasisPoints) <= 5e3 ? "half" : "theft", key2 = incident.id + "|" + stage;
+      if (key2 !== this.lastFinancialStage) {
+        this.lastFinancialStage = key2;
+        financialAnnouncer.textContent = activity;
+      }
+    }
+    if (last && BigInt(last.points) >= 10000n) {
+      const key2 = current.id + "|" + last.at + "|" + last.rule + "|" + last.points;
+      if (key2 !== this.lastMilestone) {
+        this.lastMilestone = key2;
+        const announcer = document.getElementById("score-announcement");
+        if (announcer) announcer.textContent = activity;
+      }
+    }
+    if (!this.dialog.open) return;
+    const inventory = [current?.id, saved?.id, !!legacy].join("|");
+    if (inventory !== this.inventory) {
+      this.inventory = inventory;
+      const selected = this.selected.value;
+      this.selected.replaceChildren();
+      for (const [key2, r, label] of [["current", current, "Current / latest run"], ["saved", saved, "Previous banked run"], ["legacy", legacy, "Legacy companion portfolio"]]) if (r) {
+        const option = node("option", label);
+        option.value = key2;
+        this.selected.append(option);
+      }
+      if ([...this.selected.options].some((o) => o.value === selected)) this.selected.value = selected;
+    }
+    const receipt = this.selected.value === "saved" ? saved : this.selected.value === "legacy" ? void 0 : current, old = this.selected.value === "legacy" ? legacy : void 0, verification = receipt?.verification || old;
+    this.selected.disabled = this.selected.options.length < 2;
+    this.dialog.querySelector("#portfolio-record").hidden = this.tab !== "breakdown";
+    this.dialog.querySelector("#score-badges").hidden = this.tab !== "badges";
+    for (const button of this.dialog.querySelectorAll("[data-score-tab]")) button.setAttribute("aria-pressed", String(button.dataset.scoreTab === this.tab));
+    this.dialog.querySelector("#score-rules-link").href = new URL(old ? "scoring/companion-portfolio-v1/" : receipt ? `scoring/${receipt.rules}/${receipt.identity}/` : guidePath, scope).href;
+    const set = (id, text2) => this.dialog.querySelector("#" + id).textContent = text2;
+    const statuses = { active: "Earning points", completed: "Mandate complete \xB7 points banked", stopped: "Proceedings stopped \xB7 points banked", replaced: "Replaced mandate \xB7 points banked", interrupted: "Interrupted proceedings \xB7 points banked" };
+    set("portfolio-status", verification ? (old ? "Legacy rules \xB7 " : "") + statuses[verification.status] : "Authorize a mandate to start earning.");
+    set("portfolio-total", formatPoints(receipt ? netPoints(receipt) : old ? portfolioPoints(old) : 0n));
+    set("portfolio-appearances", formatPoints(verification ? appointmentCount(verification) : 0n));
+    set("portfolio-distinct", formatPoints(BigInt(verification?.seen.length || 0)));
+    set("score-reconciliation", receipt ? `${formatPoints(BigInt(receipt.gross))} earned \u2212 ${formatPoints(BigInt(receipt.stolen))} stolen + ${formatPoints(BigInt(receipt.recovered))} recovered + ${formatPoints(BigInt(receipt.dividend))} completion dividend = ${formatPoints(netPoints(receipt))} net points.` : old ? "This historical receipt retains its original companion-only rates." : "No work has been credited yet.");
+    set("portfolio-coverage", `${formatPoints(BigInt(verification?.disabled || "0"))} appointments disclosed with companions disabled.` + (receipt?.partial ? " Some procedural or appointment evidence was unavailable; this is a partial score. Numerical output remains valid." : ""));
+    for (const details of this.dialog.querySelectorAll("[data-score-category]")) {
+      details.hidden = !!old;
+      const category = details.dataset.scoreCategory;
+      details.querySelector("[data-category-total]").textContent = formatPoints(BigInt(receipt?.categories[category] || "0"));
+      const rows = Object.entries(receipt?.buckets || {}).filter(([key2]) => ruleById.get(key2.split("|")[0])?.category === category).map(([key2, bucket]) => {
+        const [id, factor] = key2.split("|"), rule = ruleById.get(id), row = node("tr"), label = node("th", rule.title);
+        label.scope = "row";
+        label.append(node("small", describe(rule.formula, (value) => formatPoints(BigInt(value)))));
+        row.append(label, node("td", formatPoints(BigInt(bucket.quantity))), node("td", "\xD7" + formatPoints(BigInt(factor))), node("td", formatPoints(BigInt(bucket.points))));
+        return row;
+      });
+      details.querySelector("tbody").replaceChildren(...rows);
+    }
+    this.dialog.querySelector("#portfolio-tiers").replaceChildren(...Object.keys(rarityTables.salary).map((tier) => {
+      const rarity = tier, row = node("tr"), label = node("th", tier);
       label.scope = "row";
-      const count = BigInt(receipt?.counts[tier] || "0");
-      row.append(label, node("td", exactPoints(pointRates[tier])), node("td", exactPoints(count)), node("td", exactPoints(count * pointRates[tier])));
+      row.append(label, node("td", formatPoints(old ? pointRates[rarity] : BigInt(rarityTables.salary[rarity]))), node("td", "\xD7" + (old ? "1" : rarityTables.rarity[rarity])), node("td", formatPoints(old ? 0n : BigInt(rarityTables.entrance[rarity]))), node("td", formatPoints(BigInt(verification?.counts[rarity] || "0"))));
       return row;
     }));
-    const best = receipt?.highest;
-    set("portfolio-highest", best ? `${best.emoji} ${best.name} \xB7 ${best.rarity} \xB7 ${exactPoints(pointRates[best.rarity])} points at ordinal ${best.ordinal}` : "No appointed companion yet.");
-    set("portfolio-storage", persistent ? "Points are saved in this browser. The latest run and previous banked run are retained; starting another run begins at zero." : "Browser storage is unavailable. Points remain available in this page until it closes.");
-    const missing = BigInt(receipt?.unscored || "0"), disabled = BigInt(receipt?.disabled || "0");
-    set("portfolio-coverage", `${exactPoints(disabled)} appointments disclosed with companions disabled.` + (missing ? ` ${exactPoints(missing)} appointments could not be verified; this is a partial score. Numerical output remains valid.` : ""));
-    document.getElementById("portfolio-incomplete").hidden = !current || current.unscored === "0";
-    const conditions = receipt ? `Mandate / seed: ${receipt.mandate}
-Scored disclosure checkpoint: ${receipt.through}
-Rules: ${receipt.rules}
-Catalog: ${receipt.catalogVersion || "Awaiting appointments"}
-Seed policy: ${receipt.seedPolicy}
-Initial authority: ${receipt.initialAuthority}
-Authority changes: ${receipt.authorityChanges}
-Appointments by authority: ${Object.entries(receipt.authorities).map(([policy, count]) => policy + " = " + count).join("; ") || "None"}
-Run: ${receipt.id}
-Started: ${receipt.startedAt}
-Saved: ${receipt.updatedAt}` : "No run receipt yet.";
-    set("portfolio-receipt", conditions);
+    const best = verification?.highest;
+    set("portfolio-highest", best ? `Highest rarity appointed: ${best.emoji} ${best.name} \xB7 ${best.rarity} \xB7 ordinal ${formatPoints(BigInt(best.ordinal))}.` : "No appointed companion yet.");
+    set("portfolio-storage", persistent ? "The latest run, previous run and achievement cabinet are saved in this browser. New runs start at zero; ordinary refresh preserves the cabinet." : "Browser storage is unavailable. Accounting remains available until this page closes.");
+    set("portfolio-receipt", receipt ? JSON.stringify({ run: receipt.id, rules: receipt.rules, identity: receipt.identity, mandate: receipt.verification.mandate, through: receipt.verification.through, status: receipt.status, startedAt: receipt.startedAt, conditions: receipt.conditions, initialAuthority: receipt.verification.initialAuthority, lastAuthority: receipt.verification.lastAuthority, authorityChanges: receipt.verification.authorityChanges, warrants: receipt.warrants }, null, 2) : old ? JSON.stringify(old, null, 2) : "No run receipt yet.");
+    this.dialog.querySelector("#score-recent").replaceChildren(...(receipt?.recent || []).slice().reverse().map((r) => node("li", `${ruleById.get(r.rule)?.title || r.rule}: ${formatPoints(BigInt(r.quantity))} occurrence(s) \xB7 \xD7${formatPoints(BigInt(r.factor))} \xB7 +${formatPoints(BigInt(r.points))}${r.detail ? " \xB7 " + r.detail : ""}`)));
+    this.dialog.querySelector("#badges-run").setAttribute("aria-pressed", String(!this.cabinetMode));
+    this.dialog.querySelector("#badges-cabinet").setAttribute("aria-pressed", String(this.cabinetMode));
+    set("badges-help", this.cabinetMode ? "Your browser\u2019s cabinet retains first-earned dates and highest tiers. Locked badges remain visible." : "Progress in the selected run. Recognition-only badges add no hidden points.");
+    for (const badge of badgeRules) {
+      const card = this.dialog.querySelector(`[data-badge="${badge.id}"]`), tier = this.cabinetMode ? cabinet[badge.id]?.tier : receipt?.badges[badge.id], progress = BigInt(receipt?.counters[badge.counter] || "0");
+      card.dataset.earned = String(!!tier && BigInt(tier) > 0n);
+      card.querySelector("[data-badge-progress]").textContent = tier && BigInt(tier) > 0n ? `\u2713 Earned \xB7 ${formatPoints(BigInt(tier))} ${badge.repeat ? "completion(s)" : "award"}${this.cabinetMode ? " \xB7 First earned " + new Date(cabinet[badge.id].firstEarned).toLocaleDateString() : ""}` : `Locked${this.cabinetMode ? "" : " \xB7 " + formatPoints(progress) + " / " + formatPoints(BigInt(badge.target))}`;
+    }
   }
 };
+
+// web/scoring-office.ts
+var OfficeScoringAdapter = class {
+  constructor(scoring) {
+    this.scoring = scoring;
+    officeFlight.subscribe(() => this.sync());
+    officeHeist.subscribe(() => this.sync());
+    scoring.subscribe(() => this.sync());
+    officeEstate.subscribe((event) => {
+      if (event.kind === "staged") {
+        this.moveRun = scoring.runId;
+        this.moveHadWork = !!scoring.runId && (BigInt(scoring.through) > 0n || officeFlight.active || officeHeist.active);
+      }
+      if (event.kind === "committed") {
+        scoring.reorganized(event.relocation.to.placements.map((p) => p.partition).filter((p) => p !== "classic"), !!event.relocation.to.amenity, this.moveHadWork, this.moveRun);
+        this.moveRun = void 0;
+      }
+      if (event.kind === "cancelled") this.moveRun = void 0;
+    });
+  }
+  scoring;
+  busy = false;
+  seenFlight = 0;
+  seenHeist = 0;
+  lastHeistTick = "";
+  priorElapsed = 0;
+  moveRun;
+  moveHadWork = false;
+  flightOwner;
+  heistOwner;
+  sync() {
+    if (this.busy) return;
+    this.busy = true;
+    try {
+      const flight = officeFlight.snapshot, heist = officeHeist.snapshot;
+      if (flight && this.flightOwner?.id !== flight.id) this.flightOwner = { id: flight.id, run: this.scoring.runId };
+      if (heist && this.heistOwner?.id !== heist.id) this.heistOwner = { id: heist.id, run: this.scoring.runId };
+      if (flight) this.flight(flight);
+      else {
+        const ended = officeFlight.records.at(-1);
+        if (ended && ended.id > this.seenFlight) this.flight(ended.snapshot, ended.resolution);
+      }
+      if (heist) this.heist(heist);
+      else {
+        const ended = officeHeist.records.at(-1);
+        if (ended && ended.id > this.seenHeist) this.heist(ended.snapshot, ended.resolution);
+      }
+    } finally {
+      this.busy = false;
+    }
+  }
+  flight(s, resolution) {
+    if (s.plan.source !== "encounter") {
+      if (resolution) this.seenFlight = s.id;
+      return;
+    }
+    const id = String(s.id), run = this.scoring.runId;
+    if (!run || this.flightOwner?.run !== run) {
+      if (resolution) this.seenFlight = s.id;
+      return;
+    }
+    if (BigInt(s.plan.ordinal) > BigInt(this.scoring.through)) return;
+    const rarity = s.plan.actors[0].rarity;
+    if (!rarity) {
+      this.scoring.markPartial();
+      this.seenFlight = s.id;
+      return;
+    }
+    if (!this.scoring.incident) this.scoring.startIncident("flight", id, s.plan.ordinal, rarity, run);
+    const delivered = !!resolution && ["landed", "redirected", "expedited", "skipped"].includes(resolution), successful = delivered && resolution !== "skipped";
+    const loops = Math.min(s.plan.loops, Math.max(0, Math.floor((s.flown - foldMs - cruiseMs) / loopMs)));
+    this.scoring.incidentWork(id, { flightManifest: 1, flightCrew: s.plan.actors.length, flightFold: s.flown >= foldMs ? 1 : 0, flightDeparture: s.flown >= foldMs ? 1 : 0, flightCheckpoint: s.passed, flightLoop: loops, flightPersonality: s.flown >= foldMs ? 1 : 0, flightApproach: s.phase === "landing" ? 1 : 0, flightLanding: successful ? 1 : 0, flightFinding: delivered ? 1 : 0, flightDelivery: delivered ? 1 : 0, flightFan: delivered ? s.applied.filter((f) => f !== 0).length : 0, flightDestination: delivered && s.destination !== "memory" && s.arrival === s.destination ? 1 : 0 }, run);
+    if (s.elapsed > this.priorElapsed) this.scoring.resumedIncident(id, run);
+    this.priorElapsed = s.elapsed;
+    if (resolution) {
+      this.seenFlight = s.id;
+      this.scoring.finishIncident(id, successful, s.plan.tactic, run);
+      this.priorElapsed = 0;
+    }
+  }
+  heist(s, resolution) {
+    if (s.plan.source !== "encounter") {
+      if (resolution) this.seenHeist = s.id;
+      return;
+    }
+    const id = String(s.id), run = this.scoring.runId;
+    if (!run || this.heistOwner?.run !== run) {
+      if (resolution) this.seenHeist = s.id;
+      return;
+    }
+    if (BigInt(s.plan.ordinal) > BigInt(this.scoring.through)) return;
+    const rarity = s.plan.actors[0].rarity;
+    if (!rarity) {
+      this.scoring.markPartial();
+      this.seenHeist = s.id;
+      return;
+    }
+    if (!this.scoring.incident) this.scoring.startIncident("heist", id, s.plan.ordinal, rarity, run);
+    this.scoring.incidentWork(id, { heistCase: 1, heistSuspect: s.plan.actors.length, heistTactic: 1, heistFootprints: s.footprints ? 1 : 0, heistAlibi: s.alibis.length }, run);
+    const outcome = s.resolution || resolution, player = outcome === "intercepted" || outcome === "biscuit";
+    const tick4 = run + "|" + id + "|" + Math.floor(s.chaseElapsed / 250) + "|" + outcome;
+    if (tick4 !== this.lastHeistTick) {
+      this.lastHeistTick = tick4;
+      this.scoring.advanceHeist(id, s.chaseElapsed, player ? "player" : outcome === "automatic" ? "automatic" : resolution ? "cancelled" : void 0, run);
+    }
+    if (s.elapsed > this.priorElapsed) this.scoring.resumedIncident(id, run);
+    this.priorElapsed = s.elapsed;
+    if (resolution) {
+      const closed = player || resolution === "automatic";
+      this.scoring.incidentWork(id, { heistReturn: closed ? 1 : 0, heistReport: closed ? 1 : 0 }, run);
+      this.seenHeist = s.id;
+      this.scoring.finishIncident(id, closed, void 0, run);
+      this.priorElapsed = 0;
+    }
+  }
+};
+
+// web/scoring-evidence.ts
+function parseStructuredWork(value) {
+  try {
+    const work = value;
+    if (!work || work.schema !== "slopbuzz-work/v1" || typeof work.complete !== "boolean" || !work.ordinals || Object.keys(work.ordinals).length > 1002) return;
+    for (const [ordinal, counts] of Object.entries(work.ordinals)) {
+      if (ordinal !== "global" && !/^[1-9][0-9]*$/.test(ordinal) || !counts || Object.keys(counts).length > 128) return;
+      for (const [id, count] of Object.entries(counts)) if (ruleById.get(id)?.category !== "Procedural work" || !/^\d+$/.test(count) || count.length > 12) return;
+    }
+    return work;
+  } catch {
+    return;
+  }
+}
+function scoringEvidence(work, start, length, mandate) {
+  const end = String(BigInt(start) + BigInt(length) - 1n), global = {}, closing = {}, cycles = {};
+  const add = (target, id, count) => target[id] = String(BigInt(target[id] || "0") + BigInt(count));
+  for (const [ordinal, counts] of Object.entries(work?.ordinals || {})) {
+    if (ordinal === "global") {
+      for (const [id, count] of Object.entries(counts)) {
+        if (id === "complete") {
+          if (end === mandate) add(closing, id, count);
+        } else add(global, id, count);
+      }
+    } else if (BigInt(ordinal) >= BigInt(start) && BigInt(ordinal) <= BigInt(end)) cycles[ordinal] = counts;
+    else if (BigInt(ordinal) === BigInt(end) + 1n) for (const [id, count] of Object.entries(counts)) add(closing, id, count);
+  }
+  return { start, end, global, closing, cycles, complete: work?.complete === true };
+}
 
 // web/telemetry.ts
 function trackUsage(detail) {
@@ -5528,7 +6487,7 @@ async function readProclamation(response) {
   }
   const data = await response.json();
   if (data?.schema !== "slopbuzz-execution/v1" || typeof data.text !== "string" || !Array.isArray(data.trace?.events) || data.trace.events.length > 5e4 || !Number.isSafeInteger(data.trace.omitted) || data.trace.omitted < 0 || data.trace.events.some((e) => !e || e.ordinal !== null && (typeof e.ordinal !== "string" || !/^\d+$/.test(e.ordinal)) || ["kind", "office", "finding"].some((k) => typeof e[k] !== "string") || e.document !== null && typeof e.document !== "string")) throw new Error("The execution dossier could not be read. No second mandate was submitted.");
-  return { ...packet, text: data.text, events: data.trace.events, omitted: data.trace.omitted, recorded: true };
+  return { ...packet, text: data.text, events: data.trace.events, omitted: data.trace.omitted, recorded: true, work: parseStructuredWork(data.trace.work) };
 }
 function node2(tag, text2, className) {
   const result = document.createElement(tag);
@@ -5802,6 +6761,9 @@ var ExecutiveChronicle = class {
         list.append(item);
       }
       details.append(list);
+      details.addEventListener("toggle", () => {
+        if (details.open) for (const event of folio.events) document.dispatchEvent(new CustomEvent("score-inspection", { detail: { kind: "evidence", identity: event.kind } }));
+      });
       article.append(details);
     }
     return article;
@@ -6077,7 +7039,7 @@ function sitePage(url) {
   const base = new URL(scope);
   if (url.origin !== base.origin || !url.pathname.startsWith(base.pathname)) return;
   const path = url.pathname.slice(base.pathname.length).replace(/\/$/, "");
-  return path === "company-history" ? "about" : pages.has(path) ? path : void 0;
+  return path === "company-history" ? "about" : pages.has(path) || /^scoring(?:\/(?:enterprise-v\d+\/[a-f0-9]+|companion-portfolio-v1))?$/.test(path) ? path : void 0;
 }
 function onDemoPage() {
   return sitePage(new URL(location.href)) === "demo";
@@ -6099,6 +7061,7 @@ var DemoWorkspace = class {
     arrival.setAttribute("role", "status");
     byId("desk-observe").append(arrival);
     officeFlight.subscribe(() => this.flightSpotlight());
+    officeHeist.subscribe(() => this.flightSpotlight());
     byId("supervision-fullscreen").addEventListener("click", () => immersive.open("observe", byId("supervision-fullscreen")));
     document.querySelectorAll("[data-desk-link]").forEach((link) => link.addEventListener("click", (event) => {
       if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
@@ -6106,7 +7069,9 @@ var DemoWorkspace = class {
       this.navigate(link.dataset.deskLink);
     }));
     document.querySelectorAll("[data-go-desk]").forEach((button) => button.addEventListener("click", () => this.navigate(button.dataset.goDesk)));
-    document.querySelectorAll("[data-evidence]").forEach((button) => button.addEventListener("click", () => this.evidence(button.dataset.evidence)));
+    document.querySelectorAll("[data-evidence]").forEach((button) => button.addEventListener("click", () => {
+      if (button.dataset.evidence !== "portfolio") this.evidence(button.dataset.evidence);
+    }));
     this.watch.addEventListener("change", () => {
       this.manualView = true;
       this.layout();
@@ -6117,7 +7082,7 @@ var DemoWorkspace = class {
     byId("experiment-view").addEventListener("change", () => this.sections("experiment"));
     byId("evidence-view").addEventListener("change", () => this.sections("evidence"));
     byId("resume-current").addEventListener("click", () => this.navigate("observe"));
-    byId("active-run-banner").addEventListener("click", () => {
+    byId("active-run-return").addEventListener("click", () => {
       if (onDemoPage()) this.navigate("observe");
       else void openSitePage(new URL("demo/?desk=observe", scope));
     });
@@ -6273,14 +7238,15 @@ var DemoWorkspace = class {
     return onDemoPage() && this.desk === "observe";
   }
   flightSpotlight() {
-    const flight = officeFlight.snapshot;
+    const flight = officeFlight.snapshot || officeHeist.snapshot, kind = officeFlight.snapshot ? "flight" : "heist";
     if (flight) {
       if (this.flightView || !this.committed || !onDemoPage()) return;
-      this.flightView = { id: flight.id, desk: this.desk, watch: this.watch.value, manual: this.manualView, settings: !byId("watch-settings").hidden, x: scrollX, y: scrollY, focus: document.activeElement, positions: ["output", "chronicle-scroll", "companion-scroll", "watch-prose"].map((id) => {
+      this.flightView = { id: flight.id, kind, desk: this.desk, watch: this.watch.value, manual: this.manualView, settings: !byId("watch-settings").hidden, x: scrollX, y: scrollY, focus: document.activeElement, positions: ["output", "chronicle-scroll", "companion-scroll", "watch-prose"].map((id) => {
         const node3 = byId(id);
         return { node: node3, top: node3.scrollTop, left: node3.scrollLeft };
       }) };
-      document.body.dataset.flightSpotlight = "true";
+      document.body.dataset.flightSpotlight = String(kind === "flight");
+      document.body.dataset.incidentSpotlight = kind;
       clearTimeout(this.arrivalTimer);
       byId("flight-arrival-notice").hidden = true;
       this.watch.disabled = true;
@@ -6293,7 +7259,7 @@ var DemoWorkspace = class {
         else this.layout();
       }
       if (!officeFullscreen().mode) byId(facilities ? "office-stage" : "supervision-stage").scrollIntoView({ block: "nearest", behavior: "instant" });
-      const panel = byId(facilities ? "office-flight" : "supervision-flight");
+      const panel = byId((facilities ? "office-" : "supervision-") + kind);
       panel.tabIndex = -1;
       panel.focus({ preventScroll: true });
       return;
@@ -6302,6 +7268,7 @@ var DemoWorkspace = class {
     if (!saved) return;
     this.flightView = void 0;
     delete document.body.dataset.flightSpotlight;
+    delete document.body.dataset.incidentSpotlight;
     this.watch.disabled = false;
     this.watch.value = saved.watch;
     this.manualView = saved.manual;
@@ -6315,7 +7282,7 @@ var DemoWorkspace = class {
       }
       if (saved.focus instanceof HTMLElement && saved.focus.getClientRects().length) saved.focus.focus({ preventScroll: true });
       if (!officeFullscreen().mode) window.scrollTo({ left: saved.x, top: saved.y, behavior: "instant" });
-      const result = officeFlight.records.find((r) => r.id === saved.id);
+      const result = saved.kind === "flight" ? officeFlight.records.find((r) => r.id === saved.id) : void 0;
       if (result && ["landed", "redirected", "expedited"].includes(result.resolution)) {
         const notice = byId("flight-arrival-notice");
         notice.textContent = result.plan.actors[0].emoji + " Flight " + result.plan.ordinal + " arrived. " + result.finding;
@@ -6717,6 +7684,7 @@ var companions = new CompanionDesk({ remember: (discovery) => {
   });
 } });
 var portfolio = new PortfolioDesk();
+new OfficeScoringAdapter(portfolio);
 var pendingPortfolio = Promise.resolve();
 var currentLimit = "15";
 var receivedPacket;
@@ -6782,6 +7750,7 @@ function setReadingPaused(value) {
   if (!reading) return;
   if (paused === value) return;
   paused = value;
+  setHeistPaused(value);
   const office2 = supervision.enabled ? byId("supervision-current").querySelector("strong")?.textContent : void 0;
   setText("run-status", office2 ? "Observation " + (paused ? "paused" : "resumed") + " \xB7 " + office2 : paused ? "Ceremonial reading paused. Resume or reveal the complete output when ready." : "Ceremonial reading resumed.");
   readingControls();
@@ -6793,6 +7762,7 @@ revealButton.addEventListener("click", () => {
   supervision.disable();
   revealAll = true;
   paused = false;
+  setHeistPaused(false);
   wakeReading?.();
 });
 speedControl.addEventListener("change", () => wakeReading?.());
@@ -6992,6 +7962,7 @@ async function streamMandate(limit, sequence, started) {
     if (answer.ok && lines2.length !== count) throw new Error("The response did not contain the authorized number of lines.");
     if (sequence !== mandateSequence) return;
     receivedPacket = packet;
+    portfolio.receive(scoringEvidence(packet.work, String(next), lines2.length, currentLimit));
     chronicle.receive(packet);
     office.receive(packet);
     supervision.receive(packet, String(next), lines2.length);
@@ -7055,8 +8026,9 @@ async function runMandate(event) {
   officeEstate.finish();
   if (productionActive) companions.withdrawRun();
   workspace.commitDraft(String(limit));
-  portfolio.begin(String(limit), byId("companion-strategy").value || "factor-resonance-v1");
+  portfolio.begin(String(limit), byId("companion-strategy").value || "factor-resonance-v1", { runtime: config.mode, engine: config.engine || "auto", companions: String(byId("emoji-companions").checked), flights: String(byId("paper-flights").checked), heists: String(byId("stamp-heists").checked) });
   pendingPortfolio = Promise.resolve();
+  setHeistPaused(false);
   companions.beginRun(String(limit));
   productionActive = true;
   officeIncidents.begin(String(limit));
@@ -7099,6 +8071,7 @@ async function runMandate(event) {
     if (answer.ok) trackUsage({ event: "slopbuzz_demo_run", outcome: "success", runtime_mode: config.mode, duration_ms: elapsed, cache_outcome: answer.headers.get("X-SlopBuzz-Cache") || "UNKNOWN" });
     if (sequence !== mandateSequence) return;
     receivedPacket = packet;
+    portfolio.receive(scoringEvidence(packet.work, "1", text2 ? text2.trimEnd().split(/\r?\n/).length : 0, currentLimit));
     chronicle.receive(packet);
     office.receive(packet);
     supervision.receive(packet, "1", text2 ? text2.trimEnd().split(/\r?\n/).length : 0);

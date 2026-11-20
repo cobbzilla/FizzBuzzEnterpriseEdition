@@ -14,6 +14,7 @@ public final class GlyphProcurementDirectorate {
  }
  public ProcurementDossier procure(String product) {
   GlyphRequisition requisition=authority.authorize(product);
+  ExecutionCustody.work("allocation",requisition.items().size());
   if(ExecutionCustody.observing())ExecutionCustody.record("REQUISITION","Glyph Procurement Authority","Authorized product "+product+" with "+requisition.items().size()+" position-specific allocations.");
   java.util.List<GlyphDelivery> deliveries=supplier.deliver(requisition);
   if(ExecutionCustody.observing())ExecutionCustody.record("DELIVERY","Approved Glyph Supplier","Delivered "+(deliveries==null?"no":String.valueOf(deliveries.size()))+" allocations for "+product+". Inventory is fictional and inexhaustible.");

@@ -2,7 +2,7 @@ import {releaseAsset} from './release-assets';
 import {OfficeShotDirector,rebaseObservation} from './office-direction';
 import {layoutToken} from './office-layout';
 import {officeEstate} from './office-estate';
-import {officeHeist} from './office-heist';
+import {officeHeist,actOnHeist} from './office-heist';
 import {officeFlight} from './office-flight';
 import {officeIncidents} from './office-incidents';
 import {node} from './companion-story';
@@ -143,7 +143,7 @@ export class OfficeSupervisionDesk {
     this.module ||= import(releaseAsset('office-world.js').href) as Promise<typeof import('./office-world')>;
     const module=await this.module;if(!this.enabled)return;
     this.canvas.hidden=false;this.canvas.dataset.module=releaseAsset('office-world.js').href;this.canvas.dataset.renderer='babylon';
-    this.renderer=module.createOffice({canvas:this.canvas,state:this.sceneState(),interactive:false,onRoom:()=>{},onProp:()=>{},onStep:()=>{},onView:()=>{},onHeistSuspect:(index,id)=>officeHeist.intercept(index,id),onHeistFootprint:()=>officeHeist.follow(),onFlightFan:(index,id)=>officeFlight.turn(index,id),onFlightRunway:(room,id)=>officeFlight.destination(room,id),onFrame:frame=>this.painted(frame),onReady:()=>{this.ready=true;if(this.latestCue)this.renderer?.direct(this.latestCue);clearTimeout(this.readiness);const loading=element('supervision-loading'),focused=loading.contains(document.activeElement);loading.hidden=true;if(focused)element('supervision-title').focus({preventScroll:true});},onProblem:()=>this.graphicsFailure()});
+    this.renderer=module.createOffice({canvas:this.canvas,state:this.sceneState(),interactive:false,onRoom:()=>{},onProp:()=>{},onStep:()=>{},onView:()=>{},onHeistSuspect:(index,id)=>actOnHeist(()=>officeHeist.intercept(index,id)),onHeistFootprint:()=>actOnHeist(()=>officeHeist.follow()),onFlightFan:(index,id)=>officeFlight.turn(index,id),onFlightRunway:(room,id)=>officeFlight.destination(room,id),onFrame:frame=>this.painted(frame),onReady:()=>{this.ready=true;if(this.latestCue)this.renderer?.direct(this.latestCue);clearTimeout(this.readiness);const loading=element('supervision-loading'),focused=loading.contains(document.activeElement);loading.hidden=true;if(focused)element('supervision-title').focus({preventScroll:true});},onProblem:()=>this.graphicsFailure()});
     this.sceneActive=!this.visible();this.activity();this.renderer.resize();this.armReadiness();
    }catch{this.module=undefined;this.graphicsFailure();}
   })().finally(()=>{this.loading=undefined;});return this.loading;

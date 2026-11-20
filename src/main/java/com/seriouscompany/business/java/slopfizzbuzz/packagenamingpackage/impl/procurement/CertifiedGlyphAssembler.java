@@ -14,6 +14,7 @@ public final class CertifiedGlyphAssembler implements GlyphAssembler {
    if(certificate==null) throw new IllegalStateException("An empty certificate cannot authorize a letter.");
    certificate.authorize(requisition,i+1);
    text.append(certificate.delivery.character);
+   ExecutionCustody.work("placedGlyph",1);
   }
   if(ExecutionCustody.observing())ExecutionCustody.record("GLYPH_ASSEMBLED","Certified Glyph Assembler","Verified every position-specific certificate and assembled "+text.toString()+" in the approved order.");
   return new ProcurementDossier(requisition,text.toString());

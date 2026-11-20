@@ -3,8 +3,9 @@ import {parseDossier,type PersonnelDossier} from './onboarding';
 import {parsePrecedent,type PrecedentDossier} from './precedent';
 import {ChronicleLanguage,type NarrativeSituation} from './chronicle-language';
 import {parsePremises,premisesCard} from './premises';
+import {parseStructuredWork,type StructuredWork} from './scoring-evidence';
 export interface ExecutionEvent {ordinal:string|null;kind:string;office:string;finding:string;document:string|null}
-export interface ExecutionPacket {text:string;events:ExecutionEvent[];omitted:number;cache:string;runtime:Record<string,unknown>;recorded:boolean;precedent?:PrecedentDossier}
+export interface ExecutionPacket {text:string;events:ExecutionEvent[];omitted:number;cache:string;runtime:Record<string,unknown>;recorded:boolean;precedent?:PrecedentDossier;work?:StructuredWork}
 export interface Folio {ordinal:string;text:string;events:readonly ExecutionEvent[];cache:string;recorded:boolean;runtime:Record<string,unknown>;narrative?:readonly string[];packet?:ExecutionPacket}
 export async function readProclamation(response:Response):Promise<ExecutionPacket>{
  const runtime=JSON.parse(response.headers.get('X-SlopBuzz-Execution-Runtime')||'{}');
@@ -18,7 +19,7 @@ export async function readProclamation(response:Response):Promise<ExecutionPacke
  }
  const data=await response.json();
  if(data?.schema!=='slopbuzz-execution/v1'||typeof data.text!=='string'||!Array.isArray(data.trace?.events)||data.trace.events.length>50000||!Number.isSafeInteger(data.trace.omitted)||data.trace.omitted<0||data.trace.events.some((e:ExecutionEvent)=>!e||(e.ordinal!==null&&(typeof e.ordinal!=='string'||!/^\d+$/.test(e.ordinal)))||['kind','office','finding'].some(k=>typeof(e as unknown as Record<string,unknown>)[k]!=='string')||(e.document!==null&&typeof e.document!=='string')))throw new Error('The execution dossier could not be read. No second mandate was submitted.');
- return {...packet,text:data.text,events:data.trace.events,omitted:data.trace.omitted,recorded:true};
+ return {...packet,text:data.text,events:data.trace.events,omitted:data.trace.omitted,recorded:true,work:parseStructuredWork(data.trace.work)};
 }
 function node<K extends keyof HTMLElementTagNameMap>(tag:K,text?:string,className?:string){const result=document.createElement(tag);if(text!==undefined)result.textContent=text;if(className)result.className=className;return result;}
 function title(folio:Folio){
@@ -132,7 +133,7 @@ export class ExecutiveChronicle {
   folio.narrative??=Object.freeze(paragraphs(folio,this.language));
   for(const paragraph of folio.narrative)article.append(node('p',paragraph,'chronicle-prose'));
   const certificate=folio.events.find(e=>e.kind==='PREMISES_CERTIFICATE');if(certificate?.document)try{const data=parsePremises(JSON.parse(certificate.document));if(data.ordinal===folio.ordinal&&data.purpose==='MANDATE'&&folio.cache!=='HIT')article.append(premisesCard(data));}catch{/* Optional property papers cannot erase an observed numerical answer. */}
-  if(folio.events.length){const details=node('details');details.append(node('summary',`Inspect ${folio.events.length} department records for ordinal ${folio.ordinal}`));const list=node('ol');for(const event of folio.events){const item=node('li');item.append(node('strong',event.office),node('p',event.finding));if(event.document)item.append(node('pre',event.document,'chronicle-document'));list.append(item);}details.append(list);article.append(details);}
+  if(folio.events.length){const details=node('details');details.append(node('summary',`Inspect ${folio.events.length} department records for ordinal ${folio.ordinal}`));const list=node('ol');for(const event of folio.events){const item=node('li');item.append(node('strong',event.office),node('p',event.finding));if(event.document)item.append(node('pre',event.document,'chronicle-document'));list.append(item);}details.append(list);details.addEventListener('toggle',()=>{if(details.open)for(const event of folio.events)document.dispatchEvent(new CustomEvent('score-inspection',{detail:{kind:'evidence',identity:event.kind}}));});article.append(details);}
   return article;
  }
  private trim(){

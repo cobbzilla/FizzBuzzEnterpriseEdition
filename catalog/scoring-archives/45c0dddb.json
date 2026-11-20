@@ -1,0 +1,2621 @@
+{
+  "identity": "45c0dddb",
+  "sha256": "7d679877ec234406a8c6ff321e02fae7aa959b76ae991fea6c579d14dc562a20",
+  "manifest": {
+    "version": "enterprise-v2",
+    "tables": {
+      "salary": {
+        "Common": "100",
+        "Uncommon": "250",
+        "Rare": "1000",
+        "Legendary": "10000",
+        "Mythic": "100000"
+      },
+      "rarity": {
+        "Common": "1",
+        "Uncommon": "2",
+        "Rare": "5",
+        "Legendary": "10",
+        "Mythic": "25"
+      },
+      "entrance": {
+        "Common": "0",
+        "Uncommon": "0",
+        "Rare": "0",
+        "Legendary": "250000",
+        "Mythic": "2500000"
+      }
+    },
+    "boosts": [
+      {
+        "every": "5000",
+        "factor": 10,
+        "cycles": 1
+      },
+      {
+        "every": "1000",
+        "factor": 5,
+        "cycles": 4
+      },
+      {
+        "every": "500",
+        "factor": 3,
+        "cycles": 10
+      },
+      {
+        "every": "250",
+        "factor": 2,
+        "cycles": 20
+      }
+    ],
+    "policy": {
+      "recentReceipts": 100,
+      "companionIdentities": 3200,
+      "reorganizationEvery": "100",
+      "initialWarrants": "1",
+      "graceMs": 3000,
+      "chaseMs": 15000,
+      "fullRecoveryThroughMs": 4000,
+      "minimumRecoveryFromMs": 14000,
+      "heistLimit": 3,
+      "flightPersonalities": 13,
+      "partitionStyles": 12,
+      "departments": 8,
+      "loyaltyEvery": "10"
+    },
+    "financial": {
+      "budget": {
+        "op": "floorDivide",
+        "args": [
+          {
+            "op": "multiply",
+            "args": [
+              {
+                "variable": "openingScore"
+              },
+              {
+                "constant": "800"
+              }
+            ]
+          },
+          {
+            "constant": "10000"
+          }
+        ]
+      },
+      "stolen": {
+        "op": "floorDivide",
+        "args": [
+          {
+            "op": "multiply",
+            "args": [
+              {
+                "variable": "budget"
+              },
+              {
+                "op": "min",
+                "args": [
+                  {
+                    "constant": "12000"
+                  },
+                  {
+                    "op": "max",
+                    "args": [
+                      {
+                        "constant": "0"
+                      },
+                      {
+                        "op": "subtract",
+                        "args": [
+                          {
+                            "variable": "elapsedMs"
+                          },
+                          {
+                            "constant": "3000"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "constant": "12000"
+          }
+        ]
+      },
+      "recoveryBasisPoints": {
+        "op": "min",
+        "args": [
+          {
+            "constant": "10000"
+          },
+          {
+            "op": "max",
+            "args": [
+              {
+                "constant": "1000"
+              },
+              {
+                "op": "subtract",
+                "args": [
+                  {
+                    "constant": "10000"
+                  },
+                  {
+                    "op": "floorDivide",
+                    "args": [
+                      {
+                        "op": "multiply",
+                        "args": [
+                          {
+                            "constant": "9"
+                          },
+                          {
+                            "op": "max",
+                            "args": [
+                              {
+                                "constant": "0"
+                              },
+                              {
+                                "op": "subtract",
+                                "args": [
+                                  {
+                                    "variable": "elapsedMs"
+                                  },
+                                  {
+                                    "constant": "4000"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "constant": "10"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "recovery": {
+        "op": "min",
+        "args": [
+          {
+            "variable": "stolen"
+          },
+          {
+            "op": "ceilDivide",
+            "args": [
+              {
+                "op": "multiply",
+                "args": [
+                  {
+                    "variable": "stolen"
+                  },
+                  {
+                    "variable": "recoveryBasisPoints"
+                  }
+                ]
+              },
+              {
+                "constant": "10000"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "rules": [
+      {
+        "id": "runtime",
+        "title": "Runtime readiness confirmed",
+        "category": "Procedural work",
+        "scope": "cycle",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "2"
+            },
+            {
+              "variable": "quantity"
+            }
+          ]
+        },
+        "eligibility": "Each actual completed occurrence, once per unique receipt."
+      },
+      {
+        "id": "ownership",
+        "title": "Execution ownership confirmed",
+        "category": "Procedural work",
+        "scope": "cycle",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "2"
+            },
+            {
+              "variable": "quantity"
+            }
+          ]
+        },
+        "eligibility": "Each actual completed occurrence, once per unique receipt."
+      },
+      {
+        "id": "mandate",
+        "title": "Mandate accepted",
+        "category": "Procedural work",
+        "scope": "cycle",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "5"
+            },
+            {
+              "variable": "quantity"
+            }
+          ]
+        },
+        "eligibility": "Each actual completed occurrence, once per unique receipt."
+      },
+      {
+        "id": "bounds",
+        "title": "Bounds validated",
+        "category": "Procedural work",
+        "scope": "cycle",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "2"
+            },
+            {
+              "variable": "quantity"
+            }
+          ]
+        },
+        "eligibility": "Each actual completed occurrence, once per unique receipt."
+      },
+      {
+        "id": "boundDigit",
+        "title": "Canonical bound digit validated",
+        "category": "Procedural work",
+        "scope": "cycle",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "1"
+            },
+            {
+              "variable": "quantity"
+            }
+          ]
+        },
+        "eligibility": "Each actual completed occurrence, once per unique receipt."
+      },
+      {
+        "id": "cacheLookup",
+        "title": "Cache lookup",
+        "category": "Procedural work",
+        "scope": "cycle",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "2"
+            },
+            {
+              "variable": "quantity"
+            }
+          ]
+        },
+        "eligibility": "Each actual completed occurrence, once per unique receipt."
+      },
+      {
+        "id": "cacheDisposition",
+        "title": "Cache hit, miss or bypass established",
+        "category": "Procedural work",
+        "scope": "cycle",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "3"
+            },
+            {
+              "variable": "quantity"
+            }
+          ]
+        },
+        "eligibility": "Each actual completed occurrence, once per unique receipt."
+      },
+      {
+        "id": "priorExam",
+        "title": "Prior-work authority examination",
+        "category": "Procedural work",
+        "scope": "cycle",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "5"
+            },
+            {
+              "variable": "quantity"
+            }
+          ]
+        },
+        "eligibility": "Each actual completed occurrence, once per unique receipt."
+      },
+      {
+        "id": "priorReuse",
+        "title": "Prior-work reuse authorized",
+        "category": "Procedural work",
+        "scope": "cycle",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "10"
+            },
+            {
+              "variable": "quantity"
+            }
+          ]
+        },
+        "eligibility": "Each actual completed occurrence, once per unique receipt."
+      },
+      {
+        "id": "window",
+        "title": "New extended window admitted",
+        "category": "Procedural work",
+        "scope": "cycle",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "5"
+            },
+            {
+              "variable": "quantity"
+            }
+          ]
+        },
+        "eligibility": "Each actual completed occurrence, once per unique receipt."
+      },
+      {
+        "id": "hrPlanning",
+        "title": "Headcount Planning approval",
+        "category": "Procedural work",
+        "scope": "cycle",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "5"
+            },
+            {
+              "variable": "quantity"
+            }
+          ]
+        },
+        "eligibility": "Each actual completed occurrence, once per unique receipt."
+      },
+      {
+        "id": "hrRecruitment",
+        "title": "Recruitment approval",
+        "category": "Procedural work",
+        "scope": "cycle",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "5"
+            },
+            {
+              "variable": "quantity"
+            }
+          ]
+        },
+        "eligibility": "Each actual completed occurrence, once per unique receipt."
+      },
+      {
+        "id": "hrIdentity",
+        "title": "Identity approval",
+        "category": "Procedural work",
+        "scope": "cycle",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "5"
+            },
+            {
+              "variable": "quantity"
+            }
+          ]
+        },
+        "eligibility": "Each actual completed occurrence, once per unique receipt."
+      },
+      {
+        "id": "hrOffer",
+        "title": "Offer approval",
+        "category": "Procedural work",
+        "scope": "cycle",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "5"
+            },
+            {
+              "variable": "quantity"
+            }
+          ]
+        },
+        "eligibility": "Each actual completed occurrence, once per unique receipt."
+      },
+      {
+        "id": "hrInduction",
+        "title": "Induction approval",
+        "category": "Procedural work",
+        "scope": "cycle",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "5"
+            },
+            {
+              "variable": "quantity"
+            }
+          ]
+        },
+        "eligibility": "Each actual completed occurrence, once per unique receipt."
+      },
+      {
+        "id": "hrProbation",
+        "title": "Probation approval",
+        "category": "Procedural work",
+        "scope": "cycle",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "5"
+            },
+            {
+              "variable": "quantity"
+            }
+          ]
+        },
+        "eligibility": "Each actual completed occurrence, once per unique receipt."
+      },
+      {
+        "id": "hrAudit",
+        "title": "Independent personnel audit",
+        "category": "Procedural work",
+        "scope": "cycle",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "5"
+            },
+            {
+              "variable": "quantity"
+            }
+          ]
+        },
+        "eligibility": "Each actual completed occurrence, once per unique receipt."
+      },
+      {
+        "id": "ballot",
+        "title": "Continuation ballot",
+        "category": "Procedural work",
+        "scope": "cycle",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "1"
+            },
+            {
+              "variable": "quantity"
+            }
+          ]
+        },
+        "eligibility": "Each actual completed occurrence, once per unique receipt."
+      },
+      {
+        "id": "continuation",
+        "title": "Continuation certified",
+        "category": "Procedural work",
+        "scope": "cycle",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "2"
+            },
+            {
+              "variable": "quantity"
+            }
+          ]
+        },
+        "eligibility": "Each actual completed occurrence, once per unique receipt."
+      },
+      {
+        "id": "context",
+        "title": "Fizz, Buzz or numeral context appointed",
+        "category": "Procedural work",
+        "scope": "cycle",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "2"
+            },
+            {
+              "variable": "quantity"
+            }
+          ]
+        },
+        "eligibility": "Each actual completed occurrence, once per unique receipt."
+      },
+      {
+        "id": "visitor",
+        "title": "Shared visitor convened",
+        "category": "Procedural work",
+        "scope": "cycle",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "2"
+            },
+            {
+              "variable": "quantity"
+            }
+          ]
+        },
+        "eligibility": "Each actual completed occurrence, once per unique receipt."
+      },
+      {
+        "id": "classification",
+        "title": "Classification vote",
+        "category": "Procedural work",
+        "scope": "cycle",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "2"
+            },
+            {
+              "variable": "quantity"
+            }
+          ]
+        },
+        "eligibility": "Each actual completed occurrence, once per unique receipt."
+      },
+      {
+        "id": "witness",
+        "title": "Arithmetic witness",
+        "category": "Procedural work",
+        "scope": "cycle",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "3"
+            },
+            {
+              "variable": "quantity"
+            }
+          ]
+        },
+        "eligibility": "Each actual completed occurrence, once per unique receipt."
+      },
+      {
+        "id": "printer",
+        "title": "Printer consultation, including correct refusal",
+        "category": "Procedural work",
+        "scope": "cycle",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "2"
+            },
+            {
+              "variable": "quantity"
+            }
+          ]
+        },
+        "eligibility": "Each actual completed occurrence, once per unique receipt."
+      },
+      {
+        "id": "premises",
+        "title": "Request-owned premises allocation",
+        "category": "Procedural work",
+        "scope": "cycle",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "2"
+            },
+            {
+              "variable": "quantity"
+            }
+          ]
+        },
+        "eligibility": "Each actual completed occurrence, once per unique receipt."
+      },
+      {
+        "id": "vacancy",
+        "title": "Initial vacancy inspection",
+        "category": "Procedural work",
+        "scope": "cycle",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "2"
+            },
+            {
+              "variable": "quantity"
+            }
+          ]
+        },
+        "eligibility": "Each actual completed occurrence, once per unique receipt."
+      },
+      {
+        "id": "hiddenGlyph",
+        "title": "Hidden character identified",
+        "category": "Procedural work",
+        "scope": "cycle",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "1"
+            },
+            {
+              "variable": "quantity"
+            }
+          ]
+        },
+        "eligibility": "Each actual completed occurrence, once per unique receipt."
+      },
+      {
+        "id": "evictionDecision",
+        "title": "Eviction decision, including not required",
+        "category": "Procedural work",
+        "scope": "cycle",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "3"
+            },
+            {
+              "variable": "quantity"
+            }
+          ]
+        },
+        "eligibility": "Each actual completed occurrence, once per unique receipt."
+      },
+      {
+        "id": "evictedGlyph",
+        "title": "Hidden character removed",
+        "category": "Procedural work",
+        "scope": "cycle",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "1"
+            },
+            {
+              "variable": "quantity"
+            }
+          ]
+        },
+        "eligibility": "Each actual completed occurrence, once per unique receipt."
+      },
+      {
+        "id": "reinspection",
+        "title": "Vacancy reinspection",
+        "category": "Procedural work",
+        "scope": "cycle",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "3"
+            },
+            {
+              "variable": "quantity"
+            }
+          ]
+        },
+        "eligibility": "Each actual completed occurrence, once per unique receipt."
+      },
+      {
+        "id": "lease",
+        "title": "Single-use lease",
+        "category": "Procedural work",
+        "scope": "cycle",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "3"
+            },
+            {
+              "variable": "quantity"
+            }
+          ]
+        },
+        "eligibility": "Each actual completed occurrence, once per unique receipt."
+      },
+      {
+        "id": "premisesAudit",
+        "title": "Independent premises audit",
+        "category": "Procedural work",
+        "scope": "cycle",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "5"
+            },
+            {
+              "variable": "quantity"
+            }
+          ]
+        },
+        "eligibility": "Each actual completed occurrence, once per unique receipt."
+      },
+      {
+        "id": "vacancyCertificate",
+        "title": "Vacancy certificate filed",
+        "category": "Procedural work",
+        "scope": "cycle",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "3"
+            },
+            {
+              "variable": "quantity"
+            }
+          ]
+        },
+        "eligibility": "Each actual completed occurrence, once per unique receipt."
+      },
+      {
+        "id": "transaction",
+        "title": "Transaction opened",
+        "category": "Procedural work",
+        "scope": "cycle",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "3"
+            },
+            {
+              "variable": "quantity"
+            }
+          ]
+        },
+        "eligibility": "Each actual completed occurrence, once per unique receipt."
+      },
+      {
+        "id": "requisition",
+        "title": "Product requisition",
+        "category": "Procedural work",
+        "scope": "cycle",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "4"
+            },
+            {
+              "variable": "quantity"
+            }
+          ]
+        },
+        "eligibility": "Each actual completed occurrence, once per unique receipt."
+      },
+      {
+        "id": "allocation",
+        "title": "Position-specific glyph allocated",
+        "category": "Procedural work",
+        "scope": "cycle",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "1"
+            },
+            {
+              "variable": "quantity"
+            }
+          ]
+        },
+        "eligibility": "Each actual completed occurrence, once per unique receipt."
+      },
+      {
+        "id": "delivery",
+        "title": "Product delivered",
+        "category": "Procedural work",
+        "scope": "cycle",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "3"
+            },
+            {
+              "variable": "quantity"
+            }
+          ]
+        },
+        "eligibility": "Each actual completed occurrence, once per unique receipt."
+      },
+      {
+        "id": "acceptedGlyph",
+        "title": "Glyph accepted",
+        "category": "Procedural work",
+        "scope": "cycle",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "4"
+            },
+            {
+              "variable": "quantity"
+            }
+          ]
+        },
+        "eligibility": "Each actual completed occurrence, once per unique receipt."
+      },
+      {
+        "id": "placedGlyph",
+        "title": "Accepted glyph placed",
+        "category": "Procedural work",
+        "scope": "cycle",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "1"
+            },
+            {
+              "variable": "quantity"
+            }
+          ]
+        },
+        "eligibility": "Each actual completed occurrence, once per unique receipt."
+      },
+      {
+        "id": "assembly",
+        "title": "Completed word assembly certified",
+        "category": "Procedural work",
+        "scope": "cycle",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "8"
+            },
+            {
+              "variable": "quantity"
+            }
+          ]
+        },
+        "eligibility": "Each actual completed occurrence, once per unique receipt."
+      },
+      {
+        "id": "numeral",
+        "title": "Numeral conversion",
+        "category": "Procedural work",
+        "scope": "cycle",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "3"
+            },
+            {
+              "variable": "quantity"
+            }
+          ]
+        },
+        "eligibility": "Each actual completed occurrence, once per unique receipt."
+      },
+      {
+        "id": "digit",
+        "title": "Decimal digit placed",
+        "category": "Procedural work",
+        "scope": "cycle",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "1"
+            },
+            {
+              "variable": "quantity"
+            }
+          ]
+        },
+        "eligibility": "Each actual completed occurrence, once per unique receipt."
+      },
+      {
+        "id": "fragment",
+        "title": "Output fragment staged",
+        "category": "Procedural work",
+        "scope": "cycle",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "2"
+            },
+            {
+              "variable": "quantity"
+            }
+          ]
+        },
+        "eligibility": "Each actual completed occurrence, once per unique receipt."
+      },
+      {
+        "id": "notary",
+        "title": "Independent arithmetic or lexical notarization",
+        "category": "Procedural work",
+        "scope": "cycle",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "8"
+            },
+            {
+              "variable": "quantity"
+            }
+          ]
+        },
+        "eligibility": "Each actual completed occurrence, once per unique receipt."
+      },
+      {
+        "id": "payload",
+        "title": "Complete payload published",
+        "category": "Procedural work",
+        "scope": "cycle",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "10"
+            },
+            {
+              "variable": "quantity"
+            }
+          ]
+        },
+        "eligibility": "Each actual completed occurrence, once per unique receipt."
+      },
+      {
+        "id": "audit",
+        "title": "Audit record appended",
+        "category": "Procedural work",
+        "scope": "cycle",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "8"
+            },
+            {
+              "variable": "quantity"
+            }
+          ]
+        },
+        "eligibility": "Each actual completed occurrence, once per unique receipt."
+      },
+      {
+        "id": "enqueue",
+        "title": "Queue entry created",
+        "category": "Procedural work",
+        "scope": "cycle",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "2"
+            },
+            {
+              "variable": "quantity"
+            }
+          ]
+        },
+        "eligibility": "Each actual completed occurrence, once per unique receipt."
+      },
+      {
+        "id": "acknowledge",
+        "title": "Consumer acknowledgement",
+        "category": "Procedural work",
+        "scope": "cycle",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "3"
+            },
+            {
+              "variable": "quantity"
+            }
+          ]
+        },
+        "eligibility": "Each actual completed occurrence, once per unique receipt."
+      },
+      {
+        "id": "commit",
+        "title": "Transaction committed",
+        "category": "Procedural work",
+        "scope": "cycle",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "5"
+            },
+            {
+              "variable": "quantity"
+            }
+          ]
+        },
+        "eligibility": "Each actual completed occurrence, once per unique receipt."
+      },
+      {
+        "id": "release",
+        "title": "Occupancy released",
+        "category": "Procedural work",
+        "scope": "cycle",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "2"
+            },
+            {
+              "variable": "quantity"
+            }
+          ]
+        },
+        "eligibility": "Each actual completed occurrence, once per unique receipt."
+      },
+      {
+        "id": "cleanup",
+        "title": "Staging cleanup",
+        "category": "Procedural work",
+        "scope": "cycle",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "2"
+            },
+            {
+              "variable": "quantity"
+            }
+          ]
+        },
+        "eligibility": "Each actual completed occurrence, once per unique receipt."
+      },
+      {
+        "id": "successionPetition",
+        "title": "Succession petition",
+        "category": "Procedural work",
+        "scope": "cycle",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "1"
+            },
+            {
+              "variable": "quantity"
+            }
+          ]
+        },
+        "eligibility": "Each actual completed occurrence, once per unique receipt."
+      },
+      {
+        "id": "successor",
+        "title": "Successor certified",
+        "category": "Procedural work",
+        "scope": "cycle",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "2"
+            },
+            {
+              "variable": "quantity"
+            }
+          ]
+        },
+        "eligibility": "Each actual completed occurrence, once per unique receipt."
+      },
+      {
+        "id": "advance",
+        "title": "Ordinal advanced",
+        "category": "Procedural work",
+        "scope": "cycle",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "1"
+            },
+            {
+              "variable": "quantity"
+            }
+          ]
+        },
+        "eligibility": "Each actual completed occurrence, once per unique receipt."
+      },
+      {
+        "id": "complete",
+        "title": "Mandate completion recorded",
+        "category": "Procedural work",
+        "scope": "cycle",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "10"
+            },
+            {
+              "variable": "quantity"
+            }
+          ]
+        },
+        "eligibility": "Each actual completed occurrence, once per unique receipt."
+      },
+      {
+        "id": "rejection",
+        "title": "Certified rejection",
+        "category": "Procedural work",
+        "scope": "cycle",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "3"
+            },
+            {
+              "variable": "quantity"
+            }
+          ]
+        },
+        "eligibility": "First certified rejection per logical operation; retries do not pay again."
+      },
+      {
+        "id": "rollback",
+        "title": "Certified rollback",
+        "category": "Procedural work",
+        "scope": "cycle",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "4"
+            },
+            {
+              "variable": "quantity"
+            }
+          ]
+        },
+        "eligibility": "Once per rejected logical operation. Errors themselves earn nothing."
+      },
+      {
+        "id": "line",
+        "title": "New output line",
+        "category": "Publication",
+        "scope": "cycle",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "5"
+            },
+            {
+              "variable": "quantity"
+            }
+          ]
+        },
+        "eligibility": "Each actual completed occurrence, once per unique receipt."
+      },
+      {
+        "id": "character",
+        "title": "Visible output character",
+        "category": "Publication",
+        "scope": "cycle",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "1"
+            },
+            {
+              "variable": "quantity"
+            }
+          ]
+        },
+        "eligibility": "Each actual completed occurrence, once per unique receipt."
+      },
+      {
+        "id": "separator",
+        "title": "Line separator",
+        "category": "Publication",
+        "scope": "cycle",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "1"
+            },
+            {
+              "variable": "quantity"
+            }
+          ]
+        },
+        "eligibility": "Each actual completed occurrence, once per unique receipt."
+      },
+      {
+        "id": "fizz",
+        "title": "Fizz classification",
+        "category": "Publication",
+        "scope": "cycle",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "10"
+            },
+            {
+              "variable": "quantity"
+            }
+          ]
+        },
+        "eligibility": "Exclusive of Buzz and FizzBuzz."
+      },
+      {
+        "id": "buzz",
+        "title": "Buzz classification",
+        "category": "Publication",
+        "scope": "cycle",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "15"
+            },
+            {
+              "variable": "quantity"
+            }
+          ]
+        },
+        "eligibility": "Exclusive of Fizz and FizzBuzz."
+      },
+      {
+        "id": "fizzbuzz",
+        "title": "FizzBuzz classification",
+        "category": "Publication",
+        "scope": "cycle",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "50"
+            },
+            {
+              "variable": "quantity"
+            }
+          ]
+        },
+        "eligibility": "Exclusive of Fizz and Buzz."
+      },
+      {
+        "id": "digitSum",
+        "title": "Decimal digit sum",
+        "formula": {
+          "op": "digitSum",
+          "args": [
+            {
+              "variable": "ordinal"
+            }
+          ]
+        },
+        "category": "Numerical distinctions",
+        "scope": "cycle",
+        "eligibility": "Once per newly disclosed ordinal. Qualifying numerical distinctions stack."
+      },
+      {
+        "id": "zeroes",
+        "title": "Trailing decimal zeroes",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "25"
+            },
+            {
+              "op": "trailingZeroes",
+              "args": [
+                {
+                  "variable": "ordinal"
+                }
+              ]
+            }
+          ]
+        },
+        "category": "Numerical distinctions",
+        "scope": "cycle",
+        "eligibility": "Once per newly disclosed ordinal. Qualifying numerical distinctions stack."
+      },
+      {
+        "id": "palindrome",
+        "title": "Multi-digit palindrome",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "100"
+            },
+            {
+              "op": "digits",
+              "args": [
+                {
+                  "variable": "ordinal"
+                }
+              ]
+            },
+            {
+              "op": "palindrome",
+              "args": [
+                {
+                  "variable": "ordinal"
+                }
+              ]
+            }
+          ]
+        },
+        "category": "Numerical distinctions",
+        "scope": "cycle",
+        "eligibility": "Once per newly disclosed ordinal. Qualifying numerical distinctions stack."
+      },
+      {
+        "id": "identical",
+        "title": "Multi-digit identical digits",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "150"
+            },
+            {
+              "op": "digits",
+              "args": [
+                {
+                  "variable": "ordinal"
+                }
+              ]
+            },
+            {
+              "op": "identicalDigits",
+              "args": [
+                {
+                  "variable": "ordinal"
+                }
+              ]
+            }
+          ]
+        },
+        "category": "Numerical distinctions",
+        "scope": "cycle",
+        "eligibility": "Once per newly disclosed ordinal. Qualifying numerical distinctions stack."
+      },
+      {
+        "id": "powerTen",
+        "title": "Exact power of ten",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "100"
+            },
+            {
+              "op": "powerOfTen",
+              "args": [
+                {
+                  "variable": "ordinal"
+                }
+              ]
+            }
+          ]
+        },
+        "category": "Numerical distinctions",
+        "scope": "cycle",
+        "eligibility": "Once per newly disclosed ordinal. Qualifying numerical distinctions stack."
+      },
+      {
+        "id": "appointment",
+        "title": "Companion salary and supplements",
+        "category": "Companions",
+        "scope": "cycle",
+        "formula": {
+          "op": "add",
+          "args": [
+            {
+              "op": "multiply",
+              "args": [
+                {
+                  "lookup": "rarity",
+                  "key": "rarity"
+                },
+                {
+                  "op": "add",
+                  "args": [
+                    {
+                      "lookup": "salary",
+                      "key": "rarity"
+                    },
+                    {
+                      "op": "multiply",
+                      "args": [
+                        {
+                          "constant": "250"
+                        },
+                        {
+                          "variable": "paired"
+                        }
+                      ]
+                    },
+                    {
+                      "op": "multiply",
+                      "args": [
+                        {
+                          "constant": "500"
+                        },
+                        {
+                          "variable": "loyalty"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "op": "multiply",
+              "args": [
+                {
+                  "constant": "1000"
+                },
+                {
+                  "variable": "first"
+                }
+              ]
+            }
+          ]
+        },
+        "eligibility": "Every genuine appointment, including repeats. Pair supplement once per appointment; loyalty every tenth appointment of the identity; first identity once per run."
+      },
+      {
+        "id": "entrance",
+        "title": "Legendary or Mythic entrance grant",
+        "category": "Companions",
+        "scope": "flat",
+        "formula": {
+          "lookup": "entrance",
+          "key": "rarity"
+        },
+        "eligibility": "Every genuine appointment, including repeats. Never multiplied."
+      },
+      {
+        "id": "flightManifest",
+        "title": "Flight manifest registered",
+        "category": "Extraordinary operations",
+        "scope": "incident",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "100"
+            },
+            {
+              "variable": "quantity"
+            }
+          ]
+        },
+        "eligibility": "Each actual completed occurrence, once per unique receipt."
+      },
+      {
+        "id": "flightCrew",
+        "title": "Actual crew boarded",
+        "category": "Extraordinary operations",
+        "scope": "incident",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "50"
+            },
+            {
+              "variable": "quantity"
+            }
+          ]
+        },
+        "eligibility": "Actual crew only; no companion appointment awarded.",
+        "cap": 3
+      },
+      {
+        "id": "flightFold",
+        "title": "Aircraft folded",
+        "category": "Extraordinary operations",
+        "scope": "incident",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "200"
+            },
+            {
+              "variable": "quantity"
+            }
+          ]
+        },
+        "eligibility": "Each actual completed occurrence, once per unique receipt."
+      },
+      {
+        "id": "flightDeparture",
+        "title": "Departure completed",
+        "category": "Extraordinary operations",
+        "scope": "incident",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "300"
+            },
+            {
+              "variable": "quantity"
+            }
+          ]
+        },
+        "eligibility": "Each actual completed occurrence, once per unique receipt."
+      },
+      {
+        "id": "flightCheckpoint",
+        "title": "Fan checkpoint passed",
+        "category": "Extraordinary operations",
+        "scope": "incident",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "100"
+            },
+            {
+              "variable": "quantity"
+            }
+          ]
+        },
+        "eligibility": "Each actual completed occurrence, once per unique receipt.",
+        "cap": 3
+      },
+      {
+        "id": "flightLoop",
+        "title": "Authorized holding loop completed",
+        "category": "Extraordinary operations",
+        "scope": "incident",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "150"
+            },
+            {
+              "variable": "quantity"
+            }
+          ]
+        },
+        "eligibility": "Each actual completed occurrence, once per unique receipt.",
+        "cap": 3
+      },
+      {
+        "id": "flightPersonality",
+        "title": "Signature personality maneuver completed",
+        "category": "Extraordinary operations",
+        "scope": "incident",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "300"
+            },
+            {
+              "variable": "quantity"
+            }
+          ]
+        },
+        "eligibility": "Each actual completed occurrence, once per unique receipt."
+      },
+      {
+        "id": "flightApproach",
+        "title": "Final approach",
+        "category": "Extraordinary operations",
+        "scope": "incident",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "200"
+            },
+            {
+              "variable": "quantity"
+            }
+          ]
+        },
+        "eligibility": "Each actual completed occurrence, once per unique receipt."
+      },
+      {
+        "id": "flightLanding",
+        "title": "Landing completed",
+        "category": "Extraordinary operations",
+        "scope": "incident",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "1000"
+            },
+            {
+              "variable": "quantity"
+            }
+          ]
+        },
+        "eligibility": "Each actual completed occurrence, once per unique receipt."
+      },
+      {
+        "id": "flightFinding",
+        "title": "Delivery finding recorded",
+        "category": "Extraordinary operations",
+        "scope": "incident",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "500"
+            },
+            {
+              "variable": "quantity"
+            }
+          ]
+        },
+        "eligibility": "Each actual completed occurrence, once per unique receipt."
+      },
+      {
+        "id": "flightDelivery",
+        "title": "Successful direct, courier or expedited delivery",
+        "category": "Extraordinary operations",
+        "scope": "incident",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "500"
+            },
+            {
+              "variable": "quantity"
+            }
+          ]
+        },
+        "eligibility": "Each actual completed occurrence, once per unique receipt."
+      },
+      {
+        "id": "flightFan",
+        "title": "Final effective non-default fan policy",
+        "category": "Extraordinary operations",
+        "scope": "incident",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "100"
+            },
+            {
+              "variable": "quantity"
+            }
+          ]
+        },
+        "eligibility": "Once per fan; repeated adjustment does not repay.",
+        "cap": 3
+      },
+      {
+        "id": "flightDestination",
+        "title": "Non-default destination actually served",
+        "category": "Extraordinary operations",
+        "scope": "incident",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "200"
+            },
+            {
+              "variable": "quantity"
+            }
+          ]
+        },
+        "eligibility": "Each actual completed occurrence, once per unique receipt."
+      },
+      {
+        "id": "flightFirstPilot",
+        "title": "First completed flight by this personality",
+        "category": "Extraordinary operations",
+        "scope": "incident",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "500"
+            },
+            {
+              "variable": "quantity"
+            }
+          ]
+        },
+        "eligibility": "Once per personality per run."
+      },
+      {
+        "id": "flightResume",
+        "title": "Flight continued after reorganization",
+        "category": "Extraordinary operations",
+        "scope": "incident",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "500"
+            },
+            {
+              "variable": "quantity"
+            }
+          ]
+        },
+        "eligibility": "Once per flight, after actual progress resumes."
+      },
+      {
+        "id": "heistCase",
+        "title": "Heist case registered",
+        "category": "Extraordinary operations",
+        "scope": "incident",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "100"
+            },
+            {
+              "variable": "quantity"
+            }
+          ]
+        },
+        "eligibility": "Each actual completed occurrence, once per unique receipt."
+      },
+      {
+        "id": "heistSuspect",
+        "title": "Actual suspect registered",
+        "category": "Extraordinary operations",
+        "scope": "incident",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "50"
+            },
+            {
+              "variable": "quantity"
+            }
+          ]
+        },
+        "eligibility": "Each actual completed occurrence, once per unique receipt.",
+        "cap": 3
+      },
+      {
+        "id": "heistTactic",
+        "title": "Signature tactic identified",
+        "category": "Extraordinary operations",
+        "scope": "incident",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "300"
+            },
+            {
+              "variable": "quantity"
+            }
+          ]
+        },
+        "eligibility": "Once at identification; waiting for escape earns nothing."
+      },
+      {
+        "id": "heistFootprints",
+        "title": "Footprints inspected",
+        "category": "Extraordinary operations",
+        "scope": "incident",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "200"
+            },
+            {
+              "variable": "quantity"
+            }
+          ]
+        },
+        "eligibility": "Once per case."
+      },
+      {
+        "id": "heistAlibi",
+        "title": "Distinct innocent alibi",
+        "category": "Extraordinary operations",
+        "scope": "incident",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "100"
+            },
+            {
+              "variable": "quantity"
+            }
+          ]
+        },
+        "eligibility": "Each actual completed occurrence, once per unique receipt.",
+        "cap": 2
+      },
+      {
+        "id": "heistCatch",
+        "title": "Successful player interception or amnesty",
+        "category": "Extraordinary operations",
+        "scope": "incident",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "1000"
+            },
+            {
+              "variable": "quantity"
+            }
+          ]
+        },
+        "eligibility": "No award for automatic return, skip, disable or cancellation."
+      },
+      {
+        "id": "heistReturn",
+        "title": "Stamp returned",
+        "category": "Extraordinary operations",
+        "scope": "incident",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "500"
+            },
+            {
+              "variable": "quantity"
+            }
+          ]
+        },
+        "eligibility": "Each actual completed occurrence, once per unique receipt."
+      },
+      {
+        "id": "heistReport",
+        "title": "Case report filed",
+        "category": "Extraordinary operations",
+        "scope": "incident",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "250"
+            },
+            {
+              "variable": "quantity"
+            }
+          ]
+        },
+        "eligibility": "Each actual completed occurrence, once per unique receipt."
+      },
+      {
+        "id": "heistResume",
+        "title": "Heist continued after reorganization",
+        "category": "Extraordinary operations",
+        "scope": "incident",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "500"
+            },
+            {
+              "variable": "quantity"
+            }
+          ]
+        },
+        "eligibility": "Once per case, after actual progress resumes."
+      },
+      {
+        "id": "moveCharter",
+        "title": "Reorganization charter",
+        "category": "Extraordinary operations",
+        "scope": "flat",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "100"
+            },
+            {
+              "variable": "quantity"
+            }
+          ]
+        },
+        "eligibility": "Each actual completed occurrence, once per unique receipt."
+      },
+      {
+        "id": "movePack",
+        "title": "Room packed",
+        "category": "Extraordinary operations",
+        "scope": "flat",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "25"
+            },
+            {
+              "variable": "quantity"
+            }
+          ]
+        },
+        "eligibility": "Each actual completed occurrence, once per unique receipt.",
+        "cap": 8
+      },
+      {
+        "id": "moveRoom",
+        "title": "Room moved",
+        "category": "Extraordinary operations",
+        "scope": "flat",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "50"
+            },
+            {
+              "variable": "quantity"
+            }
+          ]
+        },
+        "eligibility": "Each actual completed occurrence, once per unique receipt.",
+        "cap": 8
+      },
+      {
+        "id": "moveUnpack",
+        "title": "Room unpacked",
+        "category": "Extraordinary operations",
+        "scope": "flat",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "25"
+            },
+            {
+              "variable": "quantity"
+            }
+          ]
+        },
+        "eligibility": "Each actual completed occurrence, once per unique receipt.",
+        "cap": 8
+      },
+      {
+        "id": "moveAddress",
+        "title": "Room address rebound",
+        "category": "Extraordinary operations",
+        "scope": "flat",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "10"
+            },
+            {
+              "variable": "quantity"
+            }
+          ]
+        },
+        "eligibility": "Each actual completed occurrence, once per unique receipt.",
+        "cap": 8
+      },
+      {
+        "id": "movePartition",
+        "title": "Room partition certified",
+        "category": "Extraordinary operations",
+        "scope": "flat",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "25"
+            },
+            {
+              "variable": "quantity"
+            }
+          ]
+        },
+        "eligibility": "Each actual completed occurrence, once per unique receipt.",
+        "cap": 8
+      },
+      {
+        "id": "moveRoute",
+        "title": "Directed route validated",
+        "category": "Extraordinary operations",
+        "scope": "flat",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "1"
+            },
+            {
+              "variable": "quantity"
+            }
+          ]
+        },
+        "eligibility": "Each actual completed occurrence, once per unique receipt.",
+        "cap": 56
+      },
+      {
+        "id": "moveAmenity",
+        "title": "Ninth amenity accommodated",
+        "category": "Extraordinary operations",
+        "scope": "flat",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "100"
+            },
+            {
+              "variable": "quantity"
+            }
+          ]
+        },
+        "eligibility": "Each actual completed occurrence, once per unique receipt."
+      },
+      {
+        "id": "moveMinutes",
+        "title": "Reorganization minutes filed",
+        "category": "Extraordinary operations",
+        "scope": "flat",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "100"
+            },
+            {
+              "variable": "quantity"
+            }
+          ]
+        },
+        "eligibility": "Each actual completed occurrence, once per unique receipt."
+      },
+      {
+        "id": "moveResume",
+        "title": "Interrupted work advanced afterward",
+        "category": "Extraordinary operations",
+        "scope": "flat",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "250"
+            },
+            {
+              "variable": "quantity"
+            }
+          ]
+        },
+        "eligibility": "Each actual completed occurrence, once per unique receipt."
+      },
+      {
+        "id": "biography",
+        "title": "Appointed companion biography inspected",
+        "category": "Office literacy",
+        "scope": "flat",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "25"
+            },
+            {
+              "variable": "quantity"
+            }
+          ]
+        },
+        "eligibility": "First inspection of each actually appointed identity in this run."
+      },
+      {
+        "id": "evidence",
+        "title": "Procedural evidence kind inspected",
+        "category": "Office literacy",
+        "scope": "flat",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "5"
+            },
+            {
+              "variable": "quantity"
+            }
+          ]
+        },
+        "eligibility": "First inspection of each kind of actual evidence in this run."
+      },
+      {
+        "id": "department",
+        "title": "Department inspected",
+        "category": "Office literacy",
+        "scope": "flat",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "10"
+            },
+            {
+              "variable": "quantity"
+            }
+          ]
+        },
+        "eligibility": "First inspection of each department in this run."
+      },
+      {
+        "id": "curiosity",
+        "title": "Authored curiosity response inspected",
+        "category": "Office literacy",
+        "scope": "flat",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "20"
+            },
+            {
+              "variable": "quantity"
+            }
+          ]
+        },
+        "eligibility": "First inspection of each authored response in this run."
+      },
+      {
+        "id": "bingo",
+        "title": "Bureaucratic Bingo",
+        "category": "Achievements",
+        "scope": "flat",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "500"
+            },
+            {
+              "variable": "quantity"
+            }
+          ]
+        },
+        "eligibility": "Every fresh set of numeral, Fizz, Buzz and FizzBuzz; collection resets after award."
+      },
+      {
+        "id": "century",
+        "title": "Century of Consequences",
+        "category": "Achievements",
+        "scope": "flat",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "10000"
+            },
+            {
+              "variable": "quantity"
+            }
+          ]
+        },
+        "eligibility": "Every 100 newly disclosed lines."
+      },
+      {
+        "id": "committee",
+        "title": "Appointment Committee",
+        "category": "Achievements",
+        "scope": "flat",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "2500"
+            },
+            {
+              "variable": "quantity"
+            }
+          ]
+        },
+        "eligibility": "Every ten appointments, including repeats."
+      },
+      {
+        "id": "airline",
+        "title": "Paper Airline",
+        "category": "Achievements",
+        "scope": "flat",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "25000"
+            },
+            {
+              "variable": "quantity"
+            }
+          ]
+        },
+        "eligibility": "Every five successful natural flights."
+      },
+      {
+        "id": "affairs",
+        "title": "Internal Affairs",
+        "category": "Achievements",
+        "scope": "flat",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "15000"
+            },
+            {
+              "variable": "quantity"
+            }
+          ]
+        },
+        "eligibility": "Three player-resolved natural heists, once per run."
+      },
+      {
+        "id": "spectrum",
+        "title": "Full Spectrum of Improbability",
+        "category": "Achievements",
+        "scope": "flat",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "100000"
+            },
+            {
+              "variable": "quantity"
+            }
+          ]
+        },
+        "eligibility": "All five rarities appointed, once per run."
+      },
+      {
+        "id": "census",
+        "title": "Personality Census",
+        "category": "Achievements",
+        "scope": "flat",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "250000"
+            },
+            {
+              "variable": "quantity"
+            }
+          ]
+        },
+        "eligibility": "All thirteen pilot personalities completed, once per run."
+      },
+      {
+        "id": "partitions",
+        "title": "Partition Connoisseur",
+        "category": "Achievements",
+        "scope": "flat",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "25000"
+            },
+            {
+              "variable": "quantity"
+            }
+          ]
+        },
+        "eligibility": "All twelve styles installed through scored reorganizations, once per run."
+      },
+      {
+        "id": "departments",
+        "title": "Departmental Completionist",
+        "category": "Achievements",
+        "scope": "flat",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "2000"
+            },
+            {
+              "variable": "quantity"
+            }
+          ]
+        },
+        "eligibility": "All eight departments inspected, once per run."
+      },
+      {
+        "id": "magnitude",
+        "title": "Orders of Magnitude",
+        "category": "Achievements",
+        "scope": "flat",
+        "formula": {
+          "op": "multiply",
+          "args": [
+            {
+              "constant": "1000"
+            },
+            {
+              "variable": "threshold"
+            }
+          ]
+        },
+        "eligibility": "Once at each completed-line count 10, 100, 1,000 and subsequent powers of ten."
+      },
+      {
+        "id": "dividend",
+        "title": "Completion dividend",
+        "category": "Completion dividend",
+        "scope": "flat",
+        "formula": {
+          "op": "add",
+          "args": [
+            {
+              "constant": "5000"
+            },
+            {
+              "op": "multiply",
+              "args": [
+                {
+                  "constant": "100"
+                },
+                {
+                  "variable": "completed"
+                }
+              ]
+            },
+            {
+              "op": "floorDivide",
+              "args": [
+                {
+                  "variable": "netScore"
+                },
+                {
+                  "constant": "10"
+                }
+              ]
+            }
+          ]
+        },
+        "eligibility": "Once after a positive-length mandate finishes and its incidents settle. Uses net score before this dividend; abandoned runs do not qualify."
+      }
+    ],
+    "badges": [
+      {
+        "id": "bingo",
+        "title": "Bureaucratic Bingo",
+        "counter": "bingo",
+        "target": "1",
+        "repeat": true,
+        "award": "bingo",
+        "description": "Complete a fresh set of numeral, Fizz, Buzz and FizzBuzz."
+      },
+      {
+        "id": "century",
+        "title": "Century of Consequences",
+        "counter": "lines",
+        "target": "100",
+        "repeat": true,
+        "award": "century",
+        "description": "Disclose a century of output lines."
+      },
+      {
+        "id": "committee",
+        "title": "Appointment Committee",
+        "counter": "appointments",
+        "target": "10",
+        "repeat": true,
+        "award": "committee",
+        "description": "Appoint ten companions. Repeats count."
+      },
+      {
+        "id": "airline",
+        "title": "Paper Airline",
+        "counter": "flights",
+        "target": "5",
+        "repeat": true,
+        "award": "airline",
+        "description": "Complete five successful natural flights."
+      },
+      {
+        "id": "affairs",
+        "title": "Internal Affairs",
+        "counter": "heists",
+        "target": "3",
+        "repeat": false,
+        "award": "affairs",
+        "description": "Resolve three natural heists by interception or amnesty."
+      },
+      {
+        "id": "spectrum",
+        "title": "Full Spectrum of Improbability",
+        "counter": "rarities",
+        "target": "5",
+        "repeat": false,
+        "award": "spectrum",
+        "description": "Appoint all five rarities."
+      },
+      {
+        "id": "census",
+        "title": "Personality Census",
+        "counter": "pilots",
+        "target": "13",
+        "repeat": false,
+        "award": "census",
+        "description": "Complete flights with every pilot personality, including the acting clerk."
+      },
+      {
+        "id": "partitions",
+        "title": "Partition Connoisseur",
+        "counter": "partitions",
+        "target": "12",
+        "repeat": false,
+        "award": "partitions",
+        "description": "Install every partition style through scored moves."
+      },
+      {
+        "id": "departments",
+        "title": "Departmental Completionist",
+        "counter": "departments",
+        "target": "8",
+        "repeat": false,
+        "award": "departments",
+        "description": "Inspect every department."
+      },
+      {
+        "id": "magnitude",
+        "title": "Orders of Magnitude",
+        "counter": "magnitude",
+        "target": "1",
+        "repeat": true,
+        "description": "Cross a power-of-ten completed-line milestone; award is 1,000 times the threshold."
+      },
+      {
+        "id": "untouched",
+        "title": "Not One Point",
+        "counter": "untouched",
+        "target": "1",
+        "repeat": false,
+        "description": "Stop a heist with a positive budget before its first debit. Recognition only."
+      },
+      {
+        "id": "reappropriation",
+        "title": "Reappropriation",
+        "counter": "reappropriation",
+        "target": "1",
+        "repeat": false,
+        "description": "Recover stolen points. Recognition only."
+      },
+      {
+        "id": "authority",
+        "title": "Temporary Executive Powers",
+        "counter": "boosted",
+        "target": "1",
+        "repeat": false,
+        "description": "Complete a boosted cycle. Recognition only."
+      },
+      {
+        "id": "ratified",
+        "title": "Ratified at Last",
+        "counter": "completed",
+        "target": "1",
+        "repeat": false,
+        "description": "Earn a completion dividend. Recognition only."
+      },
+      {
+        "id": "legendary",
+        "title": "Legendary Appointment",
+        "counter": "legendary",
+        "target": "1",
+        "repeat": false,
+        "description": "Receive a Legendary appointment. Recognition only."
+      },
+      {
+        "id": "mythic",
+        "title": "Mythic Appointment",
+        "counter": "mythic",
+        "target": "1",
+        "repeat": false,
+        "description": "Receive a Mythic appointment. Recognition only."
+      }
+    ]
+  },
+  "artwork": {
+    "bingo": "<rect x=\"11\" y=\"11\" width=\"42\" height=\"42\" rx=\"5\"/><path d=\"M32 11v42M11 32h42M16 41l10 10 25-30\"/><path d=\"M20 18v7M39 18h8m-8 0v10m0-5h6\"/>",
+    "century": "<path d=\"M16 9h32v46H16zM16 17h32M23 9V5m18 4V5\"/><rect x=\"9\" y=\"24\" width=\"46\" height=\"20\" rx=\"4\"/><path d=\"M21 29v10m9-10h6v10h-6zm13 0h6v10h-6zM23 49h18\"/>",
+    "committee": "<path d=\"m10 17 31-6 8 39-31 6zM19 10h34v39H19z\"/><circle cx=\"35\" cy=\"24\" r=\"5\"/><path d=\"M26 36c1-9 17-9 18 0\"/><circle cx=\"45\" cy=\"46\" r=\"11\"/><path d=\"M41 41v10m5-10h4v10h-4z\"/>",
+    "airline": "<path d=\"m12 28 42-16-15 37-7-15-20-6Zm20 6 22-22M32 34l-3 14 10-9\"/><path d=\"M13 39c-9 9 2 20 12 13M18 38h-8v7h6c7 0 7 10 0 10h-5\"/>",
+    "affairs": "<rect x=\"9\" y=\"9\" width=\"46\" height=\"46\" rx=\"7\"/><path d=\"M14 16v32m8-9h22v8H22zM27 39v-8h12v8M32 31V20\"/><circle cx=\"32\" cy=\"18\" r=\"5\"/><path d=\"m44 17 2 2m2 4 2 2m-3 4 2 2\"/>",
+    "spectrum": "<path d=\"M32 7c12 0 9 14 9 14s14-5 17 7-12 15-12 15 9 12-2 17-16-8-16-8-9 11-19 3 2-20 2-20-12-8-4-18 19-1 19-1S21 7 32 7Z\"/><path d=\"m20 25 7 6 5-11 5 11 7-6-3 17H23z\"/>",
+    "census": "<path d=\"m12 28 42-16-15 37-7-15-20-6Zm20 6 22-22M32 34l-3 14 10-9\"/><path d=\"M11 17v-8l7 4zM25 10V3l7 4zM43 5v7l7-3zM56 25h6l-3 6zM53 41h7l-4 6zM45 53v7l-6-4zM25 55v7l-6-4zM9 47H3l3-6zM8 30H2l3-6z\"/><path d=\"M18 43v9m5-9h5l-3 4 3 5h-5\"/>",
+    "partitions": "<path d=\"m5 16 13-6 14 6 14-6 13 6v35l-13-6-14 6-14-6-13 6zM18 10v35m14-29v35m14-41v35M23 22v15m5-15v15M49 23h8m-8 7h8m-8 7h8m-5-17v20\"/><path d=\"M11 27c-9-8-8 5 0 10 8-5 9-18 0-10Z\"/><circle cx=\"39\" cy=\"24\" r=\"2\"/><circle cx=\"38\" cy=\"36\" r=\"3\"/>",
+    "departments": "<path d=\"m23 7 18 0 16 16v18L41 57H23L7 41V23zM23 7v11m18-11v11m16 5H46m11 18H46M41 57V46M23 57V46M7 41h11M7 23h11\"/><circle cx=\"30\" cy=\"30\" r=\"11\"/><path d=\"m38 38 13 13\"/>",
+    "magnitude": "<path d=\"M7 55h50M10 55V39h12v16m0-16V25h12v30m0-30V11h12v44m0-44V5h9v50\"/><path d=\"m6 29 8-8 7 3 13-15M27 9h7v7\"/>",
+    "untouched": "<path d=\"m32 6 23 9-3 22c-2 10-14 17-20 21-6-4-18-11-20-21L9 15z\"/><circle cx=\"32\" cy=\"32\" r=\"13\"/><path d=\"M26 29h12m-12 6h12M32 21v22\"/>",
+    "reappropriation": "<path d=\"M8 32V12h29v40H8V39m0-17h29M15 29h9m-9 8h9m-9 8h9M49 13v23c0 13-9 16-19 16m6-7-7 7 7 6\"/><circle cx=\"49\" cy=\"13\" r=\"8\"/><path d=\"M46 13h6m-3-4v8\"/>",
+    "authority": "<path d=\"M9 36h46v18l-6-4-6 4-6-4-6 4-6-4-6 4-10-4zM15 36v-8h34v8M25 28V15h14v13\"/><ellipse cx=\"32\" cy=\"11\" rx=\"12\" ry=\"7\"/><path d=\"m26 8 12 6m-12 0 12-6M17 41v5m10-5v5m10-5v5m10-5v5\"/>",
+    "ratified": "<path d=\"M17 10h34v35c0 12-9 12-9 5H9c-8 0-8-10 0-10h8zM17 17H9c-8 0-8-7 0-7h8M24 20h18m-18 8h13m-13 8h9\"/><circle cx=\"44\" cy=\"42\" r=\"10\"/><path d=\"m38 42 4 4 8-9m-13 14-2 10 9-5 8 5-1-12\"/>",
+    "legendary": "<rect x=\"9\" y=\"29\" width=\"46\" height=\"26\" rx=\"5\"/><path d=\"M9 39h46M26 38v7h12v-7M22 29v-7h20v7m-10-25 4 9 10 1-8 7 2 10-8-5-8 5 2-10-8-7 10-1z\"/>",
+    "mythic": "<path d=\"m32 5 5 13 13-6-3 14 14 5-13 6 5 14-14-4-7 13-6-13-14 5 5-14L3 31l14-5-4-14 13 6z\"/><path d=\"m22 25 10-6 10 6v14l-10 6-10-6zm0 0 20 14m0-14L22 39\"/><ellipse cx=\"32\" cy=\"32\" rx=\"31\" ry=\"12\" transform=\"rotate(-32 32 32)\"/>"
+  },
+  "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"><meta name=\"description\" content=\"The complete, generated Enterprise Points scoring rules: every award, temporary authority, heist debit and achievement.\"><title>Enterprise Points · Rules in effect | The Serious Business Company, Inc.</title><link rel=\"icon\" type=\"image/svg+xml\" href=\"/assets/mark.svg\"><link rel=\"stylesheet\" href=\"/assets/site.css\"><link rel=\"slopbuzz-page-module\" href=\"/assets/scoring-guide.js\"></head><body><!--SITE_HEADER--><main id=\"main\" tabindex=\"-1\" class=\"scoring-guide\"><p class=\"eyebrow\">Department of Earned Importance · Official scoring charter</p><h1>Every small step. An unreasonable amount of credit.</h1><p>These tables and formulas are generated from the same versioned rules used by the scoring service. Each run keeps the edition under which it began.</p><p>Rules: <strong>enterprise-v2</strong> · Manifest: <code>45c0dddb</code> · <a href=\"/demo/\">Return to the office</a> · <a href=\"./rules.json\">Machine-readable rules</a></p>\n <nav aria-label=\"Scoring guide contents\"><a href=\"#accounting\">Accounting</a><a href=\"#boosts\">Temporary boosts</a><a href=\"#heists\">Heist custody</a><a href=\"#badges\">Badges</a><a href=\"#category-0\">Procedural work</a><a href=\"#category-1\">Publication</a><a href=\"#category-2\">Numerical distinctions</a><a href=\"#category-3\">Companions</a><a href=\"#category-4\">Extraordinary operations</a><a href=\"#category-5\">Office literacy</a><a href=\"#category-6\">Achievements</a><a href=\"#category-7\">Completion dividend</a></nav>\n <section id=\"accounting\"><h2>The account belongs to completed work</h2><p><strong>Net points = earned points − stolen points + recovered points + completion dividend.</strong> All amounts are exact integers. Recovery is a transfer of your own property, not fresh earnings. Only heists subtract points; no balance goes below zero.</p><p>Repeated appointments pay in full. Replays, duplicate receipts, repainting, repeated clicks and elapsed waiting do not. Cached runs pay for actual cache and reuse work, new disclosures and appointments; they invent no manufacturing history. Reveal-all pays for the same completed work as individual disclosure. Missing evidence is marked partial and never fabricated.</p><p>Every new mandate starts at zero. A stopped or abandoned run retains its net earnings but receives no completion dividend. The browser retains the latest and previous run and a bounded badge cabinet. Ordinary refresh preserves these records; full data reset clears them. Legacy portfolios retain their original rates.</p><p>Number grouping follows your browser locale. No large integer is converted to a floating-point number, abbreviated, or silently rounded.</p></section>\n <section id=\"boosts\"><h2>Temporary executive powers</h2><p>Normal scoring is ×<span data-score-number=\"1\">1</span>. Milestones count newly disclosed lines in this run, not the magnitude of the starting number. The strongest matching grant begins on the following cycle; grants never stack, refresh or queue.</p><div class=\"guide-table\" tabindex=\"0\" role=\"region\" aria-label=\"Completed-line milestone, Factor, Following number cycles\"><table><thead><tr><th scope=\"col\">Completed-line milestone</th><th scope=\"col\">Factor</th><th scope=\"col\">Following number cycles</th></tr></thead><tbody><tr><th scope=\"row\">Every <span data-score-number=\"5000\">5,000</span></th><td>×<span data-score-number=\"10\">10</span></td><td><span data-score-number=\"1\">1</span></td></tr><tr><th scope=\"row\">Every <span data-score-number=\"1000\">1,000</span></th><td>×<span data-score-number=\"5\">5</span></td><td><span data-score-number=\"4\">4</span></td></tr><tr><th scope=\"row\">Every <span data-score-number=\"500\">500</span></th><td>×<span data-score-number=\"3\">3</span></td><td><span data-score-number=\"10\">10</span></td></tr><tr><th scope=\"row\">Every <span data-score-number=\"250\">250</span></th><td>×<span data-score-number=\"2\">2</span></td><td><span data-score-number=\"20\">20</span></td></tr></tbody></table></div><p>A cycle means one newly disclosed number. Pause and room reorganization consume no cycles. Each cycle and its naturally triggered incident retain their captured factor, including delayed receipts. Ending the run discards unused cycles. Incidents cannot extend a boost window.</p><p><strong>Cycle scope:</strong> procedural work associated with that number, publication, numerical distinctions and appointment salary/supplements. <strong>Incident scope:</strong> the incident’s pilot or culprit rarity factor multiplied by its triggering cycle factor. <strong>Flat scope:</strong> entrance grants, manual reorganizations, literacy, achievement grants and completion dividends. Administrative work outside a cycle uses ×<span data-score-number=\"1\">1</span>. Theft and recovery are never multiplied.</p></section>\n <section id=\"companions\"><h2>The appointment payroll</h2><div class=\"guide-table\" tabindex=\"0\" role=\"region\" aria-label=\"Rarity, Salary, Local rarity factor, Flat entrance grant, Basic appointment at ×1\"><table><thead><tr><th scope=\"col\">Rarity</th><th scope=\"col\">Salary</th><th scope=\"col\">Local rarity factor</th><th scope=\"col\">Flat entrance grant</th><th scope=\"col\">Basic appointment at ×1</th></tr></thead><tbody><tr><th scope=\"row\">Common</th><td><span data-score-number=\"100\">100</span></td><td>×<span data-score-number=\"1\">1</span></td><td><span data-score-number=\"0\">0</span></td><td><span data-score-number=\"100\">100</span></td></tr><tr><th scope=\"row\">Uncommon</th><td><span data-score-number=\"250\">250</span></td><td>×<span data-score-number=\"2\">2</span></td><td><span data-score-number=\"0\">0</span></td><td><span data-score-number=\"500\">500</span></td></tr><tr><th scope=\"row\">Rare</th><td><span data-score-number=\"1000\">1,000</span></td><td>×<span data-score-number=\"5\">5</span></td><td><span data-score-number=\"0\">0</span></td><td><span data-score-number=\"5000\">5,000</span></td></tr><tr><th scope=\"row\">Legendary</th><td><span data-score-number=\"10000\">10,000</span></td><td>×<span data-score-number=\"10\">10</span></td><td><span data-score-number=\"250000\">250,000</span></td><td><span data-score-number=\"350000\">350,000</span></td></tr><tr><th scope=\"row\">Mythic</th><td><span data-score-number=\"100000\">100,000</span></td><td>×<span data-score-number=\"25\">25</span></td><td><span data-score-number=\"2500000\">2,500,000</span></td><td><span data-score-number=\"5000000\">5,000,000</span></td></tr></tbody></table></div><p>The appointment formula below includes paired appointments, first identities and loyalty supplements. An indicator is one when eligible and zero otherwise. Paired appointments count once; every <span data-score-number=\"10\">10</span>th appointment of the same identity earns the loyalty supplement. Every repeated Legendary or Mythic appointment receives its entrance grant again. Moving a companion or joining an incident is not another appointment.</p></section>\n <section id=\"heists\"><h2>The Great Rubber-Stamp Heist: custody of your points</h2><p>The opening balance is captured before the incident’s own rewards. The fixed at-risk budget is <code>floor((opening score × <span data-score-number=\"800\">800</span>) ÷ <span data-score-number=\"10000\">10,000</span>)</code>. The chase has <span data-score-number=\"3\">3</span> active seconds of grace and ends after <span data-score-number=\"15\">15</span> active seconds. During grace no points are stolen.</p><p>At elapsed time in milliseconds: <code>floor((budget × min(<span data-score-number=\"12000\">12,000</span>, max(<span data-score-number=\"0\">0</span>, (elapsed ms − <span data-score-number=\"3000\">3,000</span>)))) ÷ <span data-score-number=\"12000\">12,000</span>)</code>.</p><p>A correct interception or amnesty biscuit stops further theft. Recovery is <span data-score-number=\"100\">100</span>% through <span data-score-number=\"4\">4</span> seconds, then declines to a minimum <span data-score-number=\"10\">10</span>% at <span data-score-number=\"14\">14</span> seconds. Successful intervention before the end always receives at least this minimum. The automatic ending recovers zero.</p><p>Exact recovery in basis points: <code>min(<span data-score-number=\"10000\">10,000</span>, max(<span data-score-number=\"1000\">1,000</span>, (<span data-score-number=\"10000\">10,000</span> − floor((<span data-score-number=\"9\">9</span> × max(<span data-score-number=\"0\">0</span>, (elapsed ms − <span data-score-number=\"4000\">4,000</span>))) ÷ <span data-score-number=\"10\">10</span>))))</code>. Points returned: <code>min(stolen, ceil((stolen × recovery basis points) ÷ <span data-score-number=\"10000\">10,000</span>))</code>. Round upward to a whole point, never above the amount stolen.</p><p>Worked case: opening score <span data-score-number=\"150000\">150,000</span>, fixed budget <span data-score-number=\"12000\">12,000</span>.</p><div class=\"guide-table\" tabindex=\"0\" role=\"region\" aria-label=\"Intervention time, Stolen, Recovery rate, Returned, Permanent loss\"><table><thead><tr><th scope=\"col\">Intervention time</th><th scope=\"col\">Stolen</th><th scope=\"col\">Recovery rate</th><th scope=\"col\">Returned</th><th scope=\"col\">Permanent loss</th></tr></thead><tbody><tr><th scope=\"row\"><span data-score-number=\"2\">2</span> seconds</th><td><span data-score-number=\"0\">0</span></td><td><span data-score-number=\"100\">100</span>%</td><td><span data-score-number=\"0\">0</span></td><td><span data-score-number=\"0\">0</span></td></tr><tr><th scope=\"row\"><span data-score-number=\"4\">4</span> seconds</th><td><span data-score-number=\"1000\">1,000</span></td><td><span data-score-number=\"100\">100</span>%</td><td><span data-score-number=\"1000\">1,000</span></td><td><span data-score-number=\"0\">0</span></td></tr><tr><th scope=\"row\"><span data-score-number=\"6\">6</span> seconds</th><td><span data-score-number=\"3000\">3,000</span></td><td><span data-score-number=\"82\">82</span>%</td><td><span data-score-number=\"2460\">2,460</span></td><td><span data-score-number=\"540\">540</span></td></tr><tr><th scope=\"row\"><span data-score-number=\"9\">9</span> seconds</th><td><span data-score-number=\"6000\">6,000</span></td><td><span data-score-number=\"55\">55</span>%</td><td><span data-score-number=\"3300\">3,300</span></td><td><span data-score-number=\"2700\">2,700</span></td></tr><tr><th scope=\"row\"><span data-score-number=\"12\">12</span> seconds</th><td><span data-score-number=\"9000\">9,000</span></td><td><span data-score-number=\"28\">28</span>%</td><td><span data-score-number=\"2520\">2,520</span></td><td><span data-score-number=\"6480\">6,480</span></td></tr><tr><th scope=\"row\"><span data-score-number=\"14\">14</span> seconds</th><td><span data-score-number=\"11000\">11,000</span></td><td><span data-score-number=\"10\">10</span>%</td><td><span data-score-number=\"1100\">1,100</span></td><td><span data-score-number=\"9900\">9,900</span></td></tr><tr><th scope=\"row\"><span data-score-number=\"15\">15</span> seconds</th><td><span data-score-number=\"12000\">12,000</span></td><td><span data-score-number=\"0\">0</span>%</td><td><span data-score-number=\"0\">0</span></td><td><span data-score-number=\"12000\">12,000</span></td></tr></tbody></table></div><p>The last row is automatic resolution. Grace begins only once controls are visible and ready. Pause, reorganization, a hidden tab, or obscured intervention controls freezes the financial clock without resetting grace. Wrong accusations do not accelerate theft or reset time. Disabling future incidents does not dismiss an active chase. Skip or abandonment settles accrued losses with no recovery; no unseen theft continues. Recovery earns no multipliers or achievement income.</p><p>Natural heists retain a limit of <span data-score-number=\"3\">3</span> per run. Rehearsals have no scoring effect. Escape legs and handoffs earn no positive points. Automatic return may earn actual closure work, never player-interception points.</p></section>\n <section><h2>Flight and relocation conditions</h2><p>Natural flights have no run quota and no test-flight control. Flight awards count only completed logical maneuvers. Expediting does not invent skipped folds, checkpoints or loops. Final fan policies pay once each; repeated adjustments do not create awards. Successful delivery includes a ground courier. Reduced motion preserves equivalent completed work.</p><p>Reorganization starts with <span data-score-number=\"1\">1</span> scoring warrant; each <span data-score-number=\"100\">100</span> disclosed lines earns another. A completed scored move consumes one. An aborted move consumes none. Moves remain available without warrants but earn no points. Manual moves always use ×<span data-score-number=\"1\">1</span>. The whole operation pauses during relocation; the resumption award requires actual subsequent progress. Repeated moves cannot multiply an incident’s one resumption award.</p></section>\n <section id=\"category-0\"><h2>Procedural work</h2><div class=\"guide-table\" tabindex=\"0\" role=\"region\" aria-label=\"Completed work, Base formula, Scope and eligibility\"><table><thead><tr><th scope=\"col\">Completed work</th><th scope=\"col\">Base formula</th><th scope=\"col\">Scope and eligibility</th></tr></thead><tbody><tr><th scope=\"row\"><a id=\"rule-runtime\" href=\"#rule-runtime\">Runtime readiness confirmed</a></th><td><code data-score-formula=\"runtime\">(<span data-score-number=\"2\">2</span> × quantity)</code></td><td>cycle. Each actual completed occurrence, once per unique receipt.</td></tr><tr><th scope=\"row\"><a id=\"rule-ownership\" href=\"#rule-ownership\">Execution ownership confirmed</a></th><td><code data-score-formula=\"ownership\">(<span data-score-number=\"2\">2</span> × quantity)</code></td><td>cycle. Each actual completed occurrence, once per unique receipt.</td></tr><tr><th scope=\"row\"><a id=\"rule-mandate\" href=\"#rule-mandate\">Mandate accepted</a></th><td><code data-score-formula=\"mandate\">(<span data-score-number=\"5\">5</span> × quantity)</code></td><td>cycle. Each actual completed occurrence, once per unique receipt.</td></tr><tr><th scope=\"row\"><a id=\"rule-bounds\" href=\"#rule-bounds\">Bounds validated</a></th><td><code data-score-formula=\"bounds\">(<span data-score-number=\"2\">2</span> × quantity)</code></td><td>cycle. Each actual completed occurrence, once per unique receipt.</td></tr><tr><th scope=\"row\"><a id=\"rule-boundDigit\" href=\"#rule-boundDigit\">Canonical bound digit validated</a></th><td><code data-score-formula=\"boundDigit\">(<span data-score-number=\"1\">1</span> × quantity)</code></td><td>cycle. Each actual completed occurrence, once per unique receipt.</td></tr><tr><th scope=\"row\"><a id=\"rule-cacheLookup\" href=\"#rule-cacheLookup\">Cache lookup</a></th><td><code data-score-formula=\"cacheLookup\">(<span data-score-number=\"2\">2</span> × quantity)</code></td><td>cycle. Each actual completed occurrence, once per unique receipt.</td></tr><tr><th scope=\"row\"><a id=\"rule-cacheDisposition\" href=\"#rule-cacheDisposition\">Cache hit, miss or bypass established</a></th><td><code data-score-formula=\"cacheDisposition\">(<span data-score-number=\"3\">3</span> × quantity)</code></td><td>cycle. Each actual completed occurrence, once per unique receipt.</td></tr><tr><th scope=\"row\"><a id=\"rule-priorExam\" href=\"#rule-priorExam\">Prior-work authority examination</a></th><td><code data-score-formula=\"priorExam\">(<span data-score-number=\"5\">5</span> × quantity)</code></td><td>cycle. Each actual completed occurrence, once per unique receipt.</td></tr><tr><th scope=\"row\"><a id=\"rule-priorReuse\" href=\"#rule-priorReuse\">Prior-work reuse authorized</a></th><td><code data-score-formula=\"priorReuse\">(<span data-score-number=\"10\">10</span> × quantity)</code></td><td>cycle. Each actual completed occurrence, once per unique receipt.</td></tr><tr><th scope=\"row\"><a id=\"rule-window\" href=\"#rule-window\">New extended window admitted</a></th><td><code data-score-formula=\"window\">(<span data-score-number=\"5\">5</span> × quantity)</code></td><td>cycle. Each actual completed occurrence, once per unique receipt.</td></tr><tr><th scope=\"row\"><a id=\"rule-hrPlanning\" href=\"#rule-hrPlanning\">Headcount Planning approval</a></th><td><code data-score-formula=\"hrPlanning\">(<span data-score-number=\"5\">5</span> × quantity)</code></td><td>cycle. Each actual completed occurrence, once per unique receipt.</td></tr><tr><th scope=\"row\"><a id=\"rule-hrRecruitment\" href=\"#rule-hrRecruitment\">Recruitment approval</a></th><td><code data-score-formula=\"hrRecruitment\">(<span data-score-number=\"5\">5</span> × quantity)</code></td><td>cycle. Each actual completed occurrence, once per unique receipt.</td></tr><tr><th scope=\"row\"><a id=\"rule-hrIdentity\" href=\"#rule-hrIdentity\">Identity approval</a></th><td><code data-score-formula=\"hrIdentity\">(<span data-score-number=\"5\">5</span> × quantity)</code></td><td>cycle. Each actual completed occurrence, once per unique receipt.</td></tr><tr><th scope=\"row\"><a id=\"rule-hrOffer\" href=\"#rule-hrOffer\">Offer approval</a></th><td><code data-score-formula=\"hrOffer\">(<span data-score-number=\"5\">5</span> × quantity)</code></td><td>cycle. Each actual completed occurrence, once per unique receipt.</td></tr><tr><th scope=\"row\"><a id=\"rule-hrInduction\" href=\"#rule-hrInduction\">Induction approval</a></th><td><code data-score-formula=\"hrInduction\">(<span data-score-number=\"5\">5</span> × quantity)</code></td><td>cycle. Each actual completed occurrence, once per unique receipt.</td></tr><tr><th scope=\"row\"><a id=\"rule-hrProbation\" href=\"#rule-hrProbation\">Probation approval</a></th><td><code data-score-formula=\"hrProbation\">(<span data-score-number=\"5\">5</span> × quantity)</code></td><td>cycle. Each actual completed occurrence, once per unique receipt.</td></tr><tr><th scope=\"row\"><a id=\"rule-hrAudit\" href=\"#rule-hrAudit\">Independent personnel audit</a></th><td><code data-score-formula=\"hrAudit\">(<span data-score-number=\"5\">5</span> × quantity)</code></td><td>cycle. Each actual completed occurrence, once per unique receipt.</td></tr><tr><th scope=\"row\"><a id=\"rule-ballot\" href=\"#rule-ballot\">Continuation ballot</a></th><td><code data-score-formula=\"ballot\">(<span data-score-number=\"1\">1</span> × quantity)</code></td><td>cycle. Each actual completed occurrence, once per unique receipt.</td></tr><tr><th scope=\"row\"><a id=\"rule-continuation\" href=\"#rule-continuation\">Continuation certified</a></th><td><code data-score-formula=\"continuation\">(<span data-score-number=\"2\">2</span> × quantity)</code></td><td>cycle. Each actual completed occurrence, once per unique receipt.</td></tr><tr><th scope=\"row\"><a id=\"rule-context\" href=\"#rule-context\">Fizz, Buzz or numeral context appointed</a></th><td><code data-score-formula=\"context\">(<span data-score-number=\"2\">2</span> × quantity)</code></td><td>cycle. Each actual completed occurrence, once per unique receipt.</td></tr><tr><th scope=\"row\"><a id=\"rule-visitor\" href=\"#rule-visitor\">Shared visitor convened</a></th><td><code data-score-formula=\"visitor\">(<span data-score-number=\"2\">2</span> × quantity)</code></td><td>cycle. Each actual completed occurrence, once per unique receipt.</td></tr><tr><th scope=\"row\"><a id=\"rule-classification\" href=\"#rule-classification\">Classification vote</a></th><td><code data-score-formula=\"classification\">(<span data-score-number=\"2\">2</span> × quantity)</code></td><td>cycle. Each actual completed occurrence, once per unique receipt.</td></tr><tr><th scope=\"row\"><a id=\"rule-witness\" href=\"#rule-witness\">Arithmetic witness</a></th><td><code data-score-formula=\"witness\">(<span data-score-number=\"3\">3</span> × quantity)</code></td><td>cycle. Each actual completed occurrence, once per unique receipt.</td></tr><tr><th scope=\"row\"><a id=\"rule-printer\" href=\"#rule-printer\">Printer consultation, including correct refusal</a></th><td><code data-score-formula=\"printer\">(<span data-score-number=\"2\">2</span> × quantity)</code></td><td>cycle. Each actual completed occurrence, once per unique receipt.</td></tr><tr><th scope=\"row\"><a id=\"rule-premises\" href=\"#rule-premises\">Request-owned premises allocation</a></th><td><code data-score-formula=\"premises\">(<span data-score-number=\"2\">2</span> × quantity)</code></td><td>cycle. Each actual completed occurrence, once per unique receipt.</td></tr><tr><th scope=\"row\"><a id=\"rule-vacancy\" href=\"#rule-vacancy\">Initial vacancy inspection</a></th><td><code data-score-formula=\"vacancy\">(<span data-score-number=\"2\">2</span> × quantity)</code></td><td>cycle. Each actual completed occurrence, once per unique receipt.</td></tr><tr><th scope=\"row\"><a id=\"rule-hiddenGlyph\" href=\"#rule-hiddenGlyph\">Hidden character identified</a></th><td><code data-score-formula=\"hiddenGlyph\">(<span data-score-number=\"1\">1</span> × quantity)</code></td><td>cycle. Each actual completed occurrence, once per unique receipt.</td></tr><tr><th scope=\"row\"><a id=\"rule-evictionDecision\" href=\"#rule-evictionDecision\">Eviction decision, including not required</a></th><td><code data-score-formula=\"evictionDecision\">(<span data-score-number=\"3\">3</span> × quantity)</code></td><td>cycle. Each actual completed occurrence, once per unique receipt.</td></tr><tr><th scope=\"row\"><a id=\"rule-evictedGlyph\" href=\"#rule-evictedGlyph\">Hidden character removed</a></th><td><code data-score-formula=\"evictedGlyph\">(<span data-score-number=\"1\">1</span> × quantity)</code></td><td>cycle. Each actual completed occurrence, once per unique receipt.</td></tr><tr><th scope=\"row\"><a id=\"rule-reinspection\" href=\"#rule-reinspection\">Vacancy reinspection</a></th><td><code data-score-formula=\"reinspection\">(<span data-score-number=\"3\">3</span> × quantity)</code></td><td>cycle. Each actual completed occurrence, once per unique receipt.</td></tr><tr><th scope=\"row\"><a id=\"rule-lease\" href=\"#rule-lease\">Single-use lease</a></th><td><code data-score-formula=\"lease\">(<span data-score-number=\"3\">3</span> × quantity)</code></td><td>cycle. Each actual completed occurrence, once per unique receipt.</td></tr><tr><th scope=\"row\"><a id=\"rule-premisesAudit\" href=\"#rule-premisesAudit\">Independent premises audit</a></th><td><code data-score-formula=\"premisesAudit\">(<span data-score-number=\"5\">5</span> × quantity)</code></td><td>cycle. Each actual completed occurrence, once per unique receipt.</td></tr><tr><th scope=\"row\"><a id=\"rule-vacancyCertificate\" href=\"#rule-vacancyCertificate\">Vacancy certificate filed</a></th><td><code data-score-formula=\"vacancyCertificate\">(<span data-score-number=\"3\">3</span> × quantity)</code></td><td>cycle. Each actual completed occurrence, once per unique receipt.</td></tr><tr><th scope=\"row\"><a id=\"rule-transaction\" href=\"#rule-transaction\">Transaction opened</a></th><td><code data-score-formula=\"transaction\">(<span data-score-number=\"3\">3</span> × quantity)</code></td><td>cycle. Each actual completed occurrence, once per unique receipt.</td></tr><tr><th scope=\"row\"><a id=\"rule-requisition\" href=\"#rule-requisition\">Product requisition</a></th><td><code data-score-formula=\"requisition\">(<span data-score-number=\"4\">4</span> × quantity)</code></td><td>cycle. Each actual completed occurrence, once per unique receipt.</td></tr><tr><th scope=\"row\"><a id=\"rule-allocation\" href=\"#rule-allocation\">Position-specific glyph allocated</a></th><td><code data-score-formula=\"allocation\">(<span data-score-number=\"1\">1</span> × quantity)</code></td><td>cycle. Each actual completed occurrence, once per unique receipt.</td></tr><tr><th scope=\"row\"><a id=\"rule-delivery\" href=\"#rule-delivery\">Product delivered</a></th><td><code data-score-formula=\"delivery\">(<span data-score-number=\"3\">3</span> × quantity)</code></td><td>cycle. Each actual completed occurrence, once per unique receipt.</td></tr><tr><th scope=\"row\"><a id=\"rule-acceptedGlyph\" href=\"#rule-acceptedGlyph\">Glyph accepted</a></th><td><code data-score-formula=\"acceptedGlyph\">(<span data-score-number=\"4\">4</span> × quantity)</code></td><td>cycle. Each actual completed occurrence, once per unique receipt.</td></tr><tr><th scope=\"row\"><a id=\"rule-placedGlyph\" href=\"#rule-placedGlyph\">Accepted glyph placed</a></th><td><code data-score-formula=\"placedGlyph\">(<span data-score-number=\"1\">1</span> × quantity)</code></td><td>cycle. Each actual completed occurrence, once per unique receipt.</td></tr><tr><th scope=\"row\"><a id=\"rule-assembly\" href=\"#rule-assembly\">Completed word assembly certified</a></th><td><code data-score-formula=\"assembly\">(<span data-score-number=\"8\">8</span> × quantity)</code></td><td>cycle. Each actual completed occurrence, once per unique receipt.</td></tr><tr><th scope=\"row\"><a id=\"rule-numeral\" href=\"#rule-numeral\">Numeral conversion</a></th><td><code data-score-formula=\"numeral\">(<span data-score-number=\"3\">3</span> × quantity)</code></td><td>cycle. Each actual completed occurrence, once per unique receipt.</td></tr><tr><th scope=\"row\"><a id=\"rule-digit\" href=\"#rule-digit\">Decimal digit placed</a></th><td><code data-score-formula=\"digit\">(<span data-score-number=\"1\">1</span> × quantity)</code></td><td>cycle. Each actual completed occurrence, once per unique receipt.</td></tr><tr><th scope=\"row\"><a id=\"rule-fragment\" href=\"#rule-fragment\">Output fragment staged</a></th><td><code data-score-formula=\"fragment\">(<span data-score-number=\"2\">2</span> × quantity)</code></td><td>cycle. Each actual completed occurrence, once per unique receipt.</td></tr><tr><th scope=\"row\"><a id=\"rule-notary\" href=\"#rule-notary\">Independent arithmetic or lexical notarization</a></th><td><code data-score-formula=\"notary\">(<span data-score-number=\"8\">8</span> × quantity)</code></td><td>cycle. Each actual completed occurrence, once per unique receipt.</td></tr><tr><th scope=\"row\"><a id=\"rule-payload\" href=\"#rule-payload\">Complete payload published</a></th><td><code data-score-formula=\"payload\">(<span data-score-number=\"10\">10</span> × quantity)</code></td><td>cycle. Each actual completed occurrence, once per unique receipt.</td></tr><tr><th scope=\"row\"><a id=\"rule-audit\" href=\"#rule-audit\">Audit record appended</a></th><td><code data-score-formula=\"audit\">(<span data-score-number=\"8\">8</span> × quantity)</code></td><td>cycle. Each actual completed occurrence, once per unique receipt.</td></tr><tr><th scope=\"row\"><a id=\"rule-enqueue\" href=\"#rule-enqueue\">Queue entry created</a></th><td><code data-score-formula=\"enqueue\">(<span data-score-number=\"2\">2</span> × quantity)</code></td><td>cycle. Each actual completed occurrence, once per unique receipt.</td></tr><tr><th scope=\"row\"><a id=\"rule-acknowledge\" href=\"#rule-acknowledge\">Consumer acknowledgement</a></th><td><code data-score-formula=\"acknowledge\">(<span data-score-number=\"3\">3</span> × quantity)</code></td><td>cycle. Each actual completed occurrence, once per unique receipt.</td></tr><tr><th scope=\"row\"><a id=\"rule-commit\" href=\"#rule-commit\">Transaction committed</a></th><td><code data-score-formula=\"commit\">(<span data-score-number=\"5\">5</span> × quantity)</code></td><td>cycle. Each actual completed occurrence, once per unique receipt.</td></tr><tr><th scope=\"row\"><a id=\"rule-release\" href=\"#rule-release\">Occupancy released</a></th><td><code data-score-formula=\"release\">(<span data-score-number=\"2\">2</span> × quantity)</code></td><td>cycle. Each actual completed occurrence, once per unique receipt.</td></tr><tr><th scope=\"row\"><a id=\"rule-cleanup\" href=\"#rule-cleanup\">Staging cleanup</a></th><td><code data-score-formula=\"cleanup\">(<span data-score-number=\"2\">2</span> × quantity)</code></td><td>cycle. Each actual completed occurrence, once per unique receipt.</td></tr><tr><th scope=\"row\"><a id=\"rule-successionPetition\" href=\"#rule-successionPetition\">Succession petition</a></th><td><code data-score-formula=\"successionPetition\">(<span data-score-number=\"1\">1</span> × quantity)</code></td><td>cycle. Each actual completed occurrence, once per unique receipt.</td></tr><tr><th scope=\"row\"><a id=\"rule-successor\" href=\"#rule-successor\">Successor certified</a></th><td><code data-score-formula=\"successor\">(<span data-score-number=\"2\">2</span> × quantity)</code></td><td>cycle. Each actual completed occurrence, once per unique receipt.</td></tr><tr><th scope=\"row\"><a id=\"rule-advance\" href=\"#rule-advance\">Ordinal advanced</a></th><td><code data-score-formula=\"advance\">(<span data-score-number=\"1\">1</span> × quantity)</code></td><td>cycle. Each actual completed occurrence, once per unique receipt.</td></tr><tr><th scope=\"row\"><a id=\"rule-complete\" href=\"#rule-complete\">Mandate completion recorded</a></th><td><code data-score-formula=\"complete\">(<span data-score-number=\"10\">10</span> × quantity)</code></td><td>cycle. Each actual completed occurrence, once per unique receipt.</td></tr><tr><th scope=\"row\"><a id=\"rule-rejection\" href=\"#rule-rejection\">Certified rejection</a></th><td><code data-score-formula=\"rejection\">(<span data-score-number=\"3\">3</span> × quantity)</code></td><td>cycle. First certified rejection per logical operation; retries do not pay again.</td></tr><tr><th scope=\"row\"><a id=\"rule-rollback\" href=\"#rule-rollback\">Certified rollback</a></th><td><code data-score-formula=\"rollback\">(<span data-score-number=\"4\">4</span> × quantity)</code></td><td>cycle. Once per rejected logical operation. Errors themselves earn nothing.</td></tr></tbody></table></div></section><section id=\"category-1\"><h2>Publication</h2><div class=\"guide-table\" tabindex=\"0\" role=\"region\" aria-label=\"Completed work, Base formula, Scope and eligibility\"><table><thead><tr><th scope=\"col\">Completed work</th><th scope=\"col\">Base formula</th><th scope=\"col\">Scope and eligibility</th></tr></thead><tbody><tr><th scope=\"row\"><a id=\"rule-line\" href=\"#rule-line\">New output line</a></th><td><code data-score-formula=\"line\">(<span data-score-number=\"5\">5</span> × quantity)</code></td><td>cycle. Each actual completed occurrence, once per unique receipt.</td></tr><tr><th scope=\"row\"><a id=\"rule-character\" href=\"#rule-character\">Visible output character</a></th><td><code data-score-formula=\"character\">(<span data-score-number=\"1\">1</span> × quantity)</code></td><td>cycle. Each actual completed occurrence, once per unique receipt.</td></tr><tr><th scope=\"row\"><a id=\"rule-separator\" href=\"#rule-separator\">Line separator</a></th><td><code data-score-formula=\"separator\">(<span data-score-number=\"1\">1</span> × quantity)</code></td><td>cycle. Each actual completed occurrence, once per unique receipt.</td></tr><tr><th scope=\"row\"><a id=\"rule-fizz\" href=\"#rule-fizz\">Fizz classification</a></th><td><code data-score-formula=\"fizz\">(<span data-score-number=\"10\">10</span> × quantity)</code></td><td>cycle. Exclusive of Buzz and FizzBuzz.</td></tr><tr><th scope=\"row\"><a id=\"rule-buzz\" href=\"#rule-buzz\">Buzz classification</a></th><td><code data-score-formula=\"buzz\">(<span data-score-number=\"15\">15</span> × quantity)</code></td><td>cycle. Exclusive of Fizz and FizzBuzz.</td></tr><tr><th scope=\"row\"><a id=\"rule-fizzbuzz\" href=\"#rule-fizzbuzz\">FizzBuzz classification</a></th><td><code data-score-formula=\"fizzbuzz\">(<span data-score-number=\"50\">50</span> × quantity)</code></td><td>cycle. Exclusive of Fizz and Buzz.</td></tr></tbody></table></div></section><section id=\"category-2\"><h2>Numerical distinctions</h2><p>Qualifying decimal properties stack, using the underlying ordinal even when its output is Fizz, Buzz or FizzBuzz. No speculative factorization is rewarded.</p><div class=\"guide-table\" tabindex=\"0\" role=\"region\" aria-label=\"Ordinal, Combined numerical award at ×1\"><table><thead><tr><th scope=\"col\">Ordinal</th><th scope=\"col\">Combined numerical award at ×1</th></tr></thead><tbody><tr><th scope=\"row\"><span data-score-number=\"30\">30</span></th><td><span data-score-number=\"28\">28</span></td></tr><tr><th scope=\"row\"><span data-score-number=\"33\">33</span></th><td><span data-score-number=\"506\">506</span></td></tr><tr><th scope=\"row\"><span data-score-number=\"100\">100</span></th><td><span data-score-number=\"251\">251</span></td></tr></tbody></table></div><div class=\"guide-table\" tabindex=\"0\" role=\"region\" aria-label=\"Completed work, Base formula, Scope and eligibility\"><table><thead><tr><th scope=\"col\">Completed work</th><th scope=\"col\">Base formula</th><th scope=\"col\">Scope and eligibility</th></tr></thead><tbody><tr><th scope=\"row\"><a id=\"rule-digitSum\" href=\"#rule-digitSum\">Decimal digit sum</a></th><td><code data-score-formula=\"digitSum\">digit sum(ordinal)</code></td><td>cycle. Once per newly disclosed ordinal. Qualifying numerical distinctions stack.</td></tr><tr><th scope=\"row\"><a id=\"rule-zeroes\" href=\"#rule-zeroes\">Trailing decimal zeroes</a></th><td><code data-score-formula=\"zeroes\">(<span data-score-number=\"25\">25</span> × trailing zeroes(ordinal))</code></td><td>cycle. Once per newly disclosed ordinal. Qualifying numerical distinctions stack.</td></tr><tr><th scope=\"row\"><a id=\"rule-palindrome\" href=\"#rule-palindrome\">Multi-digit palindrome</a></th><td><code data-score-formula=\"palindrome\">(<span data-score-number=\"100\">100</span> × digits(ordinal) × palindrome(ordinal))</code></td><td>cycle. Once per newly disclosed ordinal. Qualifying numerical distinctions stack.</td></tr><tr><th scope=\"row\"><a id=\"rule-identical\" href=\"#rule-identical\">Multi-digit identical digits</a></th><td><code data-score-formula=\"identical\">(<span data-score-number=\"150\">150</span> × digits(ordinal) × identical digits(ordinal))</code></td><td>cycle. Once per newly disclosed ordinal. Qualifying numerical distinctions stack.</td></tr><tr><th scope=\"row\"><a id=\"rule-powerTen\" href=\"#rule-powerTen\">Exact power of ten</a></th><td><code data-score-formula=\"powerTen\">(<span data-score-number=\"100\">100</span> × power of ten(ordinal))</code></td><td>cycle. Once per newly disclosed ordinal. Qualifying numerical distinctions stack.</td></tr></tbody></table></div></section><section id=\"category-3\"><h2>Companions</h2><div class=\"guide-table\" tabindex=\"0\" role=\"region\" aria-label=\"Completed work, Base formula, Scope and eligibility\"><table><thead><tr><th scope=\"col\">Completed work</th><th scope=\"col\">Base formula</th><th scope=\"col\">Scope and eligibility</th></tr></thead><tbody><tr><th scope=\"row\"><a id=\"rule-appointment\" href=\"#rule-appointment\">Companion salary and supplements</a></th><td><code data-score-formula=\"appointment\">((rarity for rarity × (salary for rarity + (<span data-score-number=\"250\">250</span> × paired) + (<span data-score-number=\"500\">500</span> × loyalty))) + (<span data-score-number=\"1000\">1,000</span> × first))</code></td><td>cycle. Every genuine appointment, including repeats. Pair supplement once per appointment; loyalty every tenth appointment of the identity; first identity once per run.</td></tr><tr><th scope=\"row\"><a id=\"rule-entrance\" href=\"#rule-entrance\">Legendary or Mythic entrance grant</a></th><td><code data-score-formula=\"entrance\">entrance for rarity</code></td><td>flat. Every genuine appointment, including repeats. Never multiplied.</td></tr></tbody></table></div></section><section id=\"category-4\"><h2>Extraordinary operations</h2><div class=\"guide-table\" tabindex=\"0\" role=\"region\" aria-label=\"Completed work, Base formula, Scope and eligibility\"><table><thead><tr><th scope=\"col\">Completed work</th><th scope=\"col\">Base formula</th><th scope=\"col\">Scope and eligibility</th></tr></thead><tbody><tr><th scope=\"row\"><a id=\"rule-flightManifest\" href=\"#rule-flightManifest\">Flight manifest registered</a></th><td><code data-score-formula=\"flightManifest\">(<span data-score-number=\"100\">100</span> × quantity)</code></td><td>incident. Each actual completed occurrence, once per unique receipt.</td></tr><tr><th scope=\"row\"><a id=\"rule-flightCrew\" href=\"#rule-flightCrew\">Actual crew boarded</a></th><td><code data-score-formula=\"flightCrew\">(<span data-score-number=\"50\">50</span> × quantity)</code></td><td>incident. Actual crew only; no companion appointment awarded. Maximum <span data-score-number=\"3\">3</span> per incident or move.</td></tr><tr><th scope=\"row\"><a id=\"rule-flightFold\" href=\"#rule-flightFold\">Aircraft folded</a></th><td><code data-score-formula=\"flightFold\">(<span data-score-number=\"200\">200</span> × quantity)</code></td><td>incident. Each actual completed occurrence, once per unique receipt.</td></tr><tr><th scope=\"row\"><a id=\"rule-flightDeparture\" href=\"#rule-flightDeparture\">Departure completed</a></th><td><code data-score-formula=\"flightDeparture\">(<span data-score-number=\"300\">300</span> × quantity)</code></td><td>incident. Each actual completed occurrence, once per unique receipt.</td></tr><tr><th scope=\"row\"><a id=\"rule-flightCheckpoint\" href=\"#rule-flightCheckpoint\">Fan checkpoint passed</a></th><td><code data-score-formula=\"flightCheckpoint\">(<span data-score-number=\"100\">100</span> × quantity)</code></td><td>incident. Each actual completed occurrence, once per unique receipt. Maximum <span data-score-number=\"3\">3</span> per incident or move.</td></tr><tr><th scope=\"row\"><a id=\"rule-flightLoop\" href=\"#rule-flightLoop\">Authorized holding loop completed</a></th><td><code data-score-formula=\"flightLoop\">(<span data-score-number=\"150\">150</span> × quantity)</code></td><td>incident. Each actual completed occurrence, once per unique receipt. Maximum <span data-score-number=\"3\">3</span> per incident or move.</td></tr><tr><th scope=\"row\"><a id=\"rule-flightPersonality\" href=\"#rule-flightPersonality\">Signature personality maneuver completed</a></th><td><code data-score-formula=\"flightPersonality\">(<span data-score-number=\"300\">300</span> × quantity)</code></td><td>incident. Each actual completed occurrence, once per unique receipt.</td></tr><tr><th scope=\"row\"><a id=\"rule-flightApproach\" href=\"#rule-flightApproach\">Final approach</a></th><td><code data-score-formula=\"flightApproach\">(<span data-score-number=\"200\">200</span> × quantity)</code></td><td>incident. Each actual completed occurrence, once per unique receipt.</td></tr><tr><th scope=\"row\"><a id=\"rule-flightLanding\" href=\"#rule-flightLanding\">Landing completed</a></th><td><code data-score-formula=\"flightLanding\">(<span data-score-number=\"1000\">1,000</span> × quantity)</code></td><td>incident. Each actual completed occurrence, once per unique receipt.</td></tr><tr><th scope=\"row\"><a id=\"rule-flightFinding\" href=\"#rule-flightFinding\">Delivery finding recorded</a></th><td><code data-score-formula=\"flightFinding\">(<span data-score-number=\"500\">500</span> × quantity)</code></td><td>incident. Each actual completed occurrence, once per unique receipt.</td></tr><tr><th scope=\"row\"><a id=\"rule-flightDelivery\" href=\"#rule-flightDelivery\">Successful direct, courier or expedited delivery</a></th><td><code data-score-formula=\"flightDelivery\">(<span data-score-number=\"500\">500</span> × quantity)</code></td><td>incident. Each actual completed occurrence, once per unique receipt.</td></tr><tr><th scope=\"row\"><a id=\"rule-flightFan\" href=\"#rule-flightFan\">Final effective non-default fan policy</a></th><td><code data-score-formula=\"flightFan\">(<span data-score-number=\"100\">100</span> × quantity)</code></td><td>incident. Once per fan; repeated adjustment does not repay. Maximum <span data-score-number=\"3\">3</span> per incident or move.</td></tr><tr><th scope=\"row\"><a id=\"rule-flightDestination\" href=\"#rule-flightDestination\">Non-default destination actually served</a></th><td><code data-score-formula=\"flightDestination\">(<span data-score-number=\"200\">200</span> × quantity)</code></td><td>incident. Each actual completed occurrence, once per unique receipt.</td></tr><tr><th scope=\"row\"><a id=\"rule-flightFirstPilot\" href=\"#rule-flightFirstPilot\">First completed flight by this personality</a></th><td><code data-score-formula=\"flightFirstPilot\">(<span data-score-number=\"500\">500</span> × quantity)</code></td><td>incident. Once per personality per run.</td></tr><tr><th scope=\"row\"><a id=\"rule-flightResume\" href=\"#rule-flightResume\">Flight continued after reorganization</a></th><td><code data-score-formula=\"flightResume\">(<span data-score-number=\"500\">500</span> × quantity)</code></td><td>incident. Once per flight, after actual progress resumes.</td></tr><tr><th scope=\"row\"><a id=\"rule-heistCase\" href=\"#rule-heistCase\">Heist case registered</a></th><td><code data-score-formula=\"heistCase\">(<span data-score-number=\"100\">100</span> × quantity)</code></td><td>incident. Each actual completed occurrence, once per unique receipt.</td></tr><tr><th scope=\"row\"><a id=\"rule-heistSuspect\" href=\"#rule-heistSuspect\">Actual suspect registered</a></th><td><code data-score-formula=\"heistSuspect\">(<span data-score-number=\"50\">50</span> × quantity)</code></td><td>incident. Each actual completed occurrence, once per unique receipt. Maximum <span data-score-number=\"3\">3</span> per incident or move.</td></tr><tr><th scope=\"row\"><a id=\"rule-heistTactic\" href=\"#rule-heistTactic\">Signature tactic identified</a></th><td><code data-score-formula=\"heistTactic\">(<span data-score-number=\"300\">300</span> × quantity)</code></td><td>incident. Once at identification; waiting for escape earns nothing.</td></tr><tr><th scope=\"row\"><a id=\"rule-heistFootprints\" href=\"#rule-heistFootprints\">Footprints inspected</a></th><td><code data-score-formula=\"heistFootprints\">(<span data-score-number=\"200\">200</span> × quantity)</code></td><td>incident. Once per case.</td></tr><tr><th scope=\"row\"><a id=\"rule-heistAlibi\" href=\"#rule-heistAlibi\">Distinct innocent alibi</a></th><td><code data-score-formula=\"heistAlibi\">(<span data-score-number=\"100\">100</span> × quantity)</code></td><td>incident. Each actual completed occurrence, once per unique receipt. Maximum <span data-score-number=\"2\">2</span> per incident or move.</td></tr><tr><th scope=\"row\"><a id=\"rule-heistCatch\" href=\"#rule-heistCatch\">Successful player interception or amnesty</a></th><td><code data-score-formula=\"heistCatch\">(<span data-score-number=\"1000\">1,000</span> × quantity)</code></td><td>incident. No award for automatic return, skip, disable or cancellation.</td></tr><tr><th scope=\"row\"><a id=\"rule-heistReturn\" href=\"#rule-heistReturn\">Stamp returned</a></th><td><code data-score-formula=\"heistReturn\">(<span data-score-number=\"500\">500</span> × quantity)</code></td><td>incident. Each actual completed occurrence, once per unique receipt.</td></tr><tr><th scope=\"row\"><a id=\"rule-heistReport\" href=\"#rule-heistReport\">Case report filed</a></th><td><code data-score-formula=\"heistReport\">(<span data-score-number=\"250\">250</span> × quantity)</code></td><td>incident. Each actual completed occurrence, once per unique receipt.</td></tr><tr><th scope=\"row\"><a id=\"rule-heistResume\" href=\"#rule-heistResume\">Heist continued after reorganization</a></th><td><code data-score-formula=\"heistResume\">(<span data-score-number=\"500\">500</span> × quantity)</code></td><td>incident. Once per case, after actual progress resumes.</td></tr><tr><th scope=\"row\"><a id=\"rule-moveCharter\" href=\"#rule-moveCharter\">Reorganization charter</a></th><td><code data-score-formula=\"moveCharter\">(<span data-score-number=\"100\">100</span> × quantity)</code></td><td>flat. Each actual completed occurrence, once per unique receipt.</td></tr><tr><th scope=\"row\"><a id=\"rule-movePack\" href=\"#rule-movePack\">Room packed</a></th><td><code data-score-formula=\"movePack\">(<span data-score-number=\"25\">25</span> × quantity)</code></td><td>flat. Each actual completed occurrence, once per unique receipt. Maximum <span data-score-number=\"8\">8</span> per incident or move.</td></tr><tr><th scope=\"row\"><a id=\"rule-moveRoom\" href=\"#rule-moveRoom\">Room moved</a></th><td><code data-score-formula=\"moveRoom\">(<span data-score-number=\"50\">50</span> × quantity)</code></td><td>flat. Each actual completed occurrence, once per unique receipt. Maximum <span data-score-number=\"8\">8</span> per incident or move.</td></tr><tr><th scope=\"row\"><a id=\"rule-moveUnpack\" href=\"#rule-moveUnpack\">Room unpacked</a></th><td><code data-score-formula=\"moveUnpack\">(<span data-score-number=\"25\">25</span> × quantity)</code></td><td>flat. Each actual completed occurrence, once per unique receipt. Maximum <span data-score-number=\"8\">8</span> per incident or move.</td></tr><tr><th scope=\"row\"><a id=\"rule-moveAddress\" href=\"#rule-moveAddress\">Room address rebound</a></th><td><code data-score-formula=\"moveAddress\">(<span data-score-number=\"10\">10</span> × quantity)</code></td><td>flat. Each actual completed occurrence, once per unique receipt. Maximum <span data-score-number=\"8\">8</span> per incident or move.</td></tr><tr><th scope=\"row\"><a id=\"rule-movePartition\" href=\"#rule-movePartition\">Room partition certified</a></th><td><code data-score-formula=\"movePartition\">(<span data-score-number=\"25\">25</span> × quantity)</code></td><td>flat. Each actual completed occurrence, once per unique receipt. Maximum <span data-score-number=\"8\">8</span> per incident or move.</td></tr><tr><th scope=\"row\"><a id=\"rule-moveRoute\" href=\"#rule-moveRoute\">Directed route validated</a></th><td><code data-score-formula=\"moveRoute\">(<span data-score-number=\"1\">1</span> × quantity)</code></td><td>flat. Each actual completed occurrence, once per unique receipt. Maximum <span data-score-number=\"56\">56</span> per incident or move.</td></tr><tr><th scope=\"row\"><a id=\"rule-moveAmenity\" href=\"#rule-moveAmenity\">Ninth amenity accommodated</a></th><td><code data-score-formula=\"moveAmenity\">(<span data-score-number=\"100\">100</span> × quantity)</code></td><td>flat. Each actual completed occurrence, once per unique receipt.</td></tr><tr><th scope=\"row\"><a id=\"rule-moveMinutes\" href=\"#rule-moveMinutes\">Reorganization minutes filed</a></th><td><code data-score-formula=\"moveMinutes\">(<span data-score-number=\"100\">100</span> × quantity)</code></td><td>flat. Each actual completed occurrence, once per unique receipt.</td></tr><tr><th scope=\"row\"><a id=\"rule-moveResume\" href=\"#rule-moveResume\">Interrupted work advanced afterward</a></th><td><code data-score-formula=\"moveResume\">(<span data-score-number=\"250\">250</span> × quantity)</code></td><td>flat. Each actual completed occurrence, once per unique receipt.</td></tr></tbody></table></div></section><section id=\"category-5\"><h2>Office literacy</h2><div class=\"guide-table\" tabindex=\"0\" role=\"region\" aria-label=\"Completed work, Base formula, Scope and eligibility\"><table><thead><tr><th scope=\"col\">Completed work</th><th scope=\"col\">Base formula</th><th scope=\"col\">Scope and eligibility</th></tr></thead><tbody><tr><th scope=\"row\"><a id=\"rule-biography\" href=\"#rule-biography\">Appointed companion biography inspected</a></th><td><code data-score-formula=\"biography\">(<span data-score-number=\"25\">25</span> × quantity)</code></td><td>flat. First inspection of each actually appointed identity in this run.</td></tr><tr><th scope=\"row\"><a id=\"rule-evidence\" href=\"#rule-evidence\">Procedural evidence kind inspected</a></th><td><code data-score-formula=\"evidence\">(<span data-score-number=\"5\">5</span> × quantity)</code></td><td>flat. First inspection of each kind of actual evidence in this run.</td></tr><tr><th scope=\"row\"><a id=\"rule-department\" href=\"#rule-department\">Department inspected</a></th><td><code data-score-formula=\"department\">(<span data-score-number=\"10\">10</span> × quantity)</code></td><td>flat. First inspection of each department in this run.</td></tr><tr><th scope=\"row\"><a id=\"rule-curiosity\" href=\"#rule-curiosity\">Authored curiosity response inspected</a></th><td><code data-score-formula=\"curiosity\">(<span data-score-number=\"20\">20</span> × quantity)</code></td><td>flat. First inspection of each authored response in this run.</td></tr></tbody></table></div></section><section id=\"category-6\"><h2>Achievements</h2><div class=\"guide-table\" tabindex=\"0\" role=\"region\" aria-label=\"Completed work, Base formula, Scope and eligibility\"><table><thead><tr><th scope=\"col\">Completed work</th><th scope=\"col\">Base formula</th><th scope=\"col\">Scope and eligibility</th></tr></thead><tbody><tr><th scope=\"row\"><a id=\"rule-bingo\" href=\"#rule-bingo\">Bureaucratic Bingo</a></th><td><code data-score-formula=\"bingo\">(<span data-score-number=\"500\">500</span> × quantity)</code></td><td>flat. Every fresh set of numeral, Fizz, Buzz and FizzBuzz; collection resets after award.</td></tr><tr><th scope=\"row\"><a id=\"rule-century\" href=\"#rule-century\">Century of Consequences</a></th><td><code data-score-formula=\"century\">(<span data-score-number=\"10000\">10,000</span> × quantity)</code></td><td>flat. Every 100 newly disclosed lines.</td></tr><tr><th scope=\"row\"><a id=\"rule-committee\" href=\"#rule-committee\">Appointment Committee</a></th><td><code data-score-formula=\"committee\">(<span data-score-number=\"2500\">2,500</span> × quantity)</code></td><td>flat. Every ten appointments, including repeats.</td></tr><tr><th scope=\"row\"><a id=\"rule-airline\" href=\"#rule-airline\">Paper Airline</a></th><td><code data-score-formula=\"airline\">(<span data-score-number=\"25000\">25,000</span> × quantity)</code></td><td>flat. Every five successful natural flights.</td></tr><tr><th scope=\"row\"><a id=\"rule-affairs\" href=\"#rule-affairs\">Internal Affairs</a></th><td><code data-score-formula=\"affairs\">(<span data-score-number=\"15000\">15,000</span> × quantity)</code></td><td>flat. Three player-resolved natural heists, once per run.</td></tr><tr><th scope=\"row\"><a id=\"rule-spectrum\" href=\"#rule-spectrum\">Full Spectrum of Improbability</a></th><td><code data-score-formula=\"spectrum\">(<span data-score-number=\"100000\">100,000</span> × quantity)</code></td><td>flat. All five rarities appointed, once per run.</td></tr><tr><th scope=\"row\"><a id=\"rule-census\" href=\"#rule-census\">Personality Census</a></th><td><code data-score-formula=\"census\">(<span data-score-number=\"250000\">250,000</span> × quantity)</code></td><td>flat. All thirteen pilot personalities completed, once per run.</td></tr><tr><th scope=\"row\"><a id=\"rule-partitions\" href=\"#rule-partitions\">Partition Connoisseur</a></th><td><code data-score-formula=\"partitions\">(<span data-score-number=\"25000\">25,000</span> × quantity)</code></td><td>flat. All twelve styles installed through scored reorganizations, once per run.</td></tr><tr><th scope=\"row\"><a id=\"rule-departments\" href=\"#rule-departments\">Departmental Completionist</a></th><td><code data-score-formula=\"departments\">(<span data-score-number=\"2000\">2,000</span> × quantity)</code></td><td>flat. All eight departments inspected, once per run.</td></tr><tr><th scope=\"row\"><a id=\"rule-magnitude\" href=\"#rule-magnitude\">Orders of Magnitude</a></th><td><code data-score-formula=\"magnitude\">(<span data-score-number=\"1000\">1,000</span> × threshold)</code></td><td>flat. Once at each completed-line count 10, 100, 1,000 and subsequent powers of ten.</td></tr></tbody></table></div></section><section id=\"category-7\"><h2>Completion dividend</h2><p>The mandate must have positive length, every line disclosed, and all incidents settled. The formula uses the net balance before the dividend and is applied once, without a multiplier.</p><div class=\"guide-table\" tabindex=\"0\" role=\"region\" aria-label=\"Completed work, Base formula, Scope and eligibility\"><table><thead><tr><th scope=\"col\">Completed work</th><th scope=\"col\">Base formula</th><th scope=\"col\">Scope and eligibility</th></tr></thead><tbody><tr><th scope=\"row\"><a id=\"rule-dividend\" href=\"#rule-dividend\">Completion dividend</a></th><td><code data-score-formula=\"dividend\">(<span data-score-number=\"5000\">5,000</span> + (<span data-score-number=\"100\">100</span> × completed) + floor(net score ÷ <span data-score-number=\"10\">10</span>))</code></td><td>flat. Once after a positive-length mandate finishes and its incidents settle. Uses net score before this dividend; abandoned runs do not qualify.</td></tr></tbody></table></div></section>\n <section id=\"badges\"><h2>The Cabinet of Disproportionate Recognition</h2><p>Locked badges remain visible with readable progress. This-run counts reset with a new mandate; My cabinet retains first-earned dates and highest tiers. Badge awards are flat. Overlapping achievements stack. Recognition-only badges add no hidden points.</p><div class=\"badge-grid\"><article class=\"score-badge\"><span class=\"badge-art\"><svg viewBox=\"0 0 64 64\" width=\"64\" height=\"64\" aria-hidden=\"true\" focusable=\"false\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"11\" y=\"11\" width=\"42\" height=\"42\" rx=\"5\"/><path d=\"M32 11v42M11 32h42M16 41l10 10 25-30\"/><path d=\"M20 18v7M39 18h8m-8 0v10m0-5h6\"/></svg></span><h3>Bureaucratic Bingo</h3><p>Complete a fresh set of numeral, Fizz, Buzz and FizzBuzz.</p><p>Target: <span data-score-number=\"1\">1</span> bingo. Repeating.</p><p>Award: (<span data-score-number=\"500\">500</span> × quantity)</p></article><article class=\"score-badge\"><span class=\"badge-art\"><svg viewBox=\"0 0 64 64\" width=\"64\" height=\"64\" aria-hidden=\"true\" focusable=\"false\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M16 9h32v46H16zM16 17h32M23 9V5m18 4V5\"/><rect x=\"9\" y=\"24\" width=\"46\" height=\"20\" rx=\"4\"/><path d=\"M21 29v10m9-10h6v10h-6zm13 0h6v10h-6zM23 49h18\"/></svg></span><h3>Century of Consequences</h3><p>Disclose a century of output lines.</p><p>Target: <span data-score-number=\"100\">100</span> lines. Repeating.</p><p>Award: (<span data-score-number=\"10000\">10,000</span> × quantity)</p></article><article class=\"score-badge\"><span class=\"badge-art\"><svg viewBox=\"0 0 64 64\" width=\"64\" height=\"64\" aria-hidden=\"true\" focusable=\"false\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"m10 17 31-6 8 39-31 6zM19 10h34v39H19z\"/><circle cx=\"35\" cy=\"24\" r=\"5\"/><path d=\"M26 36c1-9 17-9 18 0\"/><circle cx=\"45\" cy=\"46\" r=\"11\"/><path d=\"M41 41v10m5-10h4v10h-4z\"/></svg></span><h3>Appointment Committee</h3><p>Appoint ten companions. Repeats count.</p><p>Target: <span data-score-number=\"10\">10</span> appointments. Repeating.</p><p>Award: (<span data-score-number=\"2500\">2,500</span> × quantity)</p></article><article class=\"score-badge\"><span class=\"badge-art\"><svg viewBox=\"0 0 64 64\" width=\"64\" height=\"64\" aria-hidden=\"true\" focusable=\"false\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"m12 28 42-16-15 37-7-15-20-6Zm20 6 22-22M32 34l-3 14 10-9\"/><path d=\"M13 39c-9 9 2 20 12 13M18 38h-8v7h6c7 0 7 10 0 10h-5\"/></svg></span><h3>Paper Airline</h3><p>Complete five successful natural flights.</p><p>Target: <span data-score-number=\"5\">5</span> flights. Repeating.</p><p>Award: (<span data-score-number=\"25000\">25,000</span> × quantity)</p></article><article class=\"score-badge\"><span class=\"badge-art\"><svg viewBox=\"0 0 64 64\" width=\"64\" height=\"64\" aria-hidden=\"true\" focusable=\"false\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"9\" y=\"9\" width=\"46\" height=\"46\" rx=\"7\"/><path d=\"M14 16v32m8-9h22v8H22zM27 39v-8h12v8M32 31V20\"/><circle cx=\"32\" cy=\"18\" r=\"5\"/><path d=\"m44 17 2 2m2 4 2 2m-3 4 2 2\"/></svg></span><h3>Internal Affairs</h3><p>Resolve three natural heists by interception or amnesty.</p><p>Target: <span data-score-number=\"3\">3</span> heists. Once per run.</p><p>Award: (<span data-score-number=\"15000\">15,000</span> × quantity)</p></article><article class=\"score-badge\"><span class=\"badge-art\"><svg viewBox=\"0 0 64 64\" width=\"64\" height=\"64\" aria-hidden=\"true\" focusable=\"false\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M32 7c12 0 9 14 9 14s14-5 17 7-12 15-12 15 9 12-2 17-16-8-16-8-9 11-19 3 2-20 2-20-12-8-4-18 19-1 19-1S21 7 32 7Z\"/><path d=\"m20 25 7 6 5-11 5 11 7-6-3 17H23z\"/></svg></span><h3>Full Spectrum of Improbability</h3><p>Appoint all five rarities.</p><p>Target: <span data-score-number=\"5\">5</span> rarities. Once per run.</p><p>Award: (<span data-score-number=\"100000\">100,000</span> × quantity)</p></article><article class=\"score-badge\"><span class=\"badge-art\"><svg viewBox=\"0 0 64 64\" width=\"64\" height=\"64\" aria-hidden=\"true\" focusable=\"false\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"m12 28 42-16-15 37-7-15-20-6Zm20 6 22-22M32 34l-3 14 10-9\"/><path d=\"M11 17v-8l7 4zM25 10V3l7 4zM43 5v7l7-3zM56 25h6l-3 6zM53 41h7l-4 6zM45 53v7l-6-4zM25 55v7l-6-4zM9 47H3l3-6zM8 30H2l3-6z\"/><path d=\"M18 43v9m5-9h5l-3 4 3 5h-5\"/></svg></span><h3>Personality Census</h3><p>Complete flights with every pilot personality, including the acting clerk.</p><p>Target: <span data-score-number=\"13\">13</span> pilots. Once per run.</p><p>Award: (<span data-score-number=\"250000\">250,000</span> × quantity)</p></article><article class=\"score-badge\"><span class=\"badge-art\"><svg viewBox=\"0 0 64 64\" width=\"64\" height=\"64\" aria-hidden=\"true\" focusable=\"false\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"m5 16 13-6 14 6 14-6 13 6v35l-13-6-14 6-14-6-13 6zM18 10v35m14-29v35m14-41v35M23 22v15m5-15v15M49 23h8m-8 7h8m-8 7h8m-5-17v20\"/><path d=\"M11 27c-9-8-8 5 0 10 8-5 9-18 0-10Z\"/><circle cx=\"39\" cy=\"24\" r=\"2\"/><circle cx=\"38\" cy=\"36\" r=\"3\"/></svg></span><h3>Partition Connoisseur</h3><p>Install every partition style through scored moves.</p><p>Target: <span data-score-number=\"12\">12</span> partitions. Once per run.</p><p>Award: (<span data-score-number=\"25000\">25,000</span> × quantity)</p></article><article class=\"score-badge\"><span class=\"badge-art\"><svg viewBox=\"0 0 64 64\" width=\"64\" height=\"64\" aria-hidden=\"true\" focusable=\"false\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"m23 7 18 0 16 16v18L41 57H23L7 41V23zM23 7v11m18-11v11m16 5H46m11 18H46M41 57V46M23 57V46M7 41h11M7 23h11\"/><circle cx=\"30\" cy=\"30\" r=\"11\"/><path d=\"m38 38 13 13\"/></svg></span><h3>Departmental Completionist</h3><p>Inspect every department.</p><p>Target: <span data-score-number=\"8\">8</span> departments. Once per run.</p><p>Award: (<span data-score-number=\"2000\">2,000</span> × quantity)</p></article><article class=\"score-badge\"><span class=\"badge-art\"><svg viewBox=\"0 0 64 64\" width=\"64\" height=\"64\" aria-hidden=\"true\" focusable=\"false\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M7 55h50M10 55V39h12v16m0-16V25h12v30m0-30V11h12v44m0-44V5h9v50\"/><path d=\"m6 29 8-8 7 3 13-15M27 9h7v7\"/></svg></span><h3>Orders of Magnitude</h3><p>Cross a power-of-ten completed-line milestone; award is 1,000 times the threshold.</p><p>Target: <span data-score-number=\"1\">1</span> magnitude. Repeating.</p><p>Award: (<span data-score-number=\"1000\">1,000</span> × threshold)</p></article><article class=\"score-badge\"><span class=\"badge-art\"><svg viewBox=\"0 0 64 64\" width=\"64\" height=\"64\" aria-hidden=\"true\" focusable=\"false\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"m32 6 23 9-3 22c-2 10-14 17-20 21-6-4-18-11-20-21L9 15z\"/><circle cx=\"32\" cy=\"32\" r=\"13\"/><path d=\"M26 29h12m-12 6h12M32 21v22\"/></svg></span><h3>Not One Point</h3><p>Stop a heist with a positive budget before its first debit. Recognition only.</p><p>Target: <span data-score-number=\"1\">1</span> untouched. Once per run.</p><p>Recognition only.</p></article><article class=\"score-badge\"><span class=\"badge-art\"><svg viewBox=\"0 0 64 64\" width=\"64\" height=\"64\" aria-hidden=\"true\" focusable=\"false\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M8 32V12h29v40H8V39m0-17h29M15 29h9m-9 8h9m-9 8h9M49 13v23c0 13-9 16-19 16m6-7-7 7 7 6\"/><circle cx=\"49\" cy=\"13\" r=\"8\"/><path d=\"M46 13h6m-3-4v8\"/></svg></span><h3>Reappropriation</h3><p>Recover stolen points. Recognition only.</p><p>Target: <span data-score-number=\"1\">1</span> reappropriation. Once per run.</p><p>Recognition only.</p></article><article class=\"score-badge\"><span class=\"badge-art\"><svg viewBox=\"0 0 64 64\" width=\"64\" height=\"64\" aria-hidden=\"true\" focusable=\"false\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M9 36h46v18l-6-4-6 4-6-4-6 4-6-4-6 4-10-4zM15 36v-8h34v8M25 28V15h14v13\"/><ellipse cx=\"32\" cy=\"11\" rx=\"12\" ry=\"7\"/><path d=\"m26 8 12 6m-12 0 12-6M17 41v5m10-5v5m10-5v5m10-5v5\"/></svg></span><h3>Temporary Executive Powers</h3><p>Complete a boosted cycle. Recognition only.</p><p>Target: <span data-score-number=\"1\">1</span> boosted. Once per run.</p><p>Recognition only.</p></article><article class=\"score-badge\"><span class=\"badge-art\"><svg viewBox=\"0 0 64 64\" width=\"64\" height=\"64\" aria-hidden=\"true\" focusable=\"false\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M17 10h34v35c0 12-9 12-9 5H9c-8 0-8-10 0-10h8zM17 17H9c-8 0-8-7 0-7h8M24 20h18m-18 8h13m-13 8h9\"/><circle cx=\"44\" cy=\"42\" r=\"10\"/><path d=\"m38 42 4 4 8-9m-13 14-2 10 9-5 8 5-1-12\"/></svg></span><h3>Ratified at Last</h3><p>Earn a completion dividend. Recognition only.</p><p>Target: <span data-score-number=\"1\">1</span> completed. Once per run.</p><p>Recognition only.</p></article><article class=\"score-badge\"><span class=\"badge-art\"><svg viewBox=\"0 0 64 64\" width=\"64\" height=\"64\" aria-hidden=\"true\" focusable=\"false\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"9\" y=\"29\" width=\"46\" height=\"26\" rx=\"5\"/><path d=\"M9 39h46M26 38v7h12v-7M22 29v-7h20v7m-10-25 4 9 10 1-8 7 2 10-8-5-8 5 2-10-8-7 10-1z\"/></svg></span><h3>Legendary Appointment</h3><p>Receive a Legendary appointment. Recognition only.</p><p>Target: <span data-score-number=\"1\">1</span> legendary. Once per run.</p><p>Recognition only.</p></article><article class=\"score-badge\"><span class=\"badge-art\"><svg viewBox=\"0 0 64 64\" width=\"64\" height=\"64\" aria-hidden=\"true\" focusable=\"false\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"m32 5 5 13 13-6-3 14 14 5-13 6 5 14-14-4-7 13-6-13-14 5 5-14L3 31l14-5-4-14 13 6z\"/><path d=\"m22 25 10-6 10 6v14l-10 6-10-6zm0 0 20 14m0-14L22 39\"/><ellipse cx=\"32\" cy=\"32\" rx=\"31\" ry=\"12\" transform=\"rotate(-32 32 32)\"/></svg></span><h3>Mythic Appointment</h3><p>Receive a Mythic appointment. Recognition only.</p><p>Target: <span data-score-number=\"1\">1</span> mythic. Once per run.</p><p>Recognition only.</p></article></div></section>\n <section><h2>Receipt integrity</h2><p>A logical action is paid once within its run, cycle or incident. A summary cannot duplicate its component work; an independent certification can earn its own award. Administrative facts, animations and narrative retention are separate. The ledger retains bounded aggregates and recent receipts, so a long run cannot require an endless animation log. Scores record rules identity, execution conditions and completion status for future high-score comparisons.</p></section></main><!--SITE_FOOTER--></body></html>"
+}

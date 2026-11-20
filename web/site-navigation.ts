@@ -4,7 +4,7 @@ const pages=new Set(['','demo','api','about','company-history','accessibility','
 export function sitePage(url:URL):string|undefined {
  const base=new URL(scope);if(url.origin!==base.origin||!url.pathname.startsWith(base.pathname))return;
  const path=url.pathname.slice(base.pathname.length).replace(/\/$/,'');
- return path==='company-history'?'about':pages.has(path)?path:undefined;
+ return path==='company-history'?'about':pages.has(path)||/^scoring(?:\/(?:enterprise-v\d+\/[a-f0-9]+|companion-portfolio-v1))?$/.test(path)?path:undefined;
 }
 export function onDemoPage(){return sitePage(new URL(location.href))==='demo';}
 export function openSitePage(url:URL|string):Promise<void>{

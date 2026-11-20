@@ -9,14 +9,14 @@ function sitePage(url) {
   const base = new URL(scope);
   if (url.origin !== base.origin || !url.pathname.startsWith(base.pathname)) return;
   const path = url.pathname.slice(base.pathname.length).replace(/\/$/, "");
-  return path === "company-history" ? "about" : pages.has(path) ? path : void 0;
+  return path === "company-history" ? "about" : pages.has(path) || /^scoring(?:\/(?:enterprise-v\d+\/[a-f0-9]+|companion-portfolio-v1))?$/.test(path) ? path : void 0;
 }
 
 // web/site-shell.ts
 var views = /* @__PURE__ */ new Map();
 var shellURL = document.querySelector("script[data-site-shell]").src;
 var styleLoads = /* @__PURE__ */ new Map();
-var persistent = ".site-header,.skip-link,.site-footer,#discovery-register,#companion-dialog,#active-run-banner,#active-run-announcement,.discovery-announcement,.companion-departures,.estate-announcement,script";
+var persistent = ".site-header,.skip-link,.site-footer,#discovery-register,#companion-dialog,#score-dialog,#active-run-banner,#active-run-announcement,.discovery-announcement,.companion-departures,.estate-announcement,script";
 var active;
 var serial = 0;
 var loading;

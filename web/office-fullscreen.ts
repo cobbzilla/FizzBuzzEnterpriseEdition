@@ -71,6 +71,7 @@ class OfficeFullscreen {
     this.adapt();
     this.panels.value = this.surface.dataset.largeText === 'true' ? 'none' : (innerWidth < 360 || innerHeight < 450) ? 'log' : 'both';
     if (mode === 'observe') {
+      this.move(byId('score-cluster'), 'office-fullscreen-header');
       this.move(byId('supervision-pane'), 'office-fullscreen-stage');
       this.move(byId('watch-output'), 'office-fullscreen-output-slot');
       this.move(byId('supervision-caption'), 'office-fullscreen-current-slot');
@@ -97,7 +98,7 @@ class OfficeFullscreen {
     this.restorations.push(() => {if (previousTabIndex === null) notice.removeAttribute('tabindex'); else notice.setAttribute('tabindex', previousTabIndex);});
     this.move(notice, 'office-fullscreen-notice');
     // Native dialogs must remain within the element granted browser full-screen.
-    for (const id of ['companion-dialog', 'personnel-dialog']) this.move(byId(id), this.surface);
+    for (const id of ['companion-dialog', 'personnel-dialog', 'score-dialog']) this.move(byId(id), this.surface);
     this.inspection(false);
     this.layout();
     this.dialog.showModal();

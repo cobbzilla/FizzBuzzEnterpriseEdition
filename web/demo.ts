@@ -1,13 +1,15 @@
 import {officeEstate} from './office-estate';
 import {officeIncidents} from './office-incidents';
 import {PaperAviationDesk} from './office-flight';
-import {StampHeistDesk} from './office-heist';
+import {StampHeistDesk,setHeistPaused} from './office-heist';
 import {OfficeTourDesk} from './office-tour';
 import {OfficeSupervisionDesk} from './office-supervision';
 import {ReorganizationPanel} from './office-reorganization';
 import {prepareSharedEncounter} from './shared-encounter';
 import {CompanionDesk} from './companions';
 import {PortfolioDesk} from './portfolio';
+import {OfficeScoringAdapter} from './scoring-office';
+import {scoringEvidence} from './scoring-evidence';
 import {parseMandate,autocorrectMandate,addOrdinals,windowCount,chooseMagnitudeWarning,type MandateInteger} from './mandate-input';
 import {trackUsage} from './telemetry';
 import { request, config,proclamation } from './runtime';
@@ -51,6 +53,7 @@ officeEstate.subscribe(event=>{if(event.kind!=='progress'){wakeReading?.();}});
 const reorganizationPanels=[new ReorganizationPanel(byId('supervision-reorganization')),new ReorganizationPanel(byId('office-reorganization'))];
 const companions=new CompanionDesk({remember:discovery=>{office.remember(discovery);supervision.remember(discovery);workspace?.remember(discovery);aviation?.remember(discovery);heists?.remember(discovery);},clearCompanions:()=>{office.clearCompanions();supervision.clearCompanions();workspace?.clearCompanions();heists?.clear();aviation?.clear();},authorityHeld:()=>officeIncidents.active||officeEstate.moving,subscribeAuthority:listener=>{officeIncidents.subscribe(listener);officeEstate.subscribe(event=>{if(event.kind!=='progress')listener();});}});
 const portfolio=new PortfolioDesk();
+new OfficeScoringAdapter(portfolio);
 let pendingPortfolio:Promise<void>=Promise.resolve();
 let currentLimit='15';
 let receivedPacket:ExecutionPacket|undefined;
@@ -87,6 +90,7 @@ function setReadingPaused(value:boolean){
   if (!reading) return;
   if(paused===value)return;
   paused = value;
+  setHeistPaused(value);
   const office=supervision.enabled?byId('supervision-current').querySelector('strong')?.textContent:undefined;
   setText('run-status', office?'Observation '+(paused?'paused':'resumed')+' · '+office:paused ? 'Ceremonial reading paused. Resume or reveal the complete output when ready.' : 'Ceremonial reading resumed.');
   readingControls();
@@ -96,7 +100,7 @@ pauseButton.addEventListener('click',()=>setReadingPaused(!paused));
 revealButton.addEventListener('click', () => {
   if (!reading) return;
   supervision.disable();
-  revealAll = true; paused = false; wakeReading?.();
+  revealAll = true; paused = false;setHeistPaused(false); wakeReading?.();
 });
 speedControl.addEventListener('change', () => wakeReading?.());
 function followLatest() { if (followOutput.checked) byId('output').scrollTop = byId('output').scrollHeight; }
@@ -238,7 +242,7 @@ async function streamMandate(limit: MandateInteger, sequence: number, started: n
   const lines=answer.ok?text.trimEnd().split('\n'):[];
   if(answer.ok&&lines.length!==count)throw new Error('The response did not contain the authorized number of lines.');
   if(sequence!==mandateSequence)return;
-  receivedPacket=packet;chronicle.receive(packet);office.receive(packet);supervision.receive(packet,String(next),lines.length);
+  receivedPacket=packet;portfolio.receive(scoringEvidence(packet.work,String(next),lines.length,currentLimit));chronicle.receive(packet);office.receive(packet);supervision.receive(packet,String(next),lines.length);
   setText('trace-result',answer.headers.get('X-SlopBuzz-Trace-Id')||'UNAVAILABLE');
   if(first) {
    first=false;const elapsed=Math.round(performance.now()-started);
@@ -284,7 +288,7 @@ async function runMandate(event: Event) {
   heists?.cancel();aviation?.cancel();officeEstate.finish();
   if(productionActive)companions.withdrawRun();
   workspace!.commitDraft(String(limit));
-  portfolio.begin(String(limit),byId<HTMLSelectElement>('companion-strategy').value||'factor-resonance-v1');pendingPortfolio=Promise.resolve();
+  portfolio.begin(String(limit),byId<HTMLSelectElement>('companion-strategy').value||'factor-resonance-v1',{runtime:config.mode,engine:config.engine||'auto',companions:String(byId<HTMLInputElement>('emoji-companions').checked),flights:String(byId<HTMLInputElement>('paper-flights').checked),heists:String(byId<HTMLInputElement>('stamp-heists').checked)});pendingPortfolio=Promise.resolve();setHeistPaused(false);
   companions.beginRun(String(limit));productionActive=true;
   officeIncidents.begin(String(limit));heists?.begin(String(limit));aviation?.begin(String(limit));
   wakeReading?.(); reading = false; streaming=false;activityMode='mandate';manualStep=false;inspection=undefined;lastPlayback=undefined;receivedPacket=undefined;currentLimit=String(limit);supervision.begin(currentLimit);readingControls();personnel.setPlaybackAvailable(false);personnel.loading();chronicle.begin(currentLimit);office.begin(currentLimit);
@@ -305,7 +309,7 @@ async function runMandate(event: Event) {
     const packet=await readProclamation(answer);const text=packet.text;
     if(answer.ok)trackUsage({event:'slopbuzz_demo_run',outcome:'success',runtime_mode:config.mode,duration_ms:elapsed,cache_outcome:answer.headers.get('X-SlopBuzz-Cache')||'UNKNOWN'});
     if (sequence !== mandateSequence) return;
-    receivedPacket=packet;chronicle.receive(packet);office.receive(packet);supervision.receive(packet,'1',text?text.trimEnd().split(/\r?\n/).length:0);
+    receivedPacket=packet;portfolio.receive(scoringEvidence(packet.work,'1',text?text.trimEnd().split(/\r?\n/).length:0,currentLimit));chronicle.receive(packet);office.receive(packet);supervision.receive(packet,'1',text?text.trimEnd().split(/\r?\n/).length:0);
     precedent.mandate(packet.precedent,packet.cache);
     setText('latency', `${Math.round(elapsed)} ms`);
     setText('cache-result', answer.headers.get('X-SlopBuzz-Cache') || 'UNKNOWN');

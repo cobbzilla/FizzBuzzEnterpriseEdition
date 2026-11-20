@@ -62,10 +62,12 @@ public final class VacantStringPremisesDirectorate {
             Survey candidate = inspection.inspect(unit); requireSurvey(unit, candidate);
             if (!beforeSurvey.equals(candidate.snapshot)) throw new IllegalStateException("The inspector changed the premises before declaring its initial occupants.");
             initial = candidate;
+            ExecutionCustody.work("hiddenGlyph",initial.tenants.size());
             pass(decisions, stage++, initial.tenants.isEmpty() ? "APPROVED" : "DISCOVERED", initial.describe(), "Initial occupancy: " + initial.snapshot.length() + " UTF-16 units. Names and code points are displayed instead of raw controls.");
             if (!initial.tenants.isEmpty()) {
                 eviction.evacuate(unit, initial);
                 if (!unit.snapshot().isEmpty()) throw new IllegalStateException("The eviction office returned without removing every hidden occupant.");
+                ExecutionCustody.work("evictedGlyph",initial.tenants.size());
                 pass(decisions, stage++, "APPROVED", "Removed " + initial.tenants.size() + " identified hidden occupant(s) under the registered removal procedure.", "Eviction completed before numerical assembly; no discovered character enters Official output.");
             } else pass(decisions, stage++, "NOT_REQUIRED", "No eviction was required because the initial survey found no occupants.", "No eviction order issued.");
             Survey vacancy = inspection.inspect(unit); requireSurvey(unit, vacancy);
@@ -95,6 +97,8 @@ public final class VacantStringPremisesDirectorate {
         if (lease == null || lease.request() != request || !lease.belongsTo(unit, vacancy) || !unit.snapshot().isEmpty()) throw new IllegalStateException("The issued lease is missing, borrowed, already consumed, or belongs to occupied premises.");
     }
     private static void pass(List<Step> decisions, int stage, String state, String finding, String document) {
+        if (!"REJECTED".equals(state)) ExecutionCustody.work(new String[]{"premises","vacancy","evictionDecision","reinspection","lease","premisesAudit"}[stage],1);
+        else ExecutionCustody.work("rejection",1);
         if (decisions != null) decisions.add(new Step(OFFICES[stage], state, finding, document));
         if (ExecutionCustody.observing()) ExecutionCustody.record("PREMISES_" + (stage == 1 && "DISCOVERED".equals(state) ? "DISCOVERY" : state), OFFICES[stage], finding, document);
     }

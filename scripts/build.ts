@@ -6,6 +6,7 @@ import {createHash} from 'node:crypto';
 import {generateCompanions} from './generate-companions.ts';
 import {analyticsConfig} from './analytics-config.ts';
 import {sourceIdentity} from './source-identity.ts';
+import {scoringGuideTemplates} from './scoring-guide.ts';
 await generateCompanions();
 const analytics = await analyticsConfig();
 const run = (command: string, args: string[]) => execFileSync(command, args, {stdio:'inherit'});
@@ -18,6 +19,9 @@ if (!process.argv.includes('--assets-only')) {
 }
 const revision = process.env.SLOPBUZZ_RELEASE_SHA || execFileSync('git', ['rev-parse','HEAD'], {encoding:'utf8'}).trim();
 const dirty = !!execFileSync('git', ['status','--porcelain','--untracked-files=no'], {encoding:'utf8'}).trim();
+// Seal the generated scoring source before identifying the complete release input.
+await mkdir('dist',{recursive:true});
+await scoringGuideTemplates();
 const sourceDigest = await sourceIdentity();
 const identity = createHash('sha256').update(revision).update(sourceDigest).update(JSON.stringify(analytics)).update(process.env.SLOPBUZZ_RUNTIME || 'browser').update(process.env.SLOPBUZZ_API_BASE_URL || '').digest('hex').slice(0,16);
 await rm('dist', {recursive:true,force:true});
@@ -30,7 +34,7 @@ await cp('browser/target/gate/js', `dist/${assets}js`, {recursive:true});
 const officeBytes=await readFile('src/main/resources/web/office-world.js');
 await writeFile(`dist/${assets}office-world.js`,officeBytes);
 await writeFile(`dist/${assets}office-pack.json`,JSON.stringify({schema:'slopbuzz-office-pack/v1',file:'office-world.js',bytes:officeBytes.length,sha256:createHash('sha256').update(officeBytes).digest('hex')}));
-const entryScripts=['site-shell','analytics','site','demo','api','response','validation','bestiary','rarity-register','rare-finds','tribunal'];
+const entryScripts=['site-shell','analytics','site','demo','api','response','validation','bestiary','rarity-register','rare-finds','tribunal','scoring-guide'];
 await build({entryPoints:entryScripts.map(name=>`web/${name}.ts`),outdir:'dist/assets',bundle:true,format:'esm',target:'es2022',define:{RELEASE_ASSET_DIRECTORY:JSON.stringify(assets)}});
 for(const name of entryScripts) await cp(`dist/assets/${name}.js`,`dist/assets/${name}.${identity}.js`);
 await build({entryPoints:['web/runtime-worker.ts'],outfile:`dist/${assets}runtime-worker.js`,bundle:true,format:'iife',target:'es2022'});
@@ -43,15 +47,16 @@ await cp('data/unicode/LICENSE.txt','dist/unicode-license.txt');
 const pages = [['rarity-register.html','department-of-improbable-appointments'],['bestiary.html','bestiary'],['index.html',''],['demo.html','demo'],['api.html','api'],['changelog.html','changelog'],['continuity.html','continuity-register'],['about.html','about'],['about.html','company-history'],['accessibility.html','accessibility'],['validation.html','validation'],['response.html','response'],['reset.html','reset'],['full-reset.html','full-reset']];
 const header = await readFile('src/main/resources/web/components/header.html', 'utf8');
 const footer = await readFile('src/main/resources/web/components/footer.html', 'utf8');
-function relativeLinks(html: string, nested: boolean) {
+function relativeLinks(html: string, directory: string) {
   return html.replace(/(href|src)="\/(?!\/)([^"]*)"/g, (_, attr, path) => {
     const [base, suffix = ''] = path.split(/(?=[?#])/);
-    const folder = ['department-of-improbable-appointments','bestiary','demo','api','changelog','continuity-register','validation','response','about','company-history','accessibility','reset','full-reset'].includes(base) ? `${base}/` : base;
-    return `${attr}="${nested ? '../' : './'}${folder}${suffix}"`;
+    const folder = ['department-of-improbable-appointments','bestiary','demo','api','changelog','continuity-register','validation','response','about','company-history','accessibility','reset','full-reset','scoring'].includes(base) ? `${base}/` : base;
+    return `${attr}="${directory ? '../'.repeat(directory.split('/').length) : './'}${folder}${suffix}"`;
   });
 }
-for (const [template,folder] of pages) {
-  let html = await readFile(`src/main/resources/web/${template}`, 'utf8');
+const scoringPages=await scoringGuideTemplates();
+for (const [template,folder] of [...pages,...scoringPages]) {
+  let html = template.startsWith('<!doctype')?template:await readFile(`src/main/resources/web/${template}`, 'utf8');
   html = html.replace('<!--LEDGER_CONTENT-->', await marked.parse(await readFile(raw[0][0],'utf8'))).replace('<!--REGISTER_CONTENT-->', await marked.parse(await readFile(raw[1][0],'utf8')));
   const active = folder === 'bestiary' ? 'BESTIARY' : folder === 'demo' ? 'DEMO' : folder === 'api' ? 'API' : (folder === 'about'||folder === 'company-history') ? 'ABOUT' : folder === 'validation' ? 'VALIDATION' : '';
   html = html.replace('<!--SITE_HEADER-->', header).replace('<!--SITE_FOOTER-->', footer).replace(`<!--NAV_${active}-->`, 'aria-current="page"').replace(/<!--NAV_[A-Z]+-->/g, '').replace('Run the real Java service. Repeat a mandate to observe Redis remember what the committee already decided.', 'Run the real Java enterprise in your browser. Repeat a mandate to observe institutional memory recall the committee’s decision.').replaceAll('Redis memory','Institutional cache').replaceAll('>Redis<','>Cache<').replace('shared Redis memory','swappable institutional memory').replace('HTTP liveness','Runtime liveness');
@@ -60,7 +65,7 @@ for (const [template,folder] of pages) {
   for (const script of entryScripts) for(const attribute of ['src','href']) html = html.replaceAll(`${attribute}="/assets/${script}.js"`,`${attribute}="/assets/${script}.${identity}.js"`);
   html=html.replaceAll('href="/openapi.json"',`href="/${assets}openapi.json"`).replaceAll('href="/unicode-license.txt"',`href="/${assets}unicode-license.txt"`);
   await mkdir(`dist/${folder}`,{recursive:true});
-  await writeFile(`dist/${folder ? folder+'/' : ''}index.html`,relativeLinks(html,!!folder));
+  await writeFile(`dist/${folder ? folder+'/' : ''}index.html`,relativeLinks(html,folder));
 }
 await writeFile('dist/analytics-config.json',JSON.stringify({...analytics,revision}));
 await writeFile('dist/runtime-config.json',JSON.stringify({mode:process.env.SLOPBUZZ_RUNTIME || 'browser',apiBaseUrl:process.env.SLOPBUZZ_API_BASE_URL || '',revision,assets,engine:process.env.SLOPBUZZ_ENGINE || 'auto'}));
@@ -88,6 +93,7 @@ async function files(directory: string): Promise<string[]> {
 }
 const paths = await files('dist');
 paths.push('department-of-improbable-appointments/', 'bestiary/', '', 'demo/', 'api/', 'changelog/', 'continuity-register/', 'response/', 'validation/', 'about/', 'company-history/', 'accessibility/');
+paths.push(...scoringPages.map(([,folder])=>folder+'/'));
 // Evidence can arrive after the first preview of the same source revision.
 // Give that complete bundle a new cache so installed previews receive the sealed report.
 const evidenceSeal = createHash('sha256').update(await readFile('dist/validation/report.json')).digest('hex').slice(0,12);

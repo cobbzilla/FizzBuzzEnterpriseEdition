@@ -1,5 +1,6 @@
 import {rooms,type RoomId} from './office-content.ts';
 import type {OfficeIncidentCoordinator} from './office-incident-model.ts';
+import type {Rarity} from '../catalog/bestiary.ts';
 export const flightPersonalities=[
  {id:'snail',glyph:'🐌',match:['🐌'],name:'Runway Due Diligence Officer',brief:'Inspects every millimetre of runway before accepting a very effective tailwind.',fold:'The snail is checking whether the runway has moved since its last inspection.',cruise:'Tailwind accepted. Security has requested permission to be astonished.',land:'The snail requests a slower round of applause.'},
  {id:'octopus',glyph:'🐙',match:['🐙','🦑'],name:'Eight Conflicting Clearances',brief:'Waves eight landing batons while the runway indicator provides the actual instruction.',fold:'Eight arms have approved eight mutually exclusive departures.',cruise:'Seven batons advise caution. The eighth has declared itself management.',land:'All eight arms claim sole credit for the landing.'},
@@ -18,13 +19,13 @@ export const flightPersonalities=[
 export type FlightPersonality=typeof flightPersonalities[number]['id'];
 export function personalityFor(emoji:string){return flightPersonalities.find(p=>p.match.some(g=>emoji.includes(g)))||flightPersonalities.at(-1)!;}
 export function personality(id:FlightPersonality){return flightPersonalities.find(p=>p.id===id)!;}
-export interface FlightActor {readonly id:string;readonly name:string;readonly emoji:string}
+export interface FlightActor {readonly id:string;readonly name:string;readonly emoji:string;readonly rarity?:Rarity}
 export interface FlightPlan {readonly key:string;readonly ordinal:string;readonly mandate:string;readonly text:string;readonly loops:number;readonly overflow:boolean;readonly tactic:FlightPersonality;readonly actors:readonly FlightActor[];readonly source:'encounter'|'rehearsal';readonly alternatives:readonly RoomId[]}
 export type FanDirection=-1|0|1;
 export type FlightPhase='folding'|'cruise'|'holding'|'landing';
 export type FlightResolution='landed'|'redirected'|'expedited'|'skipped'|'cancelled'|'disabled';
-export interface FlightSnapshot {readonly id:number;readonly plan:FlightPlan;readonly elapsed:number;readonly phase:FlightPhase;readonly progress:number;readonly destination:RoomId;readonly arrival:RoomId;readonly fans:readonly FanDirection[];readonly applied:readonly FanDirection[];readonly passed:number;readonly announcement:string;readonly expedited:boolean}
-export interface FlightRecord {id:number;plan:FlightPlan;destination:RoomId;arrival:RoomId;resolution:FlightResolution;finding:string}
+export interface FlightSnapshot {readonly id:number;readonly plan:FlightPlan;readonly elapsed:number;readonly flown:number;readonly phase:FlightPhase;readonly progress:number;readonly destination:RoomId;readonly arrival:RoomId;readonly fans:readonly FanDirection[];readonly applied:readonly FanDirection[];readonly passed:number;readonly announcement:string;readonly expedited:boolean}
+export interface FlightRecord {id:number;plan:FlightPlan;destination:RoomId;arrival:RoomId;resolution:FlightResolution;finding:string;snapshot:FlightSnapshot}
 export const foldMs=1800,cruiseMs=6000,loopMs=2000,landingMs=2500;
 export function flightEligible(ordinal:string){return ordinal.endsWith('0')&&/^[1-9][0-9]*0$/.test(ordinal);}
 export function holdingLoops(ordinal:string){if(!flightEligible(ordinal))throw new Error('Only positive, zero-ending ordinals have departure clearance.');return Math.min(3,ordinal.length-ordinal.replace(/0+$/,'').length);}
@@ -46,7 +47,7 @@ export function flightFinding(resolution:FlightResolution,arrival:RoomId){return
  }[resolution];}
 export class FlightCoordinator {
  private serial=0;private lease?:number;private last?:number;private allowed=false;private listeners=new Set<()=>void>();
- private pending?:{id:number;plan:FlightPlan;elapsed:number;destination:RoomId;fans:FanDirection[];applied:FanDirection[];passed:number;expedited:boolean;notice:string};
+ private pending?:{id:number;plan:FlightPlan;elapsed:number;flown:number;destination:RoomId;fans:FanDirection[];applied:FanDirection[];passed:number;expedited:boolean;notice:string};
  readonly records:FlightRecord[]=[];
  private readonly gate?:OfficeIncidentCoordinator;
  constructor(gate?:OfficeIncidentCoordinator){this.gate=gate;gate?.register('flight',reason=>this.finish(reason));}
@@ -61,11 +62,12 @@ export class FlightCoordinator {
   const person=personality(p.plan.tactic),announcement=p.notice||(phase==='folding'?person.fold:phase==='landing'?person.land:person.cruise);
   return Object.freeze({...p,phase,progress:Math.min(1,(p.elapsed-start)/duration),arrival,announcement,fans:Object.freeze([...p.fans]),applied:Object.freeze([...p.applied])});
  }
- start(plan:FlightPlan){if(this.active)return false;if(this.gate){this.lease=this.gate.acquire('flight');if(this.lease===undefined)return false;}this.pending={id:++this.serial,plan,elapsed:0,destination:'memory',fans:[0,0,0],applied:[0,0,0],passed:0,expedited:false,notice:''};this.last=undefined;this.allowed=false;this.notify();return true;}
+ start(plan:FlightPlan){if(this.active)return false;if(this.gate){this.lease=this.gate.acquire('flight');if(this.lease===undefined)return false;}this.pending={id:++this.serial,plan,elapsed:0,flown:0,destination:'memory',fans:[0,0,0],applied:[0,0,0],passed:0,expedited:false,notice:''};this.last=undefined;this.allowed=false;this.notify();return true;}
  advance(now:number,allow:boolean,id=this.pending?.id){
   const p=this.pending;if(!p||p.id!==id)return;if(!Number.isFinite(now))throw new Error('Air traffic requires a finite clock.');
   const delta=this.last===undefined||!this.allowed||!allow?0:Math.max(0,now-this.last);this.last=Math.max(this.last??now,now);this.allowed=allow;if(!allow||!delta)return;
   const before=this.snapshot!.phase;p.elapsed=Math.min(foldMs+cruiseMs+p.plan.loops*loopMs+landingMs,p.elapsed+delta);
+  if(!p.expedited)p.flown=p.elapsed;
   if(!p.expedited)for(let i=p.passed;i<3;i++)if(p.elapsed>=foldMs+cruiseMs*(i+1)/4){p.applied[i]=p.fans[i];p.passed=i+1;}
   if(before!==this.snapshot!.phase)p.notice='';
   if(p.elapsed>=foldMs+cruiseMs+p.plan.loops*loopMs+landingMs){const s=this.snapshot!;this.finish(p.expedited?'expedited':s.arrival===s.destination?'landed':'redirected');return;}this.notify();
@@ -73,5 +75,5 @@ export class FlightCoordinator {
  destination(room:RoomId,id=this.pending?.id){const p=this.pending;if(!p||p.id!==id||this.snapshot!.phase==='landing'||!rooms.some(r=>r.id===room))return false;p.destination=room;p.notice='Runway reassigned to '+rooms.find(r=>r.id===room)!.short+'. The destination has been notified of its promotion.';this.notify();return true;}
  turn(index:number,id=this.pending?.id){const p=this.pending;if(!p||p.id!==id||!Number.isInteger(index)||index<0||index>2||this.snapshot!.phase==='landing')return false;p.fans[index]=(p.fans[index]===0?1:p.fans[index]===1?-1:0);if(index<p.passed)p.applied[index]=p.fans[index];p.notice='Fan '+(index+1)+': '+(p.fans[index]===0?'straight':p.fans[index]<0?'left':'right')+'. Wind direction is now official policy.';this.notify();return true;}
  land(id=this.pending?.id){const p=this.pending;if(!p||p.id!==id||this.snapshot!.phase==='landing')return false;p.expedited=true;p.elapsed=foldMs+cruiseMs+p.plan.loops*loopMs;p.notice='Direct delivery authorized. The remaining circular activity has been cancelled.';this.last=undefined;this.allowed=false;this.notify();return true;}
- finish(resolution:FlightResolution='skipped'){const s=this.snapshot;if(!s)return;this.records.push(Object.freeze({id:s.id,plan:s.plan,destination:s.destination,arrival:s.arrival,resolution,finding:flightFinding(resolution,s.arrival)}));if(this.records.length>10)this.records.shift();this.pending=undefined;this.last=undefined;this.allowed=false;if(this.lease!==undefined)this.gate?.release('flight',this.lease);this.lease=undefined;this.notify();}
+ finish(resolution:FlightResolution='skipped'){const s=this.snapshot;if(!s)return;this.records.push(Object.freeze({id:s.id,plan:s.plan,destination:s.destination,arrival:s.arrival,resolution,finding:flightFinding(resolution,s.arrival),snapshot:s}));if(this.records.length>10)this.records.shift();this.pending=undefined;this.last=undefined;this.allowed=false;if(this.lease!==undefined)this.gate?.release('flight',this.lease);this.lease=undefined;this.notify();}
 }
