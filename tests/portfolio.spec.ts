@@ -98,3 +98,8 @@ test('score and badges remain keyboard accessible inside fullscreen and with enl
 test('rules navigation from the persistent banner leaves focus on the new page',async({page})=>{
  await ready(page);await run(page,'150','225');await demoAction(page,'click','#pause-reading');await department(page,'authorize');await page.locator('#active-run-banner [data-score-open="breakdown"]').click();await page.click('#score-rules-link');await expect(page.locator('.scoring-guide h1')).toBeFocused();await expect(page.locator('#score-dialog')).toBeHidden();await page.click('#active-run-return');await demoAction(page,'click','#stop-reading');
 });
+test('an idle second tab receives new badges without replacing the completed score',async({page,context})=>{
+ await ready(page);await run(page,'150','225');await expect.poll(async()=>BigInt((await receipt(page)).verification.through)).toBeGreaterThanOrEqual(3n);await demoAction(page,'click','#pause-reading');const id=(await receipt(page)).id,other=await context.newPage();
+ try{await ready(other);await demoAction(page,'click','#reveal-all');await expect(page.locator('#run-status')).toContainText('Mandate complete');await watch(other);await other.locator('#score-cluster [data-score-open="badges"]').click();await other.click('#badges-cabinet');await expect(other.locator('[data-badge="ratified"]')).toHaveAttribute('data-earned','true');const bank=await receipt(page);expect(bank.id).toBe(id);expect(bank.verification.through).toBe('150');expect(bank.status).toBe('completed');expect(BigInt(bank.dividend)).toBeGreaterThan(0n);}
+ finally{await other.close();}
+});

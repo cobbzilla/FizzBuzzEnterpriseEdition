@@ -71,7 +71,12 @@ export class EnterpriseScoringService {
  subscribe(listener:()=>void){this.listeners.add(listener);return()=>this.listeners.delete(listener);}
  mergeCabinet(value:unknown,publish=true){
   if(value&&typeof value==='object')for(const badge of badgeRules){const candidate=(value as Record<string,BadgeUnlock>)[badge.id];if(!candidate||!decimal(candidate.tier)||!Number.isFinite(Date.parse(candidate.firstEarned)))continue;const old=this.cabinet[badge.id];this.cabinet[badge.id]={tier:old&&BigInt(old.tier)>BigInt(candidate.tier)?old.tier:candidate.tier,firstEarned:old&&old.firstEarned<candidate.firstEarned?old.firstEarned:candidate.firstEarned};}
-  if(publish)this.publish();
+  if(publish){
+   // A storage event may arrive in an idle tab with an older run snapshot.
+   // Cabinet reconciliation must never write that tab's numerical account.
+   try{if(this.storage){this.mergeCabinet(JSON.parse(this.storage.getItem(cabinetStorageKey)||'{}'),false);this.storage.setItem(cabinetStorageKey,JSON.stringify(this.cabinet));}}catch{this.persistent=false;}
+   for(const listener of this.listeners)listener();
+  }
  }
  private publish(){
   if(this.active)this.active.updatedAt=this.clock();

@@ -4684,7 +4684,17 @@ var EnterpriseScoringService = class {
       const old = this.cabinet[badge.id];
       this.cabinet[badge.id] = { tier: old && BigInt(old.tier) > BigInt(candidate.tier) ? old.tier : candidate.tier, firstEarned: old && old.firstEarned < candidate.firstEarned ? old.firstEarned : candidate.firstEarned };
     }
-    if (publish) this.publish();
+    if (publish) {
+      try {
+        if (this.storage) {
+          this.mergeCabinet(JSON.parse(this.storage.getItem(cabinetStorageKey) || "{}"), false);
+          this.storage.setItem(cabinetStorageKey, JSON.stringify(this.cabinet));
+        }
+      } catch {
+        this.persistent = false;
+      }
+      for (const listener of this.listeners) listener();
+    }
   }
   publish() {
     if (this.active) this.active.updatedAt = this.clock();
