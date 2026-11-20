@@ -53,6 +53,10 @@ function systemMemory():{compressed:number;pressure?:MemoryPressure}{
 const pause=(ms:number)=>new Promise<void>(r=>setTimeout(r,ms));
 function signal(row:ProcessRow,kind:NodeJS.Signals){const current=processes().find(p=>p.pid===row.pid);if(current&&sameProcess(row,current))try{process.kill(row.pid,kind);}catch(e){if((e as NodeJS.ErrnoException).code!=='ESRCH')throw e;}}
 async function cleanup(rows:ProcessRow[]){
+ // Long serial suites retain thousands of historical descendants. Retire only
+ // identities that still exist; signal() rechecks each survivor before killing.
+ const live=new Map(processes().map(row=>[row.pid,row]));
+ rows=rows.filter(row=>{const current=live.get(row.pid);return current&&sameProcess(row,current);});
  if(!rows.length)return;
  for(const row of rows.slice().reverse())signal(row,'SIGTERM');
  await pause(1500);
