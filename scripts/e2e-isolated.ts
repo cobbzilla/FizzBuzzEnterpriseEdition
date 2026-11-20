@@ -2,8 +2,8 @@ import assert from 'node:assert/strict';
 import {execFileSync,spawn} from 'node:child_process';
 import {readFile,writeFile,readdir,mkdir} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
-import {createConnection} from 'node:net';
 import {sourceIdentity} from './source-identity.ts';
+import {renewOwnedServer} from './browser-launch.ts';
 
 interface Result {status:string;errors:unknown[]}
 interface Spec {id:string;title:string;tests:{expectedStatus:string;status:string;annotations:{type:string}[];results:Result[]}[]}
@@ -43,14 +43,9 @@ export async function isolatedE2E(selection:string[]=[]){
    // Retire the server, display and charged file cache as well as each browser.
    // Restart only after verified browser exit, never as a retry of a failed case.
    // A fresh cgroup per case also releases WebKit's charged file cache.
-   docker('restart','--timeout','5',container);
+   await renewOwnedServer(process.env.SLOPBUZZ_BROWSER_WS_ENDPOINT!);
    assert.deepEqual(JSON.parse(docker('inspect',container))[0].NetworkSettings.Ports,identity.NetworkSettings.Ports);
-   const endpoint=new URL(process.env.SLOPBUZZ_BROWSER_WS_ENDPOINT!);let ready=false;
-   for(let i=0;i<50&&!ready;i++){
-    ready=await new Promise<boolean>(resolve=>{const socket=createConnection({host:endpoint.hostname,port:Number(endpoint.port)});socket.setTimeout(500);socket.once('connect',()=>{socket.destroy();resolve(true);});socket.once('error',()=>resolve(false));socket.once('timeout',()=>{socket.destroy();resolve(false);});});
-    if(!ready)await new Promise(resolve=>setTimeout(resolve,100));
-   }
-   assert(ready,'Renewed browser server did not become ready');await clean();
+   await clean();
    console.log('Browser server residency renewed; '+Math.ceil(pressure()/1024**2)+' MiB before the next case.');
   }
  }

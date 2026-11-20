@@ -8,7 +8,7 @@ export const browserConnection=()=>process.env.SLOPBUZZ_BROWSER_WS_ENDPOINT?{
  exposeNetwork:'<loopback>',timeout:30000
 }:undefined;
 /** Release charged browser file cache between serial parity/public phases too. */
-async function renewOwnedServer(endpoint:string){
+export async function renewOwnedServer(endpoint:string){
  const name=process.env.SLOPBUZZ_BROWSER_CONTAINER;if(!name)return;
  const docker=(...args:string[])=>execFileSync('docker',args,{encoding:'utf8',timeout:15000});
  const identity=JSON.parse(docker('inspect',name))[0],id=boundedContainer(identity,endpoint);
