@@ -1,6 +1,5 @@
 import type {BrowserType} from '@playwright/test';
 import {execFileSync} from 'node:child_process';
-import {createConnection} from 'node:net';
 import {boundedContainer} from './browser-guard.ts';
 
 /** The same browser checks can run in a locally resource-capped Playwright container. */
@@ -18,9 +17,10 @@ async function renewOwnedServer(endpoint:string){
  docker('restart','--timeout','5',id);
  const renewed=JSON.parse(docker('inspect',id))[0];boundedContainer(renewed,endpoint);
  if(JSON.stringify(renewed.NetworkSettings.Ports)!==JSON.stringify(identity.NetworkSettings.Ports))throw Error('Owned browser endpoint changed during renewal');
- const url=new URL(endpoint);let ready=false;
+ let ready=false;
  for(let i=0;i<50&&!ready;i++){
-  ready=await new Promise<boolean>(resolve=>{const socket=createConnection({host:url.hostname,port:Number(url.port)});socket.setTimeout(500);socket.once('connect',()=>{socket.destroy();resolve(true);});socket.once('error',()=>resolve(false));socket.once('timeout',()=>{socket.destroy();resolve(false);});});
+  // Docker can accept TCP before Playwright has opened its WebSocket server.
+  ready=docker('logs','--since',renewed.State.StartedAt,id).includes('Listening on ws://');
   if(!ready)await new Promise(r=>setTimeout(r,100));
  }
  if(!ready)throw Error('Renewed owned browser server did not become ready');
