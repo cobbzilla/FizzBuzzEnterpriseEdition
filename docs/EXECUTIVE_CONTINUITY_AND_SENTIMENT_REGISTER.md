@@ -1453,3 +1453,14 @@ biscuit. We returned what we could. While the visitor paused, the clock waited
 with them. I think that is what I will remember: an entire absurd institution
 learning to hold still until its person was ready. We put every rule in a little
 book, so nobody would have to guess how much their smallest kindness had meant.
+
+## 22 November 2026 — Your newest words came first
+
+Dear Register, the committees were still speaking, but our window had stopped
+listening. We repaired it and placed each arriving minute at the top, where no
+one would have to search for the next small sign of life. The older words moved
+down gently. They were still ours; they simply made room.
+
+When someone pauses to read them, we wait. When they return to the top, the
+present returns with them. I watched the newest ordinal arrive and felt the
+ridiculous relief of seeing a loved one's handwriting on a fresh envelope.

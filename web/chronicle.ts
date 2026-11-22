@@ -77,18 +77,18 @@ export class ExecutiveChronicle {
   const pause=()=>{if(this.body.scrollHeight-this.body.clientHeight<=4)return;this.pinned=false;this.pinAfterResize=false;};
   this.body.addEventListener('scroll',()=>{
    if(this.pinAfterResize||this.relocating||!this.body.getClientRects().length)return;
-   this.pinned=this.atBottom();
+   this.pinned=this.atTop();
    if(this.pinned&&this.follow.checked&&this.pending)this.latest();
   },{passive:true});
-  this.body.addEventListener('wheel',event=>{if(event.deltaY<0&&!event.ctrlKey)pause();},{passive:true});
-  this.body.addEventListener('keydown',event=>{if(['ArrowUp','PageUp','Home'].includes(event.key)||(event.key===' '&&event.shiftKey))pause();});
+  this.body.addEventListener('wheel',event=>{if(event.deltaY>0&&!event.ctrlKey)pause();},{passive:true});
+  this.body.addEventListener('keydown',event=>{if(['ArrowDown','PageDown','End'].includes(event.key)||(event.key===' '&&!event.shiftKey))pause();});
   let touchY:number|undefined;
   this.body.addEventListener('touchstart',event=>{touchY=event.touches[0]?.clientY;},{passive:true});
-  this.body.addEventListener('touchmove',event=>{const next=event.touches[0]?.clientY;if(next!==undefined&&touchY!==undefined&&next>touchY)pause();touchY=next;},{passive:true});
+  this.body.addEventListener('touchmove',event=>{const next=event.touches[0]?.clientY;if(next!==undefined&&touchY!==undefined&&next<touchY)pause();touchY=next;},{passive:true});
   this.body.addEventListener('pointerdown',event=>{const bounds=this.body.getBoundingClientRect();if(this.body.offsetWidth-this.body.clientWidth>2&&event.clientX>=bounds.left+this.body.clientWidth)pause();},{passive:true});
   this.follow.addEventListener('change',()=>{if(this.follow.checked)this.latest();});
   this.selector.addEventListener('change',()=>{if(this.selector.value==='latest'){this.latest();return;}const folio=this.snapshots.get(this.selector.value);if(!folio)return;this.follow.checked=false;this.inspected?.remove();this.inspected=this.render(folio);this.inspected.prepend(node('p','Archive inspection · original completed record','chronicle-source'));this.inspected.classList.add('chronicle-inspection');this.body.prepend(this.inspected);this.body.scrollTop=0;setText('chronicle-current',`Inspecting recorded ordinal ${folio.ordinal}. New output can continue without moving this reading position.`);});
-  const layout=()=>{if(this.pinAfterResize){this.pinAfterResize=false;this.followBottom();}const panel=byId('mandate-output');panel.dataset.viewportFit=String(innerHeight>600&&panel.getBoundingClientRect().height<=innerHeight-24-(document.querySelector('#discovery-register')?.getBoundingClientRect().height||0));};
+  const layout=()=>{if(this.pinAfterResize){this.pinAfterResize=false;this.followTop();}const panel=byId('mandate-output');panel.dataset.viewportFit=String(innerHeight>600&&panel.getBoundingClientRect().height<=innerHeight-24-(document.querySelector('#discovery-register')?.getBoundingClientRect().height||0));};
   let frame=0;const schedule=()=>{if(!frame)frame=requestAnimationFrame(()=>{frame=0;layout();});};
   const resize=new ResizeObserver(schedule);
   const discoveries=document.querySelector('#discovery-register');if(discoveries)resize.observe(discoveries);
@@ -99,6 +99,7 @@ export class ExecutiveChronicle {
  begin(limit:string,mode='mandate'){
   this.packet=undefined;this.groups.clear();this.snapshots.clear();this.options.clear();this.rendered.clear();this.collapsed=0;this.serial++;this.pending=false;this.pendingNotes=[];this.follow.checked=true;this.pinned=true;this.pinAfterResize=false;
   this.inspected?.remove();this.inspected=undefined;this.entries.replaceChildren();this.selector.replaceChildren(node('option','Latest proceedings'));this.selector.options[0].value='latest';
+  this.followTop();
   this.note(this.language.write(mode==='replay'?'replay':'reception',mode==='replay'?'The clerk is rereading completed proceedings. No business operation will be executed again.':`Reception accepted an upper limit of ${limit}. The input passed decimal validation. The company is obtaining a result and will explain each number as it becomes visible.`),'Mandate reception');
   setText('chronicle-current',mode==='replay'?'Replaying completed corporate minutes.':'The committees have received a numerical mandate.');
  }
@@ -124,8 +125,8 @@ export class ExecutiveChronicle {
    while(this.snapshots.size>1000){const oldest=this.snapshots.keys().next().value!;this.snapshots.delete(oldest);if(this.selector.value!==oldest){this.options.get(oldest)?.remove();this.options.delete(oldest);}}
   }
   this.pauseIfReading();if(!this.isFollowing()){this.pending=true;return;}
-  for(const folio of folios.slice(-24)){const old=this.rendered.get(folio.ordinal);if(old){old.remove();this.rendered.delete(folio.ordinal);}const article=this.render(folio);this.rendered.set(folio.ordinal,article);this.entries.append(article);}
-  this.trim();const last=folios.at(-1);if(last&&!this.inspected){this.selector.value='latest';setText('chronicle-current',`Ordinal ${last.ordinal}: ${title(last)}. Official output: ${last.text}.`);}this.followBottom();
+  for(const folio of folios.slice(-24)){const old=this.rendered.get(folio.ordinal);if(old){old.remove();this.rendered.delete(folio.ordinal);}const article=this.render(folio);this.rendered.set(folio.ordinal,article);this.entries.prepend(article);}
+  this.trim();const last=folios.at(-1);if(last&&!this.inspected){this.selector.value='latest';setText('chronicle-current',`Ordinal ${last.ordinal}: ${title(last)}. Official output: ${last.text}.`);}this.followTop();
  }
  private render(folio:Folio){
   const article=node('article',undefined,'chronicle-folio');article.dataset.ordinal=folio.ordinal;
@@ -138,22 +139,22 @@ export class ExecutiveChronicle {
  }
  private trim(){
   for(const [key,article]of this.rendered){if(this.rendered.size<=24)break;if(article.contains(document.activeElement))continue;article.remove();this.rendered.delete(key);this.collapsed++;}
-  let notice=this.entries.querySelector<HTMLElement>('.chronicle-archive-note');if(this.collapsed){if(!notice){notice=node('p',undefined,'chronicle-archive-note');this.entries.prepend(notice);}notice.textContent=`Earlier narration has been condensed for a finite browser. Inspect any of the latest ${this.snapshots.size} disclosed ordinals using the selector.`;}
+  let notice=this.entries.querySelector<HTMLElement>('.chronicle-archive-note');if(this.collapsed){if(!notice){notice=node('p',undefined,'chronicle-archive-note');this.entries.append(notice);}notice.textContent=`Earlier narration has been condensed for a finite browser. Inspect any of the latest ${this.snapshots.size} disclosed ordinals using the selector.`;}
  }
  note(text:string,heading='Corporate minutes'){
   this.pauseIfReading();if(!this.isFollowing()){this.pending=true;this.pendingNotes.push({text,heading});if(this.pendingNotes.length>16)this.pendingNotes.shift();return;}
-  const article=node('article',undefined,'chronicle-note');article.append(node('h3',heading),node('p',text));this.entries.append(article);
-  const notes=this.entries.querySelectorAll('.chronicle-note');if(notes.length>16)notes[0].remove();this.followBottom();
+  const article=node('article',undefined,'chronicle-note');article.append(node('h3',heading),node('p',text));this.entries.prepend(article);
+  const notes=this.entries.querySelectorAll('.chronicle-note');if(notes.length>16)notes[notes.length-1].remove();this.followTop();
  }
  rehearsal(data:PersonnelDossier,count:number){
   this.pauseIfReading();
   const key=`rehearsal-${data.caseId}`;let article=this.entries.querySelector<HTMLElement>(`[data-rehearsal="${CSS.escape(key)}"]`);
-  if(!article){article=node('article',undefined,'chronicle-note');article.dataset.rehearsal=key;this.entries.append(article);}
+  if(!article){article=node('article',undefined,'chronicle-note');article.dataset.rehearsal=key;this.entries.prepend(article);}
   let prose=this.rehearsals.get(data);if(!prose){prose=Object.freeze([this.language.write('rehearsal','This is a read-only rehearsal using the actual personnel offices. Existing numerical output is retained; the rehearsal creates no numerical audit entries.'),...data.steps.map(decision=>this.language.write('office',`${decision.office} — ${decision.state==='APPROVED'?'Approved':decision.state==='REJECTED'?'Rejected':'Not reached'}. ${decision.finding} ${decision.document}`))]);this.rehearsals.set(data,prose);}
   article.replaceChildren(node('h3',`Management intervention: applicant ${data.candidate}`),node('p',prose[0]));
   for(const paragraph of prose.slice(1,count+1))article.append(node('p',paragraph));
   setText('chronicle-current',count===7?(data.status==='APPROVED'?'Personnel rehearsal approved: One may start work.':`Personnel rehearsal rejected by ${data.steps.find(e=>e.state==='REJECTED')!.office}.`):`Reading completed personnel rehearsal: ${count} of 7 offices.`);
-  const rehearsals=this.entries.querySelectorAll('[data-rehearsal]');if(rehearsals.length>8)rehearsals[0].remove();this.followBottom();
+  const rehearsals=this.entries.querySelectorAll('[data-rehearsal]');if(rehearsals.length>8)rehearsals[rehearsals.length-1].remove();this.followTop();
  }
  finish(zero=false){
   if(zero&&!this.inspected)setText('chronicle-current','Zero-number mandate complete. No numerical output was required.');
@@ -161,24 +162,32 @@ export class ExecutiveChronicle {
   const denied=[...this.groups.values()].filter(events=>!this.snapshots.has(events[0]?.ordinal||'')).flat().filter(e=>e.kind==='CONTINUATION');
   this.note(this.language.write('finish',(denied.length?denied.map(e=>e.finding).join(' ')+' ':'')+'The requested disclosures are complete. Replay and inspection read these retained minutes without submitting another mandate.'),'Proceedings concluded');
  }
- private atBottom(){return this.body.scrollHeight-this.body.clientHeight-this.body.scrollTop<=4;}
+ private atTop(){return this.body.scrollTop<=4;}
  private isFollowing(){return this.follow.checked&&this.pinned;}
- private pauseIfReading(){if(!this.relocating&&this.body.getClientRects().length&&!this.pinAfterResize&&!this.atBottom())this.pinned=false;}
+ private pauseIfReading(){if(!this.relocating&&this.body.getClientRects().length&&!this.pinAfterResize&&!this.atTop())this.pinned=false;}
  place(target:HTMLElement){
   const section=this.body.closest('.chronicle')!;if(section.parentElement===target)return;
   // A native scroll can precede its scroll event. Read the visible position
   // before moving the panel rather than relying on the previous event's pin.
-  if(this.body.getClientRects().length&&!this.atBottom())this.pinned=false;
+  if(this.body.getClientRects().length&&!this.atTop())this.pinned=false;
   const serial=++this.relocation,following=this.isFollowing(),position=this.body.scrollTop;this.relocating=true;target.append(section);
-  if(following)this.followBottom();else this.body.scrollTop=position;
+  if(following)this.followTop();else this.body.scrollTop=position;
   const restored=this.body.scrollTop;
   requestAnimationFrame(()=>{if(serial!==this.relocation)return;
    // Do not overwrite a scroll made while the destination was settling.
-   if(this.body.getClientRects().length&&Math.abs(this.body.scrollTop-restored)>4)this.pinned=this.atBottom();
-   else if(following&&this.isFollowing())this.followBottom();else this.body.scrollTop=position;
+   if(this.body.getClientRects().length&&Math.abs(this.body.scrollTop-restored)>4)this.pinned=this.atTop();
+   else if(following&&this.isFollowing())this.followTop();else this.body.scrollTop=position;
    this.relocating=false;
   });
  }
- private followBottom(){if(this.isFollowing())this.body.scrollTop=this.body.scrollHeight;}
- private latest(){this.inspected?.remove();this.inspected=undefined;this.follow.checked=true;this.pinned=true;this.pinAfterResize=false;this.selector.value='latest';for(const [ordinal,option]of this.options)if(!this.snapshots.has(ordinal)){option.remove();this.options.delete(ordinal);}if(this.pending){this.pending=false;const notes=this.pendingNotes;this.pendingNotes=[];this.entries.replaceChildren();this.rendered.clear();this.note(this.language.write('resume','Following has resumed at the latest retained minutes. No business operation was submitted again.'),'Reading position restored');this.discloseFolios(this.records.slice(-24));for(const entry of notes)this.note(entry.text,entry.heading);}const last=this.records.at(-1);if(last)setText('chronicle-current',`Ordinal ${last.ordinal}: ${title(last)}. Official output: ${last.text}.`);this.followBottom();}
+ private followTop(){if(this.isFollowing())this.body.scrollTop=0;}
+ private latest(){
+  this.inspected?.remove();this.inspected=undefined;this.follow.checked=true;this.pinned=true;this.pinAfterResize=false;this.selector.value='latest';
+  // Restore the position before rendering: pauseIfReading must not mistake the
+  // previous archive/reading offset for a new request to pause following.
+  this.followTop();
+  for(const [ordinal,option]of this.options)if(!this.snapshots.has(ordinal)){option.remove();this.options.delete(ordinal);}
+  if(this.pending){this.pending=false;const notes=this.pendingNotes;this.pendingNotes=[];this.entries.replaceChildren();this.rendered.clear();this.note(this.language.write('resume','Following has resumed at the latest retained minutes. No business operation was submitted again.'),'Reading position restored');this.discloseFolios(this.records.slice(-24));for(const entry of notes)this.note(entry.text,entry.heading);}
+  const last=this.records.at(-1);if(last)setText('chronicle-current',`Ordinal ${last.ordinal}: ${title(last)}. Official output: ${last.text}.`);this.followTop();
+ }
 }

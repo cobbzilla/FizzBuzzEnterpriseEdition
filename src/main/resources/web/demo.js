@@ -6582,14 +6582,14 @@ var ExecutiveChronicle = class {
     };
     this.body.addEventListener("scroll", () => {
       if (this.pinAfterResize || this.relocating || !this.body.getClientRects().length) return;
-      this.pinned = this.atBottom();
+      this.pinned = this.atTop();
       if (this.pinned && this.follow.checked && this.pending) this.latest();
     }, { passive: true });
     this.body.addEventListener("wheel", (event) => {
-      if (event.deltaY < 0 && !event.ctrlKey) pause();
+      if (event.deltaY > 0 && !event.ctrlKey) pause();
     }, { passive: true });
     this.body.addEventListener("keydown", (event) => {
-      if (["ArrowUp", "PageUp", "Home"].includes(event.key) || event.key === " " && event.shiftKey) pause();
+      if (["ArrowDown", "PageDown", "End"].includes(event.key) || event.key === " " && !event.shiftKey) pause();
     });
     let touchY;
     this.body.addEventListener("touchstart", (event) => {
@@ -6597,7 +6597,7 @@ var ExecutiveChronicle = class {
     }, { passive: true });
     this.body.addEventListener("touchmove", (event) => {
       const next = event.touches[0]?.clientY;
-      if (next !== void 0 && touchY !== void 0 && next > touchY) pause();
+      if (next !== void 0 && touchY !== void 0 && next < touchY) pause();
       touchY = next;
     }, { passive: true });
     this.body.addEventListener("pointerdown", (event) => {
@@ -6626,7 +6626,7 @@ var ExecutiveChronicle = class {
     const layout = () => {
       if (this.pinAfterResize) {
         this.pinAfterResize = false;
-        this.followBottom();
+        this.followTop();
       }
       const panel = byId("mandate-output");
       panel.dataset.viewportFit = String(innerHeight > 600 && panel.getBoundingClientRect().height <= innerHeight - 24 - (document.querySelector("#discovery-register")?.getBoundingClientRect().height || 0));
@@ -6671,6 +6671,7 @@ var ExecutiveChronicle = class {
     this.entries.replaceChildren();
     this.selector.replaceChildren(node2("option", "Latest proceedings"));
     this.selector.options[0].value = "latest";
+    this.followTop();
     this.note(this.language.write(mode === "replay" ? "replay" : "reception", mode === "replay" ? "The clerk is rereading completed proceedings. No business operation will be executed again." : `Reception accepted an upper limit of ${limit}. The input passed decimal validation. The company is obtaining a result and will explain each number as it becomes visible.`), "Mandate reception");
     setText("chronicle-current", mode === "replay" ? "Replaying completed corporate minutes." : "The committees have received a numerical mandate.");
   }
@@ -6738,7 +6739,7 @@ var ExecutiveChronicle = class {
       }
       const article = this.render(folio);
       this.rendered.set(folio.ordinal, article);
-      this.entries.append(article);
+      this.entries.prepend(article);
     }
     this.trim();
     const last = folios.at(-1);
@@ -6746,7 +6747,7 @@ var ExecutiveChronicle = class {
       this.selector.value = "latest";
       setText("chronicle-current", `Ordinal ${last.ordinal}: ${title(last)}. Official output: ${last.text}.`);
     }
-    this.followBottom();
+    this.followTop();
   }
   render(folio) {
     const article = node2("article", void 0, "chronicle-folio");
@@ -6790,7 +6791,7 @@ var ExecutiveChronicle = class {
     if (this.collapsed) {
       if (!notice) {
         notice = node2("p", void 0, "chronicle-archive-note");
-        this.entries.prepend(notice);
+        this.entries.append(notice);
       }
       notice.textContent = `Earlier narration has been condensed for a finite browser. Inspect any of the latest ${this.snapshots.size} disclosed ordinals using the selector.`;
     }
@@ -6805,10 +6806,10 @@ var ExecutiveChronicle = class {
     }
     const article = node2("article", void 0, "chronicle-note");
     article.append(node2("h3", heading), node2("p", text2));
-    this.entries.append(article);
+    this.entries.prepend(article);
     const notes = this.entries.querySelectorAll(".chronicle-note");
-    if (notes.length > 16) notes[0].remove();
-    this.followBottom();
+    if (notes.length > 16) notes[notes.length - 1].remove();
+    this.followTop();
   }
   rehearsal(data, count) {
     this.pauseIfReading();
@@ -6817,7 +6818,7 @@ var ExecutiveChronicle = class {
     if (!article) {
       article = node2("article", void 0, "chronicle-note");
       article.dataset.rehearsal = key2;
-      this.entries.append(article);
+      this.entries.prepend(article);
     }
     let prose = this.rehearsals.get(data);
     if (!prose) {
@@ -6828,8 +6829,8 @@ var ExecutiveChronicle = class {
     for (const paragraph of prose.slice(1, count + 1)) article.append(node2("p", paragraph));
     setText("chronicle-current", count === 7 ? data.status === "APPROVED" ? "Personnel rehearsal approved: One may start work." : `Personnel rehearsal rejected by ${data.steps.find((e) => e.state === "REJECTED").office}.` : `Reading completed personnel rehearsal: ${count} of 7 offices.`);
     const rehearsals = this.entries.querySelectorAll("[data-rehearsal]");
-    if (rehearsals.length > 8) rehearsals[0].remove();
-    this.followBottom();
+    if (rehearsals.length > 8) rehearsals[rehearsals.length - 1].remove();
+    this.followTop();
   }
   finish(zero = false) {
     if (zero && !this.inspected) setText("chronicle-current", "Zero-number mandate complete. No numerical output was required.");
@@ -6837,35 +6838,35 @@ var ExecutiveChronicle = class {
     const denied = [...this.groups.values()].filter((events) => !this.snapshots.has(events[0]?.ordinal || "")).flat().filter((e) => e.kind === "CONTINUATION");
     this.note(this.language.write("finish", (denied.length ? denied.map((e) => e.finding).join(" ") + " " : "") + "The requested disclosures are complete. Replay and inspection read these retained minutes without submitting another mandate."), "Proceedings concluded");
   }
-  atBottom() {
-    return this.body.scrollHeight - this.body.clientHeight - this.body.scrollTop <= 4;
+  atTop() {
+    return this.body.scrollTop <= 4;
   }
   isFollowing() {
     return this.follow.checked && this.pinned;
   }
   pauseIfReading() {
-    if (!this.relocating && this.body.getClientRects().length && !this.pinAfterResize && !this.atBottom()) this.pinned = false;
+    if (!this.relocating && this.body.getClientRects().length && !this.pinAfterResize && !this.atTop()) this.pinned = false;
   }
   place(target) {
     const section = this.body.closest(".chronicle");
     if (section.parentElement === target) return;
-    if (this.body.getClientRects().length && !this.atBottom()) this.pinned = false;
+    if (this.body.getClientRects().length && !this.atTop()) this.pinned = false;
     const serial = ++this.relocation, following = this.isFollowing(), position = this.body.scrollTop;
     this.relocating = true;
     target.append(section);
-    if (following) this.followBottom();
+    if (following) this.followTop();
     else this.body.scrollTop = position;
     const restored = this.body.scrollTop;
     requestAnimationFrame(() => {
       if (serial !== this.relocation) return;
-      if (this.body.getClientRects().length && Math.abs(this.body.scrollTop - restored) > 4) this.pinned = this.atBottom();
-      else if (following && this.isFollowing()) this.followBottom();
+      if (this.body.getClientRects().length && Math.abs(this.body.scrollTop - restored) > 4) this.pinned = this.atTop();
+      else if (following && this.isFollowing()) this.followTop();
       else this.body.scrollTop = position;
       this.relocating = false;
     });
   }
-  followBottom() {
-    if (this.isFollowing()) this.body.scrollTop = this.body.scrollHeight;
+  followTop() {
+    if (this.isFollowing()) this.body.scrollTop = 0;
   }
   latest() {
     this.inspected?.remove();
@@ -6874,6 +6875,7 @@ var ExecutiveChronicle = class {
     this.pinned = true;
     this.pinAfterResize = false;
     this.selector.value = "latest";
+    this.followTop();
     for (const [ordinal, option] of this.options) if (!this.snapshots.has(ordinal)) {
       option.remove();
       this.options.delete(ordinal);
@@ -6890,7 +6892,7 @@ var ExecutiveChronicle = class {
     }
     const last = this.records.at(-1);
     if (last) setText("chronicle-current", `Ordinal ${last.ordinal}: ${title(last)}. Official output: ${last.text}.`);
-    this.followBottom();
+    this.followTop();
   }
 };
 

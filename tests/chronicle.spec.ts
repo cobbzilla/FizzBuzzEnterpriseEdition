@@ -1,17 +1,38 @@
-import {demoControl,demoAction,watch} from './demo-controls';
+import {demoControl,demoAction,department,watch} from './demo-controls';
 import {test,expect,type Page} from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 test.beforeEach(async({page},info)=>{await page.route('**/runtime-config.json',async route=>{const response=await route.fetch();await route.fulfill({json:{...await response.json(),engine:info.project.metadata.engine}});});});
 async function invoke(page:Page,path:string){return page.evaluate(async path=>{const m=await import(new URL('/assets/tribunal.js',location.href).href);const client=new m.BrowserRuntimeClient();try{return await(await client.request(path)).json();}finally{client.close();}},path);}
 async function run(page:Page,limit:string){await demoAction(page,'fill','#limit',limit);await demoAction(page,'click','#run-button');await expect(page.locator('body')).toHaveAttribute('data-desk','observe');await expect(page.locator('#run-status')).toContainText('Mandate complete');await watch(page,'commentary');}
-async function bottom(page:Page){await watch(page,'commentary');await expect.poll(()=>page.locator('#chronicle-scroll').evaluate(e=>Math.abs(e.scrollTop+e.clientHeight-e.scrollHeight)<3)).toBe(true);}
+async function top(page:Page){await watch(page,'commentary');await expect.poll(()=>page.locator('#chronicle-scroll').evaluate(e=>Math.abs(e.scrollTop)<3)).toBe(true);}
 
 test('a focused chronicle has fixed height, scrolls and follows its latest entry',async({page})=>{
  await page.goto('/demo/');await expect(page.locator('#health-value')).toHaveText('LIVE');await demoAction(page,'selectOption','#display-speed','0');await run(page,'1');
  const height=await page.locator('#chronicle-scroll').evaluate(e=>e.clientHeight);await expect(page.locator('#chronicle-entries')).toContainText('One has reported for duty');await run(page,'100');
- expect(await page.locator('#chronicle-scroll').evaluate(e=>e.clientHeight)).toBe(height);expect(await page.locator('#chronicle-scroll').evaluate(e=>e.scrollHeight)).toBeGreaterThan(height*3);await bottom(page);
+ expect(await page.locator('#chronicle-scroll').evaluate(e=>e.clientHeight)).toBe(height);expect(await page.locator('#chronicle-scroll').evaluate(e=>e.scrollHeight)).toBeGreaterThan(height*3);await top(page);
  await expect(page.locator('#output')).toBeVisible();await expect(page.locator('#personnel-dialog')).not.toBeVisible();await expect(page.locator('#chronicle-entries')).toContainText('4 separately certified z’s');
- await page.setViewportSize({width:390,height:844});await bottom(page);expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
+ await page.setViewportSize({width:390,height:844});await top(page);expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
+});
+
+test('Latest proceedings keeps updating at the top when Observe is revealed and resized',async({page})=>{
+ await page.goto('/demo/?desk=observe');await department(page,'authorize');await demoAction(page,'selectOption','#display-speed','800');await demoAction(page,'fill','#limit','100');await demoAction(page,'click','#run-button');
+ // The default office/overview keeps the full chronicle hidden before it is moved into Observe.
+ await expect(page.locator('#chronicle-ordinal option[value="3"]')).toHaveCount(1);await watch(page,'commentary');
+ const first=page.locator('#chronicle-entries .chronicle-folio').first(),scroll=page.locator('#chronicle-scroll');
+ await expect(page.locator('#chronicle-ordinal')).toHaveValue('latest');await expect(page.locator('#follow-chronicle')).toBeChecked();
+ const before=Number(await first.getAttribute('data-ordinal'));
+ await expect.poll(async()=>Number(await first.getAttribute('data-ordinal'))).toBeGreaterThan(before);
+ await page.setViewportSize({width:640,height:900});
+ const resized=Number(await first.getAttribute('data-ordinal'));
+ await expect.poll(async()=>Number(await first.getAttribute('data-ordinal'))).toBeGreaterThan(resized);
+ await expect.poll(()=>scroll.evaluate(e=>e.scrollTop)).toBe(0);
+ await watch(page,'overview');await page.waitForTimeout(1000);await watch(page,'commentary');
+ const returned=Number(await first.getAttribute('data-ordinal'));
+ await expect.poll(async()=>Number(await first.getAttribute('data-ordinal'))).toBeGreaterThan(returned);
+ await demoAction(page,'selectOption','#display-speed','0');await expect(page.locator('#run-status')).toContainText('Mandate complete');
+ const ordinals=await page.locator('#chronicle-entries .chronicle-folio').evaluateAll(nodes=>nodes.map(node=>Number((node as HTMLElement).dataset.ordinal)));
+ expect(ordinals).toEqual(Array.from({length:24},(_,index)=>100-index));
+ await expect(page.locator('#chronicle-entries > article').first()).toContainText('Proceedings concluded');await top(page);
 });
 
 test('One is narrated as soon as it appears without waiting through seven HR pauses',async({page})=>{
@@ -22,21 +43,22 @@ test('One is narrated as soon as it appears without waiting through seven HR pau
  await demoAction(page,'click','#reveal-all');await expect(page.locator('#run-status')).toContainText('Mandate complete');await expect(page.locator('#chronicle-entries')).toContainText('Glyph Procurement received 4 individually inspected character allocations');
 });
 
-test('an archive inspection survives new output and Latest restores chronological order',async({page})=>{
+test('an archive inspection survives new output and Latest restores newest-first order',async({page})=>{
  await page.goto('/demo/');await demoAction(page,'selectOption','#display-speed','225');await demoAction(page,'fill','#limit','100');await demoAction(page,'click','#run-button');
  await expect(page.locator('#chronicle-ordinal option[value="2"]')).toHaveCount(1);await demoAction(page,'selectOption','#chronicle-ordinal','2');
  await expect(page.locator('#follow-chronicle')).not.toBeChecked();await demoAction(page,'selectOption','#display-speed','0');await expect(page.locator('#run-status')).toContainText('Mandate complete');
  await expect(page.locator('.chronicle-inspection')).toHaveAttribute('data-ordinal','2');await expect(page.locator('#chronicle-current')).toContainText('Inspecting recorded ordinal 2');
  expect(await page.locator('#chronicle-scroll').evaluate(e=>e.scrollTop)).toBe(0);
  await demoAction(page,'selectOption','#chronicle-ordinal','1');await expect(page.locator('.chronicle-inspection')).toHaveAttribute('data-ordinal','1');
+ await page.locator('#chronicle-scroll').evaluate(e=>{e.scrollTop=300;});
  await demoAction(page,'selectOption','#chronicle-ordinal','latest');await expect(page.locator('.chronicle-inspection')).toHaveCount(0);await expect(page.locator('#chronicle-current')).toContainText('Ordinal 100');
- expect(await page.locator('.chronicle-folio').last().getAttribute('data-ordinal')).toBe('100');await bottom(page);
+ expect(await page.locator('.chronicle-folio').first().getAttribute('data-ordinal')).toBe('100');await top(page);
 });
 
-test('scrolling up pauses automatic following and reaching the bottom resumes it',async({page})=>{
- await page.goto('/demo/');await demoAction(page,'selectOption','#display-speed','225');await demoAction(page,'fill','#limit','100');await demoAction(page,'click','#run-button');await expect(page.locator('#chronicle-ordinal option[value="3"]')).toHaveCount(1);await bottom(page);
+test('scrolling down pauses automatic following and reaching the top resumes it',async({page})=>{
+ await page.goto('/demo/');await demoAction(page,'selectOption','#display-speed','225');await demoAction(page,'fill','#limit','100');await demoAction(page,'click','#run-button');await expect(page.locator('#chronicle-ordinal option[value="3"]')).toHaveCount(1);await top(page);
  const scroll=page.locator('#chronicle-scroll');
- await expect.poll(async()=>{await scroll.hover();await page.mouse.wheel(0,-260);await scroll.evaluate(()=>new Promise<void>(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>resolve()))));return scroll.evaluate(e=>e.scrollHeight-e.clientHeight-e.scrollTop>100);}).toBe(true);
+ await expect.poll(async()=>{await scroll.hover();await page.mouse.wheel(0,260);await scroll.evaluate(()=>new Promise<void>(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>resolve()))));return scroll.evaluate(e=>e.scrollTop>100);}).toBe(true);
  // Native wheel animation can continue after two paints, especially in WebKit.
  // Establish a settled reading position before asking whether later layout preserves it.
  let previous=-1,stable=0;
@@ -44,24 +66,24 @@ test('scrolling up pauses automatic following and reaching the bottom resumes it
  const before={top:await scroll.evaluate(e=>e.scrollTop),text:await page.locator('#chronicle-entries').textContent()};await expect(page.locator('#follow-chronicle')).toBeChecked();
  await demoAction(page,'selectOption','#display-speed','0');await expect(page.locator('#run-status')).toContainText('Mandate complete');
  expect(await scroll.evaluate(e=>e.scrollTop)).toBeCloseTo(before.top,0);expect(await page.locator('#chronicle-entries').textContent()).toBe(before.text);
- await page.setViewportSize({width:1100,height:800});await expect.poll(()=>scroll.evaluate(e=>e.scrollHeight-e.clientHeight-e.scrollTop>50)).toBe(true);
+ await page.setViewportSize({width:1100,height:800});await expect.poll(()=>scroll.evaluate(e=>e.scrollTop>50)).toBe(true);
  await scroll.hover();
  // Firefox limits a single wheel gesture to roughly a viewport; keep scrolling
- // until the reader actually reaches the bottom instead of assuming a huge delta does.
- await expect.poll(async()=>{await page.mouse.wheel(0,600);await scroll.evaluate(()=>new Promise<void>(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>resolve()))));return scroll.evaluate(e=>Math.abs(e.scrollTop+e.clientHeight-e.scrollHeight)<3);}).toBe(true);
+ // until the reader actually reaches the top instead of assuming a huge delta does.
+ await expect.poll(async()=>{await page.mouse.wheel(0,-600);await scroll.evaluate(()=>new Promise<void>(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>resolve()))));return scroll.evaluate(e=>Math.abs(e.scrollTop)<3);}).toBe(true);
  await expect(page.locator('#chronicle-current')).toContainText('Ordinal 100');
  expect((await invoke(page,'/audit/evidence')).journalEntries).toBe(100);
 });
-test('keyboard scrolling retains earlier minutes and End restores the latest',async({page})=>{
- await page.goto('/demo/');await demoAction(page,'selectOption','#display-speed','225');await demoAction(page,'fill','#limit','100');await demoAction(page,'click','#run-button');await expect(page.locator('#chronicle-ordinal option[value="3"]')).toHaveCount(1);await bottom(page);
- const scroll=page.locator('#chronicle-scroll');await scroll.focus();await page.keyboard.press('Home');await expect.poll(()=>scroll.evaluate(e=>e.scrollTop)).toBe(0);
- const text=await page.locator('#chronicle-entries').textContent();await demoAction(page,'selectOption','#display-speed','0');await expect(page.locator('#run-status')).toContainText('Mandate complete');expect(await page.locator('#chronicle-entries').textContent()).toBe(text);expect(await scroll.evaluate(e=>e.scrollTop)).toBe(0);
- await scroll.focus();await page.keyboard.press('End');await bottom(page);await expect(page.locator('#chronicle-current')).toContainText('Ordinal 100');
+test('keyboard scrolling retains earlier minutes and Home restores the latest',async({page})=>{
+ await page.goto('/demo/');await demoAction(page,'selectOption','#display-speed','225');await demoAction(page,'fill','#limit','100');await demoAction(page,'click','#run-button');await expect(page.locator('#chronicle-ordinal option[value="3"]')).toHaveCount(1);await top(page);
+ const scroll=page.locator('#chronicle-scroll');await scroll.focus();await page.keyboard.press('End');await expect.poll(()=>scroll.evaluate(e=>e.scrollTop)).toBeGreaterThan(100);
+ const text=await page.locator('#chronicle-entries').textContent();await demoAction(page,'selectOption','#display-speed','0');await expect(page.locator('#run-status')).toContainText('Mandate complete');expect(await page.locator('#chronicle-entries').textContent()).toBe(text);expect(await scroll.evaluate(e=>e.scrollTop)).toBeGreaterThan(100);
+ await scroll.focus();await page.keyboard.press('Home');await top(page);await expect(page.locator('#chronicle-current')).toContainText('Ordinal 100');
 });
 test('turning following off preserves the visible minutes while the business continues',async({page})=>{
  await page.goto('/demo/');await demoAction(page,'selectOption','#display-speed','225');await demoAction(page,'fill','#limit','100');await demoAction(page,'click','#run-button');await expect(page.locator('#chronicle-ordinal option[value="3"]')).toHaveCount(1);
  await demoAction(page,'uncheck','#follow-chronicle');const before=await page.locator('#chronicle-entries').textContent();await demoAction(page,'selectOption','#display-speed','0');await expect(page.locator('#run-status')).toContainText('Mandate complete');expect(await page.locator('#chronicle-entries').textContent()).toBe(before);
- await demoAction(page,'check','#follow-chronicle');await expect(page.locator('#chronicle-current')).toContainText('Ordinal 100');await bottom(page);expect((await invoke(page,'/audit/evidence')).journalEntries).toBe(100);
+ await demoAction(page,'check','#follow-chronicle');await expect(page.locator('#chronicle-current')).toContainText('Ordinal 100');await top(page);expect((await invoke(page,'/audit/evidence')).journalEntries).toBe(100);
 });
 test('replay, step-through and paperwork inspection do not submit the business again',async({page})=>{
  await page.goto('/demo/');await demoAction(page,'selectOption','#display-speed','0');await run(page,'15');const before=await invoke(page,'/audit/evidence');expect(before.journalEntries).toBe(15);
@@ -91,7 +113,7 @@ test('long realtime windows retain bounded output, records and rendered narratio
  await page.goto('/demo/');await demoAction(page,'selectOption','#display-speed','0');await run(page,'2500');
  await expect(page.locator('#chronicle-entries')).toContainText('transient');await expect(page.locator('#chronicle-entries')).not.toContainText('Appended sequence');
  expect(await page.locator('.chronicle-folio').count()).toBeLessThanOrEqual(24);expect(await page.locator('#chronicle-ordinal option').count()).toBeLessThanOrEqual(1001);expect((await invoke(page,'/audit/evidence')).journalEntries).toBe(0);
- const lines=(await page.locator('#output').textContent())!.trim().split('\n');expect(lines.length).toBe(1000);expect(lines.at(-1)).toBe('Buzz');await bottom(page);
+ const lines=(await page.locator('#output').textContent())!.trim().split('\n');expect(lines.length).toBe(1000);expect(lines.at(-1)).toBe('Buzz');await top(page);
 });
 
 test('narrative, named scroll regions and modal papers remain accessible at enlarged text',async({page},info)=>{

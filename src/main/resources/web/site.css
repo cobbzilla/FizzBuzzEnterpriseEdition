@@ -348,7 +348,7 @@ body { overflow-wrap: anywhere; }
 .chronicle-tools label { min-width: 0; flex: 1 1 160px; margin: 0; font-size: .73rem; line-height: 1.4; }
 .chronicle-tools select { display: block; width: 100%; margin-top: 6px; font-size: .75rem; padding: 8px; }
 .chronicle-caption { font-size: .71rem; margin: 12px 0; color: var(--ink-soft); }
-.chronicle-scroll { position: relative; height: clamp(8rem, 22dvh, 16rem); min-height: 0; overflow: auto; overscroll-behavior: contain; scrollbar-gutter: stable; background: var(--paper); border: 1px solid var(--line); padding: 18px; }
+.chronicle-scroll { position: relative; height: clamp(8rem, 22dvh, 16rem); min-height: 0; overflow: auto; overflow-anchor: none; overscroll-behavior: contain; scrollbar-gutter: stable; background: var(--paper); border: 1px solid var(--line); padding: 18px; }
 .chronicle-folio, .chronicle-note { padding-block: 16px; border-bottom: 1px solid var(--line); }
 .chronicle-folio:first-child, .chronicle-note:first-child { padding-top: 0; }
 .chronicle-folio h4, .chronicle-note h4 { font-family: Georgia, 'Times New Roman', serif; font-size: 1.05rem; line-height: 1.35; margin: 0 0 12px; }

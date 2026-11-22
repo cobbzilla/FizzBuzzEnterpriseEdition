@@ -4,7 +4,8 @@
 
 Official Output displays the numerical transcript first. The Executive Chronicle
 below it has a fixed viewport height at each screen size, independent of the
-number or length of entries. New entries follow the bottom by default. Visitors
+number or length of entries. New entries appear at the top by default, pushing
+older proceedings down. Visitors
 can stop following and inspect an earlier ordinal without subsequent playback
 changing that reading position. The desk pins within the viewport when its full
 height fits; zoomed or short viewports retain natural document flow. Mobile order
@@ -63,24 +64,31 @@ exercise. Cache hits likewise report memory reuse without a new workforce.
 
 TypeScript narrates the Java evidence; it does not calculate the business answer.
 Exact ordinals remain strings. The interface retains the latest 1,000 line dossiers
-and renders at most 24 chronological line articles, plus bounded operating notes.
+and renders at most 24 line articles in newest-first order, plus bounded operating notes.
 An archive inspection is a separate stable copy; it is not appended as the newest
 chronological event. Choosing Latest removes that inspection and restores the
 latest announcement and scroll position. Realtime batches narration and leaves
 the browser responsive between finite windows.
 
 The named chronicle region handles scrolling for long prose and document text.
-Following is optional; resize preserves the bottom when following is enabled.
-Automatic following additionally requires the reader to be at the bottom, within
-four CSS pixels for fractional scroll positions. Wheel-up, upward keyboard
+Following is optional; resize preserves the top when following is enabled.
+Automatic following additionally requires the reader to be at the top, within
+four CSS pixels for fractional scroll positions. Wheel-down, downward keyboard
 navigation, touch movement and scrollbar manipulation suspend it before queued
-layout work can reposition the reader. Returning to the bottom automatically
+layout work can reposition the reader. Returning to the top automatically
 discloses pending minutes when the checkbox remains enabled. The observer that
 measures layout no longer scrolls on every notification. Explicit checkbox-off
 and archive inspection continue to require an explicit return to Latest/following.
 Only concise current-action summaries are live-announced. Native details expose
 department records, and the native HR dialog has explicit close/Escape behavior
 and returns focus to its opener, including WebKit mouse activation.
+
+Top-following remains stable when the chronicle is hidden, relocated between
+desks, or resized: content height no longer changes the following boundary.
+Explicitly returning to Latest restores the scroll position before rendering
+pending minutes, so the old reading offset cannot immediately pause it again.
+Native scroll anchoring is disabled within this region; following and inspection
+own its reading position.
 
 ## Validation
 
@@ -99,7 +107,7 @@ JVM checks cover single execution, output identity, actual event order, glyph
 allocation identity, honest cache/zero/extended paths, observer failure isolation,
 finite collection, nested and concurrent custody, error status and JSON escaping.
 Exact JVM/browser fixtures include the new structured APIs in both compiler targets
-and all three browsers. UI checks cover fixed height, newest-bottom following,
-first-line narration, inspection during ongoing output, chronological restoration,
+and all three browsers. UI checks cover fixed height, newest-first following,
+first-line narration, inspection during ongoing output, newest-first restoration,
 bounded history, replay without new audits, native modal focus, actual legacy-owner
 overlap, offline operation, JVM mode, enlarged text and accessibility rules.
