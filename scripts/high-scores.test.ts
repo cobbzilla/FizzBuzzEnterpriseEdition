@@ -36,7 +36,7 @@ test('restoring a completed run does not mint a new revision when the next manda
  const service=await scoreFixture(15);service.finish('completed');const done=receipt(service);
  const data=new Map([[scoringStorageKey,JSON.stringify({current:done.run})]]),storage={getItem:(key:string)=>data.get(key)||null,setItem:(key:string,value:string)=>{data.set(key,value);}};
  const restored=new EnterpriseScoringService(storage);restored.begin('30',policy);
- assert.deepEqual(publicationReceipt(restored.snapshot().saved!),done);
+ assert.equal(JSON.stringify(publicationReceipt(restored.snapshot().saved!)),JSON.stringify(done));
 });
 test('tampered totals, rates, line classifications, versions and partial receipts are rejected',async()=>{
  const original=receipt(await scoreFixture(15));
