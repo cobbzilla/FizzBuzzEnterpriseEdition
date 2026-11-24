@@ -12,7 +12,7 @@ async function inspect(page:Page){return page.evaluate(async()=>{const m=await i
 async function diagnostics(page:Page):Promise<OfficeDiagnostics>{return page.evaluate(async()=>{const canvas=document.querySelector<HTMLCanvasElement>('#office-canvas')!,m=await import(canvas.dataset.module!);return m.inspectOffice(canvas);});}
 
 test('the engine is lazy; all thirty-two comic scenes work without producing numerical business',async({page,baseURL},info)=>{
- test.setTimeout(180000); // Eight room selections,32 inspections and64 separately verified replies.
+ test.setTimeout(420000); // Eight room selections,32 inspections and64 replies on capped software-rendering browsers.
  test.skip(info.project.metadata.engine==='js','Shared authored DOM interactions covered once per browser.');const engineRequests:string[]=[];const foreign:string[]=[];page.on('request',r=>{if(r.url().includes('/office-world.js'))engineRequests.push(r.url());if(new URL(r.url()).origin!==new URL(baseURL!).origin)foreign.push(r.url());});
  await page.goto('/demo/');await expect(page.locator('#health-value')).toHaveText('LIVE');await page.waitForFunction(()=>!!navigator.serviceWorker.controller);expect(engineRequests).toEqual([]);await run(page);await expect(page.locator('#companion-list li')).toHaveCount(7);const before=await inspect(page),finds=await page.evaluate(()=>localStorage.getItem('slopbuzz:extraordinary-appointments:v1'));
  await open(page);expect(engineRequests.length).toBeGreaterThan(0);const counts=await diagnostics(page);expect(counts.rooms).toBe(8);expect(counts.meshes).toBeLessThan(150);expect(counts.fileActors).toBeLessThanOrEqual(1);
