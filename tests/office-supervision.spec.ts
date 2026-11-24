@@ -53,7 +53,12 @@ test('leaving Observe or opening a biography keeps its retained presentation run
 });
 
 test('mid-reading mode changes and a newer mandate cannot duplicate or release the previous number',async({page})=>{
- await reception(page);await demoAction(page,'fill','#limit','3');await demoAction(page,'selectOption','#display-speed','800');await demoAction(page,'click','#run-button');await expect(page.locator('#output')).toHaveText('1\n');await demoAction(page,'check','#executive-hovering');await expect(page.locator('#display-speed')).toBeEnabled();await expect(page.locator('#display-speed')).toHaveValue('800');await expect(page.locator('#supervision-canvas')).toHaveAttribute('data-rendered','true');await page.waitForTimeout(250);expect(await page.locator('#output').textContent()).toBe('1\n');
+ await reception(page);await demoAction(page,'fill','#limit','30');await demoAction(page,'selectOption','#display-speed','800');await demoAction(page,'click','#run-button');await expect(page.locator('#output')).toHaveText(/^1\n/);await demoAction(page,'check','#executive-hovering');await pause(page);await expect(page.locator('#display-speed')).toBeEnabled();await expect(page.locator('#display-speed')).toHaveValue('800');await expect(page.locator('#supervision-canvas')).toHaveAttribute('data-rendered','true');
+ // Navigating to the live controls can outlast one reading interval. Freeze at
+ // the actual transition, then require an exact, unduplicated FizzBuzz prefix.
+ const held=(await page.locator('#output').textContent())!;const lines=held.trimEnd().split('\n');expect(lines.length).toBeGreaterThan(0);expect(lines.length).toBeLessThan(30);
+ expect(lines).toEqual(Array.from({length:lines.length},(_,i)=>{const n=i+1;return n%15===0?'FizzBuzz':n%3===0?'Fizz':n%5===0?'Buzz':String(n);}));
+ await page.waitForTimeout(250);expect(await page.locator('#output').textContent()).toBe(held);
  await demoAction(page,'fill','#limit','1');await page.check('#authorize-executive-hovering');await demoAction(page,'click','#run-button');await pause(page);await demoAction(page,'click','#supervision-autonomy');await expect(page.locator('#display-speed')).toHaveValue('800');await demoAction(page,'click','#reveal-all');await expect(page.locator('#run-status')).toContainText('Mandate complete');expect(await page.locator('#output').textContent()).toBe('1\n');await page.waitForTimeout(150);expect(await page.locator('#output').textContent()).toBe('1\n');
 });
 
