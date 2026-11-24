@@ -10,6 +10,7 @@
     "axe-core": "4.14.0",
     "esbuild": "^0.28.2",
     "marked": "^18.1.2",
+    "miniflare": "^4.20260730.0",
     "typescript": "^7.0.2",
     "vite": "^8.3.5"
   },
@@ -30,6 +31,9 @@
     "test:companions": "node --test scripts/companions.test.ts",
     "test:portfolio": "node --test scripts/portfolio.test.ts",
     "test:scoring": "node --test scripts/scoring.test.ts",
+    "test:high-scores": "node --test --test-concurrency=1 scripts/high-scores.test.ts scripts/leaderboard-client.test.ts scripts/high-scores-resources.test.ts",
+    "preview:high-scores": "node scripts/serve-high-scores.ts",
+    "scores:admin": "node scripts/high-scores-admin.ts",
     "test:premises": "node --test scripts/premises.test.ts",
     "test:office": "node --test scripts/office-tour.test.ts",
     "test:supervision": "node --test scripts/office-supervision.test.ts scripts/office-cadence.test.ts",

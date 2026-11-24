@@ -1,0 +1,11 @@
+import {publishingEnvironment,cloudflareClient} from './cloudflare-api.ts';
+import {scoreDatabase,scoreQuery} from './high-scores-resources.ts';
+const [action,id]=process.argv.slice(2);
+if(action!=='--remove'||!id||!/^[a-f0-9-]{36}$/.test(id))throw Error('Usage: pnpm scores:admin --remove PUBLIC_ENTRY_ID');
+const env=await publishingEnvironment(),cf=cloudflareClient(env.CLOUDFLARE_API_TOKEN!),account='/accounts/'+env.CLOUDFLARE_ACCOUNT_ID;
+const database=await scoreDatabase(cf,account,env.CLOUDFLARE_WORKER_NAME||'slopbuzz-public-site');
+await scoreQuery(cf,account,database,'UPDATE leaderboard_people SET blocked=1,name=\'Withheld\' WHERE id=?1',[id]);
+await scoreQuery(cf,account,database,'DELETE FROM leaderboard_entries WHERE owner_id=?1',[id]);
+await scoreQuery(cf,account,database,'DELETE FROM leaderboard_runs WHERE owner_id=?1',[id]);
+await scoreQuery(cf,account,database,'DELETE FROM leaderboard_retired_runs WHERE owner_id=?1',[id]);
+console.log('Entry removed; further submissions from its browser credential are suppressed.');

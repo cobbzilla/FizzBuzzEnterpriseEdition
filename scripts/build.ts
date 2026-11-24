@@ -10,7 +10,7 @@ import {scoringGuideTemplates} from './scoring-guide.ts';
 await generateCompanions();
 const analytics = await analyticsConfig();
 const run = (command: string, args: string[]) => execFileSync(command, args, {stdio:'inherit'});
-await build({entryPoints:['web/site-shell.ts','web/analytics.ts','web/site.ts','web/demo.ts','web/api.ts','web/response.ts','web/validation.ts','web/bestiary.ts','web/rarity-register.ts','web/rare-finds.ts'],outdir:'src/main/resources/web',bundle:true,format:'esm',target:'es2022',banner:{js:'// Generated from web/*.ts by scripts/build.ts. Do not edit.'}});
+await build({entryPoints:['web/site-shell.ts','web/analytics.ts','web/site.ts','web/demo.ts','web/api.ts','web/response.ts','web/validation.ts','web/bestiary.ts','web/rarity-register.ts','web/rare-finds.ts','web/high-scores.ts'],outdir:'src/main/resources/web',bundle:true,format:'esm',target:'es2022',banner:{js:'// Generated from web/*.ts by scripts/build.ts. Do not edit.'}});
 await build({entryPoints:['web/office-world.ts'],outfile:'src/main/resources/web/office-world.js',bundle:true,format:'esm',target:'es2022',minify:true,legalComments:'eof',banner:{js:'// Generated from web/office-world.ts. Babylon.js license: office-licenses.txt.'}});
 await build({entryPoints:['web/reset.ts'],outfile:'src/main/resources/web/reset.js',bundle:true,format:'esm',target:'es2022',banner:{js:'// Generated from web/reset.ts by scripts/build.ts. Do not edit.'}});
 if (!process.argv.includes('--assets-only')) {
@@ -34,7 +34,7 @@ await cp('browser/target/gate/js', `dist/${assets}js`, {recursive:true});
 const officeBytes=await readFile('src/main/resources/web/office-world.js');
 await writeFile(`dist/${assets}office-world.js`,officeBytes);
 await writeFile(`dist/${assets}office-pack.json`,JSON.stringify({schema:'slopbuzz-office-pack/v1',file:'office-world.js',bytes:officeBytes.length,sha256:createHash('sha256').update(officeBytes).digest('hex')}));
-const entryScripts=['site-shell','analytics','site','demo','api','response','validation','bestiary','rarity-register','rare-finds','tribunal','scoring-guide'];
+const entryScripts=['site-shell','analytics','site','demo','api','response','validation','bestiary','rarity-register','rare-finds','tribunal','scoring-guide','high-scores'];
 await build({entryPoints:entryScripts.map(name=>`web/${name}.ts`),outdir:'dist/assets',bundle:true,format:'esm',target:'es2022',define:{RELEASE_ASSET_DIRECTORY:JSON.stringify(assets)}});
 for(const name of entryScripts) await cp(`dist/assets/${name}.js`,`dist/assets/${name}.${identity}.js`);
 await build({entryPoints:['web/runtime-worker.ts'],outfile:`dist/${assets}runtime-worker.js`,bundle:true,format:'iife',target:'es2022'});
@@ -44,13 +44,13 @@ for (const stylesheet of ['site.css','api.css','office.css','office-preview.svg'
 const raw = [['CHANGELOG.md','CHANGELOG.md'],['docs/EXECUTIVE_CONTINUITY_AND_SENTIMENT_REGISTER.md','continuity-register.md']];
 for (const [source,target] of raw) await cp(source, `dist/${target}`);
 await cp('data/unicode/LICENSE.txt','dist/unicode-license.txt');
-const pages = [['rarity-register.html','department-of-improbable-appointments'],['bestiary.html','bestiary'],['index.html',''],['demo.html','demo'],['api.html','api'],['changelog.html','changelog'],['continuity.html','continuity-register'],['about.html','about'],['about.html','company-history'],['accessibility.html','accessibility'],['validation.html','validation'],['response.html','response'],['reset.html','reset'],['full-reset.html','full-reset']];
+const pages = [['high-scores.html','high-scores'],['rarity-register.html','department-of-improbable-appointments'],['bestiary.html','bestiary'],['index.html',''],['demo.html','demo'],['api.html','api'],['changelog.html','changelog'],['continuity.html','continuity-register'],['about.html','about'],['about.html','company-history'],['accessibility.html','accessibility'],['validation.html','validation'],['response.html','response'],['reset.html','reset'],['full-reset.html','full-reset']];
 const header = await readFile('src/main/resources/web/components/header.html', 'utf8');
 const footer = await readFile('src/main/resources/web/components/footer.html', 'utf8');
 function relativeLinks(html: string, directory: string) {
   return html.replace(/(href|src)="\/(?!\/)([^"]*)"/g, (_, attr, path) => {
     const [base, suffix = ''] = path.split(/(?=[?#])/);
-    const folder = ['department-of-improbable-appointments','bestiary','demo','api','changelog','continuity-register','validation','response','about','company-history','accessibility','reset','full-reset','scoring'].includes(base) ? `${base}/` : base;
+    const folder = ['department-of-improbable-appointments','bestiary','demo','api','changelog','continuity-register','validation','response','about','company-history','accessibility','reset','full-reset','scoring','high-scores'].includes(base) ? `${base}/` : base;
     return `${attr}="${directory ? '../'.repeat(directory.split('/').length) : './'}${folder}${suffix}"`;
   });
 }
@@ -92,7 +92,7 @@ async function files(directory: string): Promise<string[]> {
   } return result;
 }
 const paths = await files('dist');
-paths.push('department-of-improbable-appointments/', 'bestiary/', '', 'demo/', 'api/', 'changelog/', 'continuity-register/', 'response/', 'validation/', 'about/', 'company-history/', 'accessibility/');
+paths.push('high-scores/','department-of-improbable-appointments/', 'bestiary/', '', 'demo/', 'api/', 'changelog/', 'continuity-register/', 'response/', 'validation/', 'about/', 'company-history/', 'accessibility/');
 paths.push(...scoringPages.map(([,folder])=>folder+'/'));
 // Evidence can arrive after the first preview of the same source revision.
 // Give that complete bundle a new cache so installed previews receive the sealed report.

@@ -12,6 +12,7 @@ export interface AwardBucket {quantity:string;points:string;awards:string}
 export interface BadgeUnlock {firstEarned:string;tier:string}
 export interface IncidentAccount {id:string;kind:'flight'|'heist';ordinal:string;rarity:Rarity;boost:number;counts:Record<string,string>;opening:string;budget:string;stolen:string;recovered:string;elapsed:number;settled:boolean;recoveryBasisPoints:string;resumed:boolean}
 export interface ScoringRun {
+ publicationProtocol?:1;revision?:number;closedHeists?:IncidentAccount[];
  rules:typeof scoringVersion;identity:string;id:string;status:PortfolioStatus;startedAt:string;updatedAt:string;
  verification:PortfolioReceipt;conditions:Record<string,string>;gross:string;stolen:string;recovered:string;dividend:string;
  categories:Partial<Record<Category,string>>;buckets:Record<string,AwardBucket>;recent:AwardReceipt[];
@@ -55,14 +56,16 @@ export class EnterpriseScoringService {
  private current?:ScoringRun;private saved?:ScoringRun;private legacy?:PortfolioReceipt;private active?:ScoringRun;private verification?:PortfolioRun;private adjudicating?:ScoringRun;
  private evidence?:ScoringEvidence;private evidenceThrough='0';private lastEvidenceStart='0';private cabinet:Record<string,BadgeUnlock>={};private persistent:boolean;
  private listeners=new Set<()=>void>();private storage?:Pick<Storage,'getItem'|'setItem'>;private clock:()=>string;private id:()=>string;
+ private publicationStates=new Map<string,string>();
  constructor(storage?:Pick<Storage,'getItem'|'setItem'>,clock=()=>new Date().toISOString(),id=()=>crypto.randomUUID()){
   this.storage=storage;this.clock=clock;this.id=id;this.persistent=!!storage;
   try{
    const data=JSON.parse(storage?.getItem(scoringStorageKey)||'null');this.current=decodeScoringRun(data?.current);this.saved=decodeScoringRun(data?.saved);
    const old=JSON.parse(storage?.getItem(portfolioStorageKey)||'null');this.legacy=decodePortfolio(old?.current)||decodePortfolio(old?.saved);
    this.mergeCabinet(JSON.parse(storage?.getItem(cabinetStorageKey)||'{}'),false);
-   if(this.current?.status==='active'){this.current.status='interrupted';this.current.verification.status='interrupted';this.current.incident=undefined;this.current.updatedAt=this.clock();}
+   if(this.current?.status==='active'){this.current.status='interrupted';this.current.verification.status='interrupted';if(this.current.incident?.kind==='heist')(this.current.closedHeists??=[]).push(structuredClone(this.current.incident));this.current.incident=undefined;this.current.updatedAt=this.clock();if(this.current.publicationProtocol===1)this.current.revision=(this.current.revision||0)+1;}
   }catch{this.persistent=false;}
+  for(const run of [this.current,this.saved])if(run?.publicationProtocol===1)this.publicationStates.set(run.id,JSON.stringify({...run,revision:undefined}));
  }
  snapshot():ScoringState{return structuredClone({current:this.current,saved:this.saved,legacy:this.legacy,cabinet:this.cabinet,persistent:this.persistent});}
  get runId(){return this.active?.id;}
@@ -80,13 +83,15 @@ export class EnterpriseScoringService {
  }
  private publish(){
   if(this.active)this.active.updatedAt=this.clock();
+  for(const run of [this.current,this.saved])if(run?.publicationProtocol===1){const serialized=JSON.stringify({...run,revision:undefined});if(this.publicationStates.get(run.id)!==serialized){run.revision=(run.revision||0)+1;this.publicationStates.set(run.id,serialized);}}
+  for(const id of this.publicationStates.keys())if(id!==this.current?.id&&id!==this.saved?.id)this.publicationStates.delete(id);
   try{if(!this.storage)throw Error('Storage unavailable');this.mergeCabinet(JSON.parse(this.storage.getItem(cabinetStorageKey)||'{}'),false);this.storage.setItem(scoringStorageKey,JSON.stringify({current:this.current,saved:this.saved}));this.storage.setItem(cabinetStorageKey,JSON.stringify(this.cabinet));this.persistent=true;}catch{this.persistent=false;}
   for(const listener of this.listeners)listener();
  }
  begin(mandate:string,authority:string,conditions:Record<string,string>={}){
   this.finish('replaced');this.saved=this.current||this.saved;
   const now=this.clock(),verification=newPortfolio(this.id(),mandate,authority,now);this.verification=new PortfolioRun(verification);
-  this.current=this.active={rules:scoringVersion,identity:rulesIdentity,id:verification.id,status:'active',startedAt:now,updatedAt:now,verification,conditions,gross:'0',stolen:'0',recovered:'0',dividend:'0',categories:{},buckets:{},recent:[],counters:{},badges:{},identities:{},rarities:[],pilots:[],partitions:[],departments:[],inspections:[],bingo:[],warrants:scoringPolicy.initialWarrants,pendingResume:'0',lastIncidents:{},partial:false};
+  this.current=this.active={publicationProtocol:1,revision:0,closedHeists:[],rules:scoringVersion,identity:rulesIdentity,id:verification.id,status:'active',startedAt:now,updatedAt:now,verification,conditions,gross:'0',stolen:'0',recovered:'0',dividend:'0',categories:{},buckets:{},recent:[],counters:{},badges:{},identities:{},rarities:[],pilots:[],partitions:[],departments:[],inspections:[],bingo:[],warrants:scoringPolicy.initialWarrants,pendingResume:'0',lastIncidents:{},partial:false};
   this.evidence=undefined;this.evidenceThrough='0';this.lastEvidenceStart='0';
   this.award('mandate');this.award('bounds');this.award('boundDigit',{quantity:mandate.length});this.publish();
  }
@@ -164,6 +169,7 @@ export class EnterpriseScoringService {
  }
  finishIncident(id:string,successful:boolean,personality?:string,runId=this.runId){
   const r=this.active,i=r?.incident;if(!r||!i||i.id!==id||r.id!==runId)return;
+  if(i.kind==='heist')(r.closedHeists??=[]).push(structuredClone(i));
   if(i.kind==='flight'&&successful){if(personality&&!r.pilots.includes(personality)){r.pilots.push(personality);this.incidentWork(id,{flightFirstPilot:1},runId);this.count('pilots');}this.count('flights');}
   r.incident=undefined;this.publish();
  }
@@ -183,6 +189,7 @@ export class EnterpriseScoringService {
  finish(status:Exclude<PortfolioStatus,'active'>){
   const r=this.active;if(!r)return;
   if(status==='completed'&&(r.incident||r.verification.through!==r.verification.mandate))throw Error('Cannot bank unfinished proceedings');
+  if(r.incident?.kind==='heist')(r.closedHeists??=[]).push(structuredClone(r.incident));
   if(status==='completed'&&BigInt(r.verification.through)>0n){this.award('dividend',{completed:r.verification.through,netScore:netPoints(r)});this.count('completed');}
   r.status=status;r.updatedAt=this.clock();this.verification?.close(status,this.clock());r.verification=this.verification!.snapshot();r.incident=undefined;this.active=undefined;this.verification=undefined;this.evidence=undefined;this.publish();
  }

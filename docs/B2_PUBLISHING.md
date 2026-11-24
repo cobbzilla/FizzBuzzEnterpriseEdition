@@ -3,7 +3,8 @@
 The public site is configured for **https://fizzbuzz.biz**. Its static HTML,
 TypeScript bundles and compiled Java/WASM artifacts live in a public Backblaze
 B2 bucket. A Cloudflare Worker serves them at the public hostname. Business
-operations still execute in each visitor's browser; the Worker only serves files.
+operations still execute in each visitor's browser. The Worker serves files,
+proxies analytics intake, and operates the persistent D1 high-score register.
 
 ## Publish
 
@@ -59,10 +60,17 @@ The B2 key must list the selected bucket and have `readFiles`, `writeFiles` and
 `listFiles` within the selected prefix. The bucket must already be public; the
 publisher never changes its policy or lifecycle. The Cloudflare token needs
 Workers Scripts Edit on the account, Workers Routes Edit on the zone, Zone Read,
-and DNS Read for conflict detection. The zone must be active and belong to the
+and DNS Read for conflict detection. Live high scores additionally require
+**Account D1 Edit** and **Account Turnstile Edit**, scoped to the same account.
+The zone must be active and belong to the
 account. An account-owned token is supported; `/user/tokens/verify` is not used.
 The specified Worker is managed by this command, including its code and bindings.
 Use a dedicated Worker name; unrelated Workers are not modified.
+
+The publisher provisions the dedicated D1 database and Turnstile widget, applies
+checksummed migrations, preserves secret bindings, and deploys the API before
+new HTML. See [high-score operations](HIGH_SCORES.md) for local testing,
+withdrawal, moderation and the submission feature switch.
 
 Analytics defaults to production mode, with local collection disabled. The
 PostHog file must contain the public `POSTHOG_TOKEN` when enabled. Disable analytics

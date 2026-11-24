@@ -28,6 +28,7 @@ self.addEventListener('activate', event => {
 self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
   if (event.request.method !== 'GET' || !url.href.startsWith(self.registration.scope)) return;
+  if(url.pathname==='/api/high-scores'||url.pathname.startsWith('/api/high-scores/'))return;
   // Recovery must remain reachable from the network through every later release.
   if(['reset/','full-reset/'].some(path=>{const recovery=new URL(path,self.registration.scope);return url.pathname===recovery.pathname.slice(0,-1)||url.pathname.startsWith(recovery.pathname);}))return;
   event.respondWith((async () => {

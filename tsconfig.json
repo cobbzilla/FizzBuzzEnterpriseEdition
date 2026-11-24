@@ -18,6 +18,7 @@
     ]
   },
   "include": [
+    "deploy/**/*.ts",
     "web/**/*.ts",
     "scripts/**/*.ts",
     "tests/**/*.ts",

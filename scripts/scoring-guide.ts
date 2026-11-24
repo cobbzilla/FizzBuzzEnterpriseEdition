@@ -33,7 +33,9 @@ export async function scoringGuideTemplates():Promise<Array<[string,string]>>{
  const file=`${directory}/${rulesIdentity}.json`,archive=JSON.stringify({identity:rulesIdentity,sha256,manifest:rulesManifest,artwork:badgeArtwork,html},null,2);
  try{const old=await readFile(file,'utf8');if(old!==archive)throw Error('Scoring identity collision or modified immutable guide');}catch(error){if((error as NodeJS.ErrnoException).code!=='ENOENT')throw error;await writeFile(file,archive);}
  await mkdir('dist/scoring',{recursive:true});await writeFile('dist/scoring/rules.json',json);
- const templates:Array<[string,string]>=[[html,'scoring'],[renderLegacyGuide(),'scoring/companion-portfolio-v1']];
+ // Add current service guidance without rewriting any immutable scoring edition.
+ const liveGuide=html.replace('<nav aria-label="Scoring guide contents">','<p><a href="/high-scores/">Visit the Top 1,000 score register</a>. A live run can qualify before it finishes. Publication is optional and remembered for this browser; a stamp heist can lower its live ranking. All rule editions compete together. Withdraw before clearing cookies if you want a public entry removed.</p><nav aria-label="Scoring guide contents">');
+ const templates:Array<[string,string]>=[[liveGuide,'scoring'],[renderLegacyGuide(),'scoring/companion-portfolio-v1']];
  for(const filename of (await readdir(directory)).sort()){
   if(!/^[a-f0-9]{8}\.json$/.test(filename))continue;
   const saved=JSON.parse(await readFile(directory+'/'+filename,'utf8'));

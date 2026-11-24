@@ -2,7 +2,7 @@ import {createHash} from 'node:crypto';
 export const digest=(bytes:Uint8Array)=>createHash('sha1').update(bytes).digest('hex');
 export function settings(e:Record<string,string|undefined>){
  for(const k of ['B2_BUCKET_ID','B2_KEY_ID','B2_APP_KEY','CLOUDFLARE_ACCOUNT_ID','CLOUDFLARE_ZONE_ID','CLOUDFLARE_API_TOKEN','SLOPBUZZ_PUBLIC_URL'])if(!e[k])throw new Error(`Missing ${k}`);
- for(const name of ['B2_PUBLISH_DRY_RUN','SLOPBUZZ_ANALYTICS_ENABLED'])if(e[name]!==undefined&&!['true','false'].includes(e[name]!))throw new Error(`${name} must be true or false`);
+ for(const name of ['B2_PUBLISH_DRY_RUN','SLOPBUZZ_ANALYTICS_ENABLED','SLOPBUZZ_HIGH_SCORES_ENABLED'])if(e[name]!==undefined&&!['true','false'].includes(e[name]!))throw new Error(`${name} must be true or false`);
  const url=new URL(e.SLOPBUZZ_PUBLIC_URL!);
  if(url.protocol!=='https:'||url.pathname!=='/'||url.search||url.hash||url.username||url.password||url.port)throw new Error('SLOPBUZZ_PUBLIC_URL must be an HTTPS origin');
  const prefix=(e.B2_PREFIX||'site/').replace(/\/$/,'')+'/';

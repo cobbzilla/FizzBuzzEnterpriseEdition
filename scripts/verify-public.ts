@@ -6,6 +6,7 @@ import {chromium, firefox, webkit, expect} from '@playwright/test';
 import {launchBrowser} from './browser-launch.ts';
 import {scoringStorageKey,cabinetStorageKey,netPoints,type ScoringRun} from '../web/scoring-service.ts';
 import {guidePath,rulesIdentity} from '../web/scoring-rules.ts';
+import {participationKey} from '../web/leaderboard-model.ts';
 
 /** Exercise the deployed artifact, including HTTPS, CSP and real service workers. */
 export async function verifyPublic(origin: string, revision: string) {
@@ -34,11 +35,16 @@ export async function verifyPublic(origin: string, revision: string) {
  assert.equal(head.status, 200);
  assert.equal(head.headers.get('cache-control'), 'no-cache');
  for(const path of ['/reset/','/reset/reset.js','/full-reset/']){const response=await fetch(origin+path,{method:'HEAD'});assert.equal(response.status,200);assert.equal(response.headers.get('cache-control'),'no-store');}
+ const scores=await get('/api/high-scores?limit=1');assert(Array.isArray(scores.entries));assert(scores.total>=0&&scores.total<=1000);assert.equal(typeof scores.enabled,'boolean');assert.equal(typeof scores.sitekey,'string');
+ const personal=await fetch(origin+'/api/high-scores/me');assert.equal(personal.status,200);assert.equal(personal.headers.get('cache-control'),'no-store');assert.equal((await personal.json()).participating,false);
 
  for (const engine of [chromium, firefox, webkit]) {
   let browser = await launchBrowser(engine);
   try {
    let context = await browser.newContext();
+   // Release verification must never publish synthetic scores or interrupt other
+   // demo checks with a genuine live qualification invitation.
+   await context.addInitScript(key=>localStorage.setItem(key,'private'),participationKey);
    let page = await context.newPage();
    let demo=demoNavigator(page);
    page.setDefaultTimeout(60000);
@@ -50,8 +56,10 @@ export async function verifyPublic(origin: string, revision: string) {
    observeRequests();
    const freshBrowser=async()=>{
     assert.deepEqual(businessRequests,[]);await browser.close();browser=await launchBrowser(engine);
-    context=await browser.newContext();page=await context.newPage();page.setDefaultTimeout(60000);demo=demoNavigator(page);observeRequests();
+    context=await browser.newContext();await context.addInitScript(key=>localStorage.setItem(key,'private'),participationKey);page=await context.newPage();page.setDefaultTimeout(60000);demo=demoNavigator(page);observeRequests();
    };
+   await page.goto(origin+'/high-scores/');await expect(page.locator('#high-scores-list')).toContainText('Top');
+   await expect(page.locator('#high-scores-list [role="status"]')).toContainText(/No scores filed yet|of [\d,]+ · Updated/);
    await page.goto(origin + '/demo/');
    // Playwright assertions have their own timeout; honor the runtime's cold-start budget.
    await expect(page.locator('#health-value')).toHaveText('LIVE',{timeout:60000});
@@ -60,6 +68,7 @@ export async function verifyPublic(origin: string, revision: string) {
    assert.deepEqual(await page.getByRole('navigation',{name:'Demo departments'}).getByRole('link').allTextContents(),['Authorize','Observe','Experiment','Facilities','Evidence']);
    await expect(page.locator('#authorize-require-companion-roll-call')).toBeChecked();await expect(page.locator('#authorize-executive-hovering')).toBeChecked();
    await demo.run();await expect(page.locator('#observe-title')).toBeFocused();
+   await page.locator('#score-cluster [data-high-scores-open]').click();await expect(page.locator('#high-scores-dialog')).toBeVisible();await page.locator('[data-high-scores-close]').click();
    const firstScore=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)!).current as ScoringRun,scoringStorageKey);assert.equal(firstScore.identity,rulesIdentity);assert.equal(firstScore.partial,false);assert.equal(firstScore.categories.Publication,'253');assert.equal(firstScore.categories['Numerical distinctions'],'691');assert(BigInt(firstScore.dividend)>0n);
    await expect(page.locator('#portfolio-open [data-portfolio-points]')).toHaveAttribute('data-exact',String(netPoints(firstScore)));
    await page.click('#portfolio-open');await expect(page.locator('#portfolio-record')).toBeVisible();await expect(page.locator('#portfolio-appearances')).toHaveText('7');await expect(page.locator('#portfolio-total')).toHaveText(netPoints(firstScore).toLocaleString('en-US'));await expect(page.locator('#score-rules-link')).toHaveAttribute('href',origin+'/'+guidePath);await page.click('[data-score-tab="badges"]');await expect(page.locator('.score-badge svg')).toHaveCount(16);await expect(page.locator('[data-badge="bingo"]')).toHaveAttribute('data-earned','true');await page.click('#score-close');await demo.watch('overview');

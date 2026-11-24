@@ -98,7 +98,7 @@ class OfficeFullscreen {
     this.restorations.push(() => {if (previousTabIndex === null) notice.removeAttribute('tabindex'); else notice.setAttribute('tabindex', previousTabIndex);});
     this.move(notice, 'office-fullscreen-notice');
     // Native dialogs must remain within the element granted browser full-screen.
-    for (const id of ['companion-dialog', 'personnel-dialog', 'score-dialog']) this.move(byId(id), this.surface);
+    for (const id of ['companion-dialog', 'personnel-dialog', 'score-dialog','high-scores-dialog']) this.move(byId(id), this.surface);
     this.inspection(false);
     this.layout();
     this.dialog.showModal();

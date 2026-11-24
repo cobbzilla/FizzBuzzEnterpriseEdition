@@ -1035,11 +1035,11 @@ function evaluate(e, facts, tables = {}) {
       return /^10+$/.test(s) ? BigInt(s.length - 1) : 0n;
   }
 }
-function describe(e, number = String) {
-  if ("constant" in e) return number(BigInt(e.constant));
+function describe(e, number2 = String) {
+  if ("constant" in e) return number2(BigInt(e.constant));
   if ("variable" in e) return e.variable.replace(/[A-Z]/g, (c) => " " + c.toLowerCase());
   if ("lookup" in e) return e.lookup + " for " + e.key;
-  const a = e.args.map((arg) => describe(arg, number));
+  const a = e.args.map((arg) => describe(arg, number2));
   const infix = { add: " + ", subtract: " \u2212 ", multiply: " \xD7 ", equal: " = ", atLeast: " \u2265 ", mod: " mod " };
   if (infix[e.op]) return "(" + a.join(infix[e.op]) + ")";
   if (e.op === "floorDivide" || e.op === "ceilDivide") return (e.op === "floorDivide" ? "floor" : "ceil") + "(" + a.join(" \xF7 ") + ")";
@@ -2078,9 +2078,9 @@ function controlsVisible() {
     if (panel.hidden || panel.closest("[inert]") || modal && !modal.contains(panel)) return false;
     if (officeHeist.snapshot?.plan.source === "encounter" && panel.dataset.scoreHeist !== String(officeHeist.snapshot.id)) return false;
     const required = officeHeist.snapshot?.plan.source === "encounter" ? [panel.querySelector(".heist-finance"), panel.querySelector('[aria-label="Offer an amnesty biscuit"]')] : [panel.querySelector("button")];
-    return required.every((element4) => {
-      if (!element4) return false;
-      const r = element4.getBoundingClientRect(), p = panel.getBoundingClientRect();
+    return required.every((element5) => {
+      if (!element5) return false;
+      const r = element5.getBoundingClientRect(), p = panel.getBoundingClientRect();
       return r.width > 0 && r.height > 0 && r.left >= 0 && r.right <= innerWidth && r.top >= Math.max(0, p.top) && r.bottom <= Math.min(innerHeight, p.bottom) && document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2)?.closest(".heist-panel") === panel;
     });
   });
@@ -2630,7 +2630,7 @@ var OfficeFullscreen = class {
       this.restorations.push(() => playback.remove());
       this.move(byId("office-pause"), playback);
       this.move(byId("office-next"), playback);
-      for (const element4 of [byId("office-camera-help"), document.querySelector(".office-inspection"), document.querySelector(".office-playback"), byId("office-route-status"), byId("office-route"), byId("office-reorganization"), document.querySelector(".office-options")]) this.move(element4, "office-fullscreen-inspection-slot");
+      for (const element5 of [byId("office-camera-help"), document.querySelector(".office-inspection"), document.querySelector(".office-playback"), byId("office-route-status"), byId("office-route"), byId("office-reorganization"), document.querySelector(".office-options")]) this.move(element5, "office-fullscreen-inspection-slot");
     }
     const notice = byId(mode === "observe" ? "run-status" : "office-status");
     const previousTabIndex = notice.getAttribute("tabindex");
@@ -2640,7 +2640,7 @@ var OfficeFullscreen = class {
       else notice.setAttribute("tabindex", previousTabIndex);
     });
     this.move(notice, "office-fullscreen-notice");
-    for (const id of ["companion-dialog", "personnel-dialog", "score-dialog"]) this.move(byId(id), this.surface);
+    for (const id of ["companion-dialog", "personnel-dialog", "score-dialog", "high-scores-dialog"]) this.move(byId(id), this.surface);
     this.inspection(false);
     this.layout();
     this.dialog.showModal();
@@ -2693,17 +2693,17 @@ var OfficeFullscreen = class {
     byId("office-fullscreen-inspect").setAttribute("aria-expanded", String(open));
     if (focus) byId("office-fullscreen-inspect").focus({ preventScroll: true });
   }
-  move(element4, destination, chronicle2 = false) {
+  move(element5, destination, chronicle2 = false) {
     const target = typeof destination === "string" ? byId(destination) : destination;
     const marker = document.createComment("Retained office presentation slot");
-    element4.before(marker);
+    element5.before(marker);
     if (chronicle2 && this.placeChronicle) this.placeChronicle(target);
-    else target.append(element4);
+    else target.append(element5);
     this.restorations.push(() => {
       if (chronicle2 && this.placeChronicle) {
         this.placeChronicle(marker.parentElement);
         marker.remove();
-      } else marker.replaceWith(element4);
+      } else marker.replaceWith(element5);
     });
   }
   layout() {
@@ -4639,6 +4639,7 @@ var EnterpriseScoringService = class {
   storage;
   clock;
   id;
+  publicationStates = /* @__PURE__ */ new Map();
   constructor(storage, clock = () => (/* @__PURE__ */ new Date()).toISOString(), id = () => crypto.randomUUID()) {
     this.storage = storage;
     this.clock = clock;
@@ -4654,12 +4655,15 @@ var EnterpriseScoringService = class {
       if (this.current?.status === "active") {
         this.current.status = "interrupted";
         this.current.verification.status = "interrupted";
+        if (this.current.incident?.kind === "heist") (this.current.closedHeists ??= []).push(structuredClone(this.current.incident));
         this.current.incident = void 0;
         this.current.updatedAt = this.clock();
+        if (this.current.publicationProtocol === 1) this.current.revision = (this.current.revision || 0) + 1;
       }
     } catch {
       this.persistent = false;
     }
+    for (const run of [this.current, this.saved]) if (run?.publicationProtocol === 1) this.publicationStates.set(run.id, JSON.stringify({ ...run, revision: void 0 }));
   }
   snapshot() {
     return structuredClone({ current: this.current, saved: this.saved, legacy: this.legacy, cabinet: this.cabinet, persistent: this.persistent });
@@ -4698,6 +4702,14 @@ var EnterpriseScoringService = class {
   }
   publish() {
     if (this.active) this.active.updatedAt = this.clock();
+    for (const run of [this.current, this.saved]) if (run?.publicationProtocol === 1) {
+      const serialized = JSON.stringify({ ...run, revision: void 0 });
+      if (this.publicationStates.get(run.id) !== serialized) {
+        run.revision = (run.revision || 0) + 1;
+        this.publicationStates.set(run.id, serialized);
+      }
+    }
+    for (const id of this.publicationStates.keys()) if (id !== this.current?.id && id !== this.saved?.id) this.publicationStates.delete(id);
     try {
       if (!this.storage) throw Error("Storage unavailable");
       this.mergeCabinet(JSON.parse(this.storage.getItem(cabinetStorageKey) || "{}"), false);
@@ -4714,7 +4726,7 @@ var EnterpriseScoringService = class {
     this.saved = this.current || this.saved;
     const now = this.clock(), verification = newPortfolio(this.id(), mandate, authority, now);
     this.verification = new PortfolioRun(verification);
-    this.current = this.active = { rules: scoringVersion, identity: rulesIdentity, id: verification.id, status: "active", startedAt: now, updatedAt: now, verification, conditions, gross: "0", stolen: "0", recovered: "0", dividend: "0", categories: {}, buckets: {}, recent: [], counters: {}, badges: {}, identities: {}, rarities: [], pilots: [], partitions: [], departments: [], inspections: [], bingo: [], warrants: scoringPolicy.initialWarrants, pendingResume: "0", lastIncidents: {}, partial: false };
+    this.current = this.active = { publicationProtocol: 1, revision: 0, closedHeists: [], rules: scoringVersion, identity: rulesIdentity, id: verification.id, status: "active", startedAt: now, updatedAt: now, verification, conditions, gross: "0", stolen: "0", recovered: "0", dividend: "0", categories: {}, buckets: {}, recent: [], counters: {}, badges: {}, identities: {}, rarities: [], pilots: [], partitions: [], departments: [], inspections: [], bingo: [], warrants: scoringPolicy.initialWarrants, pendingResume: "0", lastIncidents: {}, partial: false };
     this.evidence = void 0;
     this.evidenceThrough = "0";
     this.lastEvidenceStart = "0";
@@ -4905,6 +4917,7 @@ var EnterpriseScoringService = class {
   finishIncident(id, successful, personality2, runId = this.runId) {
     const r = this.active, i = r?.incident;
     if (!r || !i || i.id !== id || r.id !== runId) return;
+    if (i.kind === "heist") (r.closedHeists ??= []).push(structuredClone(i));
     if (i.kind === "flight" && successful) {
       if (personality2 && !r.pilots.includes(personality2)) {
         r.pilots.push(personality2);
@@ -4958,6 +4971,7 @@ var EnterpriseScoringService = class {
     const r = this.active;
     if (!r) return;
     if (status === "completed" && (r.incident || r.verification.through !== r.verification.mandate)) throw Error("Cannot bank unfinished proceedings");
+    if (r.incident?.kind === "heist") (r.closedHeists ??= []).push(structuredClone(r.incident));
     if (status === "completed" && BigInt(r.verification.through) > 0n) {
       this.award("dividend", { completed: r.verification.through, netScore: netPoints(r) });
       this.count("completed");
@@ -5138,16 +5152,16 @@ var PortfolioDesk = class extends EnterpriseScoringService {
   }
   render() {
     const { current, saved, legacy, cabinet, persistent } = this.snapshot(), points = current ? netPoints(current) : legacy ? portfolioPoints(legacy) : 0n;
-    for (const element4 of document.querySelectorAll("[data-portfolio-points]")) {
+    for (const element5 of document.querySelectorAll("[data-portfolio-points]")) {
       const text2 = formatPoints(points);
-      if (element4.textContent !== text2) element4.textContent = text2;
-      element4.title = text2 + " Enterprise Points";
-      element4.dataset.exact = String(points);
+      if (element5.textContent !== text2) element5.textContent = text2;
+      element5.title = text2 + " Enterprise Points";
+      element5.dataset.exact = String(points);
     }
     const boost = cycleAuthority(BigInt(current?.verification.through || "0") + 1n);
-    for (const element4 of document.querySelectorAll("[data-score-boost]")) {
-      element4.hidden = !current || current.status !== "active" || boost.factor === 1;
-      element4.textContent = `\xD7${formatPoints(BigInt(boost.factor))} \xB7 ${formatPoints(BigInt(boost.remaining))} cycles left`;
+    for (const element5 of document.querySelectorAll("[data-score-boost]")) {
+      element5.hidden = !current || current.status !== "active" || boost.factor === 1;
+      element5.textContent = `\xD7${formatPoints(BigInt(boost.factor))} \xB7 ${formatPoints(BigInt(boost.remaining))} cycles left`;
     }
     const partial = document.getElementById("portfolio-incomplete");
     if (partial) partial.hidden = !current?.partial;
@@ -5158,9 +5172,9 @@ var PortfolioDesk = class extends EnterpriseScoringService {
       const percent = new Intl.NumberFormat(void 0, { style: "percent", maximumFractionDigits: 2 }).format(Number(incident.recoveryBasisPoints) / 1e4);
       activity = incident.settled ? `${formatPoints(stolen)} stolen \xB7 ${formatPoints(BigInt(incident.recovered))} recovered` : incident.elapsed < scoringPolicy.graceMs ? `Stamp heist \xB7 ${formatPoints(BigInt(Math.ceil((scoringPolicy.graceMs - incident.elapsed) / 1e3)))}s grace \xB7 ${formatPoints(BigInt(incident.budget))} at risk` : `${formatPoints(stolen)} stolen \xB7 Recover ${percent}: ${formatPoints(returned)} \xB7 ${formatPoints(BigInt(incident.budget) - stolen)} still at risk`;
     }
-    for (const element4 of document.querySelectorAll("[data-score-activity]")) {
-      element4.textContent = activity;
-      element4.classList.toggle("score-theft", incident?.kind === "heist");
+    for (const element5 of document.querySelectorAll("[data-score-activity]")) {
+      element5.textContent = activity;
+      element5.classList.toggle("score-theft", incident?.kind === "heist");
     }
     let financialAnnouncer;
     const modal = [...document.querySelectorAll("dialog[open]")].at(-1);
@@ -5260,6 +5274,634 @@ var PortfolioDesk = class extends EnterpriseScoringService {
     }
   }
 };
+
+// web/leaderboard-model.ts
+var leaderboardAPI = "/api/high-scores";
+var participationKey = "slopbuzz:high-scores:participation:v1";
+function leaderboardName(value) {
+  if (typeof value !== "string") throw Error("Enter a name using letters, digits, spaces, hyphens and underscores.");
+  const name = value.trim();
+  if (!/^[A-Za-z0-9 _-]{1,24}$/.test(name) || !/[A-Za-z0-9]/.test(name)) throw Error("Use 1\u201324 ASCII letters, digits, spaces, hyphens or underscores, including at least one letter or digit.");
+  return name;
+}
+function decimalCompare(a, b) {
+  return a.length - b.length || (a < b ? -1 : a > b ? 1 : 0);
+}
+function publicationReceipt(run) {
+  if (run.publicationProtocol !== 1 || !Number.isSafeInteger(run.revision) || run.partial || BigInt(run.verification.through) < 1n) return;
+  return { schema: "slopbuzz-leaderboard/v1", sequence: run.revision, run };
+}
+
+// web/leaderboard-client.ts
+var LeaderboardHTTPError = class extends Error {
+  status;
+  retryAfter;
+  constructor(message, status, retryAfter = 0) {
+    super(message);
+    this.status = status;
+    this.retryAfter = retryAfter;
+  }
+};
+var LeaderboardClient = class {
+  state = { choice: "undecided", error: "", stale: false, enabled: false, sitekey: "", invitation: false };
+  listeners = /* @__PURE__ */ new Set();
+  queue = /* @__PURE__ */ new Map();
+  accepted = /* @__PURE__ */ new Map();
+  rejected = /* @__PURE__ */ new Map();
+  timer;
+  polling;
+  busy = false;
+  disposed = false;
+  connected = false;
+  failures = 0;
+  retryAt = 0;
+  lastSend = 0;
+  lastCheck = 0;
+  lastPoll = 0;
+  cutoff;
+  unsubscribe;
+  store;
+  epoch = 0;
+  send;
+  now;
+  visible;
+  constructor(send = fetch, storage, now = Date.now, visible2 = () => !document.hidden) {
+    this.send = (input, init) => send(input, init);
+    this.now = now;
+    this.visible = visible2;
+    this.store = storage;
+    try {
+      const choice = storage?.getItem(participationKey);
+      if (choice === "public" || choice === "private") this.state.choice = choice;
+    } catch {
+    }
+  }
+  subscribe(listener) {
+    this.listeners.add(listener);
+    return () => this.listeners.delete(listener);
+  }
+  publish() {
+    for (const listener of this.listeners) listener();
+  }
+  async request(path, method = "GET", body) {
+    const response = await this.send(leaderboardAPI + path, { method, credentials: "same-origin", cache: "no-store", ...body === void 0 ? {} : { headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }, signal: AbortSignal.timeout(12e3) });
+    const data = await response.json();
+    if (!response.ok) throw new LeaderboardHTTPError(data.error || "The register could not be reached.", response.status, Number(response.headers.get("Retry-After") || 0) * 1e3);
+    return data;
+  }
+  async start() {
+    if (this.connected) return;
+    this.connected = true;
+    await this.refresh();
+    this.polling = setInterval(() => {
+      if (this.visible()) this.schedule(0);
+    }, 15e3);
+  }
+  async refresh() {
+    try {
+      try {
+        const saved = this.store?.getItem(participationKey);
+        if (saved === "private" || saved === "public") this.state.choice = saved;
+      } catch {
+      }
+      const personal = await this.request("/me");
+      this.apply(personal);
+      if (personal.participating) this.choice("public");
+      else if (this.state.choice === "public") this.choice("undecided");
+      this.lastPoll = this.now();
+      this.success();
+    } catch (error) {
+      this.failure(error);
+    }
+    this.publish();
+    this.schedule(0);
+  }
+  attach(scoring) {
+    this.unsubscribe?.();
+    const read = () => {
+      const snapshot = scoring.snapshot();
+      this.state.current = snapshot.current;
+      for (const run2 of [snapshot.saved, snapshot.current]) {
+        if (!run2) continue;
+        const receipt = publicationReceipt(run2);
+        if (receipt && receipt.sequence > (this.accepted.get(run2.id) || 0) && receipt.sequence > (this.rejected.get(run2.id) || 0)) this.queue.set(run2.id, receipt);
+      }
+      for (const id of this.queue.keys()) if (id !== snapshot.current?.id && id !== snapshot.saved?.id) this.queue.delete(id);
+      this.publish();
+      const run = snapshot.current, prior = this.state.qualification;
+      const immediate2 = run?.status !== "active" || !!prior && prior.runId !== run?.id;
+      this.schedule(immediate2 ? 0 : 250);
+    };
+    this.unsubscribe = scoring.subscribe(read);
+    read();
+    void this.start();
+  }
+  choice(value) {
+    this.state.choice = value;
+    try {
+      this.store?.setItem(participationKey, value);
+    } catch {
+    }
+  }
+  decline() {
+    this.choice("private");
+    this.state.invitation = false;
+    this.publish();
+  }
+  dismissInvitation() {
+    this.state.invitation = false;
+    this.publish();
+  }
+  async enroll(name, turnstileToken) {
+    ++this.epoch;
+    const personal = await this.request("/me", "PUT", { name, turnstileToken });
+    this.apply(personal);
+    this.choice("public");
+    this.state.invitation = false;
+    this.success();
+    this.publish();
+    this.schedule(0);
+  }
+  async withdraw() {
+    ++this.epoch;
+    const personal = await this.request("/me", "DELETE");
+    this.apply(personal);
+    this.choice("private");
+    this.accepted.clear();
+    this.state.invitation = false;
+    this.success();
+    this.publish();
+  }
+  async list(offset = 0) {
+    const page = await this.request("?offset=" + offset + "&limit=50");
+    this.cutoff = page.cutoff;
+    this.state.enabled = page.enabled;
+    this.state.sitekey = page.sitekey;
+    return page;
+  }
+  resume() {
+    this.retryAt = 0;
+    this.schedule(0);
+  }
+  apply(personal) {
+    this.state.personal = personal;
+    this.state.enabled = personal.enabled;
+    this.state.sitekey = personal.sitekey;
+  }
+  success() {
+    this.failures = 0;
+    this.retryAt = 0;
+    this.state.error = "";
+    this.state.stale = false;
+  }
+  failure(error) {
+    this.state.error = error instanceof Error ? error.message : "The register could not be reached.";
+    this.state.stale = true;
+    this.failures++;
+    this.retryAt = this.now() + Math.max(error instanceof LeaderboardHTTPError ? error.retryAfter : 0, Math.min(6e4, 1e3 * 2 ** Math.min(6, this.failures)));
+  }
+  schedule(delay) {
+    if (this.disposed || this.timer) return;
+    this.timer = setTimeout(() => {
+      this.timer = void 0;
+      void this.flush();
+    }, delay);
+  }
+  async flush() {
+    if (this.busy || this.disposed) return;
+    const now = this.now();
+    if (now < this.retryAt) {
+      this.schedule(this.retryAt - now);
+      return;
+    }
+    this.busy = true;
+    const epoch = this.epoch;
+    try {
+      if (now - this.lastPoll >= 15e3 && this.visible()) {
+        this.apply(await this.request("/me"));
+        this.lastPoll = now;
+        if (this.state.choice !== "public") await this.list();
+      }
+      if (!this.state.enabled) return;
+      if (this.state.choice === "public" && this.state.personal?.participating) {
+        const receipt = [...this.queue.values()][0];
+        if (receipt) {
+          const heist = receipt.run.incident?.kind === "heist", urgent = receipt.run.status !== "active" || !receipt.run.incident && this.lastIncident;
+          const delay = (heist ? 1e3 : 5e3) - (now - this.lastSend);
+          if (!urgent && delay > 0) {
+            this.schedule(delay);
+            return;
+          }
+          this.lastIncident = !!receipt.run.incident;
+          try {
+            const result = await this.request("/runs/" + receipt.run.id, "PUT", receipt);
+            if (epoch !== this.epoch) return;
+            this.accepted.set(receipt.run.id, result.acceptedSequence);
+            this.apply(result);
+            if ((this.queue.get(receipt.run.id)?.sequence || 0) <= result.acceptedSequence) this.queue.delete(receipt.run.id);
+          } catch (error) {
+            if (error instanceof LeaderboardHTTPError && error.status === 401) {
+              this.choice("undecided");
+              this.state.personal = void 0;
+            }
+            if (error instanceof LeaderboardHTTPError && [409, 422].includes(error.status)) {
+              this.rejected.set(receipt.run.id, receipt.sequence);
+              if (this.queue.get(receipt.run.id)?.sequence === receipt.sequence) this.queue.delete(receipt.run.id);
+            }
+            throw error;
+          }
+          this.lastSend = now;
+        }
+      } else {
+        const current = this.state.current, receipt = current ? publicationReceipt(current) : void 0;
+        if (receipt) {
+          if (this.cutoff === void 0) await this.list();
+          const score = String(netPoints(current)), qualifiesLocally = this.cutoff === null || decimalCompare(score, this.cutoff) >= 0;
+          const crossing = qualifiesLocally && !this.state.qualification?.qualifies;
+          if ((crossing || now - this.lastCheck >= 5e3) && (qualifiesLocally || this.state.qualification?.qualifies)) {
+            const result = await this.request("/check", "POST", receipt);
+            this.lastCheck = now;
+            if (this.state.current?.id === result.runId) {
+              this.state.qualification = result;
+              if (result.qualifies && this.state.choice === "undecided") this.state.invitation = true;
+            }
+          }
+        }
+      }
+      this.success();
+    } catch (error) {
+      this.failure(error);
+    } finally {
+      this.busy = false;
+      this.publish();
+      if (this.state.enabled && this.state.choice === "public" && this.queue.size || this.retryAt > this.now()) this.schedule(Math.max(250, this.retryAt - this.now()));
+    }
+  }
+  lastIncident = false;
+  dispose() {
+    this.disposed = true;
+    clearTimeout(this.timer);
+    clearInterval(this.polling);
+    this.unsubscribe?.();
+    this.listeners.clear();
+  }
+};
+
+// web/high-scores.ts
+var trophy = '<svg viewBox="0 0 32 32" width="24" height="24" aria-hidden="true" focusable="false"><path d="M10 5h12v7c0 5-3 8-6 8s-6-3-6-8V5Zm0 3H5v3c0 4 3 6 7 6m10-9h5v3c0 4-3 6-7 6M16 20v6m-6 2h12M13 4h6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="m16 8 1 2 2 .3-1.5 1.4.4 2.1-1.9-1-1.9 1 .4-2.1-1.5-1.4 2-.3Z" fill="currentColor"/></svg>';
+var element2 = (tag, text2) => {
+  const e = document.createElement(tag);
+  if (text2) e.textContent = text2;
+  return e;
+};
+var number = (value) => formatPoints(BigInt(value));
+var RankingView = class {
+  constructor(host, client) {
+    this.host = host;
+    this.client = client;
+    host.innerHTML = '<p class="leaderboard-own"></p><p class="leaderboard-list-status" role="status"></p><div class="leaderboard-table" tabindex="0" role="region" aria-label="Top scores table"><table><caption>Top 1,000 \xB7 one entry per browser</caption><thead><tr><th scope="col">Rank</th><th scope="col">Name and mandate</th><th scope="col">Enterprise Points</th></tr></thead><tbody></tbody></table></div><div class="leaderboard-pagination"><button type="button" data-page="previous">Previous 50</button><button type="button" data-page="next">Next 50</button></div>';
+    this.table = host.querySelector("tbody");
+    this.status = host.querySelector(".leaderboard-list-status");
+    this.own = host.querySelector(".leaderboard-own");
+    this.previous = host.querySelector('[data-page="previous"]');
+    this.next = host.querySelector('[data-page="next"]');
+    this.previous.addEventListener("click", () => {
+      this.offset = Math.max(0, this.offset - 50);
+      void this.refresh();
+    });
+    this.next.addEventListener("click", () => {
+      this.offset += 50;
+      void this.refresh();
+    });
+  }
+  host;
+  client;
+  offset = 0;
+  loading = false;
+  table;
+  status;
+  previous;
+  next;
+  own;
+  async refresh() {
+    if (this.loading) return;
+    this.loading = true;
+    try {
+      const page = await this.client.list(this.offset);
+      this.render(page);
+    } catch (error) {
+      this.status.textContent = error.message + " Previous results, if any, may be out of date.";
+    } finally {
+      this.loading = false;
+    }
+  }
+  render(page) {
+    const expanded = new Set([...this.table.querySelectorAll("details[open]")].map((e) => e.closest("tr").dataset.entryId));
+    const focused = this.table.contains(document.activeElement) ? { id: document.activeElement?.closest("tr")?.dataset.entryId, tag: document.activeElement?.tagName } : void 0;
+    const own = this.client.state.personal?.entry;
+    this.own.textContent = own ? own.rank <= 1e3 ? `Your published best: #${number(own.rank)} \xB7 ${number(own.score)} points${own.stale ? " \xB7 awaiting a fresh run update" : ""}.` : `Your published best is currently outside the top 1,000.` : "Scores appear only after their owner chooses to publish.";
+    this.status.textContent = page.total ? `${number(this.offset + 1)}\u2013${number(Math.min(this.offset + 50, page.total))} of ${number(page.total)} \xB7 Updated ${new Date(page.asOf).toLocaleTimeString()}` : "No scores filed yet. Numerical greatness awaits its first volunteer.";
+    this.previous.disabled = this.offset === 0;
+    this.next.disabled = this.offset + 50 >= page.total;
+    this.table.replaceChildren(...page.entries.map((entry) => {
+      const row = element2("tr");
+      row.dataset.entryId = entry.id;
+      if (own?.id === entry.id) row.className = "leaderboard-my-entry";
+      const rank = element2("th", "#" + number(entry.rank));
+      rank.scope = "row";
+      const info = element2("td");
+      info.append(element2("strong", entry.name));
+      if (own?.id === entry.id) info.append(element2("span", " \xB7 You"));
+      const status = entry.stale ? "Awaiting update" : entry.status === "active" ? "Earning points" : entry.status === "completed" ? "Completed" : "Points banked";
+      info.append(element2("p", `${number(entry.through)} lines \xB7 ${status}`));
+      const details = element2("details"), summary = element2("summary", "Run conditions");
+      details.open = expanded.has(entry.id);
+      details.append(summary);
+      details.append(element2("p", `Mandate: ${number(entry.mandate)} \xB7 Rules: ${entry.rules} / ${entry.identity}`));
+      const link = element2("a", "Scoring edition");
+      link.href = new URL(`scoring/${entry.rules}/${entry.identity}/`, scope).href;
+      details.append(link);
+      for (const [name, value] of Object.entries(entry.conditions)) details.append(element2("p", `${name}: ${value}`));
+      details.append(element2("p", "Score recorded " + new Date(entry.updatedAt).toLocaleString()));
+      info.append(details);
+      const score = element2("td", number(entry.score));
+      score.className = "leaderboard-points";
+      row.append(rank, info, score);
+      return row;
+    }));
+    if (focused) {
+      const row = [...this.table.rows].find((r) => r.dataset.entryId === focused.id);
+      row?.querySelector(focused.tag === "A" ? "a" : "summary")?.focus({ preventScroll: true });
+    }
+  }
+};
+var HighScoreDesk = class {
+  client;
+  dialog;
+  board;
+  boardView;
+  form;
+  name;
+  status;
+  score;
+  rank;
+  submit;
+  decline;
+  withdraw;
+  invoker;
+  mode = "board";
+  widget;
+  token = "";
+  challengeLoading;
+  requestBusy = false;
+  rendering = false;
+  pageView;
+  interval;
+  restoreFocus = true;
+  lastClientError = "";
+  constructor() {
+    let storage;
+    try {
+      storage = localStorage;
+    } catch {
+    }
+    this.client = new LeaderboardClient(fetch, storage);
+    this.dialog = element2("dialog");
+    this.dialog.id = "high-scores-dialog";
+    this.dialog.className = "high-scores-dialog";
+    this.dialog.setAttribute("aria-labelledby", "high-scores-title");
+    this.dialog.innerHTML = `<header class="score-dialog-heading"><div><p class="eyebrow">Office of Competitive Importance</p><h2 id="high-scores-title" tabindex="-1">Top scores</h2></div><button type="button" data-high-scores-close aria-label="Close top scores">\xD7</button></header>
+   <div class="score-tabs"><button type="button" data-high-scores-tab="board">Top 1,000</button><button type="button" data-high-scores-tab="settings">My participation</button><a href="${new URL("scoring/", scope).href}">Scoring rules \u2197</a></div>
+   <section data-high-scores-board></section>
+   <form class="leaderboard-enrollment" hidden><p data-high-scores-explanation></p><p class="leaderboard-live-score"><strong data-high-scores-live>0</strong> Enterprise Points <span data-high-scores-rank></span></p>
+    <label for="high-scores-name">Public display name</label><input id="high-scores-name" name="name" type="text" minlength="1" maxlength="24" pattern="[A-Za-z0-9 _\\-]+" autocomplete="nickname" aria-describedby="high-scores-name-help" required>
+    <p id="high-scores-name-help">1\u201324 letters A\u2013Z, digits, spaces, hyphens or underscores. Include at least one letter or digit. Names are public and need not be unique.</p>
+    <p>Publishing also enables automatic updates from future runs in this browser. Heists can lower a live result. Your best banked result remains a fallback.</p><div data-turnstile></div>
+    <div class="leaderboard-actions"><button class="button button-primary" type="submit">Publish my score</button><button class="button button-secondary" type="button" data-high-scores-decline>Keep private</button><button class="button button-secondary" type="button" data-high-scores-withdraw hidden>Withdraw from the register</button></div>
+   </form><p id="high-scores-status" role="status" aria-live="polite"></p><p class="leaderboard-audit-note">Receipts are checked for accounting consistency. Browser activity is not independently authenticated. All scoring editions compete together.</p>`;
+    document.body.append(this.dialog);
+    this.board = this.dialog.querySelector("[data-high-scores-board]");
+    this.boardView = new RankingView(this.board, this.client);
+    this.form = this.dialog.querySelector("form");
+    this.name = this.form.querySelector("input");
+    this.status = this.dialog.querySelector("#high-scores-status");
+    this.score = this.form.querySelector("[data-high-scores-live]");
+    this.rank = this.form.querySelector("[data-high-scores-rank]");
+    this.submit = this.form.querySelector('[type="submit"]');
+    this.decline = this.form.querySelector("[data-high-scores-decline]");
+    this.withdraw = this.form.querySelector("[data-high-scores-withdraw]");
+    this.dialog.querySelector("[data-high-scores-close]").addEventListener("click", () => this.close());
+    this.dialog.addEventListener("cancel", (event) => {
+      event.preventDefault();
+      this.close();
+    });
+    this.dialog.addEventListener("close", () => {
+      if (this.mode === "invite" && this.client.state.choice === "undecided") this.client.decline();
+      this.removeChallenge();
+      document.dispatchEvent(new Event("score-dialog-change"));
+      if (this.restoreFocus && this.invoker?.getClientRects().length) this.invoker.focus({ preventScroll: true });
+    });
+    for (const tab of this.dialog.querySelectorAll("[data-high-scores-tab]")) tab.addEventListener("click", () => this.open(tab.dataset.highScoresTab, tab));
+    this.decline.addEventListener("click", () => {
+      this.client.decline();
+      this.close();
+    });
+    this.withdraw.addEventListener("click", () => void this.perform(async () => {
+      await this.client.withdraw();
+      this.status.textContent = "Your entry has been removed. This browser will keep future scores private.";
+      this.name.value = "";
+      this.removeChallenge();
+    }));
+    this.name.addEventListener("input", () => this.name.setCustomValidity(""));
+    this.form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      let name;
+      try {
+        name = leaderboardName(this.name.value);
+      } catch (error) {
+        this.name.setCustomValidity(error.message);
+        this.name.reportValidity();
+        return;
+      }
+      void this.perform(async () => {
+        await this.client.enroll(name, this.token);
+        this.mode = "settings";
+        this.status.textContent = "Participation saved. Your current score is being checked and filed.";
+        this.removeChallenge();
+      });
+    });
+    document.addEventListener("click", (event) => {
+      const target = event.target instanceof Element ? event.target.closest("[data-high-scores-open]") : null;
+      if (target) {
+        event.preventDefault();
+        this.open(target.dataset.highScoresOpen === "settings" ? "settings" : "board", target);
+      }
+    });
+    this.client.subscribe(() => this.render());
+    document.addEventListener("site-page-change", () => this.mountPage());
+    document.addEventListener("site-page-leaving", () => {
+      this.restoreFocus = false;
+    });
+    document.addEventListener("visibilitychange", () => {
+      if (!document.hidden) {
+        this.client.resume();
+        this.render();
+      }
+    });
+    document.addEventListener("score-dialog-change", () => this.render());
+    document.addEventListener("close", () => this.render(), true);
+    addEventListener("online", () => this.client.resume());
+    window.addEventListener("storage", (event) => {
+      if (event.key === "slopbuzz:high-scores:participation:v1") void this.client.refresh();
+    });
+    addEventListener("pagehide", () => {
+      clearInterval(this.interval);
+      this.client.dispose();
+      this.removeChallenge();
+    }, { once: true });
+    this.interval = setInterval(() => {
+      if (!document.hidden) {
+        if (this.dialog.open && this.mode === "board") void this.boardView.refresh();
+        if (document.body.dataset.sitePage === "high-scores") void this.pageView?.refresh();
+      }
+    }, 15e3);
+    for (const button of document.querySelectorAll("[data-high-scores-open]")) if (button.classList.contains("score-trophy-button")) button.innerHTML = trophy + "<span data-high-score-standing></span>";
+    this.mountPage();
+    void this.client.start();
+  }
+  attach(scoring) {
+    this.client.attach(scoring);
+  }
+  mountPage() {
+    const host = document.getElementById("high-scores-list");
+    if (host && this.pageView?.host !== host) this.pageView = new RankingView(host, this.client);
+    if (host?.getClientRects().length) void this.pageView.refresh();
+  }
+  open(mode, invoker) {
+    this.mode = mode;
+    if (invoker && !this.dialog.contains(invoker)) this.invoker = invoker;
+    this.restoreFocus = true;
+    this.status.textContent = "";
+    this.name.value = this.client.state.personal?.name || this.name.value;
+    if (!this.dialog.open) this.dialog.showModal();
+    this.render();
+    this.dialog.querySelector("#high-scores-title").focus({ preventScroll: true });
+    document.dispatchEvent(new Event("score-dialog-change"));
+    if (mode === "board") void this.boardView.refresh();
+    else void this.challenge();
+  }
+  close() {
+    if (this.mode === "invite") this.client.decline();
+    this.dialog.close();
+  }
+  async perform(action) {
+    if (this.requestBusy) return;
+    this.requestBusy = true;
+    this.render();
+    try {
+      await action();
+    } catch (error) {
+      this.status.textContent = error.message;
+      if (this.widget) window.turnstile?.reset(this.widget);
+      this.token = "";
+    } finally {
+      this.requestBusy = false;
+      this.render();
+    }
+  }
+  render() {
+    if (this.rendering) return;
+    this.rendering = true;
+    try {
+      const state = this.client.state, current = state.current, entry = state.personal?.entry;
+      const ownCurrent = !!entry && entry.runId === current?.id;
+      let standing = entry && entry.rank <= 1e3 ? `${ownCurrent ? "" : "Best "}#${number(entry.rank)}` : "";
+      const qualification = state.qualification;
+      if (state.choice !== "public" && qualification && qualification.runId === current?.id && qualification.qualifies) standing = "Would rank #" + number(qualification.rank);
+      for (const label of document.querySelectorAll("[data-high-score-standing]")) {
+        label.textContent = standing;
+        label.classList.toggle("leaderboard-stale", state.stale || !!entry?.stale);
+        label.title = standing ? (state.stale ? "Last confirmed standing. " : entry && !ownCurrent ? `Previous best: ${number(entry.score)} points. ` : "") + "Rank is updated periodically." : "";
+        label.closest("button")?.setAttribute("aria-label", "Open top scores" + (standing ? ". " + standing : ""));
+      }
+      if (state.invitation && !this.dialog.open && !document.hidden && document.body.dataset.sitePage === "demo" && !document.querySelector("dialog[open]:not(#office-fullscreen)")) {
+        this.rendering = false;
+        this.open("invite");
+        return;
+      }
+      if (!this.dialog.open) return;
+      this.board.hidden = this.mode !== "board";
+      this.form.hidden = this.mode === "board";
+      this.dialog.querySelector("#high-scores-title").textContent = this.mode === "invite" ? "Your score has entered the top 1,000" : this.mode === "settings" ? "My high-score participation" : "Top 1,000 scores";
+      this.form.querySelector("[data-high-scores-explanation]").textContent = state.choice === "public" ? "This browser participates automatically. You can change its public name or withdraw." : state.choice === "private" ? "Your scores are private. You can join the register whenever you choose." : `${current?.status === "active" ? "Your mandate is still running. " : ""}Would you like your score to appear in the public register?`;
+      this.score.textContent = current ? number(String(netPoints(current))) : entry ? number(entry.score) : "0";
+      this.rank.textContent = standing ? `\xB7 ${standing}${state.stale ? " \xB7 awaiting update" : ""}` : "";
+      this.submit.textContent = state.personal?.participating ? "Save public name" : "Publish my score";
+      this.submit.disabled = this.requestBusy || !state.enabled || !state.personal?.participating && !this.token;
+      this.decline.hidden = !!state.personal?.participating;
+      this.withdraw.hidden = !state.personal?.participating;
+      this.withdraw.disabled = this.requestBusy;
+      if (state.error) this.status.textContent = state.error;
+      else if (!state.enabled) this.status.textContent = "Score submissions are temporarily unavailable. Your demo can continue.";
+      else if (this.lastClientError && this.status.textContent === this.lastClientError) this.status.textContent = "";
+      this.lastClientError = state.error;
+      if (this.mode !== "board" && !this.widget && !this.requestBusy) void this.challenge();
+    } finally {
+      this.rendering = false;
+    }
+  }
+  async challenge() {
+    if (this.widget || this.client.state.personal?.participating || !this.client.state.enabled || !this.client.state.sitekey) return;
+    try {
+      if (!window.turnstile) {
+        this.challengeLoading ??= new Promise((resolve, reject) => {
+          const script = element2("script");
+          script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
+          script.async = true;
+          const timer = setTimeout(() => {
+            script.remove();
+            reject(Error("Verification could not load. Your demo can continue; try joining again later."));
+          }, 15e3);
+          script.onload = () => {
+            clearTimeout(timer);
+            resolve();
+          };
+          script.onerror = () => {
+            clearTimeout(timer);
+            script.remove();
+            reject(Error("Verification could not load."));
+          };
+          document.head.append(script);
+        });
+        await this.challengeLoading;
+      }
+      if (!this.dialog.open || this.mode === "board" || this.widget) return;
+      this.widget = window.turnstile.render(this.form.querySelector("[data-turnstile]"), { sitekey: this.client.state.sitekey, action: "leaderboard-enroll", theme: "auto", callback: (token) => {
+        this.token = token;
+        this.render();
+      }, "expired-callback": () => {
+        this.token = "";
+        this.render();
+      }, "error-callback": () => {
+        this.token = "";
+        this.status.textContent = "Verification needs another attempt. Your run continues.";
+        this.render();
+      } });
+    } catch (error) {
+      this.challengeLoading = void 0;
+      this.status.textContent = error.message;
+    }
+  }
+  removeChallenge() {
+    if (this.widget) window.turnstile?.remove(this.widget);
+    this.widget = void 0;
+    this.token = "";
+  }
+};
+function highScoreDesk() {
+  return window.__slopbuzzHighScores ??= new HighScoreDesk();
+}
+highScoreDesk();
 
 // web/scoring-office.ts
 var OfficeScoringAdapter = class {
@@ -5548,17 +6190,17 @@ var PersonnelProceedings = class {
       const details = document.createElement("details");
       const summary = document.createElement("summary");
       details.addEventListener("toggle", () => this.synchronizeDisclosure());
-      const number = document.createElement("span");
-      number.className = "personnel-index";
-      number.textContent = String(index + 1).padStart(2, "0");
-      number.setAttribute("aria-hidden", "true");
+      const number2 = document.createElement("span");
+      number2.className = "personnel-index";
+      number2.textContent = String(index + 1).padStart(2, "0");
+      number2.setAttribute("aria-hidden", "true");
       const office2 = document.createElement("span");
       office2.className = "personnel-office";
       office2.textContent = step.office;
       const badge = document.createElement("span");
       badge.className = "personnel-badge";
       badge.textContent = "Not yet read";
-      summary.append(number, office2, badge);
+      summary.append(number2, office2, badge);
       details.append(summary);
       const facts = document.createElement("dl");
       for (const [label, text2] of [["Rule", step.rule], ["Received", step.received], ["Recorded decision", step.state === "APPROVED" ? "Approved" : step.state === "REJECTED" ? "Rejected" : "Not reached"], ["Finding", step.finding], ["Issued document", step.document]]) {
@@ -5628,7 +6270,7 @@ function parsePrecedent(value) {
   if (d.status === "APPROVED" ? d.certifiedLines !== d.limit || d.steps.some((s) => s.state !== "APPROVED") : d.certifiedLines !== null || rejected < 0 || d.steps.some((s, i) => s.state !== (i < rejected ? "APPROVED" : i === rejected ? "REJECTED" : "NOT_REACHED"))) throw new Error("The court returned inconsistent decisions.");
   return d;
 }
-function element2(tag, text2) {
+function element3(tag, text2) {
   const n = document.createElement(tag);
   if (text2 !== void 0) n.textContent = text2;
   return n;
@@ -5709,22 +6351,22 @@ var PrecedentView = class {
     const objection = d.steps.find((s) => s.state === "REJECTED");
     this.text("precedent-status", d.status === "APPROVED" ? `Reuse approved. Certificate of Authorized Non-Performance issued for ${d.certifiedLines} lines.` : `Reuse rejected by ${objection.office}. ${objection.finding}`);
     const rows = d.steps.map((step, index) => {
-      const item = element2("li");
+      const item = element3("li");
       item.dataset.verdict = step.state;
-      const details = element2("details"), summary = element2("summary");
-      const order = element2("span", String(index + 1).padStart(2, "0"));
+      const details = element3("details"), summary = element3("summary");
+      const order = element3("span", String(index + 1).padStart(2, "0"));
       order.className = "personnel-index";
       order.setAttribute("aria-hidden", "true");
-      const office2 = element2("span", step.office);
+      const office2 = element3("span", step.office);
       office2.className = "personnel-office";
-      const state = element2("span", step.state === "APPROVED" ? "Approved" : step.state === "REJECTED" ? "Rejected" : "Not reached");
+      const state = element3("span", step.state === "APPROVED" ? "Approved" : step.state === "REJECTED" ? "Rejected" : "Not reached");
       state.className = "personnel-badge";
       summary.append(order, office2, state);
       details.append(summary);
-      const facts = element2("dl");
+      const facts = element3("dl");
       for (const [label, text2] of [["Published rule", step.rule], ["Received", step.received], ["Finding", step.finding], ["Issued document", step.document]]) {
-        const row = element2("div");
-        row.append(element2("dt", label), element2("dd", text2));
+        const row = element3("div");
+        row.append(element3("dt", label), element3("dd", text2));
         facts.append(row);
       }
       details.append(facts);
@@ -6381,48 +7023,48 @@ function parsePremises(value) {
 }
 
 // web/premises.ts
-function element3(tag, text2, className) {
+function element4(tag, text2, className) {
   const n = document.createElement(tag);
   if (text2 !== void 0) n.textContent = text2;
   if (className) n.className = className;
   return n;
 }
 function premisesCard(d, details = false) {
-  const card = element3("div", void 0, "premises-card");
+  const card = element4("div", void 0, "premises-card");
   card.dataset.premisesOrdinal = d.ordinal;
   card.dataset.premisesVerdict = d.status;
-  card.append(element3("p", `Premises inspection \xB7 Ordinal ${d.ordinal}`, "eyebrow"));
+  card.append(element4("p", `Premises inspection \xB7 Ordinal ${d.ordinal}`, "eyebrow"));
   const verdict = d.status === "REJECTED" ? "Occupancy refused" : d.tenants.length ? "Hidden occupants removed; vacancy certified" : "Vacancy certified; lease issued";
-  card.append(element3("p", verdict, "premises-verdict"));
-  const plan = element3("dl", void 0, "premises-floorplan");
+  card.append(element4("p", verdict, "premises-verdict"));
+  const plan = element4("dl", void 0, "premises-floorplan");
   const before = d.initialLength === null ? "No valid initial survey received" : d.tenants.length ? `${d.initialLength} UTF-16 unit${d.initialLength === 1 ? "" : "s"} occupied` : "Empty: 0 characters";
   for (const [label, text2] of [["Initial survey", before], ["Before numerical occupancy", d.vacancyCertified ? "Reinspection confirmed 0 characters" : "Vacancy authorization withheld"], ["Lease", d.status === "APPROVED" ? "Issued to this request and this premises" : "No usable lease issued"]]) {
-    const row = element3("div");
-    row.append(element3("dt", label), element3("dd", text2));
+    const row = element4("div");
+    row.append(element4("dt", label), element4("dd", text2));
     plan.append(row);
   }
   card.append(plan);
   if (d.tenants.length) {
-    const list = element3("ul", void 0, "premises-tenants");
+    const list = element4("ul", void 0, "premises-tenants");
     for (const tenant of d.tenants) {
-      const row = element3("li");
-      row.append(element3("strong", `${tenant.name} \xB7 ${tenant.codePoint}`), element3("p", `Position ${tenant.position}. ${tenant.excuse}`));
+      const row = element4("li");
+      row.append(element4("strong", `${tenant.name} \xB7 ${tenant.codePoint}`), element4("p", `Position ${tenant.position}. ${tenant.excuse}`));
       list.append(row);
     }
     card.append(list);
   }
-  card.append(element3("p", d.purpose === "REHEARSAL" ? "Read-only specimen. Its lease is closed after inspection; no numerical output, cache entry or audit transaction is created." : "This is the actual pre-occupancy inspection. Authorized numerical text moves in after vacancy is certified.", "field-help"));
+  card.append(element4("p", d.purpose === "REHEARSAL" ? "Read-only specimen. Its lease is closed after inspection; no numerical output, cache entry or audit transaction is created." : "This is the actual pre-occupancy inspection. Authorized numerical text moves in after vacancy is certified.", "field-help"));
   if (details) {
-    const list = element3("ol", void 0, "personnel-steps");
+    const list = element4("ol", void 0, "personnel-steps");
     list.setAttribute("aria-label", "Six premises office decisions");
     for (const [index, step] of d.steps.entries()) {
-      const item = element3("li");
+      const item = element4("li");
       item.dataset.verdict = step.state;
-      const disclosure = element3("details"), summary = element3("summary");
-      const number = element3("span", String(index + 1).padStart(2, "0"), "personnel-index");
-      number.setAttribute("aria-hidden", "true");
-      summary.append(number, element3("span", step.office, "personnel-office"), element3("span", step.state.replaceAll("_", " ").toLowerCase(), "personnel-badge"));
-      disclosure.append(summary, element3("p", step.finding), element3("p", step.document, "field-help"));
+      const disclosure = element4("details"), summary = element4("summary");
+      const number2 = element4("span", String(index + 1).padStart(2, "0"), "personnel-index");
+      number2.setAttribute("aria-hidden", "true");
+      summary.append(number2, element4("span", step.office, "personnel-office"), element4("span", step.state.replaceAll("_", " ").toLowerCase(), "personnel-badge"));
+      disclosure.append(summary, element4("p", step.finding), element4("p", step.document, "field-help"));
       item.append(disclosure);
       list.append(item);
     }
@@ -7696,6 +8338,7 @@ var companions = new CompanionDesk({ remember: (discovery) => {
   });
 } });
 var portfolio = new PortfolioDesk();
+highScoreDesk().attach(portfolio);
 new OfficeScoringAdapter(portfolio);
 var pendingPortfolio = Promise.resolve();
 var currentLimit = "15";

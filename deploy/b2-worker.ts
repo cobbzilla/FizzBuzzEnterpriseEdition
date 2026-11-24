@@ -1,9 +1,11 @@
 import {proxyIntake} from './intake-proxy.ts';
-export interface Env {B2_ORIGIN:string}
+import {highScores,highScoreCSP,type HighScoresEnv} from './high-scores.ts';
+export interface Env extends HighScoresEnv {B2_ORIGIN:string}
 export async function serve(request:Request,env:Env,fetchOrigin:typeof fetch=fetch):Promise<Response>{
  const url=new URL(request.url);
  if(url.protocol!=='https:'){url.protocol='https:';return Response.redirect(url.href,308);}
  if(url.pathname.startsWith('/intake/'))return proxyIntake(request,fetchOrigin,request.headers.get('CF-Connecting-IP')||undefined);
+ if(url.pathname==='/api/high-scores'||url.pathname.startsWith('/api/high-scores/'))return highScores(request,env,fetchOrigin);
  if(!['GET','HEAD'].includes(request.method))return new Response('Method not allowed',{status:405,headers:{Allow:'GET, HEAD'}});
  let path:string;try{path=decodeURIComponent(url.pathname);}catch{return new Response('Invalid path',{status:400});}
  if(path.startsWith('//')||path.split('/').some(p=>p==='..'||p==='.'||p.includes('\\')||p.includes('\0')))return new Response('Invalid path',{status:400});
@@ -23,7 +25,7 @@ export async function serve(request:Request,env:Env,fetchOrigin:typeof fetch=fet
  result.set('Cache-Control',recovery?'no-store':immutable?'public, max-age=31536000, immutable':'no-cache');
  if(/^\/full-reset\/(?:index\.html)?$/.test(url.pathname)&&request.method==='GET'&&request.headers.get('Sec-Fetch-Mode')==='navigate'&&request.headers.get('Sec-Fetch-Dest')==='document'&&!request.headers.get('Sec-Purpose')&&!request.headers.get('Purpose'))result.set('Clear-Site-Data','"cache", "cookies"');
  result.set('X-Content-Type-Options','nosniff');result.set('Referrer-Policy','strict-origin-when-cross-origin');
- result.set('Content-Security-Policy',path.endsWith('/runtime-worker.js')?"default-src 'self'; script-src 'self' 'unsafe-eval'; connect-src 'self'":"default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self'; img-src 'self' data:; connect-src 'self'; worker-src 'self'; base-uri 'none'; frame-ancestors 'none'");
+ result.set('Content-Security-Policy',path.endsWith('/runtime-worker.js')?"default-src 'self'; script-src 'self' 'unsafe-eval'; connect-src 'self'":highScoreCSP);
  return new Response(request.method==='HEAD'?null:upstream.body,{status:upstream.status,headers:result});
 }
 export default {fetch:(request:Request,env:Env)=>serve(request,env)};

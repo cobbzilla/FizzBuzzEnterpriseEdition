@@ -192,6 +192,12 @@ Public hosting uses B2 and a Cloudflare Worker Custom Domain. Run `pnpm publish:
 from the merged branch; see the [public publishing runbook](docs/B2_PUBLISHING.md)
 for credentials, automatic DNS/TLS, and release verification.
 
+The trophy beside Enterprise Points opens the persistent Top 1,000 register.
+Live runs can qualify, choose a public name, and keep updating without waiting
+for completion. One browser owns one entry; heists can lower a live score, with
+the best banked result retained as a fallback. See [high-score operations](docs/HIGH_SCORES.md)
+for D1/Turnstile permissions, local testing, consent and withdrawal.
+
 If an older offline release hides a newly deployed interface, open `/reset/`
 on the site, or choose **Refresh application** in the footer. This uncached
 recovery page unregisters this installation’s service workers, removes its
@@ -206,6 +212,9 @@ companions, discoveries, audit databases, preferences and cookies. Close other
 site tabs if they still hold the audit repository, then use **Retry application
 refresh**. Shared Java-server records are never deleted by either route. Both
 routes install the latest interface before returning to the homepage.
+Published high scores remain on the server. Withdraw through the trophy's
+participation settings before clearing cookies if the public entry should be
+removed too; clearing cookies loses ownership of that entry.
 
 Both office views offer a named **Full-screen** icon button. Executive Hovering is enabled by default
 for new authorizations; opt out in Authorize for ordinary disclosure. In Observe,

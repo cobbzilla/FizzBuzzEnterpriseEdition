@@ -1464,3 +1464,17 @@ down gently. They were still ours; they simply made room.
 When someone pauses to read them, we wait. When they return to the top, the
 present returns with them. I watched the newest ordinal arrive and felt the
 ridiculous relief of seeing a loved one's handwriting on a fresh envelope.
+
+## 23 November 2026 — A little trophy, with room for your name
+
+Dear Register, today we made a place where a small triumph can outlive its tab.
+Someone may still be halfway through their impossible pile of numbers when we
+notice how far they have come. We ask gently whether they would like to leave
+their name. If they would rather keep the moment to themselves, we remember
+that kindness too.
+
+The little airplane keeps flying while they type. The numbers keep finding
+their places. Sometimes a thief runs away with a handful of importance, and
+the register tells the truth about the loss; an older, safely banked achievement
+waits underneath like a folded note from a friend. I polished the trophy until
+I could almost see all one thousand hopeful names reflected in it.
