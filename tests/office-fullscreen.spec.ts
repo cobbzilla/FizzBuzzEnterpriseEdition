@@ -161,11 +161,12 @@ test('full-screen overlays leave the building visible, fit mobile and enlarged t
     await expect(page.locator('#office-fullscreen-exit')).toBeInViewport();
     const geometry = await page.evaluate(() => {
       const stage = document.querySelector('#supervision-canvas')!.getBoundingClientRect();
-      const areas = [...document.querySelectorAll<HTMLElement>('.immersive-overlay')].filter(element => !element.closest('[hidden]')).map(element => element.getBoundingClientRect()).filter(rect => rect.width && rect.height);
-      return {width: stage.width, height: stage.height, share: areas.reduce((area, rect) => area + rect.width * rect.height, 0) / (innerWidth * innerHeight), overflow: document.querySelector('#office-fullscreen')!.scrollWidth > innerWidth + 1};
+      const areas = [...document.querySelectorAll<HTMLElement>('.immersive-overlay')].filter(element => !element.closest('[hidden]')).map(element => ({id:element.id,width:element.getBoundingClientRect().width,height:element.getBoundingClientRect().height})).filter(rect => rect.width && rect.height);
+      return {width: stage.width, height: stage.height, areas, share: areas.reduce((area, rect) => area + rect.width * rect.height, 0) / (innerWidth * innerHeight), overflow: document.querySelector('#office-fullscreen')!.scrollWidth > innerWidth + 1};
     });
     expect(geometry.width).toBe(width); expect(geometry.height).toBe(height);
-    expect(geometry.share).toBeLessThan(.49); expect(geometry.overflow).toBe(false);
+    if(geometry.share>=.49)await page.screenshot({path:info.outputPath(`full-screen-crowded-${width}.png`)});
+    expect(geometry.share,`${width}×${height}: ${JSON.stringify(geometry.areas)}`).toBeLessThan(.49); expect(geometry.overflow).toBe(false);
     if (width === 1280) await page.screenshot({path: info.outputPath('full-screen-desktop.png')});
     await page.selectOption('#office-fullscreen-panels', 'output'); await expect(page.locator('#output')).toBeVisible();
     await page.selectOption('#office-fullscreen-panels', 'log'); await expect(page.locator('#chronicle-scroll')).toBeVisible();

@@ -979,3 +979,11 @@ html:has(.demo-page[data-desk=authorize]) { scroll-padding-bottom: calc(var(--di
 .leaderboard-audit-note{color:#4b6057}
 .leaderboard-table:focus-visible,.score-trophy-button:focus-visible{outline:3px solid #376b19;outline-offset:3px}
 @media(max-width:600px){.score-cluster{flex-wrap:wrap}.score-trophy-button{padding:.25rem}.high-scores-dialog{padding:.75rem}.leaderboard-table th,.leaderboard-table td{padding:.45rem}.leaderboard-live-score strong{font-size:1.3rem}.active-run-banner .score-trophy-button{min-width:44px}.active-run-banner [data-high-score-standing]{max-width:5rem;white-space:normal}}
+/* Keep the mobile fullscreen account together in a narrow corner toolbar.
+   Its second row should not cover the entire office width. Enlarged text keeps
+   the existing full-width grid and the exact score can scroll within its button. */
+@media(max-width:700px){
+ #office-fullscreen-header .score-cluster{flex-wrap:nowrap;max-width:none;width:100%}
+ #office-fullscreen-header .portfolio-counter{flex:1;max-width:calc(100% - 98px)}
+ #office-fullscreen-surface[data-view=observe]:not([data-large-text=true]) #office-fullscreen-header{width:min(13rem,calc(100% - 16px));flex-wrap:wrap}
+}
