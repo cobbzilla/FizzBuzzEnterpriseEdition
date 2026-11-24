@@ -16,6 +16,7 @@ export function auditLeaderboardReceipt(value:unknown,previous?:LeaderboardRecei
  const receipt=value as LeaderboardReceipt,r=receipt?.run;
  requireFact(receipt?.schema==='slopbuzz-leaderboard/v1'&&Number.isSafeInteger(receipt.sequence)&&receipt.sequence>0,'Unsupported receipt or sequence.');
  requireFact(r?.publicationProtocol===1&&r.revision===receipt.sequence,'This run predates live score publication.');
+ requireFact(!r.publicationInterrupted,'Local display inferences are not publication receipts.');
  requireFact(/^[A-Za-z0-9_-]{1,80}$/.test(r?.id||''),'Invalid run identity.');
  const edition=acceptedEditions.get(r?.identity);requireFact(edition&&r.rules===edition.version,'Unsupported scoring edition.');
  // Bound decimal conversion and collection sizes before the existing local decoder runs.

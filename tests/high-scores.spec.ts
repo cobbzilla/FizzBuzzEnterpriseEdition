@@ -10,9 +10,9 @@ import {participationKey,type LeaderboardEntry,type LeaderboardReceipt} from '..
 test.use({serviceWorkers:'block'});
 
 async function mockRegister(page:Page){
- let name='',entry:LeaderboardEntry|null=null,participating=false;const receipts:LeaderboardReceipt[]=[];const failures:string[]=[];
- await page.route('https://challenges.cloudflare.com/turnstile/v0/api.js*',route=>route.fulfill({contentType:'text/javascript',body:'window.turnstile={render:function(host,options){queueMicrotask(function(){options.callback("test-token")});return "test-widget"},remove:function(){},reset:function(){}};'}));
- await page.route('**/api/high-scores**',async route=>{
+ let name='',entry:LeaderboardEntry|null=null,participating=false;const receipts:LeaderboardReceipt[]=[];const failures:string[]=[];const previous=new Map<string,LeaderboardReceipt>();
+ await page.context().route('https://challenges.cloudflare.com/turnstile/v0/api.js*',route=>route.fulfill({contentType:'text/javascript',body:'window.turnstile={render:function(host,options){queueMicrotask(function(){options.callback("test-token")});return "test-widget"},remove:function(){},reset:function(){}};'}));
+ await page.context().route('**/api/high-scores**',async route=>{
   const request=route.request(),url=new URL(request.url()),path=url.pathname.replace('/api/high-scores',''),method=request.method(),asOf=new Date().toISOString();
   const personal=()=>({participating,name,entry,asOf,enabled:true,sitekey:'test-sitekey'});
   if(path==='/me'){
@@ -22,10 +22,10 @@ async function mockRegister(page:Page){
   }
   if(path===''||path==='/'){await route.fulfill({json:{entries:entry?[entry]:[],offset:Number(url.searchParams.get('offset')||0),limit:50,total:entry?1:0,cutoff:null,asOf,enabled:true,sitekey:'test-sitekey'}});return;}
   if(path==='/check'||path.startsWith('/runs/')){
-   let receipt:LeaderboardReceipt;try{receipt=auditLeaderboardReceipt(request.postDataJSON());}catch(error){failures.push((error as Error).message);await route.fulfill({status:422,json:{error:(error as Error).message}});return;}
+   let receipt:LeaderboardReceipt;try{const data=request.postDataJSON() as LeaderboardReceipt,prior=path==='/check'?undefined:previous.get(data.run.id);receipt=auditLeaderboardReceipt(data,prior&&JSON.stringify(prior)!==JSON.stringify(data)?prior:undefined);}catch(error){failures.push((error as Error).message);await route.fulfill({status:422,json:{error:(error as Error).message}});return;}
    const r=receipt.run,score=String(netPoints(r));
    if(path==='/check'){await route.fulfill({json:{qualifies:true,rank:1,score,runId:r.id,sequence:receipt.sequence,asOf}});return;}
-   receipts.push(receipt);entry={id:'test-entry',name,runId:r.id,rank:1,score,through:r.verification.through,mandate:r.verification.mandate,status:r.status,rules:r.rules,identity:r.identity,conditions:r.conditions,attainedAt:asOf,updatedAt:asOf,stale:false};
+   receipts.push(receipt);previous.set(r.id,receipt);entry={id:'test-entry',name,runId:r.id,rank:1,score,through:r.verification.through,mandate:r.verification.mandate,status:r.status,rules:r.rules,identity:r.identity,conditions:r.conditions,attainedAt:asOf,updatedAt:asOf,stale:false};
    await route.fulfill({json:{...personal(),acceptedSequence:receipt.sequence,runId:r.id}});return;
   }
   await route.fulfill({status:404,json:{error:'Unknown test operation'}});
@@ -69,6 +69,15 @@ test('visiting the public register and returning preserves the active mandate an
  await expect.poll(async()=>{const r=await current(page);return r.id===first.id&&r.status==='active'&&BigInt(r.verification.through)>BigInt(first.verification.through);}).toBe(true);
  await page.getByRole('button',{name:'My participation',exact:true}).click();await expect(page.locator('#high-scores-dialog')).toBeVisible();await page.keyboard.press('Escape');
  await page.getByRole('link',{name:'Earn an unreasonable amount of credit',exact:true}).click();await department(page,'observe');const returned=await current(page);expect(returned.id).toBe(first.id);expect(returned.status).toBe('active');expect(BigInt(returned.verification.through)).toBeGreaterThan(BigInt(first.verification.through));
+});
+test('opening another tab cannot finalize or freeze the owner’s live high score',async({page,context})=>{
+ const register=await mockRegister(page);await page.goto('/demo/');await expect(page.locator('#health-value')).toHaveText('LIVE');await run(page,'1000');await expect(page.locator('#high-scores-dialog')).toBeVisible();
+ await page.locator('#high-scores-name').fill('Two Tab Clerk');await page.getByRole('button',{name:'Publish my score',exact:true}).click();await expect.poll(()=>register.receipts.length).toBeGreaterThan(0);await page.keyboard.press('Escape');
+ await demoAction(page,'click','#pause-reading');await expect.poll(async()=>register.entry()?.score===String(netPoints(await current(page)))).toBe(true);const paused=await current(page);
+ const count=register.receipts.length,other=await context.newPage();
+ try{await other.goto('/demo/');await expect(other.locator('#health-value')).toHaveText('LIVE');await expect.poll(()=>register.receipts.length).toBeGreaterThan(count);expect(register.entry()?.status).toBe('active');expect(register.entry()?.runId).toBe(paused.id);expect(register.failures).toEqual([]);}
+ finally{await other.close();}
+ await demoAction(page,'click','#pause-reading');await expect.poll(async()=>BigInt((await current(page)).verification.through)).toBeGreaterThan(BigInt(paused.verification.through)+2n);await expect.poll(()=>BigInt(register.entry()!.score)).toBeGreaterThan(netPoints(paused));expect(register.failures).toEqual([]);
 });
 test('trophy and register remain readable and keyboard accessible at 320px',async({page},info)=>{
  await mockRegister(page);await page.setViewportSize({width:320,height:568});await page.goto('/high-scores/');await expect(page.locator('#high-scores-list')).toContainText('No scores filed yet');await page.getByRole('button',{name:'My participation',exact:true}).click();

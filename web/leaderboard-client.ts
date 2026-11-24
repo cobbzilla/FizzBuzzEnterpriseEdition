@@ -14,6 +14,7 @@ export class LeaderboardClient {
  private unsubscribe?:()=>void;private store?:Pick<Storage,'getItem'|'setItem'>;
  private epoch=0;
  private timerAt=Infinity;private attempted=new Set<string>();private persistedFinals='';
+ private restored=new Set<string>();
  private send:typeof fetch;private now:()=>number;private visible:()=>boolean;
  constructor(send:typeof fetch=fetch,storage?:Pick<Storage,'getItem'|'setItem'>,now=Date.now,visible=()=>!document.hidden){
   this.send=(input,init)=>send(input,init);this.now=now;this.visible=visible;
@@ -21,7 +22,7 @@ export class LeaderboardClient {
   if(this.state.choice==='public')try{
    const raw=storage?.getItem(pendingScoresKey)||'[]';if(raw.length>2*1024*1024)throw Error('Oversized pending receipts');
    const saved=JSON.parse(raw);if(!Array.isArray(saved)||saved.length>100)throw Error('Invalid pending receipts');
-   for(const item of saved){const run=decodeScoringRun(item.run),receipt=run&&publicationReceipt(run);if(receipt&&run!.status!=='active'){this.queue.set(run!.id,receipt);if(item.attempted)this.attempted.add(run!.id);}}
+   for(const item of saved){const run=decodeScoringRun(item.run),receipt=run&&publicationReceipt(run);if(receipt&&(run!.status!=='active'||item.restored===true)){this.queue.set(run!.id,receipt);if(item.attempted)this.attempted.add(run!.id);if(item.restored)this.restored.add(run!.id);}}
   }catch{/* Damaged local pending data never stops numerical execution. */}
  }
  subscribe(listener:()=>void){this.listeners.add(listener);return()=>this.listeners.delete(listener);}
@@ -42,10 +43,10 @@ export class LeaderboardClient {
  }
  attach(scoring:EnterpriseScoringService){
   this.unsubscribe?.();const read=()=>{const snapshot=scoring.snapshot();this.state.current=snapshot.current;
-   for(const run of [snapshot.saved,snapshot.current]){if(!run)continue;const receipt=publicationReceipt(run);if(receipt&&receipt.sequence>(this.accepted.get(run.id)||0)&&receipt.sequence>(this.rejected.get(run.id)||0))this.queue.set(run.id,receipt);}
+   for(const run of [snapshot.saved,snapshot.current]){if(!run)continue;const receipt=publicationReceipt(run);if(receipt&&receipt.sequence>(this.accepted.get(run.id)||0)&&receipt.sequence>(this.rejected.get(run.id)||0)){this.queue.set(run.id,receipt);if(run.publicationInterrupted){this.restored.add(run.id);this.attempted.add(run.id);}}}
    // Keep final receipts until acknowledged, including a published run's losses.
    // Never-submitted banked runs need only their best candidate.
-   for(const [id,receipt]of this.queue)if(id!==snapshot.current?.id&&id!==snapshot.saved?.id&&(receipt.run.status==='active'||this.state.choice!=='public'))this.queue.delete(id);
+   for(const [id,receipt]of this.queue)if(id!==snapshot.current?.id&&id!==snapshot.saved?.id&&(receipt.run.status==='active'&&!this.restored.has(id)||this.state.choice!=='public'))this.queue.delete(id);
    this.persistFinals();
    this.publish();const run=snapshot.current,prior=this.state.qualification;
    const immediate=run?.status!=='active'||!!prior&&prior.runId!==run?.id||!run?.incident&&this.lastIncident;
@@ -58,7 +59,7 @@ export class LeaderboardClient {
   let best:LeaderboardReceipt|undefined;
   for(const r of this.queue.values())if(r.run.status!=='active'&&!this.attempted.has(r.run.id)&&(!best||netPoints(r.run)>netPoints(best.run)))best=r;
   for(const [id,r]of this.queue)if(this.state.personal&&r.run.status!=='active'&&!this.attempted.has(id)&&id!==best?.run.id)this.queue.delete(id);
-  const serialized=JSON.stringify([...this.queue.values()].filter(r=>r.run.status!=='active').map(r=>({run:r.run,attempted:this.attempted.has(r.run.id)})));
+  const serialized=JSON.stringify([...this.queue.values()].filter(r=>r.run.status!=='active'||this.restored.has(r.run.id)).map(r=>({run:r.run,attempted:this.attempted.has(r.run.id),restored:this.restored.has(r.run.id)})));
   if(serialized!==this.persistedFinals)try{this.store?.setItem(pendingScoresKey,serialized);this.persistedFinals=serialized;}catch{/* The in-memory queue remains available if storage is full. */}
  }
  decline(){this.choice('private');this.state.invitation=false;this.publish();}
@@ -67,7 +68,7 @@ export class LeaderboardClient {
   ++this.epoch;const personal=await this.request<PersonalStanding>('/me','PUT',{name,turnstileToken});this.apply(personal);this.choice('public');this.state.invitation=false;this.success();this.publish();this.schedule(0);
   this.persistFinals();
  }
- async withdraw(){++this.epoch;const personal=await this.request<PersonalStanding>('/me','DELETE');this.apply(personal);this.choice('private');this.accepted.clear();this.rejected.clear();this.attempted.clear();this.queue.clear();const current=this.state.current&&publicationReceipt(this.state.current);if(current)this.queue.set(current.run.id,current);try{this.store?.setItem(pendingScoresKey,'[]');this.persistedFinals='[]';}catch{}this.state.invitation=false;this.success();this.publish();}
+ async withdraw(){++this.epoch;const personal=await this.request<PersonalStanding>('/me','DELETE');this.apply(personal);this.choice('private');this.accepted.clear();this.rejected.clear();this.attempted.clear();this.restored.clear();this.queue.clear();const current=this.state.current&&publicationReceipt(this.state.current);if(current)this.queue.set(current.run.id,current);try{this.store?.setItem(pendingScoresKey,'[]');this.persistedFinals='[]';}catch{}this.state.invitation=false;this.success();this.publish();}
  async list(offset=0){const page=await this.request<LeaderboardPage>('?offset='+offset+'&limit=50');this.cutoff=page.cutoff;this.state.enabled=page.enabled;this.state.sitekey=page.sitekey;return page;}
  resume(){this.retryAt=0;this.schedule(0);}
  private apply(personal:PersonalStanding){this.state.personal=personal;this.state.enabled=personal.enabled;this.state.sitekey=personal.sitekey;if(personal.entry?.status==='active')this.attempted.add(personal.entry.runId);}
@@ -88,7 +89,7 @@ export class LeaderboardClient {
    if(this.state.choice==='public'&&this.state.personal?.participating){
     const receipt=[...this.queue.values()][0];
     if(receipt){
-     const heist=receipt.run.incident?.kind==='heist',urgent=receipt.run.status!=='active'||!receipt.run.incident&&this.lastIncident;
+     const heist=receipt.run.incident?.kind==='heist',urgent=receipt.run.status!=='active'||this.restored.has(receipt.run.id)||!receipt.run.incident&&this.lastIncident;
      const delay=(heist?1000:5000)-(now-this.lastSend);
      if(!urgent&&delay>0){this.schedule(delay);return;}
      this.lastIncident=!!receipt.run.incident;
@@ -98,11 +99,11 @@ export class LeaderboardClient {
       if(epoch!==this.epoch)return;
       this.accepted.set(receipt.run.id,result.acceptedSequence);this.apply(result);
       if((this.queue.get(receipt.run.id)?.sequence||0)<=result.acceptedSequence)this.queue.delete(receipt.run.id);
-      if(receipt.run.status!=='active'&&!this.queue.has(receipt.run.id))this.attempted.delete(receipt.run.id);
+      if(!this.queue.has(receipt.run.id)&&(receipt.run.status!=='active'||this.restored.has(receipt.run.id))){this.attempted.delete(receipt.run.id);this.restored.delete(receipt.run.id);}
       this.persistFinals();
      }catch(error){
       if(error instanceof LeaderboardHTTPError&&error.status===401){this.choice('undecided');this.state.personal=undefined;}
-      if(error instanceof LeaderboardHTTPError&&[409,422].includes(error.status)){this.rejected.set(receipt.run.id,receipt.sequence);if(this.queue.get(receipt.run.id)?.sequence===receipt.sequence)this.queue.delete(receipt.run.id);if(!this.queue.has(receipt.run.id))this.attempted.delete(receipt.run.id);this.persistFinals();}
+      if(error instanceof LeaderboardHTTPError&&[409,422].includes(error.status)){this.rejected.set(receipt.run.id,receipt.sequence);if(this.queue.get(receipt.run.id)?.sequence===receipt.sequence)this.queue.delete(receipt.run.id);if(!this.queue.has(receipt.run.id)){this.attempted.delete(receipt.run.id);this.restored.delete(receipt.run.id);}this.persistFinals();}
       throw error;
      }
      this.lastSend=now;

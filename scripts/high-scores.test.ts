@@ -38,6 +38,15 @@ test('restoring a completed run does not mint a new revision when the next manda
  const restored=new EnterpriseScoringService(storage);restored.begin('30',policy);
  assert.equal(JSON.stringify(publicationReceipt(restored.snapshot().saved!)),JSON.stringify(done));
 });
+test('a restored active run republishes its exact genuine snapshot, including unresolved heist losses',async()=>{
+ for(const heist of [false,true]){
+  const service=await scoreFixture(100,'1000');if(heist){service.startIncident('heist','1','99','Common');service.incidentWork('1',{heistCase:1});service.advanceHeist('1',14000);}
+  const original=receipt(service),data=new Map([[scoringStorageKey,JSON.stringify({current:original.run})]]),storage={getItem:(key:string)=>data.get(key)||null,setItem:(key:string,value:string)=>{data.set(key,value);}};
+  const idle=new EnterpriseScoringService(storage);assert.equal(idle.snapshot().current!.status,'interrupted');assert.equal(JSON.stringify(receipt(idle)),JSON.stringify(original));auditLeaderboardReceipt(receipt(idle),original);
+  idle.begin('30',policy);assert.equal(JSON.stringify(publicationReceipt(idle.snapshot().saved!)),JSON.stringify(original));
+  const reopened=new EnterpriseScoringService(storage);assert.equal(JSON.stringify(publicationReceipt(reopened.snapshot().saved!)),JSON.stringify(original));
+ }
+});
 test('tampered totals, rates, line classifications, versions and partial receipts are rejected',async()=>{
  const original=receipt(await scoreFixture(15));
  for(const mutate of [(r:LeaderboardReceipt)=>r.run.gross='999999',(r:LeaderboardReceipt)=>r.run.partial=true,(r:LeaderboardReceipt)=>r.run.identity='deadbeef',(r:LeaderboardReceipt)=>r.run.buckets['line|1'].quantity='999',(r:LeaderboardReceipt)=>r.run.verification.through='14',(r:LeaderboardReceipt)=>r.run.publicationProtocol=undefined]){const copy=structuredClone(original);mutate(copy);assert.throws(()=>auditLeaderboardReceipt(copy));}
@@ -65,6 +74,9 @@ test('D1 uses current live net and the best finalized fallback, not an earlier p
 });
 test('replayed and concurrent updates cannot overwrite a newer score',async()=>{
  const cookie=await enroll('Concurrent'),service=await scoreFixture(20,'1000'),first=receipt(service);await call('/runs/'+first.run.id,'PUT',first,cookie);
+ const idle=new EnterpriseScoringService({getItem:key=>key===scoringStorageKey?JSON.stringify({current:first.run}):null,setItem:()=>{}});
+ assert.equal((await call('/runs/'+first.run.id,'PUT',receipt(idle),cookie)).status,200);
+ assert.equal((await (await call('/me','GET',undefined,cookie)).json()).entry.status,'active');
  service.inspect('department','memory');const second=receipt(service);service.inspect('department','publication');const third=receipt(service);
  const results=await Promise.all([call('/runs/'+second.run.id,'PUT',second,cookie),call('/runs/'+third.run.id,'PUT',third,cookie)]);assert.ok(results.every(r=>[200,409].includes(r.status)));
  await call('/runs/'+third.run.id,'PUT',third,cookie);const mine=await (await call('/me','GET',undefined,cookie)).json();assert.equal(mine.entry.score,String(netPoints(third.run)));

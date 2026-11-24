@@ -13,6 +13,7 @@ export interface BadgeUnlock {firstEarned:string;tier:string}
 export interface IncidentAccount {id:string;kind:'flight'|'heist';ordinal:string;rarity:Rarity;boost:number;counts:Record<string,string>;opening:string;budget:string;stolen:string;recovered:string;elapsed:number;settled:boolean;recoveryBasisPoints:string;resumed:boolean}
 export interface ScoringRun {
  publicationProtocol?:1;revision?:number;closedHeists?:IncidentAccount[];
+ publicationInterrupted?:{revision:number;updatedAt:string;incident?:IncidentAccount;closedHeists?:IncidentAccount[]};
  rules:typeof scoringVersion;identity:string;id:string;status:PortfolioStatus;startedAt:string;updatedAt:string;
  verification:PortfolioReceipt;conditions:Record<string,string>;gross:string;stolen:string;recovered:string;dividend:string;
  categories:Partial<Record<Category,string>>;buckets:Record<string,AwardBucket>;recent:AwardReceipt[];
@@ -63,7 +64,12 @@ export class EnterpriseScoringService {
    const data=JSON.parse(storage?.getItem(scoringStorageKey)||'null');this.current=decodeScoringRun(data?.current);this.saved=decodeScoringRun(data?.saved);
    const old=JSON.parse(storage?.getItem(portfolioStorageKey)||'null');this.legacy=decodePortfolio(old?.current)||decodePortfolio(old?.saved);
    this.mergeCabinet(JSON.parse(storage?.getItem(cabinetStorageKey)||'{}'),false);
-   if(this.current?.status==='active'){this.current.status='interrupted';this.current.verification.status='interrupted';if(this.current.incident?.kind==='heist')(this.current.closedHeists??=[]).push(structuredClone(this.current.incident));this.current.incident=undefined;this.current.updatedAt=this.clock();if(this.current.publicationProtocol===1)this.current.revision=(this.current.revision||0)+1;}
+   if(this.current?.status==='active'){
+    // Another tab may still own this run. Local recovery is a display inference,
+    // never authority to finalize that tab's public accounting.
+    if(this.current.publicationProtocol===1)this.current.publicationInterrupted={revision:this.current.revision!,updatedAt:this.current.updatedAt,incident:structuredClone(this.current.incident),closedHeists:structuredClone(this.current.closedHeists)};
+    this.current.status='interrupted';this.current.verification.status='interrupted';if(this.current.incident?.kind==='heist')(this.current.closedHeists??=[]).push(structuredClone(this.current.incident));this.current.incident=undefined;this.current.updatedAt=this.clock();if(this.current.publicationProtocol===1)this.current.revision=(this.current.revision||0)+1;
+   }
   }catch{this.persistent=false;}
   for(const run of [this.current,this.saved])if(run?.publicationProtocol===1)this.publicationStates.set(run.id,JSON.stringify({...run,revision:undefined}));
  }

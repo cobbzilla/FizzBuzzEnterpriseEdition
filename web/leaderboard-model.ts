@@ -24,5 +24,11 @@ export function leaderboardName(value:unknown):string {
 export function decimalCompare(a:string,b:string){return a.length-b.length||(a<b?-1:a>b?1:0);}
 export function publicationReceipt(run:ScoringRun):LeaderboardReceipt|undefined {
  if(run.publicationProtocol!==1||!Number.isSafeInteger(run.revision)||run.partial||BigInt(run.verification.through)<1n)return;
+ if(run.publicationInterrupted){
+  // Replay the last genuine snapshot. Its original revision cannot supersede
+  // newer owner activity, and it cannot invent an interruption in another tab.
+  const original=run.publicationInterrupted;run=structuredClone(run);delete run.publicationInterrupted;
+  run.revision=original.revision;run.updatedAt=original.updatedAt;run.status='active';run.verification.status='active';run.incident=structuredClone(original.incident);run.closedHeists=structuredClone(original.closedHeists);
+ }
  return {schema:'slopbuzz-leaderboard/v1',sequence:run.revision!,run};
 }
