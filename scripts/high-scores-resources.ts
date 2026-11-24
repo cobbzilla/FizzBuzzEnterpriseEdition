@@ -24,8 +24,15 @@ export async function ensureHighScores(cf:CloudflareCall,account:string,worker:s
  }
  const widgets=await cf(account+'/challenges/widgets'),name=worker+' high scores';
  const existing=widgets.find((w:{name:string})=>w.name===name);
- const widget=existing?await cf(account+'/challenges/widgets/'+existing.sitekey):await cf(account+'/challenges/widgets','POST',{name,domains:[hostname],mode:'managed',clearance_level:'no_clearance'});
+ let widget=existing?await cf(account+'/challenges/widgets/'+existing.sitekey):await cf(account+'/challenges/widgets','POST',{name,domains:[hostname],mode:'invisible',clearance_level:'no_clearance'});
  if(!widget.domains?.includes(hostname)||!widget.sitekey||!widget.secret)throw Error('The high-score Turnstile widget must belong to this public hostname and expose its secret to the publisher.');
+ if(widget.mode!=='invisible'){
+  // Update the dedicated widget in place so existing browser releases keep the
+  // same sitekey and Worker secret. Preserve its configured hostnames/settings.
+  const updated=await cf(account+'/challenges/widgets/'+widget.sitekey,'PUT',{name:widget.name||name,domains:widget.domains,mode:'invisible',clearance_level:widget.clearance_level||'no_clearance',...(typeof widget.bot_fight_mode==='boolean'?{bot_fight_mode:widget.bot_fight_mode}:{})});
+  if(updated.sitekey!==widget.sitekey||updated.mode!=='invisible'||!updated.domains?.includes(hostname))throw Error('The high-score verification widget could not be made invisible.');
+  widget={...widget,...updated,secret:updated.secret||widget.secret};
+ }
  return {database,secret:widget.secret,bindings:[
   {type:'d1',name:'HIGH_SCORES',id:database},
   {type:'plain_text',name:'HIGH_SCORES_ENABLED',text:String(enabled)},

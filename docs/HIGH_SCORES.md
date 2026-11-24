@@ -1,6 +1,13 @@
 # Persistent high scores
 
-The website's trophy opens the public Top 1,000 register. `/high-scores/` provides
+The website's SVG trophy opens the public Top 1,000 register. For an undecided
+visitor whose current score qualifies, the first qualifying trophy click opens
+the compact name-entry invitation instead, including when qualification is still
+in flight. A previous decline is respected: trophy clicks open the register and
+joining remains available through My participation. Automatic invitations and
+manual enrollment use the same small form; successful publication closes it.
+Ranks beside the score display only `#` and the locale-formatted position.
+`/high-scores/` provides
 the same list without starting the Java runtime or 3-D office. A browser gets one
 entry, combining its best banked run with its current accepted live results.
 All rule editions and run lengths compete together. Heist losses can lower a
@@ -15,7 +22,11 @@ Scripts Edit, Workers Routes Edit, Zone Read and DNS Read remain required.
 
 `pnpm publish:b2` manages a database named `<worker-name>-scores` and a Turnstile
 widget named `<worker-name> high scores`. It reuses their identities on subsequent
-deployments. `deploy/migrations/` contains ordered, checksummed migrations. Never
+deployments. Enrollment uses invisible Turnstile verification. The publisher
+updates an older managed widget in place, preserving its sitekey, secret and
+hostnames; repeat deployment does not keep rewriting it. The site's high-score
+privacy policy links to Cloudflare's Turnstile Privacy Addendum as required for
+invisible mode. `deploy/migrations/` contains ordered, checksummed migrations. Never
 edit a migration after it has been applied; add a new one. The Turnstile secret
 exists only in the Worker binding and is checked against the publication tree
 before upload. API failures never print credential values or SQL response bodies.

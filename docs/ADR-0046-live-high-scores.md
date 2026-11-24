@@ -18,6 +18,15 @@ Existing protections stop heist clocks when their intervention controls are
 obscured. The small trophy accompanies the score in Observe and the persistent
 banner; a standalone `/high-scores/` page provides public access.
 
+The enrollment invitation is a compact name form with publication and decline
+actions. Successful enrollment closes it. A qualifying trophy click from an
+undecided visitor opens this form even if the rank response arrives after the
+click; a remembered decline goes directly to the board. Trophy SVGs are authored
+in both score controls so navigation does not restore a text placeholder. Rank
+labels contain only the position. Turnstile enrollment runs in invisible mode;
+the dedicated widget is reconciled in place and the site's privacy policy links
+to Cloudflare's Turnstile Privacy Addendum.
+
 Names contain 1–24 trimmed ASCII letters, digits, spaces, hyphens or underscores,
 including at least one letter or digit. Names are not unique identities. An opaque
 Secure, HttpOnly, SameSite=Strict cookie authenticates ownership; only its SHA-256

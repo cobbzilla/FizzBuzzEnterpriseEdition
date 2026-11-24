@@ -958,6 +958,17 @@ html:has(.demo-page[data-desk=authorize]) { scroll-padding-bottom: calc(var(--di
 .leaderboard-stale{font-style:italic}
 .high-scores-dialog{width:min(54rem,calc(100vw - 2rem));max-height:calc(100dvh - 2rem);overflow:auto;padding:1.2rem;border:1px solid #7b9690;border-radius:1rem;background:#fff;color:#173333}
 .high-scores-dialog::backdrop{background:rgba(5,26,24,.42)}
+.high-scores-dialog [hidden]{display:none!important}
+.high-scores-dialog[data-minimal="true"]{width:min(26rem,calc(100vw - 2rem));padding:1rem}
+.high-scores-dialog[data-minimal="true"] .score-dialog-heading{margin:0 0 .5rem}
+.high-scores-dialog[data-minimal="true"] h2{font-size:1.2rem;line-height:1.35;margin:0}
+.high-scores-dialog[data-minimal="true"] .leaderboard-live-score{margin:.25rem 0 .75rem;font-size:.85rem}
+.high-scores-dialog[data-minimal="true"] .leaderboard-live-score strong{font-size:1rem}
+.high-scores-dialog[data-minimal="true"] .leaderboard-enrollment label{margin:.5rem 0 .3rem;font-size:.85rem}
+.high-scores-dialog[data-minimal="true"] .leaderboard-actions{gap:.5rem;margin:.75rem 0 0}
+.high-scores-dialog[data-minimal="true"] .leaderboard-actions button{flex:1;padding:.6rem .7rem;font-size:.85rem;line-height:1.3}
+#high-scores-status:empty{display:none}
+#high-scores-status{font-size:.85rem;line-height:1.4;margin:.7rem 0 0}
 .high-scores-dialog button,.high-scores-page button{min-height:44px}
 .high-scores-page{padding-block:3rem;max-width:68rem}
 .leaderboard-table{overflow:auto;max-height:65vh;border:1px solid #c3d1cd;border-radius:.5rem;scrollbar-gutter:stable}

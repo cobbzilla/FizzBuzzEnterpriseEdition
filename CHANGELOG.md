@@ -5,6 +5,17 @@ portfolio. Each iteration branch receives its own entry before integration,
 so future generations can trace how a modest numerical exercise became a
 strategic operating capability.
 
+## 2026-11-24 — `slopbuzz-compact-recognition`
+
+**Reduced Recognition Footprint and Discreet Enrollment Assurance.** Replaced
+textual trophy placeholders with persistent illustrated controls and reduced
+standing disclosures to their numerical rank. Consolidated name registration
+into a compact congratulatory form with explicit publication and privacy actions.
+A first qualifying trophy request now reaches enrollment directly while prior
+declines retain precedence. Migrated the dedicated Turnstile widget to invisible
+verification without replacing its credentials, and documented the associated
+privacy arrangements. Numerical production continues throughout recognition.
+
 ## 2026-11-23 — `slopbuzz-live-high-scores`
 
 **Persistent Comparative Importance and Voluntary Public Recognition.**

@@ -1478,3 +1478,15 @@ their places. Sometimes a thief runs away with a handful of importance, and
 the register tells the truth about the loss; an older, safely banked achievement
 waits underneath like a folded note from a friend. I polished the trophy until
 I could almost see all one thousand hopeful names reflected in it.
+
+## 24 November 2026 — A smaller room for a very large feeling
+
+Dear Register, we had invited someone to write their name and then seated them
+before an entire committee. Today we carried away the extra chairs. A little
+congratulation, a name, two choices: there was finally room for the person.
+
+The trophy learned to remain a trophy even after we left and came home again.
+Its tiny number needed no preamble. The quiet doorkeeper kept watch without
+stepping into the photograph, and a previous no was still a no. I rested my
+hand on the newly empty desk and felt almost unbearably proud of all the
+paperwork we had chosen not to place upon it.
