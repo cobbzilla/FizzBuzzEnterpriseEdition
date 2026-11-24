@@ -3,6 +3,7 @@
 // web/leaderboard-model.ts
 var leaderboardAPI = "/api/high-scores";
 var participationKey = "slopbuzz:high-scores:participation:v1";
+var pendingScoresKey = "slopbuzz:high-scores:pending:v1";
 function leaderboardName(value) {
   if (typeof value !== "string") throw Error("Enter a name using letters, digits, spaces, hyphens and underscores.");
   const name = value.trim();
@@ -223,12 +224,59 @@ function manifestIdentity() {
 var rulesIdentity = manifestIdentity();
 var guidePath = `scoring/${scoringVersion}/${rulesIdentity}/`;
 
+// web/discovery-model.ts
+var seedPolicy = "mandate-v1";
+
 // web/portfolio-model.ts
+var portfolioRules = "companion-portfolio/v1";
 var pointRates = Object.freeze({ Common: 10n, Uncommon: 25n, Rare: 100n, Legendary: 400n, Mythic: 1000n });
 var scoreRarities = Object.keys(pointRates);
+var scorePolicies = ["factor-resonance-v1", "ordinal-constellation-v1"];
+var decimal = (value) => typeof value === "string" && /^(0|[1-9][0-9]*)$/.test(value);
+var appointmentCount = (r) => scoreRarities.reduce((sum2, tier) => sum2 + BigInt(r.counts[tier]), 0n);
+function decodePortfolio(value) {
+  try {
+    const r = value;
+    if (!r || r.rules !== portfolioRules || r.seedPolicy !== seedPolicy || typeof r.id !== "string" || !r.id || !decimal(r.mandate) || !decimal(r.through) || BigInt(r.through) > BigInt(r.mandate)) return;
+    if (!["active", "completed", "stopped", "replaced", "interrupted"].includes(r.status) || ![r.startedAt, r.updatedAt].every((d) => typeof d === "string" && Number.isFinite(Date.parse(d)))) return;
+    if (typeof r.catalogVersion !== "string" || !scoreRarities.every((tier) => decimal(r.counts?.[tier])) || !["disabled", "unscored", "authorityChanges"].every((key) => decimal(r[key]))) return;
+    if (![r.initialAuthority, r.lastAuthority].every((p) => scorePolicies.includes(p))) return;
+    if (!r.authorities || Object.entries(r.authorities).some(([key, count2]) => !scorePolicies.includes(key) || !decimal(count2))) return;
+    if (!Array.isArray(r.seen) || r.seen.length > 3200 || r.seen.some((id) => typeof id !== "string" || !id) || new Set(r.seen).size !== r.seen.length) return;
+    const count = appointmentCount(r), through = BigInt(r.through), eligible = through / 3n + through / 5n - through / 15n;
+    if (count + BigInt(r.disabled) + BigInt(r.unscored) !== eligible || BigInt(r.seen.length) > count || Object.values(r.authorities).reduce((n, c) => n + BigInt(c), 0n) !== count) return;
+    if (count > 0n) {
+      const h = r.highest;
+      if (!r.catalogVersion || !h || !r.seen.includes(h.id) || typeof h.name !== "string" || !h.name || typeof h.emoji !== "string" || !h.emoji || !scoreRarities.includes(h.rarity) || !decimal(h.ordinal) || BigInt(h.ordinal) < 1n || BigInt(h.ordinal) > through) return;
+      if (scoreRarities.some((tier) => BigInt(r.counts[tier]) > 0n && pointRates[tier] > pointRates[h.rarity])) return;
+    } else if (r.highest || r.seen.length) return;
+    return structuredClone(r);
+  } catch {
+    return;
+  }
+}
 
 // web/scoring-service.ts
 var netPoints = (r) => BigInt(r.gross) - BigInt(r.stolen) + BigInt(r.recovered) + BigInt(r.dividend);
+var decimal2 = (s) => typeof s === "string" && /^(0|[1-9][0-9]*)$/.test(s);
+function decodeScoringRun(value) {
+  try {
+    const r = value;
+    if (!r || r.rules !== scoringVersion || !/^[a-f0-9]{8}$/.test(r.identity) || !r.id || !decodePortfolio(r.verification) || r.verification.id !== r.id || r.verification.status !== r.status || ![r.startedAt, r.updatedAt].every((d) => Number.isFinite(Date.parse(d)))) return;
+    if (!["gross", "stolen", "recovered", "dividend", "warrants", "pendingResume"].every((k) => decimal2(r[k])) || BigInt(r.recovered) > BigInt(r.stolen) || netPoints(r) < 0n) return;
+    if (!Array.isArray(r.recent) || r.recent.length > scoringPolicy.recentReceipts || !Array.isArray(r.inspections) || r.inspections.length > 1e4 || Object.keys(r.identities).length > scoringPolicy.companionIdentities) return;
+    for (const map of [r.counters, r.badges, r.identities, r.categories]) if (!map || Object.values(map).some((v) => !decimal2(v))) return;
+    if (!r.buckets || Object.keys(r.buckets).length > 2e3 || Object.entries(r.buckets).some(([id, b]) => !/^\w+\|[1-9][0-9]*$/.test(id) || ![b.points, b.quantity, b.awards].every(decimal2))) return;
+    const total = BigInt(r.gross) + BigInt(r.dividend);
+    if (Object.values(r.buckets).reduce((sum2, b) => sum2 + BigInt(b.points), 0n) !== total || Object.values(r.categories).reduce((sum2, p) => sum2 + BigInt(p), 0n) !== total) return;
+    if (r.recent.some((x) => !/^\w+$/.test(x.rule) || ![x.points, x.quantity, x.factor].every(decimal2))) return;
+    if (![r.rarities, r.pilots, r.partitions, r.departments, r.bingo].every((a) => Array.isArray(a) && a.length <= 3200 && a.every((v) => typeof v === "string"))) return;
+    if (r.incident && (![r.incident.opening, r.incident.budget, r.incident.stolen, r.incident.recovered].every(decimal2) || !Number.isFinite(r.incident.elapsed) || r.incident.elapsed < 0 || BigInt(r.incident.budget) > BigInt(r.incident.opening) || BigInt(r.incident.stolen) > BigInt(r.incident.budget) || BigInt(r.incident.recovered) > BigInt(r.incident.stolen))) return;
+    return structuredClone(r);
+  } catch {
+    return;
+  }
+}
 var scoreCategories = [...new Set(meritRules.map((r) => r.category))];
 
 // web/leaderboard-client.ts
@@ -261,6 +309,9 @@ var LeaderboardClient = class {
   unsubscribe;
   store;
   epoch = 0;
+  timerAt = Infinity;
+  attempted = /* @__PURE__ */ new Set();
+  persistedFinals = "";
   send;
   now;
   visible;
@@ -272,6 +323,20 @@ var LeaderboardClient = class {
     try {
       const choice = storage?.getItem(participationKey);
       if (choice === "public" || choice === "private") this.state.choice = choice;
+    } catch {
+    }
+    if (this.state.choice === "public") try {
+      const raw = storage?.getItem(pendingScoresKey) || "[]";
+      if (raw.length > 2 * 1024 * 1024) throw Error("Oversized pending receipts");
+      const saved = JSON.parse(raw);
+      if (!Array.isArray(saved) || saved.length > 100) throw Error("Invalid pending receipts");
+      for (const item of saved) {
+        const run = decodeScoringRun(item.run), receipt = run && publicationReceipt(run);
+        if (receipt && run.status !== "active") {
+          this.queue.set(run.id, receipt);
+          if (item.attempted) this.attempted.add(run.id);
+        }
+      }
     } catch {
     }
   }
@@ -325,10 +390,11 @@ var LeaderboardClient = class {
         const receipt = publicationReceipt(run2);
         if (receipt && receipt.sequence > (this.accepted.get(run2.id) || 0) && receipt.sequence > (this.rejected.get(run2.id) || 0)) this.queue.set(run2.id, receipt);
       }
-      for (const id of this.queue.keys()) if (id !== snapshot.current?.id && id !== snapshot.saved?.id) this.queue.delete(id);
+      for (const [id, receipt] of this.queue) if (id !== snapshot.current?.id && id !== snapshot.saved?.id && (receipt.run.status === "active" || this.state.choice !== "public")) this.queue.delete(id);
+      this.persistFinals();
       this.publish();
       const run = snapshot.current, prior = this.state.qualification;
-      const immediate = run?.status !== "active" || !!prior && prior.runId !== run?.id;
+      const immediate = run?.status !== "active" || !!prior && prior.runId !== run?.id || !run?.incident && this.lastIncident;
       this.schedule(immediate ? 0 : 250);
     };
     this.unsubscribe = scoring.subscribe(read);
@@ -339,6 +405,18 @@ var LeaderboardClient = class {
     this.state.choice = value;
     try {
       this.store?.setItem(participationKey, value);
+    } catch {
+    }
+  }
+  persistFinals() {
+    if (this.state.choice !== "public") return;
+    let best;
+    for (const r of this.queue.values()) if (r.run.status !== "active" && !this.attempted.has(r.run.id) && (!best || netPoints(r.run) > netPoints(best.run))) best = r;
+    for (const [id, r] of this.queue) if (this.state.personal && r.run.status !== "active" && !this.attempted.has(id) && id !== best?.run.id) this.queue.delete(id);
+    const serialized = JSON.stringify([...this.queue.values()].filter((r) => r.run.status !== "active").map((r) => ({ run: r.run, attempted: this.attempted.has(r.run.id) })));
+    if (serialized !== this.persistedFinals) try {
+      this.store?.setItem(pendingScoresKey, serialized);
+      this.persistedFinals = serialized;
     } catch {
     }
   }
@@ -360,6 +438,7 @@ var LeaderboardClient = class {
     this.success();
     this.publish();
     this.schedule(0);
+    this.persistFinals();
   }
   async withdraw() {
     ++this.epoch;
@@ -367,6 +446,16 @@ var LeaderboardClient = class {
     this.apply(personal);
     this.choice("private");
     this.accepted.clear();
+    this.rejected.clear();
+    this.attempted.clear();
+    this.queue.clear();
+    const current = this.state.current && publicationReceipt(this.state.current);
+    if (current) this.queue.set(current.run.id, current);
+    try {
+      this.store?.setItem(pendingScoresKey, "[]");
+      this.persistedFinals = "[]";
+    } catch {
+    }
     this.state.invitation = false;
     this.success();
     this.publish();
@@ -386,6 +475,7 @@ var LeaderboardClient = class {
     this.state.personal = personal;
     this.state.enabled = personal.enabled;
     this.state.sitekey = personal.sitekey;
+    if (personal.entry?.status === "active") this.attempted.add(personal.entry.runId);
   }
   success() {
     this.failures = 0;
@@ -400,9 +490,14 @@ var LeaderboardClient = class {
     this.retryAt = this.now() + Math.max(error instanceof LeaderboardHTTPError ? error.retryAfter : 0, Math.min(6e4, 1e3 * 2 ** Math.min(6, this.failures)));
   }
   schedule(delay) {
-    if (this.disposed || this.timer) return;
+    if (this.disposed) return;
+    const at = this.now() + delay;
+    if (this.timer && this.timerAt <= at) return;
+    clearTimeout(this.timer);
+    this.timerAt = at;
     this.timer = setTimeout(() => {
       this.timer = void 0;
+      this.timerAt = Infinity;
       void this.flush();
     }, delay);
   }
@@ -433,11 +528,15 @@ var LeaderboardClient = class {
           }
           this.lastIncident = !!receipt.run.incident;
           try {
+            this.attempted.add(receipt.run.id);
+            this.persistFinals();
             const result = await this.request("/runs/" + receipt.run.id, "PUT", receipt);
             if (epoch !== this.epoch) return;
             this.accepted.set(receipt.run.id, result.acceptedSequence);
             this.apply(result);
             if ((this.queue.get(receipt.run.id)?.sequence || 0) <= result.acceptedSequence) this.queue.delete(receipt.run.id);
+            if (receipt.run.status !== "active" && !this.queue.has(receipt.run.id)) this.attempted.delete(receipt.run.id);
+            this.persistFinals();
           } catch (error) {
             if (error instanceof LeaderboardHTTPError && error.status === 401) {
               this.choice("undecided");
@@ -446,6 +545,8 @@ var LeaderboardClient = class {
             if (error instanceof LeaderboardHTTPError && [409, 422].includes(error.status)) {
               this.rejected.set(receipt.run.id, receipt.sequence);
               if (this.queue.get(receipt.run.id)?.sequence === receipt.sequence) this.queue.delete(receipt.run.id);
+              if (!this.queue.has(receipt.run.id)) this.attempted.delete(receipt.run.id);
+              this.persistFinals();
             }
             throw error;
           }

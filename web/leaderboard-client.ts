@@ -1,5 +1,5 @@
-import {leaderboardAPI,participationKey,publicationReceipt,decimalCompare,type Participation,type LeaderboardPage,type PersonalStanding,type QualificationResult,type LeaderboardReceipt,type SubmissionResult} from './leaderboard-model.ts';
-import {netPoints,type EnterpriseScoringService,type ScoringRun} from './scoring-service.ts';
+import {leaderboardAPI,participationKey,pendingScoresKey,publicationReceipt,decimalCompare,type Participation,type LeaderboardPage,type PersonalStanding,type QualificationResult,type LeaderboardReceipt,type SubmissionResult} from './leaderboard-model.ts';
+import {decodeScoringRun,netPoints,type EnterpriseScoringService,type ScoringRun} from './scoring-service.ts';
 
 export class LeaderboardHTTPError extends Error {readonly status:number;readonly retryAfter:number;constructor(message:string,status:number,retryAfter=0){super(message);this.status=status;this.retryAfter=retryAfter;}}
 export interface LeaderboardClientState {
@@ -13,10 +13,16 @@ export class LeaderboardClient {
  private timer?:ReturnType<typeof setTimeout>;private polling?:ReturnType<typeof setInterval>;private busy=false;private disposed=false;private connected=false;private failures=0;private retryAt=0;private lastSend=0;private lastCheck=0;private lastPoll=0;private cutoff:string|null|undefined;
  private unsubscribe?:()=>void;private store?:Pick<Storage,'getItem'|'setItem'>;
  private epoch=0;
+ private timerAt=Infinity;private attempted=new Set<string>();private persistedFinals='';
  private send:typeof fetch;private now:()=>number;private visible:()=>boolean;
  constructor(send:typeof fetch=fetch,storage?:Pick<Storage,'getItem'|'setItem'>,now=Date.now,visible=()=>!document.hidden){
   this.send=(input,init)=>send(input,init);this.now=now;this.visible=visible;
   this.store=storage;try{const choice=storage?.getItem(participationKey);if(choice==='public'||choice==='private')this.state.choice=choice;}catch{}
+  if(this.state.choice==='public')try{
+   const raw=storage?.getItem(pendingScoresKey)||'[]';if(raw.length>2*1024*1024)throw Error('Oversized pending receipts');
+   const saved=JSON.parse(raw);if(!Array.isArray(saved)||saved.length>100)throw Error('Invalid pending receipts');
+   for(const item of saved){const run=decodeScoringRun(item.run),receipt=run&&publicationReceipt(run);if(receipt&&run!.status!=='active'){this.queue.set(run!.id,receipt);if(item.attempted)this.attempted.add(run!.id);}}
+  }catch{/* Damaged local pending data never stops numerical execution. */}
  }
  subscribe(listener:()=>void){this.listeners.add(listener);return()=>this.listeners.delete(listener);}
  private publish(){for(const listener of this.listeners)listener();}
@@ -37,26 +43,37 @@ export class LeaderboardClient {
  attach(scoring:EnterpriseScoringService){
   this.unsubscribe?.();const read=()=>{const snapshot=scoring.snapshot();this.state.current=snapshot.current;
    for(const run of [snapshot.saved,snapshot.current]){if(!run)continue;const receipt=publicationReceipt(run);if(receipt&&receipt.sequence>(this.accepted.get(run.id)||0)&&receipt.sequence>(this.rejected.get(run.id)||0))this.queue.set(run.id,receipt);}
-   // Only the service's two retained runs need a pending receipt; finalized writes already in flight retain their value.
-   for(const id of this.queue.keys())if(id!==snapshot.current?.id&&id!==snapshot.saved?.id)this.queue.delete(id);
+   // Keep final receipts until acknowledged, including a published run's losses.
+   // Never-submitted banked runs need only their best candidate.
+   for(const [id,receipt]of this.queue)if(id!==snapshot.current?.id&&id!==snapshot.saved?.id&&(receipt.run.status==='active'||this.state.choice!=='public'))this.queue.delete(id);
+   this.persistFinals();
    this.publish();const run=snapshot.current,prior=this.state.qualification;
-   const immediate=run?.status!=='active'||!!prior&&prior.runId!==run?.id;
+   const immediate=run?.status!=='active'||!!prior&&prior.runId!==run?.id||!run?.incident&&this.lastIncident;
    this.schedule(immediate?0:250);
   };this.unsubscribe=scoring.subscribe(read);read();void this.start();
  }
  private choice(value:Participation){this.state.choice=value;try{this.store?.setItem(participationKey,value);}catch{}}
+ private persistFinals(){
+  if(this.state.choice!=='public')return;
+  let best:LeaderboardReceipt|undefined;
+  for(const r of this.queue.values())if(r.run.status!=='active'&&!this.attempted.has(r.run.id)&&(!best||netPoints(r.run)>netPoints(best.run)))best=r;
+  for(const [id,r]of this.queue)if(this.state.personal&&r.run.status!=='active'&&!this.attempted.has(id)&&id!==best?.run.id)this.queue.delete(id);
+  const serialized=JSON.stringify([...this.queue.values()].filter(r=>r.run.status!=='active').map(r=>({run:r.run,attempted:this.attempted.has(r.run.id)})));
+  if(serialized!==this.persistedFinals)try{this.store?.setItem(pendingScoresKey,serialized);this.persistedFinals=serialized;}catch{/* The in-memory queue remains available if storage is full. */}
+ }
  decline(){this.choice('private');this.state.invitation=false;this.publish();}
  dismissInvitation(){this.state.invitation=false;this.publish();}
  async enroll(name:string,turnstileToken:string){
   ++this.epoch;const personal=await this.request<PersonalStanding>('/me','PUT',{name,turnstileToken});this.apply(personal);this.choice('public');this.state.invitation=false;this.success();this.publish();this.schedule(0);
+  this.persistFinals();
  }
- async withdraw(){++this.epoch;const personal=await this.request<PersonalStanding>('/me','DELETE');this.apply(personal);this.choice('private');this.accepted.clear();this.state.invitation=false;this.success();this.publish();}
+ async withdraw(){++this.epoch;const personal=await this.request<PersonalStanding>('/me','DELETE');this.apply(personal);this.choice('private');this.accepted.clear();this.rejected.clear();this.attempted.clear();this.queue.clear();const current=this.state.current&&publicationReceipt(this.state.current);if(current)this.queue.set(current.run.id,current);try{this.store?.setItem(pendingScoresKey,'[]');this.persistedFinals='[]';}catch{}this.state.invitation=false;this.success();this.publish();}
  async list(offset=0){const page=await this.request<LeaderboardPage>('?offset='+offset+'&limit=50');this.cutoff=page.cutoff;this.state.enabled=page.enabled;this.state.sitekey=page.sitekey;return page;}
  resume(){this.retryAt=0;this.schedule(0);}
- private apply(personal:PersonalStanding){this.state.personal=personal;this.state.enabled=personal.enabled;this.state.sitekey=personal.sitekey;}
+ private apply(personal:PersonalStanding){this.state.personal=personal;this.state.enabled=personal.enabled;this.state.sitekey=personal.sitekey;if(personal.entry?.status==='active')this.attempted.add(personal.entry.runId);}
  private success(){this.failures=0;this.retryAt=0;this.state.error='';this.state.stale=false;}
  private failure(error:unknown){this.state.error=error instanceof Error?error.message:'The register could not be reached.';this.state.stale=true;this.failures++;this.retryAt=this.now()+Math.max(error instanceof LeaderboardHTTPError?error.retryAfter:0,Math.min(60000,1000*2**Math.min(6,this.failures)));}
- private schedule(delay:number){if(this.disposed||this.timer)return;this.timer=setTimeout(()=>{this.timer=undefined;void this.flush();},delay);}
+ private schedule(delay:number){if(this.disposed)return;const at=this.now()+delay;if(this.timer&&this.timerAt<=at)return;clearTimeout(this.timer);this.timerAt=at;this.timer=setTimeout(()=>{this.timer=undefined;this.timerAt=Infinity;void this.flush();},delay);}
  async flush(){
   if(this.busy||this.disposed)return;
   const now=this.now();if(now<this.retryAt){this.schedule(this.retryAt-now);return;}
@@ -76,13 +93,16 @@ export class LeaderboardClient {
      if(!urgent&&delay>0){this.schedule(delay);return;}
      this.lastIncident=!!receipt.run.incident;
      try{
+      this.attempted.add(receipt.run.id);this.persistFinals();
       const result=await this.request<SubmissionResult>('/runs/'+receipt.run.id,'PUT',receipt);
       if(epoch!==this.epoch)return;
       this.accepted.set(receipt.run.id,result.acceptedSequence);this.apply(result);
       if((this.queue.get(receipt.run.id)?.sequence||0)<=result.acceptedSequence)this.queue.delete(receipt.run.id);
+      if(receipt.run.status!=='active'&&!this.queue.has(receipt.run.id))this.attempted.delete(receipt.run.id);
+      this.persistFinals();
      }catch(error){
       if(error instanceof LeaderboardHTTPError&&error.status===401){this.choice('undecided');this.state.personal=undefined;}
-      if(error instanceof LeaderboardHTTPError&&[409,422].includes(error.status)){this.rejected.set(receipt.run.id,receipt.sequence);if(this.queue.get(receipt.run.id)?.sequence===receipt.sequence)this.queue.delete(receipt.run.id);}
+      if(error instanceof LeaderboardHTTPError&&[409,422].includes(error.status)){this.rejected.set(receipt.run.id,receipt.sequence);if(this.queue.get(receipt.run.id)?.sequence===receipt.sequence)this.queue.delete(receipt.run.id);if(!this.queue.has(receipt.run.id))this.attempted.delete(receipt.run.id);this.persistFinals();}
       throw error;
      }
      this.lastSend=now;

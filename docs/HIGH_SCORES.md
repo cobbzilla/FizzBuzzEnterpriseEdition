@@ -52,6 +52,9 @@ score snapshot. Only the last snapshot is stored for an active run; the recent
 100 award receipts are not treated as a complete event log.
 The best and most recent finalized snapshots are retained. Older finalized
 receipts shrink to sequence/digest anchors so compaction cannot admit replays.
+Unacknowledged final receipts are kept in a local outbox when storage is available.
+It preserves updates to previously submitted runs and the best never-submitted
+banked candidate, including when several new mandates finish during an outage.
 
 Public rows disclose the chosen name, exact score, run length, status, conditions,
 scoring edition and update time. Amounts and ordinals are decimal strings.

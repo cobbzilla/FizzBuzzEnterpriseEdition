@@ -2,6 +2,7 @@ import type {ScoringRun} from './scoring-service.ts';
 
 export const leaderboardAPI='/api/high-scores';
 export const participationKey='slopbuzz:high-scores:participation:v1';
+export const pendingScoresKey='slopbuzz:high-scores:pending:v1';
 export const leaderboardLimit=1000;
 export type Participation='undecided'|'private'|'public';
 export interface LeaderboardReceipt {schema:'slopbuzz-leaderboard/v1';sequence:number;run:ScoringRun}

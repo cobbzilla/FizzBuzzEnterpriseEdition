@@ -5278,6 +5278,7 @@ var PortfolioDesk = class extends EnterpriseScoringService {
 // web/leaderboard-model.ts
 var leaderboardAPI = "/api/high-scores";
 var participationKey = "slopbuzz:high-scores:participation:v1";
+var pendingScoresKey = "slopbuzz:high-scores:pending:v1";
 function leaderboardName(value) {
   if (typeof value !== "string") throw Error("Enter a name using letters, digits, spaces, hyphens and underscores.");
   const name = value.trim();
@@ -5322,6 +5323,9 @@ var LeaderboardClient = class {
   unsubscribe;
   store;
   epoch = 0;
+  timerAt = Infinity;
+  attempted = /* @__PURE__ */ new Set();
+  persistedFinals = "";
   send;
   now;
   visible;
@@ -5333,6 +5337,20 @@ var LeaderboardClient = class {
     try {
       const choice = storage?.getItem(participationKey);
       if (choice === "public" || choice === "private") this.state.choice = choice;
+    } catch {
+    }
+    if (this.state.choice === "public") try {
+      const raw = storage?.getItem(pendingScoresKey) || "[]";
+      if (raw.length > 2 * 1024 * 1024) throw Error("Oversized pending receipts");
+      const saved = JSON.parse(raw);
+      if (!Array.isArray(saved) || saved.length > 100) throw Error("Invalid pending receipts");
+      for (const item of saved) {
+        const run = decodeScoringRun(item.run), receipt = run && publicationReceipt(run);
+        if (receipt && run.status !== "active") {
+          this.queue.set(run.id, receipt);
+          if (item.attempted) this.attempted.add(run.id);
+        }
+      }
     } catch {
     }
   }
@@ -5386,10 +5404,11 @@ var LeaderboardClient = class {
         const receipt = publicationReceipt(run2);
         if (receipt && receipt.sequence > (this.accepted.get(run2.id) || 0) && receipt.sequence > (this.rejected.get(run2.id) || 0)) this.queue.set(run2.id, receipt);
       }
-      for (const id of this.queue.keys()) if (id !== snapshot.current?.id && id !== snapshot.saved?.id) this.queue.delete(id);
+      for (const [id, receipt] of this.queue) if (id !== snapshot.current?.id && id !== snapshot.saved?.id && (receipt.run.status === "active" || this.state.choice !== "public")) this.queue.delete(id);
+      this.persistFinals();
       this.publish();
       const run = snapshot.current, prior = this.state.qualification;
-      const immediate2 = run?.status !== "active" || !!prior && prior.runId !== run?.id;
+      const immediate2 = run?.status !== "active" || !!prior && prior.runId !== run?.id || !run?.incident && this.lastIncident;
       this.schedule(immediate2 ? 0 : 250);
     };
     this.unsubscribe = scoring.subscribe(read);
@@ -5400,6 +5419,18 @@ var LeaderboardClient = class {
     this.state.choice = value;
     try {
       this.store?.setItem(participationKey, value);
+    } catch {
+    }
+  }
+  persistFinals() {
+    if (this.state.choice !== "public") return;
+    let best;
+    for (const r of this.queue.values()) if (r.run.status !== "active" && !this.attempted.has(r.run.id) && (!best || netPoints(r.run) > netPoints(best.run))) best = r;
+    for (const [id, r] of this.queue) if (this.state.personal && r.run.status !== "active" && !this.attempted.has(id) && id !== best?.run.id) this.queue.delete(id);
+    const serialized = JSON.stringify([...this.queue.values()].filter((r) => r.run.status !== "active").map((r) => ({ run: r.run, attempted: this.attempted.has(r.run.id) })));
+    if (serialized !== this.persistedFinals) try {
+      this.store?.setItem(pendingScoresKey, serialized);
+      this.persistedFinals = serialized;
     } catch {
     }
   }
@@ -5421,6 +5452,7 @@ var LeaderboardClient = class {
     this.success();
     this.publish();
     this.schedule(0);
+    this.persistFinals();
   }
   async withdraw() {
     ++this.epoch;
@@ -5428,6 +5460,16 @@ var LeaderboardClient = class {
     this.apply(personal);
     this.choice("private");
     this.accepted.clear();
+    this.rejected.clear();
+    this.attempted.clear();
+    this.queue.clear();
+    const current = this.state.current && publicationReceipt(this.state.current);
+    if (current) this.queue.set(current.run.id, current);
+    try {
+      this.store?.setItem(pendingScoresKey, "[]");
+      this.persistedFinals = "[]";
+    } catch {
+    }
     this.state.invitation = false;
     this.success();
     this.publish();
@@ -5447,6 +5489,7 @@ var LeaderboardClient = class {
     this.state.personal = personal;
     this.state.enabled = personal.enabled;
     this.state.sitekey = personal.sitekey;
+    if (personal.entry?.status === "active") this.attempted.add(personal.entry.runId);
   }
   success() {
     this.failures = 0;
@@ -5461,9 +5504,14 @@ var LeaderboardClient = class {
     this.retryAt = this.now() + Math.max(error instanceof LeaderboardHTTPError ? error.retryAfter : 0, Math.min(6e4, 1e3 * 2 ** Math.min(6, this.failures)));
   }
   schedule(delay) {
-    if (this.disposed || this.timer) return;
+    if (this.disposed) return;
+    const at = this.now() + delay;
+    if (this.timer && this.timerAt <= at) return;
+    clearTimeout(this.timer);
+    this.timerAt = at;
     this.timer = setTimeout(() => {
       this.timer = void 0;
+      this.timerAt = Infinity;
       void this.flush();
     }, delay);
   }
@@ -5494,11 +5542,15 @@ var LeaderboardClient = class {
           }
           this.lastIncident = !!receipt.run.incident;
           try {
+            this.attempted.add(receipt.run.id);
+            this.persistFinals();
             const result = await this.request("/runs/" + receipt.run.id, "PUT", receipt);
             if (epoch !== this.epoch) return;
             this.accepted.set(receipt.run.id, result.acceptedSequence);
             this.apply(result);
             if ((this.queue.get(receipt.run.id)?.sequence || 0) <= result.acceptedSequence) this.queue.delete(receipt.run.id);
+            if (receipt.run.status !== "active" && !this.queue.has(receipt.run.id)) this.attempted.delete(receipt.run.id);
+            this.persistFinals();
           } catch (error) {
             if (error instanceof LeaderboardHTTPError && error.status === 401) {
               this.choice("undecided");
@@ -5507,6 +5559,8 @@ var LeaderboardClient = class {
             if (error instanceof LeaderboardHTTPError && [409, 422].includes(error.status)) {
               this.rejected.set(receipt.run.id, receipt.sequence);
               if (this.queue.get(receipt.run.id)?.sequence === receipt.sequence) this.queue.delete(receipt.run.id);
+              if (!this.queue.has(receipt.run.id)) this.attempted.delete(receipt.run.id);
+              this.persistFinals();
             }
             throw error;
           }

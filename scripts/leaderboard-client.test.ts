@@ -4,6 +4,7 @@ import {LeaderboardClient} from '../web/leaderboard-client.ts';
 import {participationKey,type PersonalStanding,type LeaderboardReceipt} from '../web/leaderboard-model.ts';
 import {netPoints} from '../web/scoring-service.ts';
 import {makeScore} from './leaderboard-fixtures.ts';
+import {auditLeaderboardReceipt} from '../deploy/leaderboard-audit.ts';
 
 class Storage {data=new Map<string,string>();getItem(k:string){return this.data.get(k)||null;}setItem(k:string,v:string){this.data.set(k,v);}}
 function server(){
@@ -41,4 +42,29 @@ test('failed synchronization retains the last confirmed rank and sends losses af
 test('withdrawal cannot be undone by an earlier in-flight score response',async()=>{
  const api=server();let release!:(r:Response)=>void;let held=false;const client=new LeaderboardClient(async(input,options)=>{const response=await api.send(input,options);if(String(input).includes('/runs/')&&held)return new Promise(resolve=>{release=()=>resolve(response);});return response;},new Storage(),()=>100000,()=>true);
  try{await client.start();await client.enroll('Withdraw Clerk','token');held=true;client.attach(await makeScore(15,'1000'));const pending=client.flush();await settle();await client.withdraw();release(new Response());await pending;assert.equal(client.state.choice,'private');assert.equal(client.state.personal?.participating,false);assert.equal(client.state.personal?.entry,null);}finally{client.dispose();}
+});
+test('a final receipt preempts a pending five-second update timer',async()=>{
+ const api=server();let now=100000;const client=new LeaderboardClient(api.send,new Storage(),()=>now,()=>true);
+ try{await client.start();await client.enroll('Immediate Clerk','token');const service=await makeScore(15,'1000');client.attach(service);await settle();await client.flush();
+  now+=100;service.inspect('department','publication');await client.flush();service.finish('stopped');await settle();
+  assert.equal(api.personal().entry?.status,'stopped');assert.equal(api.personal().entry?.score,String(netPoints(service.snapshot().current!)));
+ }finally{client.dispose();}
+});
+test('rapid later mandates and reload preserve an earlier published run’s pending heist loss',async()=>{
+ const api=server(),storage=new Storage();let offline=false,now=100000;
+ const send:typeof fetch=async(...args)=>{if(offline)throw Error('Offline');return api.send(...args);};
+ const client=new LeaderboardClient(send,storage,()=>now,()=>true);
+ let earlier:LeaderboardReceipt;
+ try{await client.start();await client.enroll('Patient Clerk','token');const service=await makeScore(100,'1000');client.attach(service);await settle();await client.flush();
+  offline=true;service.startIncident('heist','1','99','Common');service.incidentWork('1',{heistCase:1});service.advanceHeist('1',15000,'automatic');service.finish('stopped');earlier={schema:'slopbuzz-leaderboard/v1',sequence:service.snapshot().current!.revision!,run:service.snapshot().current!};
+  // More than the scoring service's two retained runs pass before connectivity returns.
+  for(const count of [150,160,170]){service.begin(String(count),'factor-resonance-v1',{companions:'false'});service.receive({start:'1',end:String(count),global:{},cycles:{},closing:{},complete:true});await service.disclose('1',Array.from({length:count},(_,i)=>{const n=i+1;return n%15===0?'FizzBuzz':n%3===0?'Fizz':n%5===0?'Buzz':String(n);}),undefined,async()=>[]);service.finish('completed');}
+  now+=5000;await client.flush();assert.equal(client.state.stale,true);
+ }finally{client.dispose();}
+ offline=false;now+=60000;const restored=new LeaderboardClient(send,storage,()=>now,()=>true);
+ try{await restored.start();await restored.flush();await settle();await restored.flush();
+  const filed=api.calls.filter(c=>c.path==='/runs/'+earlier!.run.id&&c.body.run.status==='stopped').at(-1)?.body as LeaderboardReceipt|undefined;
+  assert(filed);auditLeaderboardReceipt(filed);assert.equal(filed.sequence,earlier!.sequence);assert.equal(String(netPoints(filed.run)),String(netPoints(earlier!.run)));
+  assert(api.calls.some(c=>c.path.startsWith('/runs/')&&c.body.run.verification.mandate==='170'&&c.body.run.status==='completed'));
+ }finally{restored.dispose();}
 });
