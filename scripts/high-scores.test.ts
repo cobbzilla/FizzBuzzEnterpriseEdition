@@ -106,6 +106,16 @@ test('withdrawal removes public results and invalidates ownership; API remains r
  const cookie=await enroll('Withdraw Me'),r=receipt(await scoreFixture(15));await call('/runs/'+r.run.id,'PUT',r,cookie);assert.equal((await call('/me','DELETE',undefined,cookie)).status,200);assert.equal((await (await call('/me','GET',undefined,cookie)).json()).participating,false);
  local.env.HIGH_SCORES_ENABLED='false';assert.equal((await call('')).status,200);assert.equal((await call('/check','POST',r)).status,503);local.env.HIGH_SCORES_ENABLED='true';
 });
+test('invented credentials cannot reset the visitor IP request allowance',async()=>{
+ for(const method of ['GET','PUT']){
+  const seen=new Set<string>(),limiter={limit:async({key}:{key:string})=>{const success=!seen.has(key);seen.add(key);return {success};}};
+  const env={...local.env,SCORES_READ_LIMIT:limiter,SCORES_WRITE_LIMIT:limiter};
+  const request=(cookie:string,ip:string)=>new Request('https://scores.example/api/high-scores/me',{method,headers:{Origin:'https://scores.example','Content-Type':'application/json','CF-Connecting-IP':ip,Cookie:'__Host-slopbuzz-scores='+cookie},...(method==='PUT'?{body:JSON.stringify({name:'Invalid!'})}:{})});
+  assert.equal((await highScores(request('a'.repeat(64),'192.0.2.1'),env)).status,method==='GET'?200:400);
+  const refused=await highScores(request('b'.repeat(64),'192.0.2.1'),env);assert.equal(refused.status,429);assert.equal(refused.headers.get('Retry-After'),'15');
+  assert.equal((await highScores(request('b'.repeat(64),'192.0.2.2'),env)).status,method==='GET'?200:400);
+ }
+});
 test('D1 resolves rank 1000 versus 1001, ties and arbitrary-precision values',async()=>{
  const db=local.env.HIGH_SCORES!,store=new LeaderboardStore(db.withSession('first-primary'));
  const template=receipt(await scoreFixture(1));

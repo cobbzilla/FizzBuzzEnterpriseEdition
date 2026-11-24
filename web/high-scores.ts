@@ -125,8 +125,12 @@ export class HighScoreDesk {
    this.form.querySelector('[data-high-scores-explanation]')!.textContent=state.choice==='public'?'This browser participates automatically. You can change its public name or withdraw.':state.choice==='private'?'Your scores are private. You can join the register whenever you choose.':`${current?.status==='active'?'Your mandate is still running. ':''}Would you like your score to appear in the public register?`;
    this.score.textContent=current?number(String(netPoints(current))):entry?number(entry.score):'0';
    this.rank.textContent=standing?`· ${standing}${state.stale?' · awaiting update':''}`:'';
-   this.submit.textContent=state.personal?.participating?'Save public name':'Publish my score';
-   this.submit.disabled=this.requestBusy||!state.enabled||!state.personal?.participating&&!this.token;
+   // Preserve the pressed button across live score updates. Replacing its text
+   // during a pointer press can cancel WebKit's eventual click.
+   const submitLabel=state.personal?.participating?'Save public name':'Publish my score';
+   if(this.submit.textContent!==submitLabel)this.submit.textContent=submitLabel;
+   const submitDisabled=this.requestBusy||!state.enabled||!state.personal?.participating&&!this.token;
+   if(this.submit.disabled!==submitDisabled)this.submit.disabled=submitDisabled;
    this.decline.hidden=!!state.personal?.participating;this.withdraw.hidden=!state.personal?.participating;this.withdraw.disabled=this.requestBusy;
    if(state.error)this.status.textContent=state.error;
    else if(!state.enabled)this.status.textContent='Score submissions are temporarily unavailable. Your demo can continue.';

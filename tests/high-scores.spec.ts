@@ -48,7 +48,11 @@ test('qualifies mid-run, keeps the dialog score live while typing, and publishes
  await expect.poll(async()=>BigInt((await current(page)).verification.through)).toBeGreaterThan(BigInt(first.verification.through)+2n);
  await expect(page.locator('#high-scores-name')).toHaveValue('Still Typing_7');
  await expect.poll(async()=>{const r=await current(page);return await page.locator('[data-high-scores-live]').textContent()===netPoints(r).toLocaleString('en-US');}).toBe(true);
- await page.getByRole('button',{name:'Publish my score',exact:true}).click();await expect.poll(()=>register.receipts.length).toBeGreaterThan(0);
+ expect(await page.locator('#high-scores-name').evaluate((e:HTMLInputElement)=>({valid:e.checkValidity(),message:e.validationMessage}))).toEqual({valid:true,message:''});
+ // Keep the pointer pressed through live updates: Safari must still submit.
+ const publish=page.getByRole('button',{name:'Publish my score',exact:true});await expect(publish).toBeEnabled();await publish.hover();await page.mouse.down();
+ const pressed=await current(page);await expect.poll(async()=>BigInt((await current(page)).verification.through)).toBeGreaterThan(BigInt(pressed.verification.through)+2n);await page.mouse.up();
+ await expect.poll(async()=>({filed:register.receipts.length>0,errors:register.failures,state:await page.evaluate(()=>({choice:window.__slopbuzzHighScores?.client.state.choice,error:window.__slopbuzzHighScores?.client.state.error})),status:await page.locator('#high-scores-status').textContent()})).toMatchObject({filed:true,errors:[],state:{choice:'public',error:''}});
  await page.keyboard.press('Escape');await expect(page.locator('#high-scores-dialog')).toBeHidden();await expect(page.locator('#score-cluster [data-high-score-standing]')).toContainText('#1');
  await demoAction(page,'click','#reveal-all');await expect(page.locator('#run-status')).toContainText('Mandate complete');await expect.poll(()=>register.entry()?.status).toBe('completed');
  expect(register.entry()?.score).toBe(String(netPoints(await current(page))));expect(register.failures).toEqual([]);

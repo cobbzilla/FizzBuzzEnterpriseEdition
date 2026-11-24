@@ -31,7 +31,9 @@ export async function highScores(request:Request,env:HighScoresEnv,send:typeof f
  const ip=request.headers.get('CF-Connecting-IP')||'local-preview',token=credential(request),validToken=token&&/^[a-f0-9]{64}$/.test(token)?token:undefined;
  const hash=validToken?await sha(validToken):undefined;
  const limiter=writes?env.SCORES_WRITE_LIMIT:env.SCORES_READ_LIMIT;
- if(limiter&&!(await limiter.limit({key:hash||ip})).success)return json({error:'Please give the register a moment.'},429,{'Retry-After':'15'});
+ // Cookies are visitor-controlled until ownership is checked. Inventing a new
+ // credential must not reset the request allowance.
+ if(limiter&&!(await limiter.limit({key:ip})).success)return json({error:'Please give the register a moment.'},429,{'Retry-After':'15'});
  try{
   const store=new LeaderboardStore(env.HIGH_SCORES.withSession('first-primary'),now),person=hash?await store.person(hash):null;
   if(person?.blocked&&writes&&request.method!=='DELETE')return json({error:'This browser cannot submit to the register.'},403);
