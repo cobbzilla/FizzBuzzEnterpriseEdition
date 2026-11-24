@@ -34,7 +34,7 @@ export async function isolatedE2E(selection:string[]=[]){
  // Exercise the account and its responsive surfaces before long natural-flight
  // scenarios. Every collected case still runs, with the complete order sealed
  // into the checkpoint alongside source and artifact hashes.
- const priority=['portfolio.spec.ts','demo-layout.spec.ts','chronicle.spec.ts','heist.spec.ts','office-fullscreen.spec.ts'];
+ const priority=['high-scores.spec.ts','portfolio.spec.ts','demo-layout.spec.ts','chronicle.spec.ts','heist.spec.ts','office-fullscreen.spec.ts'];
  const rank=(spec:Spec)=>{const index=priority.indexOf(spec.file?.split('/').at(-1)||'');return index<0?priority.length:index;};
  const ordered=specs(inventory).sort((a,b)=>rank(a)-rank(b)),ids=ordered.map(s=>s.id);assert.equal(new Set(ids).size,ids.length);assert(ids.length>0);
  const checkpointPath=folder+'/checkpoint.json';

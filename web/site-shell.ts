@@ -3,7 +3,7 @@ import {sitePage} from './site-navigation';
 interface View {key:string;root:HTMLElement;main:HTMLElement;title:string;description:string;canonical?:string;robots?:string;classes:string;module?:string;loaded?:Promise<unknown>;scroll:{x:number;y:number}}
 const views=new Map<string,View>(),shellURL=document.querySelector<HTMLScriptElement>('script[data-site-shell]')!.src;
 const styleLoads=new Map<string,Promise<void>>();
-const persistent='.site-header,.skip-link,.site-footer,#discovery-register,#companion-dialog,#score-dialog,#active-run-banner,#active-run-announcement,.discovery-announcement,.companion-departures,.estate-announcement,script';
+const persistent='.site-header,.skip-link,.site-footer,#discovery-register,#companion-dialog,#score-dialog,#high-scores-dialog,#active-run-banner,#active-run-announcement,.discovery-announcement,.companion-departures,.estate-announcement,script';
 let active:View,serial=0,loading:AbortController|undefined;
 const notice=document.createElement('p');notice.className='site-navigation-notice';notice.setAttribute('role','status');notice.setAttribute('aria-live','polite');notice.hidden=true;
 const retry=document.createElement('button');retry.type='button';retry.className='button button-secondary';retry.textContent='Resubmit the navigation paperwork';retry.hidden=true;

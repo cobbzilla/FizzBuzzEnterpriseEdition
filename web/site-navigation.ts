@@ -1,6 +1,6 @@
 import {scope} from './release-assets';
 
-const pages=new Set(['','demo','api','about','company-history','accessibility','validation','bestiary','department-of-improbable-appointments','changelog','continuity-register','response']);
+const pages=new Set(['','demo','api','about','company-history','accessibility','validation','bestiary','department-of-improbable-appointments','changelog','continuity-register','response','high-scores']);
 export function sitePage(url:URL):string|undefined {
  const base=new URL(scope);if(url.origin!==base.origin||!url.pathname.startsWith(base.pathname))return;
  const path=url.pathname.slice(base.pathname.length).replace(/\/$/,'');

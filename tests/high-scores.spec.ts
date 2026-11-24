@@ -3,7 +3,7 @@ import AxeBuilder from '@axe-core/playwright';
 import {demoAction,department} from './demo-controls';
 import {auditLeaderboardReceipt} from '../deploy/leaderboard-audit';
 import {netPoints,scoringStorageKey,type ScoringRun} from '../web/scoring-service';
-import type {LeaderboardEntry,LeaderboardReceipt} from '../web/leaderboard-model';
+import {participationKey,type LeaderboardEntry,type LeaderboardReceipt} from '../web/leaderboard-model';
 
 // Network-mocked register tests must not be intercepted by the offline worker.
 // The release's public checks exercise the real API with service workers enabled.
@@ -60,6 +60,15 @@ test('declining is remembered across runs and reloads; joining later and withdra
  await run(page,'30','0');await expect(page.locator('#run-status')).toContainText('Mandate complete');await expect(page.locator('#high-scores-dialog')).toBeHidden();expect(register.receipts).toHaveLength(0);
  await page.reload();await expect(page.locator('#health-value')).toHaveText('LIVE');await expect(page.locator('#high-scores-dialog')).toBeHidden();await page.locator('#score-cluster [data-high-scores-open]').click();await page.locator('[data-high-scores-tab="settings"]').click();await page.locator('#high-scores-name').fill('Later Clerk');await page.getByRole('button',{name:'Publish my score',exact:true}).click();await expect.poll(()=>register.receipts.length).toBeGreaterThan(0);
  await page.getByRole('button',{name:'Withdraw from the register',exact:true}).click();await expect(page.locator('#high-scores-status')).toContainText('removed');expect(register.entry()).toBeNull();expect(register.failures).toEqual([]);
+});
+test('visiting the public register and returning preserves the active mandate and live score',async({page})=>{
+ await mockRegister(page);await page.addInitScript(key=>localStorage.setItem(key,'private'),participationKey);
+ await page.goto('/demo/');await expect(page.locator('#health-value')).toHaveText('LIVE');await run(page,'1000');const first=await current(page);
+ await page.locator('#portfolio-open').click();await page.locator('#score-rules-link').click();await expect(page).toHaveURL(/\/scoring\//);
+ await page.getByRole('link',{name:'Top scores',exact:true}).click();await expect(page).toHaveURL(/\/high-scores\/$/);await expect(page.locator('body')).toHaveAttribute('data-site-page','high-scores');await expect(page.locator('#high-scores-list')).toContainText('No scores filed yet');
+ await expect.poll(async()=>{const r=await current(page);return r.id===first.id&&r.status==='active'&&BigInt(r.verification.through)>BigInt(first.verification.through);}).toBe(true);
+ await page.getByRole('button',{name:'My participation',exact:true}).click();await expect(page.locator('#high-scores-dialog')).toBeVisible();await page.keyboard.press('Escape');
+ await page.getByRole('link',{name:'Earn an unreasonable amount of credit',exact:true}).click();await department(page,'observe');const returned=await current(page);expect(returned.id).toBe(first.id);expect(returned.status).toBe('active');expect(BigInt(returned.verification.through)).toBeGreaterThan(BigInt(first.verification.through));
 });
 test('trophy and register remain readable and keyboard accessible at 320px',async({page},info)=>{
  await mockRegister(page);await page.setViewportSize({width:320,height:568});await page.goto('/high-scores/');await expect(page.locator('#high-scores-list')).toContainText('No scores filed yet');await page.getByRole('button',{name:'My participation',exact:true}).click();

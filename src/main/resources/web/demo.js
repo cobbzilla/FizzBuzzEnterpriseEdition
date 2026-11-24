@@ -7742,7 +7742,7 @@ var RecentAppointments = class {
 };
 
 // web/site-navigation.ts
-var pages = /* @__PURE__ */ new Set(["", "demo", "api", "about", "company-history", "accessibility", "validation", "bestiary", "department-of-improbable-appointments", "changelog", "continuity-register", "response"]);
+var pages = /* @__PURE__ */ new Set(["", "demo", "api", "about", "company-history", "accessibility", "validation", "bestiary", "department-of-improbable-appointments", "changelog", "continuity-register", "response", "high-scores"]);
 function sitePage(url) {
   const base = new URL(scope);
   if (url.origin !== base.origin || !url.pathname.startsWith(base.pathname)) return;
