@@ -29,7 +29,10 @@ export async function drainScoreNotifications(env:HighScoresEnv,send:typeof fetc
     const data=await response.json() as {id?:string};if(typeof data.id!=='string')throw Error('Provider response did not confirm an email identifier');
     await db.prepare("UPDATE leaderboard_notifications SET state='sent',resend_id=?3,lease_token=NULL,lease_until_ms=0,error=NULL WHERE id=?1 AND lease_token=?2").bind(job.id,lease,data.id).run();
    }else{
-    const temporary=response.status===429||response.status>=500,delay=Math.max(Number(response.headers.get('Retry-After')||0)*1000,Math.min(3600000,60000*2**Math.min(job.attempts,6)));
+    const conflict=response.status===409?await response.json().catch(()=>null) as {name?:string}|null:null;
+    const temporary=response.status===429||response.status>=500||conflict?.name==='concurrent_idempotent_requests';
+    const retryAfter=response.headers.get('Retry-After')||'',seconds=Number(retryAfter),requestedDelay=Number.isFinite(seconds)?seconds*1000:Date.parse(retryAfter)-clock();
+    const delay=Math.max(Number.isFinite(requestedDelay)?requestedDelay:0,Math.min(3600000,60000*2**Math.min(job.attempts,6)));
     await db.prepare('UPDATE leaderboard_notifications SET state=?3,error=?4,next_ms=?5,lease_token=NULL,lease_until_ms=0 WHERE id=?1 AND lease_token=?2').bind(job.id,lease,temporary?'pending':'failed','Resend HTTP '+response.status,clock()+delay).run();
     break;
    }

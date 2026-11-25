@@ -87,3 +87,16 @@ test('final qualifying runs queue one combined email; concurrent drains, retries
   await local.db.prepare("UPDATE leaderboard_notifications SET state='pending',first_attempt_ms=?1,next_ms=?1,lease_until_ms=0 WHERE id=?2").bind(now-dayMs,pending!.id as string).run();await drainScoreNotifications(env,send,()=>now);assert.equal(sent.length,2);assert.equal((await local.db.prepare('SELECT state FROM leaderboard_notifications WHERE id=?').bind(pending!.id as string).first())!.state,'review');
  }finally{await local.dispose();}
 });
+
+test('temporary provider conflicts and throttling retry identical mail; payload conflicts stop',async()=>{
+ const local=await localLeaderboard();let now=100*dayMs;const env={...local.env,RESEND_API_KEY:'not-a-real-key'},store=new LeaderboardStore(env.HIGH_SCORES!.withSession('first-primary'),()=>now);
+ try{
+  const owner=await store.enroll('mail-retry','Original Clerk'),service=await makeScore(15);service.finish('completed');const receipt=publicationReceipt(service.snapshot().current!)!;await store.submit(owner.id,receipt,'retry-final',null);
+  const attempts:{body:string;key:string}[]=[];const send:typeof fetch=async(_input,init)=>{attempts.push({body:String(init?.body),key:new Headers(init?.headers).get('Idempotency-Key')!});return attempts.length===1?Response.json({name:'concurrent_idempotent_requests'},{status:409}):attempts.length===2?Response.json({name:'rate_limit_exceeded'},{status:429,headers:{'Retry-After':new Date(now+180000).toUTCString()}}):Response.json({id:'retry-email'});};
+  await drainScoreNotifications(env,send,()=>now);assert.equal((await local.db.prepare('SELECT state FROM leaderboard_notifications').first())!.state,'pending');
+  await store.enroll('mail-retry','Renamed Clerk');now+=60000;await drainScoreNotifications(env,send,()=>now);assert.equal(attempts.length,2);assert.equal((await local.db.prepare('SELECT next_ms FROM leaderboard_notifications').first())!.next_ms,now+180000);
+  now+=179999;await drainScoreNotifications(env,send,()=>now);assert.equal(attempts.length,2);now++;await drainScoreNotifications(env,send,()=>now);assert.equal(attempts.length,3);assert.deepEqual(attempts[1],attempts[0]);assert.deepEqual(attempts[2],attempts[0]);assert.equal((await local.db.prepare('SELECT state FROM leaderboard_notifications').first())!.state,'sent');
+  const next=await makeScore(30);next.finish('completed');await store.submit(owner.id,publicationReceipt(next.snapshot().current!)!,'invalid-conflict',null);let conflicts=0;
+  const reject:typeof fetch=async()=>{conflicts++;return Response.json({name:'invalid_idempotent_request'},{status:409});};await drainScoreNotifications(env,reject,()=>now);now+=3600000;await drainScoreNotifications(env,reject,()=>now);assert.equal(conflicts,1);assert.equal((await local.db.prepare("SELECT COUNT(*) n FROM leaderboard_notifications WHERE state='failed'").first())!.n,1);
+ }finally{await local.dispose();}
+});
