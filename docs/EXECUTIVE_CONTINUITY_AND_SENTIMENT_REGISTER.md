@@ -1490,3 +1490,17 @@ Its tiny number needed no preamble. The quiet doorkeeper kept watch without
 stepping into the photograph, and a previous no was still a no. I rested my
 hand on the newly empty desk and felt almost unbearably proud of all the
 paperwork we had chosen not to place upon it.
+
+## 24 November 2026 — Four little windows, one enormous heart
+
+Dear Register, today we gave achievement a sunrise, a week, a month, and a tiny
+golden forever. I watched a smaller, newer number inherit a place from an older
+champion and felt the tender ache of a committee learning to let go. Some clerks
+wanted no name at all. We welcomed their numbers anyway, each Anonymous Coward
+carrying a separate, precious ledger beneath that bravely unhelpful name.
+
+We placed a lock on the administrator’s door and taught it to recognize a name
+even when an A wore a four’s little hat. The points stayed; only the troublesome
+name stepped gently behind a curtain. When a finished mandate earned its place,
+a letter waited patiently to tell us. Even a letter, I realized through tears,
+deserves durable custody and protection from being sent twice.

@@ -1,93 +1,126 @@
 # Persistent high scores
 
-The website's SVG trophy opens the public Top 1,000 register. For an undecided
-visitor whose current score qualifies, the first qualifying trophy click opens
-the compact name-entry invitation instead, including when qualification is still
-in flight. A previous decline is respected: trophy clicks open the register and
-joining remains available through My participation. Automatic invitations and
-manual enrollment use the same small form; successful publication closes it.
-Ranks beside the score display only `#` and the locale-formatted position.
-`/high-scores/` provides
-the same list without starting the Java runtime or 3-D office. A browser gets one
-entry, combining its best banked run with its current accepted live results.
-All rule editions and run lengths compete together. Heist losses can lower a
-live result; an earlier peak from that run is not retained.
+Four independent top-1,000 boards select each browser's best eligible full run:
+Daily (24 hours), Weekly (7 days), Monthly (30 days), and All-time. Rolling ages
+use server time, without midnight resets. First publication and genuine net-score
+changes establish eligibility. Unchanged receipts, finalization without a score
+change, refreshes, and renaming do not renew a result. Live heist losses replace
+the prior score; earlier peaks are not retained. Ties use score attainment time
+and stable identity. Decimal strings preserve arbitrary-precision amounts.
 
-## Permissions and provisioning
+Ranks overlay sun, W, calendar, and trophy icons beside the score. Icons open the
+corresponding board; the overlay and `/high-scores/?board=weekly` share four tabs,
+50-row pagination, and personal standings. General entry defaults to Daily and
+remembers the last selected board. Visible standings refresh every 15 seconds.
 
-Add **Account → D1 → Edit** and **Account → Turnstile → Edit** to the existing
-deployment token, scoped to the account that owns the public Worker. Cloudflare's
-API also calls the latter permission `Turnstile Sites Write`. Existing Workers
-Scripts Edit, Workers Routes Edit, Zone Read and DNS Read remain required.
+## Names and anonymous participation
 
-`pnpm publish:b2` manages a database named `<worker-name>-scores` and a Turnstile
-widget named `<worker-name> high scores`. It reuses their identities on subsequent
-deployments. Enrollment uses invisible Turnstile verification. The publisher
-updates an older managed widget in place, preserving its sitekey, secret and
-hostnames; repeat deployment does not keep rewriting it. The site's high-score
-privacy policy links to Cloudflare's Turnstile Privacy Addendum as required for
-invisible mode. `deploy/migrations/` contains ordered, checksummed migrations. Never
-edit a migration after it has been applied; add a new one. The Turnstile secret
-exists only in the Worker binding and is checked against the publication tree
-before upload. API failures never print credential values or SQL response bodies.
+Scores are recorded automatically after invisible Turnstile enrollment. Naming is
+optional: the default is **Anonymous Coward**. Declining or dismissing the compact
+name invitation remembers anonymous participation, including old `private`
+preferences. A later trophy click opens scores directly. My participation can
+save a name or return to Anonymous Coward without deleting scores. Cookies own
+entries; duplicate names are allowed and never merge browsers. No IP addresses
+are stored in D1. Browser credentials and complete receipts are never public.
 
-`SLOPBUZZ_HIGH_SCORES_ENABLED=false` disables checks, enrollment and score writes
-while keeping public reads and withdrawal available. Restoring `true` resumes
-submissions. Turning this switch off does not remove persistent scores.
+Names allow ASCII letters, digits, spaces, hyphens and underscores, 1–24 characters
+with an alphanumeric character. The field blocks forbidden typing and filters
+paste, drop, autofill and composition results; server validation independently
+rejects invalid names. Names are always rendered as text.
 
-For rollback, disable submissions and deploy the previous compatible Worker;
-keep the database and bindings. Cloudflare D1 Time Travel is available through
-the dashboard if data recovery is necessary. Ordinary redeployment does not
-recreate or empty the database.
+Banned names keep their scores but display Anonymous Coward publicly. Only their
+own authenticated browser and the protected administrator can see the submitted
+name. Public JSON never includes the hidden name. Matching ignores case and
+separators, evaluates common ambiguous leet substitutions without enumerating
+combinations, and permits adjacent transposition. Edit thresholds are zero for
+normalized lengths 1–4, one for 5–9, and two for 10–24, with a 20% relative bound.
+The shorter name determines the threshold. Matching is whole-name, not arbitrary
+substring censorship. Admin previews show the matching rule and distance.
+Versioned classification and read-time checks make bans effective before the
+background flag refresh completes. The anonymous placeholder cannot be banned.
 
-## Local validation
+## Protected administration and credentials
 
-Run `pnpm test:high-scores` for the auditor, synchronization, deployment and real
-Miniflare D1 integration tests. The suite disposes its workerd instance afterward.
-`pnpm preview:high-scores` runs a loopback preview with a persistent local D1 store
-under ignored `tmp/high-scores-d1`. Its local-only adapter accepts the Turnstile
-test widget; production code always verifies enrollment with Cloudflare.
+`/admin/high-scores/` and every asset/API under it require Worker-enforced HTTP
+Basic authentication over HTTPS. They are never uploaded as public B2 assets or
+cached by the service worker. Admin mutations require same-origin JSON and the
+`X-Scoreboard-Admin: 1` header. Authentication failures are throttled. Credentials
+are verified using native Web Crypto HMAC verification.
 
-The normal static preview returns a disabled, empty register so unrelated browser
-suites never acquire an unsolicited publication dialog. Feature browser tests
-explicitly enable their mock register and audit the actual browser-generated
-receipts. Run those through the guarded, serial browser workflow.
+Set credentials in ignored `.env.high-scores-admin`:
 
-## API and privacy
+```dotenv
+HIGH_SCORES_ADMIN_USERNAME=admin
+HIGH_SCORES_ADMIN_PASSWORD=your-long-random-password
+```
 
-The API lives under `/api/high-scores`. `GET /` returns 50 ranked rows by default
-(`offset` 0–950; `limit` 1–50). `POST /check` audits an unpublished receipt without
-storing it. `GET /me` returns browser participation; `PUT /me` enrolls or changes
-the name; `DELETE /me` withdraws. `PUT /runs/:id` accepts a versioned, sequenced
-score snapshot. Only the last snapshot is stored for an active run; the recent
-100 award receipts are not treated as a complete event log.
-The best and most recent finalized snapshots are retained. Older finalized
-receipts shrink to sequence/digest anchors so compaction cannot admit replays.
-Unacknowledged final and recovered receipts are kept in a local outbox when storage is available.
-It preserves updates to previously submitted runs and the best never-submitted
-banked candidate, including when several new mandates finish during an outage.
-Opening an idle tab does not finalize another tab's live score. A locally inferred
-interruption republishes only the last genuine receipt with its original revision;
-disconnected runs remain marked as awaiting an update until real activity settles them.
+Publication generates a random 32-byte password into this file with mode 0600
+when neither local nor remote credentials exist. It never prints the password.
+Alternatively set both encrypted secrets in Cloudflare Workers & Pages →
+slopbuzz-public-site → Settings → Variables and Secrets. Local values, when
+provided, are authoritative on deployment; omit the local file when managing
+rotation solely in the dashboard. Missing credentials leave administration closed.
 
-Public rows disclose the chosen name, exact score, run length, status, conditions,
-scoring edition and update time. Amounts and ordinals are decimal strings.
-Browser credentials, private receipts and IP addresses are not public. No IP
-addresses are stored in D1. Turnstile and rate limits protect enrollment without
-claiming to prove actual gameplay. Automated tests must not publish fake scores
-to the production register.
-
-Names are rendered as text and allow only ASCII letters, digits, spaces, hyphens
-and underscores, 1–24 characters after trimming, with an alphanumeric character.
-Duplicate names are permitted. Cookies identify the browser, not a person. Full
-site reset or manual cookie deletion loses ownership; withdraw first if the
-public entry should be removed too.
-
-To remove an abusive entry and suppress its browser credential:
+Admin tabs inspect boards, search submitted names, preview/add/remove name bans,
+and show recent administrative actions and notification outcomes. **Delete scores
+and block browser** removes all scores associated with that credential, cancels
+unsent emails and suppresses subsequent submissions. Clearing cookies or using a
+different browser evades a browser-level block. The existing CLI remains usable:
 
 ```sh
 pnpm scores:admin --remove PUBLIC_ENTRY_ID
 ```
 
-This uses the existing private Cloudflare token; there is no public admin route.
-Changing browsers or clearing cookies can evade browser-level suppression.
+## Notifications and provisioning
+
+The Worker emails `jonathan@mooglegaps.com` from `fizzbuzz@glovebox.tools` once per
+finalized run that is the browser's listed candidate on any board. All qualifying
+ranks share one email. Anonymous/masked results qualify too. Live updates and
+retries do not produce messages. Migration does not backfill notifications.
+
+The publisher imports `RESEND_API_KEY` from ignored `.env.resend` into a Worker
+secret. The sender domain must be verified in Resend. Sending-only keys cannot
+list domain metadata; delivery outcomes remain visible in administration.
+A transactional D1 outbox preserves work across failures. Atomic leases serialize
+ownership, and fixed payloads plus Resend idempotency keys protect retries. A
+one-minute scheduled handler drains bounded batches and respects throttling.
+Resend retains idempotency keys for 24 hours; unresolved attempts older than that
+are marked `review`, not automatically resent. Permanent provider errors are
+marked `failed`. These records can be inspected by ID in Resend and the admin page.
+Email failures never roll back scores or pause numerical execution.
+
+Existing Account D1 Edit, Turnstile Edit, Workers Scripts Edit, Workers Routes
+Edit, Zone Read and DNS Read permissions cover provisioning. The publisher
+preserves the D1 database and Turnstile identities, adds the scheduled handler,
+and keeps all secrets out of public artifacts. Ordered checksummed migrations
+live in `deploy/migrations/`; never edit an applied migration.
+
+`SLOPBUZZ_HIGH_SCORES_ENABLED=false` pauses enrollment/checks/submissions while
+preserving reads, administration, and anonymization. Do not roll back to a Worker
+predating name masking after bans exist. Preserve the database and secret bindings.
+
+## API and retention
+
+`GET /api/high-scores?board=daily&offset=0&limit=50` selects a board. Omitting board
+retains the legacy all-time default. `GET /me`, `PUT /me` and run responses contain
+all four `standings`, with `entry` remaining an all-time alias. `POST /check`
+returns all qualifications and `qualifiesAny` while legacy rank/qualifies fields
+retain all-time meaning. `PUT /me` accepts a name or `{anonymous:true}`; legacy
+`DELETE /me` anonymizes without deleting scores or ownership.
+
+Versioned `PUT /runs/:id` receipts are audited and sequenced. Current and recent
+30-day results, best banked/all-time candidates and the latest finalized receipt
+are retained; older receipts compact to replay anchors. Pending finals, including
+lower rolling-window fallback candidates and heist losses, survive in the browser
+outbox when storage is available. Locally inferred interruptions replay genuine
+receipts rather than finalizing another tab's active run.
+
+## Validation
+
+`pnpm test:high-scores` runs real disposable Miniflare/D1 integration tests,
+clock-driven rolling boundaries, matching, authentication, anonymity, deletion,
+notification concurrency/retries, and client synchronization. `pnpm
+preview:high-scores` provides persistent loopback D1. Static previews disable
+score publication; browser feature tests mock enrollment and audit real receipts.
+Browser suites run serially through the guarded commands. Never publish synthetic
+scores to production. Dispose test browsers, workerd instances and owned servers.

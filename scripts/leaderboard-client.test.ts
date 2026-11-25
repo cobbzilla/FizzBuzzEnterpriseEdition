@@ -1,5 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
+import {anonymousName} from '../web/scoreboards.ts';
 import {LeaderboardClient} from '../web/leaderboard-client.ts';
 import {participationKey,publicationReceipt,type PersonalStanding,type LeaderboardReceipt} from '../web/leaderboard-model.ts';
 import {EnterpriseScoringService,netPoints,scoringStorageKey} from '../web/scoring-service.ts';
@@ -12,7 +13,7 @@ function server(){
  let personal:PersonalStanding={participating:false,name:'',entry:null,asOf:new Date().toISOString(),enabled:true,sitekey:'test'};
  const send:typeof fetch=async(input,options)=>{
   const path=String(input).replace('/api/high-scores',''),method=options?.method||'GET',body=options?.body?JSON.parse(String(options.body)):undefined;calls.push({path,method,body});
-  if(path==='/me'){if(method==='PUT')personal={...personal,participating:true,name:body.name};if(method==='DELETE')personal={...personal,participating:false,name:'',entry:null};return Response.json(personal);}
+  if(path==='/me'){if(method==='PUT')personal={...personal,participating:true,name:body.anonymous?anonymousName:body.name};if(method==='DELETE')personal={...personal,participating:true,name:anonymousName,entry:personal.entry?{...personal.entry,name:anonymousName}:null};return Response.json(personal);}
   if(path.startsWith('?'))return Response.json({entries:[],offset:0,limit:50,total:0,cutoff:null,enabled:true,sitekey:'test',asOf:personal.asOf});
   if(path==='/check')return Response.json({qualifies:true,rank:1,score:String(netPoints(body.run)),runId:body.run.id,sequence:body.sequence,asOf:personal.asOf});
   if(path.startsWith('/runs/')){const r=body as LeaderboardReceipt;personal={...personal,entry:{id:'owner',name:personal.name,rank:1,runId:r.run.id,score:String(netPoints(r.run)),through:r.run.verification.through,mandate:r.run.verification.mandate,status:r.run.status,rules:r.run.rules,identity:r.run.identity,conditions:r.run.conditions,attainedAt:personal.asOf,updatedAt:personal.asOf,stale:false}};return Response.json({...personal,acceptedSequence:r.sequence,runId:r.run.id});}
@@ -21,9 +22,9 @@ function server(){
  return {send,calls,personal:()=>personal};
 }
 const settle=()=>new Promise(resolve=>setTimeout(resolve,20));
-test('a qualifying active run invites once; refusal persists and never uploads',async()=>{
- const api=server(),storage=new Storage(),client=new LeaderboardClient(api.send,storage,()=>100000,()=>true);
- try{await client.start();client.attach(await makeScore(15,'1000'));await client.flush();assert.equal(client.state.invitation,true);assert.equal(api.calls.some(c=>c.path.startsWith('/runs/')),false);client.decline();await client.flush();assert.equal(client.state.invitation,false);assert.equal(storage.getItem(participationKey),'private');}finally{client.dispose();}
+test('a qualifying run invites once; declining records scores anonymously and remembers the choice',async()=>{
+ const api=server(),storage=new Storage(),client=new LeaderboardClient(api.send,storage,()=>100000,()=>true);client.setVerification(async()=>'test-token');
+ try{await client.start();client.attach(await makeScore(15,'1000'));await settle();await client.flush();assert.equal(client.state.invitation,true);assert.ok(api.calls.some(c=>c.path.startsWith('/runs/')));client.decline();await client.flush();assert.equal(client.state.invitation,false);assert.equal(storage.getItem(participationKey),'anonymous');assert.equal(api.personal().name,anonymousName);}finally{client.dispose();}
 });
 test('remembered participation coalesces live receipts and publishes a terminal result immediately',async()=>{
  const api=server(),storage=new Storage();let now=100000;const client=new LeaderboardClient(api.send,storage,()=>now,()=>true);
@@ -41,7 +42,7 @@ test('failed synchronization retains the last confirmed rank and sends losses af
 });
 test('withdrawal cannot be undone by an earlier in-flight score response',async()=>{
  const api=server();let release!:(r:Response)=>void;let held=false;const client=new LeaderboardClient(async(input,options)=>{const response=await api.send(input,options);if(String(input).includes('/runs/')&&held)return new Promise(resolve=>{release=()=>resolve(response);});return response;},new Storage(),()=>100000,()=>true);
- try{await client.start();await client.enroll('Withdraw Clerk','token');held=true;client.attach(await makeScore(15,'1000'));const pending=client.flush();await settle();await client.withdraw();release(new Response());await pending;assert.equal(client.state.choice,'private');assert.equal(client.state.personal?.participating,false);assert.equal(client.state.personal?.entry,null);}finally{client.dispose();}
+ try{await client.start();await client.enroll('Withdraw Clerk','token');held=true;client.attach(await makeScore(15,'1000'));const pending=client.flush();await settle();await client.withdraw();release(new Response());await pending;assert.equal(client.state.choice,'anonymous');assert.equal(client.state.personal?.participating,true);assert.equal(client.state.personal?.name,anonymousName);}finally{client.dispose();}
 });
 test('a final receipt preempts a pending five-second update timer',async()=>{
  const api=server();let now=100000;const client=new LeaderboardClient(api.send,new Storage(),()=>now,()=>true);
@@ -66,10 +67,20 @@ test('rapid later mandates and reload preserve an earlier published run’s pend
   now+=5000;await client.flush();assert.equal(client.state.stale,true);
  }finally{client.dispose();}
  offline=false;now+=60000;const restored=new LeaderboardClient(send,storage,()=>now,()=>true);
- try{await restored.start();await restored.flush();await settle();await restored.flush();
+ try{await restored.start();for(let i=0;i<6;i++){await restored.flush();await settle();}
   const filed=api.calls.filter(c=>c.path==='/runs/'+earlier!.run.id&&c.body.run.status===earlier!.run.status).at(-1)?.body as LeaderboardReceipt|undefined;
   assert(filed);auditLeaderboardReceipt(filed);assert.equal(filed.sequence,earlier!.sequence);assert.equal(String(netPoints(filed.run)),String(netPoints(earlier!.run)));
-  assert(api.calls.some(c=>c.path.startsWith('/runs/')&&c.body.run.verification.mandate==='170'&&c.body.run.status==='completed'));
+  for(const mandate of ['150','160','170'])assert(api.calls.some(c=>c.path.startsWith('/runs/')&&c.body.run.verification.mandate===mandate&&c.body.run.status==='completed'));
  }finally{restored.dispose();}
  }
+});
+
+test('a stale personal refresh cannot undo the choice to become anonymous',async()=>{
+ const api=server();let hold=false,release!:()=>void;const client=new LeaderboardClient(async(input,options)=>{const response=await api.send(input,options);if(hold&&String(input).endsWith('/me')&&(!options?.method||options.method==='GET'))await new Promise<void>(resolve=>{release=resolve;});return response;},new Storage(),()=>100000,()=>true);
+ try{await client.start();await client.enroll('Prior Name','test');hold=true;const refresh=client.refresh();await settle();await client.withdraw();release();await refresh;assert.equal(client.state.personal?.name,anonymousName);assert.equal(client.state.choice,'anonymous');}finally{client.dispose();}
+});
+
+test('storage-full warnings survive successful network exchanges',async()=>{
+ const api=server(),storage=new Storage();storage.setItem=(key,value)=>{if(key.includes('pending'))throw Error('Quota exceeded');storage.data.set(key,value);};const client=new LeaderboardClient(api.send,storage,()=>100000,()=>true);
+ try{await client.start();await client.enroll('Storage Clerk','test');client.attach(await makeScore(15,'1000'));await settle();await client.flush();assert.equal(client.state.stale,false);assert.match(client.state.error,/browser storage is full/);}finally{client.dispose();}
 });

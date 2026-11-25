@@ -3,11 +3,13 @@ import {netPoints} from '../web/scoring-service.ts';
 import {auditLeaderboardReceipt,ReceiptError} from './leaderboard-audit.ts';
 import {LeaderboardStore} from './leaderboard-store.ts';
 import type {LeaderboardDatabase} from './d1.ts';
+import {anonymousName,isScoreboard,scoreboards,type Scoreboard} from '../web/scoreboards.ts';
 
 export interface RateLimitBinding {limit(options:{key:string}):Promise<{success:boolean}>}
 export interface HighScoresEnv {
  HIGH_SCORES?:LeaderboardDatabase;HIGH_SCORES_ENABLED?:string;TURNSTILE_SITEKEY?:string;TURNSTILE_SECRET?:string;
  SCORES_READ_LIMIT?:RateLimitBinding;SCORES_WRITE_LIMIT?:RateLimitBinding;SCORES_ENROLL_LIMIT?:RateLimitBinding;
+ SCORES_ADMIN_LIMIT?:RateLimitBinding;HIGH_SCORES_ADMIN_USERNAME?:string;HIGH_SCORES_ADMIN_PASSWORD?:string;RESEND_API_KEY?:string;
 }
 const cookieName='__Host-slopbuzz-scores';
 const json=(body:unknown,status=200,headers:HeadersInit={})=>Response.json(body,{status,headers:{'Cache-Control':'no-store','X-Content-Type-Options':'nosniff',...headers}});
@@ -35,22 +37,23 @@ export async function highScores(request:Request,env:HighScoresEnv,send:typeof f
  // credential must not reset the request allowance.
  if(limiter&&!(await limiter.limit({key:ip})).success)return json({error:'Please give the register a moment.'},429,{'Retry-After':'15'});
  try{
-  const store=new LeaderboardStore(env.HIGH_SCORES.withSession('first-primary'),now),person=hash?await store.person(hash):null;
+  const at=now(),store=new LeaderboardStore(env.HIGH_SCORES.withSession('first-primary'),()=>at);let person=hash?await store.person(hash):null;
   if(person?.blocked&&writes&&request.method!=='DELETE')return json({error:'This browser cannot submit to the register.'},403);
-  const asOf=()=>new Date(now()).toISOString();
-  const standing=async()=>({participating:!!person&&!person.blocked,name:person?.name||'',entry:person?await store.personal(person.id):null,asOf:asOf(),enabled:enabled&&!person?.blocked,sitekey});
+  const asOf=()=>new Date(at).toISOString();
+  const standing=async()=>{const standings=person&&!person.blocked?await store.standings(person.id):Object.fromEntries(scoreboards.map(b=>[b.id,null]));return {participating:!!person&&!person.blocked,name:person?.blocked?'':person?.name||'',entry:standings['all-time'],standings,asOf:asOf(),enabled:enabled&&!person?.blocked,sitekey};};
   if((path===''||path==='/')&&request.method==='GET'){
    const offset=Number(url.searchParams.get('offset')||0),limit=Number(url.searchParams.get('limit')||50);
    if(!Number.isInteger(offset)||offset<0||offset>950||!Number.isInteger(limit)||limit<1||limit>50)return json({error:'Invalid page.'},400);
-   return json({...await store.list(offset,limit),offset,limit,asOf:asOf(),enabled,sitekey},200,{'Cache-Control':'public, max-age=5'});
+   const board=url.searchParams.get('board')||'all-time';if(!isScoreboard(board))return json({error:'Invalid scoreboard.'},400);
+   return json({...await store.list(offset,limit,board),offset,limit,asOf:asOf(),enabled,sitekey});
   }
   if(path==='/me'&&request.method==='GET')return json(await standing());
   if(path==='/me'&&request.method==='DELETE'){
-   if(person)await store.withdraw(person.id);
-   return json({participating:false,name:'',entry:null,asOf:asOf(),enabled,sitekey},200,{'Set-Cookie':`${cookieName}=; Path=/; Secure; HttpOnly; SameSite=Strict; Max-Age=0`});
+   if(person&&!person.blocked){await store.anonymize(person.id);person={...person,name:anonymousName};await store.classify(person);}
+   return json(await standing());
   }
   if(path==='/me'&&request.method==='PUT'){
-   const data=await body(request),name=leaderboardName(data.name);
+   const data=await body(request),name=data.anonymous===true?anonymousName:leaderboardName(data.name);
    if(!person){
     if(env.SCORES_ENROLL_LIMIT&&!(await env.SCORES_ENROLL_LIMIT.limit({key:ip})).success)return json({error:'Enrollment is temporarily limited. Try again shortly.'},429,{'Retry-After':'60'});
     if(!env.TURNSTILE_SECRET||typeof data.turnstileToken!=='string'||data.turnstileToken.length>2048)return json({error:'Complete the verification to publish your score.'},400);
@@ -59,11 +62,12 @@ export async function highScores(request:Request,env:HighScoresEnv,send:typeof f
     if(!response.ok||!verification.success||verification.hostname!==url.hostname||verification.action!=='leaderboard-enroll')return json({error:'Verification expired or failed. Please try it again.'},400);
    }
    const nextToken=validToken||[...crypto.getRandomValues(new Uint8Array(32))].map(v=>v.toString(16).padStart(2,'0')).join(''),profile=await store.enroll(await sha(nextToken),name);
-   return json({participating:true,name:profile.name,entry:await store.personal(profile.id),asOf:asOf(),enabled,sitekey},200,{'Set-Cookie':`${cookieName}=${nextToken}; Path=/; Secure; HttpOnly; SameSite=Strict; Max-Age=31536000`});
+   person=profile;return json(await standing(),200,{'Set-Cookie':`${cookieName}=${nextToken}; Path=/; Secure; HttpOnly; SameSite=Strict; Max-Age=31536000`});
   }
   if(path==='/check'&&request.method==='POST'){
-   const receipt=auditLeaderboardReceipt(await body(request)),score=String(netPoints(receipt.run)),rank=await store.prospective(score,person?.id);
-   return json({qualifies:rank<=1000,rank:rank<=1000?rank:null,score,runId:receipt.run.id,sequence:receipt.sequence,asOf:asOf()});
+   const receipt=auditLeaderboardReceipt(await body(request)),score=String(netPoints(receipt.run)),standings={} as Record<Scoreboard,{qualifies:boolean;rank:number|null}>;
+   for(const board of scoreboards){const rank=await store.prospective(score,person?.id,board.id);standings[board.id]={qualifies:rank<=1000,rank:rank<=1000?rank:null};}
+   return json({...standings['all-time'],standings,qualifiesAny:Object.values(standings).some(s=>s.qualifies),score,runId:receipt.run.id,sequence:receipt.sequence,asOf:asOf()});
   }
   if(/^\/runs\/[A-Za-z0-9_-]{1,80}$/.test(path)&&request.method==='PUT'){
    if(!person)return json({error:'Join the register before submitting a score.'},401);

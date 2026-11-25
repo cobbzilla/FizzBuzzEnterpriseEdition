@@ -5,6 +5,7 @@ import {build} from 'esbuild';
 import {settings,metadata,digest} from './b2-support.ts';
 import {needsUpload,uploadFiles,type RemoteFile} from './b2-upload.ts';
 import {verifyPublic} from './verify-public.ts';
+import {prepareScoreSecrets,verifyResendDomain} from './high-scores-secrets.ts';
 import {ensureHighScores} from './high-scores-resources.ts';
 async function main(){
  let file='.b2.env';let contents:string;try{contents=await readFile(file,'utf8');}catch(e){if((e as NodeJS.ErrnoException).code!=='ENOENT')throw e;file='.env.b2';contents=await readFile(file,'utf8');}
@@ -21,6 +22,7 @@ async function main(){
  const account=`/accounts/${e.CLOUDFLARE_ACCOUNT_ID}`;
  // Check the two new scopes before spending time on release qualification.
  await cf(account+'/d1/database?per_page=1');await cf(account+'/challenges/widgets');
+ const safety=await prepareScoreSecrets(cf,account,c.worker,c.dry);if(safety.values.RESEND_API_KEY)await verifyResendDomain(safety.values.RESEND_API_KEY);
  const domains=await cf(account+'/workers/domains');const domain=domains.find((d:any)=>d.hostname===c.url.hostname);
  if(domain&&(domain.service!==c.worker||domain.environment!=='production'))throw new Error('Hostname already belongs to a different Worker');
  if(!domain){const records=await cf(`/zones/${e.CLOUDFLARE_ZONE_ID}/dns_records?name=${encodeURIComponent(c.url.hostname)}`);if(records.some((d:any)=>['A','AAAA','CNAME'].includes(d.type)))throw new Error('Conflicting DNS record exists; no record has been replaced');}
@@ -40,7 +42,7 @@ async function main(){
  run('typecheck');run('test:browser-guard');run('test:mandate');run('test:chronicle-language');run('test:companions');run('test:portfolio');run('test:scoring');run('test:high-scores');run('test:office');run('test:supervision');run('test:layout');run('test:heist');run('test:aviation');run('test:workspace');run('test:premises');run('test:publish');run('build');run('test:parity');run('test:e2e');execFileSync('node',['scripts/build.ts','--assets-only'],{stdio:'inherit',env:childEnv});
  if(!c.dry&&git('status','--porcelain','--untracked-files=no'))throw new Error('Build changed tracked sources; commit generated assets before publishing');
  async function files(directory:string):Promise<string[]>{const result:string[]=[];for(const d of await readdir(directory,{withFileTypes:true})){if(d.isSymbolicLink())throw new Error('Symlink in publication tree');const p=directory+'/'+d.name;if(d.isDirectory())result.push(...await files(p));else result.push(p.slice(5));}return result;}
- const privateValues=[e.B2_APP_KEY,e.CLOUDFLARE_API_TOKEN];
+ const privateValues=[e.B2_APP_KEY,e.CLOUDFLARE_API_TOKEN,...Object.entries(safety.values).filter(([key])=>key!=='HIGH_SCORES_ADMIN_USERNAME').map(([,value])=>value)];
  // The build receives a public project token, never the PostHog management key.
  try {
   const analyticsEnv=parseEnv(await readFile(childEnv.SLOPBUZZ_POSTHOG_ENV_FILE,'utf8'));
@@ -57,9 +59,11 @@ async function main(){
  if(c.dry){console.log('Dry run complete; no remote changes made.');return;}
  const scores=await ensureHighScores(cf,account,c.worker,c.url.hostname,e.SLOPBUZZ_HIGH_SCORES_ENABLED!=='false');
  for(const payload of payloads)if(payload.bytes.includes(Buffer.from(scores.secret)))throw Error('Turnstile secret found in publication tree');
- const form=new FormData();form.set('metadata',JSON.stringify({main_module:'worker.mjs',compatibility_date:'2026-10-30',keep_bindings:['secret_text'],bindings:[{type:'plain_text',name:'B2_ORIGIN',text:origin},...scores.bindings]}));form.set('worker.mjs',new Blob([code],{type:'application/javascript+module'}),'worker.mjs');
+ const form=new FormData();form.set('metadata',JSON.stringify({main_module:'worker.mjs',compatibility_date:'2026-10-30',keep_bindings:['secret_text'],bindings:[{type:'plain_text',name:'B2_ORIGIN',text:origin},...scores.bindings,...safety.bindings]}));form.set('worker.mjs',new Blob([code],{type:'application/javascript+module'}),'worker.mjs');
  // The API must exist before any new HTML can load its client.
  await cf(account+'/workers/scripts/'+c.worker,'PUT',form);
+ const schedules=await cf(account+'/workers/scripts/'+c.worker+'/schedules');const existingSchedules=schedules.schedules||schedules;
+ if(!existingSchedules.some((s:{cron:string})=>s.cron==='* * * * *'))await cf(account+'/workers/scripts/'+c.worker+'/schedules','PUT',[...existingSchedules.map((s:{cron:string})=>({cron:s.cron})),{cron:'* * * * *'}]);
  if(!domain)await cf(account+'/workers/domains','PUT',{hostname:c.url.hostname,service:c.worker,environment:'production',zone_id:e.CLOUDFLARE_ZONE_ID});
  await uploadFiles(changed,c.prefix,()=>b2('b2_get_upload_url',{bucketId:e.B2_BUCKET_ID}));
  console.log('Files uploaded and Worker domain configured. Checking DNS/TLS and release…');

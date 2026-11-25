@@ -1,9 +1,12 @@
 import {proxyIntake} from './intake-proxy.ts';
 import {highScores,highScoreCSP,type HighScoresEnv} from './high-scores.ts';
+import {scoreAdmin} from './high-scores-admin.ts';
+import {drainScoreNotifications} from './score-notifications.ts';
 export interface Env extends HighScoresEnv {B2_ORIGIN:string}
 export async function serve(request:Request,env:Env,fetchOrigin:typeof fetch=fetch):Promise<Response>{
  const url=new URL(request.url);
  if(url.protocol!=='https:'){url.protocol='https:';return Response.redirect(url.href,308);}
+ if(url.pathname==='/admin'||url.pathname.startsWith('/admin/'))return scoreAdmin(request,env);
  if(url.pathname.startsWith('/intake/'))return proxyIntake(request,fetchOrigin,request.headers.get('CF-Connecting-IP')||undefined);
  if(url.pathname==='/api/high-scores'||url.pathname.startsWith('/api/high-scores/'))return highScores(request,env,fetchOrigin);
  if(!['GET','HEAD'].includes(request.method))return new Response('Method not allowed',{status:405,headers:{Allow:'GET, HEAD'}});
@@ -28,4 +31,7 @@ export async function serve(request:Request,env:Env,fetchOrigin:typeof fetch=fet
  result.set('Content-Security-Policy',path.endsWith('/runtime-worker.js')?"default-src 'self'; script-src 'self' 'unsafe-eval'; connect-src 'self'":highScoreCSP);
  return new Response(request.method==='HEAD'?null:upstream.body,{status:upstream.status,headers:result});
 }
-export default {fetch:(request:Request,env:Env)=>serve(request,env)};
+export default {
+ async fetch(request:Request,env:Env,ctx:{waitUntil(promise:Promise<unknown>):void}){const response=await serve(request,env);if(request.method==='PUT'&&new URL(request.url).pathname.startsWith('/api/high-scores/runs/')&&response.ok)ctx.waitUntil(drainScoreNotifications(env));return response;},
+ async scheduled(_controller:unknown,env:Env){await drainScoreNotifications(env);}
+};

@@ -38,6 +38,6 @@ export async function ensureHighScores(cf:CloudflareCall,account:string,worker:s
   {type:'plain_text',name:'HIGH_SCORES_ENABLED',text:String(enabled)},
   {type:'plain_text',name:'TURNSTILE_SITEKEY',text:widget.sitekey},
   {type:'secret_text',name:'TURNSTILE_SECRET',text:widget.secret},
-  ...[{name:'SCORES_READ_LIMIT',limit:240},{name:'SCORES_WRITE_LIMIT',limit:120},{name:'SCORES_ENROLL_LIMIT',limit:5}].map(({name,limit})=>({type:'ratelimit',name,namespace_id:String(createHash('sha256').update(worker+':'+name).digest().readUInt32BE(0)||1),simple:{limit,period:60}}))
+  ...[{name:'SCORES_READ_LIMIT',limit:240},{name:'SCORES_WRITE_LIMIT',limit:120},{name:'SCORES_ENROLL_LIMIT',limit:5},{name:'SCORES_ADMIN_LIMIT',limit:10}].map(({name,limit})=>({type:'ratelimit',name,namespace_id:String(createHash('sha256').update(worker+':'+name).digest().readUInt32BE(0)||1),simple:{limit,period:60}}))
  ]};
 }

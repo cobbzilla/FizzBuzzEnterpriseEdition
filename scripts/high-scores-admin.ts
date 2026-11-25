@@ -8,4 +8,6 @@ await scoreQuery(cf,account,database,'UPDATE leaderboard_people SET blocked=1,na
 await scoreQuery(cf,account,database,'DELETE FROM leaderboard_entries WHERE owner_id=?1',[id]);
 await scoreQuery(cf,account,database,'DELETE FROM leaderboard_runs WHERE owner_id=?1',[id]);
 await scoreQuery(cf,account,database,'DELETE FROM leaderboard_retired_runs WHERE owner_id=?1',[id]);
+await scoreQuery(cf,account,database,'DELETE FROM leaderboard_name_status WHERE owner_id=?1',[id]);
+await scoreQuery(cf,account,database,"UPDATE leaderboard_notifications SET state='cancelled',lease_token=NULL WHERE owner_id=?1 AND state<>'sent'",[id]);
 console.log('Entry removed; further submissions from its browser credential are suppressed.');

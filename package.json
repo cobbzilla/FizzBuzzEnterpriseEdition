@@ -31,7 +31,7 @@
     "test:companions": "node --test scripts/companions.test.ts",
     "test:portfolio": "node --test scripts/portfolio.test.ts",
     "test:scoring": "node --test scripts/scoring.test.ts",
-    "test:high-scores": "node --test --test-concurrency=1 scripts/high-scores.test.ts scripts/leaderboard-client.test.ts scripts/high-scores-resources.test.ts",
+    "test:high-scores": "node --test --test-concurrency=1 scripts/high-scores.test.ts scripts/leaderboard-client.test.ts scripts/high-scores-resources.test.ts scripts/scoreboard-safety.test.ts scripts/high-scores-secrets.test.ts",
     "preview:high-scores": "node scripts/serve-high-scores.ts",
     "scores:admin": "node scripts/high-scores-admin.ts",
     "test:premises": "node --test scripts/premises.test.ts",

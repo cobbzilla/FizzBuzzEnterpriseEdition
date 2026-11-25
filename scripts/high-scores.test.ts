@@ -86,6 +86,7 @@ test('compacted finalized receipts retain replay protection and preserve the lat
  const cookie=await enroll('Archives'),bank=await scoreFixture(100);bank.finish('completed');
  const older=await scoreFixture(5);older.finish('completed');const old=receipt(older);
  for(const r of [receipt(bank),old])assert.equal((await call('/runs/'+r.run.id,'PUT',r,cookie)).status,200);
+ await local.db.prepare('UPDATE leaderboard_runs SET attained_ms=?1 WHERE run_id=?2').bind(Date.now()-31*86400000,old.run.id).run();
  const latest=await scoreFixture(7,'100');latest.finish('stopped');let r=receipt(latest);assert.equal((await call('/runs/'+r.run.id,'PUT',r,cookie)).status,200);
  const owner=(await (await call('/me','GET',undefined,cookie)).json()).entry.id,store=new LeaderboardStore(local.env.HIGH_SCORES!.withSession('first-primary'));
  assert.equal(await store.saved(owner,old.run.id),null);assert.ok(await store.retired(owner,old.run.id));assert.ok(await store.saved(owner,r.run.id));
@@ -93,7 +94,7 @@ test('compacted finalized receipts retain replay protection and preserve the lat
  const changed=structuredClone(old);changed.sequence++;changed.run.revision=changed.sequence;
  assert.equal((await call('/runs/'+changed.run.id,'PUT',changed,cookie)).status,409);
  assert.equal((await (await call('/me','GET',undefined,cookie)).json()).entry.runId,bank.snapshot().current!.id);
- await call('/me','DELETE',undefined,cookie);assert.equal(await store.retired(owner,old.run.id),null);
+ await store.withdraw(owner);assert.equal(await store.retired(owner,old.run.id),null);
 });
 test('origin, Turnstile hostname/action, anonymous writes, malformed names and oversized JSON are refused',async()=>{
  assert.equal((await highScores(new Request('https://scores.example/api/high-scores/me',{method:'PUT',headers:{Origin:'https://evil.example'}}),local.env)).status,403);
@@ -102,8 +103,8 @@ test('origin, Turnstile hostname/action, anonymous writes, malformed names and o
  const r=receipt(await scoreFixture(15));assert.equal((await call('/runs/'+r.run.id,'PUT',r)).status,401);
  assert.equal((await call('/check','POST',{junk:'a'.repeat(1024*1024)})).status,422);
 });
-test('withdrawal removes public results and invalidates ownership; API remains readable while writes are disabled',async()=>{
- const cookie=await enroll('Withdraw Me'),r=receipt(await scoreFixture(15));await call('/runs/'+r.run.id,'PUT',r,cookie);assert.equal((await call('/me','DELETE',undefined,cookie)).status,200);assert.equal((await (await call('/me','GET',undefined,cookie)).json()).participating,false);
+test('legacy withdrawal anonymizes results; API remains readable while writes are disabled',async()=>{
+ const cookie=await enroll('Withdraw Me'),r=receipt(await scoreFixture(15));await call('/runs/'+r.run.id,'PUT',r,cookie);assert.equal((await call('/me','DELETE',undefined,cookie)).status,200);assert.equal((await (await call('/me','GET',undefined,cookie)).json()).participating,true);
  local.env.HIGH_SCORES_ENABLED='false';assert.equal((await call('')).status,200);assert.equal((await call('/check','POST',r)).status,503);local.env.HIGH_SCORES_ENABLED='true';
 });
 test('invented credentials cannot reset the visitor IP request allowance',async()=>{
@@ -121,7 +122,10 @@ test('D1 resolves rank 1000 versus 1001, ties and arbitrary-precision values',as
  const template=receipt(await scoreFixture(1));
  const statements=[];for(let i=0;i<1001;i++){const id='rank-test-'+String(i).padStart(4,'0'),score=String(10n**30n+BigInt(i));statements.push(db.prepare('INSERT INTO leaderboard_people(id,credential,name,created_ms) VALUES(?1,?1,?1,1)').bind(id));statements.push(db.prepare('INSERT INTO leaderboard_runs(owner_id,run_id,sequence,digest,receipt,score,digits,status,attained_ms,updated_ms) VALUES(?1,?1,1,?1,?2,?3,?4,\'active\',1,1)').bind(id,JSON.stringify(template),score,score.length));statements.push(db.prepare('INSERT INTO leaderboard_entries(owner_id,run_id,score,digits,attained_ms,updated_ms) VALUES(?1,?1,?2,?3,1,1)').bind(id,score,score.length));}
  for(let i=0;i<statements.length;i+=90)await db.batch(statements.slice(i,i+90));
- const page=await store.list(950,50);assert.equal(page.total,1000);assert.equal(page.entries.at(-1)!.rank,1000);assert.equal(page.entries.at(-1)!.score,String(10n**30n+1n));
- assert.equal(await store.prospective(String(10n**30n+1n)),1001);assert.equal(await store.prospective(String(10n**30n+2n)),1000);
+ await db.prepare("UPDATE leaderboard_runs SET attained_ms=?1 WHERE owner_id LIKE 'rank-test-%'").bind(Date.now()).run();
+ for(const board of ['daily','weekly','monthly','all-time'] as const){
+ const page=await store.list(950,50,board);assert.equal(page.total,1000);assert.equal(page.entries.at(-1)!.rank,1000);assert.equal(page.entries.at(-1)!.score,String(10n**30n+1n));
+ assert.equal(await store.prospective(String(10n**30n+1n),undefined,board),1001);assert.equal(await store.prospective(String(10n**30n+2n),undefined,board),1000);
  assert.ok(!JSON.stringify(page).includes('rank-test-0000'));
+ }
 });

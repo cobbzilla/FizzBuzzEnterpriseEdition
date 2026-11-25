@@ -5286,9 +5286,6 @@ function leaderboardName(value) {
   if (!/^[A-Za-z0-9 _-]{1,24}$/.test(name) || !/[A-Za-z0-9]/.test(name)) throw Error("Use 1\u201324 ASCII letters, digits, spaces, hyphens or underscores, including at least one letter or digit.");
   return name;
 }
-function decimalCompare(a, b) {
-  return a.length - b.length || (a < b ? -1 : a > b ? 1 : 0);
-}
 function publicationReceipt(run) {
   if (run.publicationProtocol !== 1 || !Number.isSafeInteger(run.revision) || run.partial || BigInt(run.verification.through) < 1n) return;
   if (run.publicationInterrupted) {
@@ -5303,6 +5300,28 @@ function publicationReceipt(run) {
     run.closedHeists = structuredClone(original.closedHeists);
   }
   return { schema: "slopbuzz-leaderboard/v1", sequence: run.revision, run };
+}
+
+// web/scoreboards.ts
+var anonymousName = "Anonymous Coward";
+var dayMs = 864e5;
+var scoreboards = [
+  { id: "daily", label: "Daily", window: "Last 24 hours", duration: dayMs },
+  { id: "weekly", label: "Weekly", window: "Last 7 days", duration: 7 * dayMs },
+  { id: "monthly", label: "Monthly", window: "Last 30 days", duration: 30 * dayMs },
+  { id: "all-time", label: "All-time", window: "All recorded scores", duration: 0 }
+];
+function isScoreboard(value) {
+  return scoreboards.some((b) => b.id === value);
+}
+function scoreboardIcon(board) {
+  const paths2 = {
+    daily: '<circle cx="22" cy="22" r="13"/><path d="M22 2v4m0 32v4M2 22h4m32 0h4M8 8l3 3m22 22 3 3M8 36l3-3m22-22 3-3"/>',
+    weekly: '<path d="m4 7 8 31 10-19 10 19 8-31"/>',
+    monthly: '<rect x="4" y="7" width="36" height="33" rx="4"/><path d="M4 15h36M13 3v8M31 3v8"/>',
+    "all-time": '<path d="M10 5h24v13c0 8-5 13-12 13s-12-5-12-13V5Zm0 5H3v7c0 6 4 10 11 10m20-17h7v7c0 6-4 10-11 10M22 31v8m-8 2h16"/>'
+  };
+  return `<svg viewBox="0 0 44 44" width="40" height="40" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${paths2[board]}</g></svg>`;
 }
 
 // web/leaderboard-client.ts
@@ -5339,6 +5358,26 @@ var LeaderboardClient = class {
   attempted = /* @__PURE__ */ new Set();
   persistedFinals = "";
   restored = /* @__PURE__ */ new Set();
+  storageError = "";
+  verification;
+  enrollment;
+  setVerification(verify) {
+    this.verification = verify;
+    this.schedule(0);
+  }
+  async ensureEnrollment() {
+    if (this.state.personal?.participating) return;
+    if (!this.verification) return;
+    this.enrollment ??= (async () => {
+      const turnstileToken = await this.verification();
+      const personal = await this.request("/me", "PUT", { anonymous: true, turnstileToken });
+      this.apply(personal);
+      this.publish();
+    })().finally(() => {
+      this.enrollment = void 0;
+    });
+    await this.enrollment;
+  }
   send;
   now;
   visible;
@@ -5349,14 +5388,15 @@ var LeaderboardClient = class {
     this.store = storage;
     try {
       const choice = storage?.getItem(participationKey);
-      if (choice === "public" || choice === "private") this.state.choice = choice;
+      if (choice === "public" || choice === "anonymous") this.state.choice = choice;
+      else if (choice === "private") this.state.choice = "anonymous";
     } catch {
     }
-    if (this.state.choice === "public") try {
+    try {
       const raw = storage?.getItem(pendingScoresKey) || "[]";
-      if (raw.length > 2 * 1024 * 1024) throw Error("Oversized pending receipts");
+      if (raw.length > 16 * 1024 * 1024) throw Error("Oversized pending receipts");
       const saved = JSON.parse(raw);
-      if (!Array.isArray(saved) || saved.length > 100) throw Error("Invalid pending receipts");
+      if (!Array.isArray(saved) || saved.length > 1e4) throw Error("Invalid pending receipts");
       for (const item of saved) {
         const run = decodeScoringRun(item.run), receipt = run && publicationReceipt(run);
         if (receipt && (run.status !== "active" || item.restored === true)) {
@@ -5390,16 +5430,19 @@ var LeaderboardClient = class {
     }, 15e3);
   }
   async refresh() {
+    const epoch = this.epoch;
     try {
       try {
         const saved = this.store?.getItem(participationKey);
-        if (saved === "private" || saved === "public") this.state.choice = saved;
+        if (saved === "anonymous" || saved === "public") this.state.choice = saved;
+        else if (saved === "private") this.state.choice = "anonymous";
       } catch {
       }
       const personal = await this.request("/me");
+      if (epoch !== this.epoch) return;
       this.apply(personal);
-      if (personal.participating) this.choice("public");
-      else if (this.state.choice === "public") this.choice("undecided");
+      if (personal.participating && personal.name !== anonymousName) this.choice("public");
+      else if (this.state.choice === "public") this.choice("anonymous");
       this.lastPoll = this.now();
       this.success();
     } catch (error) {
@@ -5424,7 +5467,7 @@ var LeaderboardClient = class {
           }
         }
       }
-      for (const [id, receipt] of this.queue) if (id !== snapshot.current?.id && id !== snapshot.saved?.id && (receipt.run.status === "active" && !this.restored.has(id) || this.state.choice !== "public")) this.queue.delete(id);
+      for (const [id, receipt] of this.queue) if (id !== snapshot.current?.id && id !== snapshot.saved?.id && receipt.run.status === "active" && !this.restored.has(id)) this.queue.delete(id);
       this.persistFinals();
       this.publish();
       const run = snapshot.current, prior = this.state.qualification;
@@ -5443,27 +5486,28 @@ var LeaderboardClient = class {
     }
   }
   persistFinals() {
-    if (this.state.choice !== "public") return;
-    let best;
-    for (const r of this.queue.values()) if (r.run.status !== "active" && !this.attempted.has(r.run.id) && (!best || netPoints(r.run) > netPoints(best.run))) best = r;
-    for (const [id, r] of this.queue) if (this.state.personal && r.run.status !== "active" && !this.attempted.has(id) && id !== best?.run.id) this.queue.delete(id);
     const serialized = JSON.stringify([...this.queue.values()].filter((r) => r.run.status !== "active" || this.restored.has(r.run.id)).map((r) => ({ run: r.run, attempted: this.attempted.has(r.run.id), restored: this.restored.has(r.run.id) })));
     if (serialized !== this.persistedFinals) try {
+      if (serialized.length > 16 * 1024 * 1024) throw Error("Outbox too large");
       this.store?.setItem(pendingScoresKey, serialized);
       this.persistedFinals = serialized;
+      this.storageError = "";
     } catch {
+      this.state.error = this.storageError = "Pending scores remain in this tab; browser storage is full. Keep the tab open until synchronization finishes.";
     }
   }
   decline() {
-    this.choice("private");
+    this.choice("anonymous");
     this.state.invitation = false;
     this.publish();
+    this.schedule(0);
   }
   dismissInvitation() {
     this.state.invitation = false;
     this.publish();
   }
   async enroll(name, turnstileToken) {
+    if (this.enrollment) await this.enrollment;
     ++this.epoch;
     const personal = await this.request("/me", "PUT", { name, turnstileToken });
     this.apply(personal);
@@ -5478,27 +5522,15 @@ var LeaderboardClient = class {
     ++this.epoch;
     const personal = await this.request("/me", "DELETE");
     this.apply(personal);
-    this.choice("private");
-    this.accepted.clear();
-    this.rejected.clear();
-    this.attempted.clear();
-    this.restored.clear();
-    this.queue.clear();
-    const current = this.state.current && publicationReceipt(this.state.current);
-    if (current) this.queue.set(current.run.id, current);
-    try {
-      this.store?.setItem(pendingScoresKey, "[]");
-      this.persistedFinals = "[]";
-    } catch {
-    }
+    this.choice("anonymous");
     this.state.invitation = false;
     this.success();
     this.publish();
+    this.schedule(0);
   }
-  async list(offset = 0) {
-    const page = await this.request("?offset=" + offset + "&limit=50");
-    this.cutoff = page.cutoff;
-    this.state.enabled = page.enabled;
+  async list(offset = 0, board = "all-time") {
+    const page = await this.request("?board=" + board + "&offset=" + offset + "&limit=50");
+    this.state.enabled = page.enabled && this.state.personal?.enabled !== false;
     this.state.sitekey = page.sitekey;
     return page;
   }
@@ -5510,12 +5542,15 @@ var LeaderboardClient = class {
     this.state.personal = personal;
     this.state.enabled = personal.enabled;
     this.state.sitekey = personal.sitekey;
-    if (personal.entry?.status === "active") this.attempted.add(personal.entry.runId);
+    for (const entry of Object.values(personal.standings || { "all-time": personal.entry })) {
+      if (entry?.status === "active") this.attempted.add(entry.runId);
+      if (this.state.choice === "undecided" && entry?.runId === this.state.current?.id && entry && entry.rank <= 1e3) this.state.invitation = true;
+    }
   }
   success() {
     this.failures = 0;
     this.retryAt = 0;
-    this.state.error = "";
+    this.state.error = this.storageError;
     this.state.stale = false;
   }
   failure(error) {
@@ -5547,12 +5582,14 @@ var LeaderboardClient = class {
     const epoch = this.epoch;
     try {
       if (now - this.lastPoll >= 15e3 && this.visible()) {
-        this.apply(await this.request("/me"));
+        const personal = await this.request("/me");
+        if (epoch !== this.epoch) return;
+        this.apply(personal);
         this.lastPoll = now;
-        if (this.state.choice !== "public") await this.list();
       }
       if (!this.state.enabled) return;
-      if (this.state.choice === "public" && this.state.personal?.participating) {
+      if (!this.state.personal?.participating && this.queue.size && this.verification) await this.ensureEnrollment();
+      if (this.state.personal?.participating) {
         const receipt = [...this.queue.values()][0];
         if (receipt) {
           const heist = receipt.run.incident?.kind === "heist", urgent = receipt.run.status !== "active" || this.restored.has(receipt.run.id) || !receipt.run.incident && this.lastIncident;
@@ -5596,15 +5633,12 @@ var LeaderboardClient = class {
       } else {
         const current = this.state.current, receipt = current ? publicationReceipt(current) : void 0;
         if (receipt) {
-          if (this.cutoff === void 0) await this.list();
-          const score = String(netPoints(current)), qualifiesLocally = this.cutoff === null || decimalCompare(score, this.cutoff) >= 0;
-          const crossing = qualifiesLocally && !this.state.qualification?.qualifies;
-          if ((crossing || now - this.lastCheck >= 5e3) && (qualifiesLocally || this.state.qualification?.qualifies)) {
+          if (now - this.lastCheck >= 5e3 || this.state.qualification?.runId !== current?.id) {
             const result = await this.request("/check", "POST", receipt);
             this.lastCheck = now;
-            if (this.state.current?.id === result.runId) {
+            if (this.state.current?.id === result.runId && this.state.current.revision === result.sequence) {
               this.state.qualification = result;
-              if (result.qualifies && this.state.choice === "undecided") this.state.invitation = true;
+              if ((result.qualifiesAny ?? result.qualifies) && this.state.choice === "undecided") this.state.invitation = true;
             }
           }
         }
@@ -5615,7 +5649,7 @@ var LeaderboardClient = class {
     } finally {
       this.busy = false;
       this.publish();
-      if (this.state.enabled && this.state.choice === "public" && this.queue.size || this.retryAt > this.now()) this.schedule(Math.max(250, this.retryAt - this.now()));
+      if (this.state.enabled && this.state.personal?.participating && this.queue.size || this.retryAt > this.now()) this.schedule(Math.max(250, this.retryAt - this.now()));
     }
   }
   lastIncident = false;
@@ -5628,6 +5662,27 @@ var LeaderboardClient = class {
   }
 };
 
+// web/leaderboard-name-input.ts
+function restrictLeaderboardName(input) {
+  input.addEventListener("beforeinput", (event) => {
+    if (!event.isComposing && event.inputType === "insertText" && event.data && event.data.length === 1 && /[^A-Za-z0-9 _-]/.test(event.data)) event.preventDefault();
+  });
+  const clean = () => {
+    const position = input.selectionStart ?? input.value.length, before = input.value.slice(0, position);
+    const value = input.value.replace(/[^A-Za-z0-9 _-]/g, "").slice(0, 24);
+    if (value !== input.value) {
+      input.value = value;
+      const caret = Math.min(before.replace(/[^A-Za-z0-9 _-]/g, "").length, value.length);
+      input.setSelectionRange(caret, caret);
+    }
+    input.setCustomValidity("");
+  };
+  input.addEventListener("input", (event) => {
+    if (!event.isComposing) clean();
+  });
+  input.addEventListener("compositionend", clean);
+}
+
 // web/high-scores.ts
 var element2 = (tag, text2) => {
   const e = document.createElement(tag);
@@ -5635,11 +5690,45 @@ var element2 = (tag, text2) => {
   return e;
 };
 var number = (value) => formatPoints(BigInt(value));
+var selectedBoard = (queryFirst = true) => {
+  const query = new URL(location.href).searchParams.get("board");
+  if (queryFirst && isScoreboard(query)) return query;
+  try {
+    const saved = localStorage.getItem("slopbuzz:scoreboard");
+    if (isScoreboard(saved)) return saved;
+  } catch {
+  }
+  return "daily";
+};
 var RankingView = class {
   constructor(host, client) {
     this.host = host;
     this.client = client;
-    host.innerHTML = '<p class="leaderboard-own"></p><p class="leaderboard-list-status" role="status"></p><div class="leaderboard-table" tabindex="0" role="region" aria-label="Top scores table"><table><caption>Top 1,000 \xB7 one entry per browser</caption><thead><tr><th scope="col">Rank</th><th scope="col">Name and mandate</th><th scope="col">Enterprise Points</th></tr></thead><tbody></tbody></table></div><div class="leaderboard-pagination"><button type="button" data-page="previous">Previous 50</button><button type="button" data-page="next">Next 50</button></div>';
+    host.innerHTML = '<div class="scoreboard-tabs" role="tablist" aria-label="Scoreboards"></div><p class="scoreboard-window"></p><p class="leaderboard-own"></p><p class="leaderboard-list-status" role="status"></p><div class="leaderboard-table" tabindex="0" role="region" aria-label="Top scores table"><table><caption>Top 1,000 \xB7 one entry per browser</caption><thead><tr><th scope="col">Rank</th><th scope="col">Name and mandate</th><th scope="col">Enterprise Points</th></tr></thead><tbody></tbody></table></div><div class="leaderboard-pagination"><button type="button" data-page="previous">Previous 50</button><button type="button" data-page="next">Next 50</button></div>';
+    try {
+      localStorage.setItem("slopbuzz:scoreboard", this.selected);
+    } catch {
+    }
+    const tabs = host.querySelector(".scoreboard-tabs");
+    for (const b of scoreboards) {
+      const button = element2("button");
+      button.type = "button";
+      button.dataset.scoreboard = b.id;
+      button.setAttribute("role", "tab");
+      button.innerHTML = scoreboardIcon(b.id);
+      button.append(document.createTextNode(b.label));
+      button.addEventListener("click", () => this.select(b.id));
+      button.addEventListener("keydown", (event) => {
+        const keys = ["ArrowRight", "ArrowLeft", "Home", "End"];
+        if (!keys.includes(event.key)) return;
+        event.preventDefault();
+        const i = scoreboards.findIndex((b2) => b2.id === this.selected), next = event.key === "Home" ? 0 : event.key === "End" ? 3 : (i + (event.key === "ArrowRight" ? 1 : 3)) % 4;
+        this.select(scoreboards[next].id);
+        tabs.children[next].focus();
+      });
+      tabs.append(button);
+    }
+    this.updateTabs();
     this.table = host.querySelector("tbody");
     this.status = host.querySelector(".leaderboard-list-status");
     this.own = host.querySelector(".leaderboard-own");
@@ -5656,6 +5745,8 @@ var RankingView = class {
   }
   host;
   client;
+  selected = selectedBoard();
+  generation = 0;
   offset = 0;
   loading = false;
   table;
@@ -5663,23 +5754,50 @@ var RankingView = class {
   previous;
   next;
   own;
+  select(board) {
+    this.selected = board;
+    this.offset = 0;
+    this.loading = false;
+    ++this.generation;
+    try {
+      localStorage.setItem("slopbuzz:scoreboard", board);
+    } catch {
+    }
+    if (this.host.id === "high-scores-list") {
+      const url = new URL(location.href);
+      url.searchParams.set("board", board);
+      history.replaceState(history.state, "", url);
+    }
+    this.updateTabs();
+    this.table.replaceChildren();
+    void this.refresh();
+  }
+  updateTabs() {
+    for (const button of this.host.querySelectorAll('[role="tab"]')) {
+      const active = button.dataset.scoreboard === this.selected;
+      button.setAttribute("aria-selected", String(active));
+      button.tabIndex = active ? 0 : -1;
+    }
+    this.host.querySelector(".scoreboard-window").textContent = scoreboards.find((b) => b.id === this.selected).window;
+  }
   async refresh() {
     if (this.loading) return;
     this.loading = true;
+    const generation = ++this.generation, board = this.selected;
     try {
-      const page = await this.client.list(this.offset);
-      this.render(page);
+      const page = await this.client.list(this.offset, board);
+      if (generation === this.generation) this.render(page);
     } catch (error) {
-      this.status.textContent = error.message + " Previous results, if any, may be out of date.";
+      if (generation === this.generation) this.status.textContent = error.message + " Previous results, if any, may be out of date.";
     } finally {
-      this.loading = false;
+      if (generation === this.generation) this.loading = false;
     }
   }
   render(page) {
     const expanded = new Set([...this.table.querySelectorAll("details[open]")].map((e) => e.closest("tr").dataset.entryId));
     const focused = this.table.contains(document.activeElement) ? { id: document.activeElement?.closest("tr")?.dataset.entryId, tag: document.activeElement?.tagName } : void 0;
-    const own = this.client.state.personal?.entry;
-    this.own.textContent = own ? own.rank <= 1e3 ? `Your published best: #${number(own.rank)} \xB7 ${number(own.score)} points${own.stale ? " \xB7 awaiting a fresh run update" : ""}.` : `Your published best is currently outside the top 1,000.` : "Scores appear only after their owner chooses to publish.";
+    const own = this.client.state.personal?.standings?.[this.selected] ?? (this.selected === "all-time" ? this.client.state.personal?.entry : null);
+    this.own.textContent = own ? own.rank <= 1e3 ? `Your published best: #${number(own.rank)} \xB7 ${number(own.score)} points${own.stale ? " \xB7 awaiting a fresh run update" : ""}.` : `Your published best is currently outside the top 1,000.` : "Scores are recorded anonymously until their owner chooses a public name.";
     this.status.textContent = page.total ? `${number(this.offset + 1)}\u2013${number(Math.min(this.offset + 50, page.total))} of ${number(page.total)} \xB7 Updated ${new Date(page.asOf).toLocaleTimeString()}` : "No scores filed yet. Numerical greatness awaits its first volunteer.";
     this.previous.disabled = this.offset === 0;
     this.next.disabled = this.offset + 50 >= page.total;
@@ -5690,7 +5808,7 @@ var RankingView = class {
       const rank = element2("th", "#" + number(entry.rank));
       rank.scope = "row";
       const info = element2("td");
-      info.append(element2("strong", entry.name));
+      info.append(element2("strong", own?.id === entry.id ? this.client.state.personal.name : entry.name));
       if (own?.id === entry.id) info.append(element2("span", " \xB7 You"));
       const status = entry.stale ? "Awaiting update" : entry.status === "active" ? "Earning points" : entry.status === "completed" ? "Completed" : "Points banked";
       info.append(element2("p", `${number(entry.through)} lines \xB7 ${status}`));
@@ -5740,6 +5858,10 @@ var HighScoreDesk = class {
   restoreFocus = true;
   trophyOfferRun;
   lastClientError = "";
+  verificationPromise;
+  challengeHost;
+  serverClockOffset = 0;
+  lastStandingAsOf = "";
   constructor() {
     let storage;
     try {
@@ -5757,8 +5879,8 @@ var HighScoreDesk = class {
    <form class="leaderboard-enrollment" hidden><p data-high-scores-explanation></p><p class="leaderboard-live-score"><strong data-high-scores-live>0</strong> Enterprise Points <span data-high-scores-rank></span></p>
     <label for="high-scores-name">Your public name</label><input id="high-scores-name" name="name" type="text" minlength="1" maxlength="24" pattern="[A-Za-z0-9 _\\-]+" autocomplete="nickname" aria-describedby="high-scores-name-help" placeholder="Enter your name" title="1\u201324 letters, digits, spaces, hyphens or underscores" required>
     <p id="high-scores-name-help" data-registration-detail>1\u201324 letters A\u2013Z, digits, spaces, hyphens or underscores. Include at least one letter or digit. Names are public and need not be unique.</p>
-    <p data-registration-detail>Publishing also enables automatic updates from future runs in this browser. Heists can lower a live result. Your best banked result remains a fallback.</p><div data-turnstile></div>
-    <div class="leaderboard-actions"><button class="button button-primary" type="submit">Publish my score</button><button class="button button-secondary" type="button" data-high-scores-decline>Keep private</button><button class="button button-secondary" type="button" data-high-scores-withdraw hidden>Withdraw from the register</button></div>
+    <p data-registration-detail>Scores update automatically from future runs in this browser. Heists can lower a live result. Your best banked result remains a fallback.</p><div data-turnstile></div>
+    <div class="leaderboard-actions"><button class="button button-primary" type="submit">Save name</button><button class="button button-secondary" type="button" data-high-scores-decline>Continue anonymously</button><button class="button button-secondary" type="button" data-high-scores-withdraw hidden>Use Anonymous Coward</button></div>
    </form><p id="high-scores-status" role="status" aria-live="polite"></p><p class="leaderboard-audit-note" data-registration-detail>Receipts are checked for accounting consistency. Browser activity is not independently authenticated. All scoring editions compete together.</p>`;
     document.body.append(this.dialog);
     this.board = this.dialog.querySelector("[data-high-scores-board]");
@@ -5781,7 +5903,10 @@ var HighScoreDesk = class {
       if (this.mode !== "board" && this.client.state.choice === "undecided") this.client.decline();
       this.removeChallenge();
       document.dispatchEvent(new Event("score-dialog-change"));
-      if (this.restoreFocus && this.invoker?.getClientRects().length) this.invoker.focus({ preventScroll: true });
+      if (this.restoreFocus) {
+        const target = this.invoker?.getClientRects().length ? this.invoker : this.invoker?.closest("[data-scoreboard-strip]")?.querySelector("button:not([hidden])");
+        target?.focus({ preventScroll: true });
+      }
     });
     for (const tab of this.dialog.querySelectorAll("[data-high-scores-tab]")) tab.addEventListener("click", () => this.open(tab.dataset.highScoresTab, tab));
     this.decline.addEventListener("click", () => {
@@ -5790,11 +5915,11 @@ var HighScoreDesk = class {
     });
     this.withdraw.addEventListener("click", () => void this.perform(async () => {
       await this.client.withdraw();
-      this.status.textContent = "Your entry has been removed. This browser will keep future scores private.";
+      this.status.textContent = "Your scores are now displayed as Anonymous Coward.";
       this.name.value = "";
       this.removeChallenge();
     }));
-    this.name.addEventListener("input", () => this.name.setCustomValidity(""));
+    restrictLeaderboardName(this.name);
     this.form.addEventListener("submit", (event) => {
       event.preventDefault();
       let name;
@@ -5805,9 +5930,9 @@ var HighScoreDesk = class {
         this.name.reportValidity();
         return;
       }
-      const joining = !this.client.state.personal?.participating;
+      const joining = this.dialog.dataset.minimal === "true";
       void this.perform(async () => {
-        await this.client.enroll(name, this.token);
+        await this.client.enroll(name, this.client.state.personal?.participating ? "" : await this.challenge());
         this.removeChallenge();
         if (joining) this.dialog.close();
         else this.status.textContent = "Your public name has been saved.";
@@ -5852,6 +5977,7 @@ var HighScoreDesk = class {
         if (document.body.dataset.sitePage === "high-scores") void this.pageView?.refresh();
       }
     }, 15e3);
+    this.client.setVerification(() => this.challenge());
     this.mountPage();
     void this.client.start();
   }
@@ -5866,25 +5992,26 @@ var HighScoreDesk = class {
   }
   qualifiesForInvitation() {
     const s = this.client.state;
-    return s.choice === "undecided" && !s.personal?.participating && s.enabled && !s.stale && s.qualification?.runId === s.current?.id && !!s.qualification?.qualifies;
+    if (s.choice !== "undecided" || !s.enabled || s.stale || !s.current) return false;
+    return Object.values(s.personal?.standings || { "all-time": s.personal?.entry }).some((e) => e?.runId === s.current.id && e.rank <= 1e3) || s.qualification?.runId === s.current.id && !!(s.qualification.qualifiesAny ?? s.qualification.qualifies);
   }
   open(mode, invoker) {
+    if (mode === "board") this.boardView.select(isScoreboard(invoker?.dataset.scoreboard) ? invoker.dataset.scoreboard : selectedBoard(false));
     this.mode = mode;
     if (mode !== "board") this.trophyOfferRun = void 0;
     if (invoker && !this.dialog.contains(invoker)) this.invoker = invoker;
     this.restoreFocus = true;
     this.status.textContent = "";
-    this.name.value = this.client.state.personal?.name || this.name.value;
+    this.name.value = this.client.state.personal?.name === anonymousName ? "" : this.client.state.personal?.name || this.name.value;
     if (!this.dialog.open) this.dialog.showModal();
     this.render();
     (this.dialog.dataset.minimal === "true" ? this.name : this.dialog.querySelector("#high-scores-title")).focus({ preventScroll: true });
     document.dispatchEvent(new Event("score-dialog-change"));
     if (mode === "board") void this.boardView.refresh();
-    else void this.challenge();
   }
   close() {
     this.trophyOfferRun = void 0;
-    if (this.mode !== "board" && !this.client.state.personal?.participating) this.client.decline();
+    if (this.mode !== "board" && this.client.state.choice === "undecided") this.client.decline();
     this.dialog.close();
   }
   async perform(action) {
@@ -5907,15 +6034,42 @@ var HighScoreDesk = class {
     this.rendering = true;
     try {
       const state = this.client.state, current = state.current, entry = state.personal?.entry;
-      const ownCurrent = !!entry && entry.runId === current?.id;
-      let standing = entry && entry.rank <= 1e3 ? `#${number(entry.rank)}` : "";
       const qualification = state.qualification;
-      if (state.choice !== "public" && qualification && qualification.runId === current?.id && qualification.qualifies) standing = "#" + number(qualification.rank);
-      for (const label of document.querySelectorAll("[data-high-score-standing]")) {
-        label.textContent = standing;
-        label.classList.toggle("leaderboard-stale", state.stale || !!entry?.stale);
-        label.title = standing ? (state.stale ? "Last confirmed standing. " : entry && !ownCurrent ? `Previous best: ${number(entry.score)} points. ` : "") + "Rank is updated periodically." : "";
-        label.closest("button")?.setAttribute("aria-label", "Open top scores" + (standing ? ". " + standing : ""));
+      if (state.personal && !state.stale && state.personal.asOf !== this.lastStandingAsOf) {
+        this.lastStandingAsOf = state.personal.asOf;
+        this.serverClockOffset = Date.parse(state.personal.asOf) - Date.now();
+      }
+      let standing = "";
+      for (const host of document.querySelectorAll("[data-scoreboard-strip]")) {
+        let visible2 = 0;
+        for (const b of scoreboards) {
+          const e = state.personal?.standings?.[b.id] ?? (b.id === "all-time" ? entry : null), estimate = qualification?.runId === current?.id ? qualification?.standings?.[b.id] ?? (b.id === "all-time" ? qualification : null) : null;
+          const expired = !!e && b.duration > 0 && Date.parse(e.attainedAt) + b.duration <= Date.now() + this.serverClockOffset;
+          const rank = e && !expired && e.rank <= 1e3 ? e.rank : !state.personal?.participating && estimate?.qualifies ? estimate.rank : null;
+          let button = host.querySelector('[data-scoreboard="' + b.id + '"]');
+          if (!button) {
+            button = element2("button");
+            button.type = "button";
+            button.className = "score-trophy-button scoreboard-rank";
+            button.dataset.highScoresOpen = "board";
+            button.dataset.scoreboard = b.id;
+            button.innerHTML = scoreboardIcon(b.id) + "<span data-high-score-standing></span>";
+            host.append(button);
+          }
+          button.hidden = !rank;
+          if (!rank) continue;
+          visible2++;
+          const text2 = number(rank), label = button.querySelector("[data-high-score-standing]");
+          if (label.textContent !== text2) label.textContent = text2;
+          const description = b.label + ", " + b.window + ", " + (e ? "rank " : "estimated rank ") + text2 + (e ? " \xB7 " + number(e.score) + " points" + (current && e.runId !== current.id ? " \xB7 earlier run" : "") : " \xB7 not yet recorded") + (state.stale || e?.stale ? " \xB7 last confirmed standing" : "");
+          button.title = description;
+          button.setAttribute("aria-label", "Open " + description);
+          button.classList.toggle("leaderboard-stale", state.stale || !!e?.stale);
+          standing += (standing ? " \xB7 " : "") + b.label + " #" + text2;
+        }
+        host.dataset.placed = String(visible2);
+        const fallback = host.querySelector("[data-high-scores-open]:not([data-scoreboard])");
+        if (fallback) fallback.hidden = visible2 > 0;
       }
       if (this.qualifiesForInvitation() && this.dialog.open && this.mode === "board" && this.trophyOfferRun === current?.id) {
         this.rendering = false;
@@ -5930,20 +6084,20 @@ var HighScoreDesk = class {
       if (!this.dialog.open) return;
       this.board.hidden = this.mode !== "board";
       this.form.hidden = this.mode === "board";
-      const minimal = this.mode === "invite" || this.mode === "settings" && !state.personal?.participating;
+      const minimal = this.mode === "invite" || this.mode === "settings" && (!state.personal?.participating || state.personal.name === anonymousName);
       this.dialog.dataset.minimal = String(minimal);
       for (const detail of this.dialog.querySelectorAll("[data-registration-detail]")) detail.hidden = minimal;
       this.form.querySelector("[data-high-scores-explanation]").hidden = minimal;
-      this.dialog.querySelector("#high-scores-title").textContent = minimal ? qualification?.qualifies && qualification.runId === current?.id ? "Congratulations! You made the top 1,000." : "Join the top scores" : this.mode === "settings" ? "My high-score participation" : "Top 1,000 scores";
-      this.form.querySelector("[data-high-scores-explanation]").textContent = state.choice === "public" ? "This browser participates automatically. You can change its public name or withdraw." : state.choice === "private" ? "Your scores are private. You can join the register whenever you choose." : `${current?.status === "active" ? "Your mandate is still running. " : ""}Would you like your score to appear in the public register?`;
+      this.dialog.querySelector("#high-scores-title").textContent = minimal ? this.qualifiesForInvitation() ? "Congratulations! You made the top 1,000." : "Join the top scores" : this.mode === "settings" ? "My high-score participation" : "Top 1,000 scores";
+      this.form.querySelector("[data-high-scores-explanation]").textContent = state.choice === "public" ? "Scores are recorded automatically. You can change your public name or use Anonymous Coward." : state.choice === "anonymous" ? "Your scores appear as Anonymous Coward. You can choose a name whenever you like." : `${current?.status === "active" ? "Your mandate is still running. " : ""}Would you like to add your name to your score?`;
       this.score.textContent = current ? number(String(netPoints(current))) : entry ? number(entry.score) : "0";
       this.rank.textContent = standing ? `\xB7 ${standing}${state.stale ? " \xB7 awaiting update" : ""}` : "";
-      const submitLabel = state.personal?.participating ? "Save public name" : "Publish my score";
+      const submitLabel = "Save name";
       if (this.submit.textContent !== submitLabel) this.submit.textContent = submitLabel;
-      const submitDisabled = this.requestBusy || !state.enabled || !state.personal?.participating && !this.token;
+      const submitDisabled = this.requestBusy || !state.enabled;
       if (this.submit.disabled !== submitDisabled) this.submit.disabled = submitDisabled;
-      this.decline.hidden = !!state.personal?.participating;
-      this.withdraw.hidden = !state.personal?.participating;
+      this.decline.hidden = !minimal;
+      this.withdraw.hidden = minimal || !state.personal?.participating || state.personal.name === anonymousName;
       this.withdraw.disabled = this.requestBusy;
       if (state.error) this.status.textContent = state.error;
       else if (!state.enabled) this.status.textContent = "Score submissions are temporarily unavailable. Your demo can continue.";
@@ -5954,9 +6108,10 @@ var HighScoreDesk = class {
       this.rendering = false;
     }
   }
-  async challenge() {
-    if (this.widget || this.client.state.personal?.participating || !this.client.state.enabled || !this.client.state.sitekey) return;
-    try {
+  challenge() {
+    if (this.verificationPromise) return this.verificationPromise;
+    this.verificationPromise = (async () => {
+      if (!this.client.state.sitekey) throw Error("Score verification is not configured.");
       if (!window.turnstile) {
         this.challengeLoading ??= new Promise((resolve, reject) => {
           const script = element2("script");
@@ -5964,7 +6119,7 @@ var HighScoreDesk = class {
           script.async = true;
           const timer = setTimeout(() => {
             script.remove();
-            reject(Error("Verification could not load. Your demo can continue; try joining again later."));
+            reject(Error("Score verification could not load. Your run continues."));
           }, 15e3);
           script.onload = () => {
             clearTimeout(timer);
@@ -5973,30 +6128,36 @@ var HighScoreDesk = class {
           script.onerror = () => {
             clearTimeout(timer);
             script.remove();
-            reject(Error("Verification could not load."));
+            reject(Error("Score verification could not load."));
           };
           document.head.append(script);
         });
         await this.challengeLoading;
       }
-      if (!this.dialog.open || this.mode === "board" || this.widget) return;
-      this.widget = window.turnstile.render(this.form.querySelector("[data-turnstile]"), { sitekey: this.client.state.sitekey, action: "leaderboard-enroll", theme: "auto", callback: (token) => {
-        this.token = token;
-        this.render();
-      }, "expired-callback": () => {
-        this.token = "";
-        this.render();
-      }, "error-callback": () => {
-        this.token = "";
-        this.status.textContent = "Verification needs another attempt. Your run continues.";
-        this.render();
-      } });
-    } catch (error) {
+      this.challengeHost ??= element2("div");
+      if (!this.challengeHost.isConnected) document.body.append(this.challengeHost);
+      return new Promise((resolve, reject) => {
+        const timer = setTimeout(() => reject(Error("Score verification timed out. Your run continues.")), 2e4);
+        this.widget = window.turnstile.render(this.challengeHost, { sitekey: this.client.state.sitekey, action: "leaderboard-enroll", theme: "auto", callback: (token) => {
+          clearTimeout(timer);
+          resolve(token);
+        }, "expired-callback": () => {
+          clearTimeout(timer);
+          reject(Error("Score verification expired."));
+        }, "error-callback": () => {
+          clearTimeout(timer);
+          reject(Error("Score verification needs another attempt."));
+        } });
+      });
+    })().finally(() => {
+      this.verificationPromise = void 0;
       this.challengeLoading = void 0;
-      this.status.textContent = error.message;
-    }
+      this.removeChallenge();
+    });
+    return this.verificationPromise;
   }
   removeChallenge() {
+    if (this.verificationPromise) return;
     if (this.widget) window.turnstile?.remove(this.widget);
     this.widget = void 0;
     this.token = "";

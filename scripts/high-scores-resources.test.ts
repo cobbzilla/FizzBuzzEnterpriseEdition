@@ -18,7 +18,7 @@ test('resource setup is repeatable, preserves database identity and keeps the se
  const a=api(),first=await ensureHighScores(a.cf,'/accounts/test','test-worker','scores.example',true),second=await ensureHighScores(a.cf,'/accounts/test','test-worker','scores.example',false);
  assert.equal(first.database,second.database);assert.equal(a.calls.filter(c=>c.path.endsWith('/d1/database')&&c.method==='POST').length,1);assert.equal(a.calls.filter(c=>c.path.endsWith('/challenges/widgets')&&c.method==='POST').length,1);
  assert.equal(a.calls.find(c=>c.path.endsWith('/challenges/widgets')&&c.method==='POST')?.body.mode,'invisible');assert.equal(a.calls.filter(c=>c.method==='PUT').length,0);
- assert.equal(first.bindings.find(b=>b.name==='TURNSTILE_SECRET')?.type,'secret_text');const flag=second.bindings.find(b=>b.name==='HIGH_SCORES_ENABLED');assert.equal(flag&&'text'in flag?flag.text:undefined,'false');assert.equal(first.bindings.filter(b=>b.type==='ratelimit').length,3);
+ assert.equal(first.bindings.find(b=>b.name==='TURNSTILE_SECRET')?.type,'secret_text');const flag=second.bindings.find(b=>b.name==='HIGH_SCORES_ENABLED');assert.equal(flag&&'text'in flag?flag.text:undefined,'false');assert.equal(first.bindings.filter(b=>b.type==='ratelimit').length,4);
  a.migrations.set('0001-high-scores.sql','tampered');await assert.rejects(()=>ensureHighScores(a.cf,'/accounts/test','test-worker','scores.example',true),/migration was changed/);
 });
 test('existing managed enrollment becomes invisible without rotating its identity or losing hostnames',async()=>{

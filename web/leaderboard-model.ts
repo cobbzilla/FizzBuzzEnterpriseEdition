@@ -1,19 +1,20 @@
 import type {ScoringRun} from './scoring-service.ts';
+import type {Scoreboard} from './scoreboards.ts';
 
 export const leaderboardAPI='/api/high-scores';
 export const participationKey='slopbuzz:high-scores:participation:v1';
 export const pendingScoresKey='slopbuzz:high-scores:pending:v1';
 export const leaderboardLimit=1000;
-export type Participation='undecided'|'private'|'public';
+export type Participation='undecided'|'private'|'public'|'anonymous';
 export interface LeaderboardReceipt {schema:'slopbuzz-leaderboard/v1';sequence:number;run:ScoringRun}
 export interface LeaderboardEntry {
  id:string;runId:string;rank:number;name:string;score:string;through:string;mandate:string;
  status:ScoringRun['status'];rules:string;identity:string;conditions:Record<string,string>;
  attainedAt:string;updatedAt:string;stale:boolean;
 }
-export interface LeaderboardPage {entries:LeaderboardEntry[];total:number;offset:number;limit:number;cutoff:string|null;asOf:string;enabled:boolean;sitekey:string}
-export interface QualificationResult {qualifies:boolean;rank:number|null;score:string;runId:string;sequence:number;asOf:string}
-export interface PersonalStanding {participating:boolean;name:string;entry:LeaderboardEntry|null;asOf:string;enabled:boolean;sitekey:string}
+export interface LeaderboardPage {board?:Scoreboard;entries:LeaderboardEntry[];total:number;offset:number;limit:number;cutoff:string|null;asOf:string;enabled:boolean;sitekey:string}
+export interface QualificationResult {qualifies:boolean;rank:number|null;score:string;runId:string;sequence:number;asOf:string;qualifiesAny?:boolean;standings?:Record<Scoreboard,{qualifies:boolean;rank:number|null}>}
+export interface PersonalStanding {participating:boolean;name:string;entry:LeaderboardEntry|null;asOf:string;enabled:boolean;sitekey:string;standings?:Record<Scoreboard,LeaderboardEntry|null>}
 export interface SubmissionResult extends PersonalStanding {acceptedSequence:number;runId:string}
 export function leaderboardName(value:unknown):string {
  if(typeof value!=='string')throw Error('Enter a name using letters, digits, spaces, hyphens and underscores.');
