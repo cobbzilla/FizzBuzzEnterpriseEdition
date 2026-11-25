@@ -3,6 +3,10 @@ import assert from 'node:assert/strict';
 import {serve} from '../deploy/b2-worker.ts';
 import {settings, metadata, digest} from './b2-support.ts';
 import {needsUpload, uploadFiles, type Payload} from './b2-upload.ts';
+import {runInNewContext} from 'node:vm';
+import type {BrowserContext} from '@playwright/test';
+import {protectProductionScores} from './protect-production-scores.ts';
+import {participationKey} from '../web/leaderboard-model.ts';
 
 const env = {B2_ORIGIN: 'https://f004.backblazeb2.com/file/test-bucket/site/'};
 const config = {B2_BUCKET_ID: 'bucket', B2_KEY_ID: 'key', B2_APP_KEY: 'secret', CLOUDFLARE_ACCOUNT_ID: 'account', CLOUDFLARE_ZONE_ID: 'zone', CLOUDFLARE_API_TOKEN: 'token', SLOPBUZZ_PUBLIC_URL: 'https://example.org'};
@@ -11,6 +15,50 @@ const file = (path: string): Payload => {
  return {path, bytes, sha1: digest(bytes), ...metadata(path)};
 };
 const noWait = async () => {};
+
+async function protectedPage() {
+ const location=new URL('https://example.org/demo/'),storage=new Map<string,string>();
+ const requests:{url:string;method:string;body:string}[]=[];
+ const window={fetch:async(input:RequestInfo|URL,init?:RequestInit)=>{
+  const request=new Request(input instanceof Request?input:new URL(input,location.href),init);
+  requests.push({url:request.url,method:request.method,body:await request.text()});
+  return Response.json({network:true});
+ }};
+ await protectProductionScores({addInitScript:async(script:unknown,key:unknown)=>{
+  assert.equal(typeof script,'function');
+  runInNewContext('('+String(script)+')(key)',{window,location,Request,Response,URL,key,localStorage:{setItem:(key:string,value:string)=>storage.set(key,value)}});
+ }} as unknown as BrowserContext);
+ return {send:window.fetch,requests,storage};
+}
+
+test('live verification blocks score mutations for string, URL and Request inputs before network access',async()=>{
+ const {send,requests,storage}=await protectedPage();
+ assert.equal(storage.get(participationKey),'anonymous');
+ for(const method of ['POST','PUT','DELETE','PATCH']){
+  for(const input of ['/api/high-scores/me',new URL('https://example.org/api/high-scores/runs/a'),new Request('https://example.org/api/high-scores/check',{method,body:'score'})]){
+   assert.equal((await send(input,{method:method.toLowerCase(),body:'score'})).status,503);
+  }
+ }
+ assert.equal((await send(new Request('https://example.org/api/high-scores/runs/a',{method:'PUT',body:'score'}))).status,503);
+ assert.deepEqual(requests,[]);
+});
+
+test('live verification disables enrollment but preserves real public leaderboard reads',async()=>{
+ const {send,requests}=await protectedPage();
+ const personal=await(await send('/api/high-scores/me')).json();
+ assert.equal(personal.enabled,false);assert.equal(personal.participating,false);assert.equal(personal.sitekey,'');
+ assert.equal(requests.length,0);
+ assert.equal((await(await send('/api/high-scores?board=weekly')).json()).network,true);
+ assert.equal(requests[0].url,'https://example.org/api/high-scores?board=weekly');
+});
+
+test('score protection leaves unrelated Request bodies and external endpoints intact',async()=>{
+ const {send,requests}=await protectedPage();
+ const input=new Request('https://example.org/intake/e/',{method:'POST',body:'analytics payload'});
+ assert.equal((await send(input)).status,200);
+ await send('https://other.example/api/high-scores',{method:'POST',body:'unrelated payload'});
+ assert.deepEqual(requests,[{url:'https://example.org/intake/e/',method:'POST',body:'analytics payload'},{url:'https://other.example/api/high-scores',method:'POST',body:'unrelated payload'}]);
+});
 
 test('configuration requires credentials and a root HTTPS origin; defaults need no flags', () => {
  const c = settings(config);

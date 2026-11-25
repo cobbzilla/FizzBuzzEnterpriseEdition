@@ -2,11 +2,11 @@ import {naturalFlight} from './flight-navigation.ts';
 import {demoNavigator} from './demo-navigation.ts';
 import {verifyAnalytics} from './verify-analytics.ts';
 import assert from 'node:assert/strict';
-import {chromium, firefox, webkit, expect,type BrowserContext} from '@playwright/test';
+import {chromium, firefox, webkit, expect} from '@playwright/test';
 import {launchBrowser} from './browser-launch.ts';
 import {scoringStorageKey,cabinetStorageKey,netPoints,type ScoringRun} from '../web/scoring-service.ts';
 import {guidePath,rulesIdentity} from '../web/scoring-rules.ts';
-import {participationKey} from '../web/leaderboard-model.ts';
+import {protectProductionScores} from './protect-production-scores.ts';
 
 /** Exercise the deployed artifact, including HTTPS, CSP and real service workers. */
 export async function verifyPublic(origin: string, revision: string) {
@@ -40,14 +40,6 @@ export async function verifyPublic(origin: string, revision: string) {
  for(const path of ['/admin/high-scores/','/admin/high-scores/app.js','/admin/high-scores/api/boards'])assert.equal((await fetch(origin+path)).status,401);
  const personal=await fetch(origin+'/api/high-scores/me');assert.equal(personal.status,200);assert.equal(personal.headers.get('cache-control'),'no-store');assert.equal((await personal.json()).participating,false);
 
- const protectProductionScores=async(context:BrowserContext)=>{
-  await context.addInitScript(key=>localStorage.setItem(key,'anonymous'),participationKey);
-  await context.route('**/api/high-scores**',async route=>{const request=route.request(),path=new URL(request.url()).pathname;
-   if(!['GET','HEAD'].includes(request.method())){await route.fulfill({status:503,json:{error:'Publication is disabled in release verification.'}});return;}
-   if(path.endsWith('/me')){await route.fulfill({json:{participating:false,name:'',entry:null,enabled:false,sitekey:'',asOf:new Date().toISOString()}});return;}
-   await route.continue();
-  });
- };
  for (const engine of [chromium, firefox, webkit]) {
   let browser = await launchBrowser(engine);
   try {
@@ -59,13 +51,15 @@ export async function verifyPublic(origin: string, revision: string) {
    let demo=demoNavigator(page);
    page.setDefaultTimeout(60000);
    const businessRequests: string[] = [];
+   const publicationRequests: string[] = [];
    const observeRequests=()=>page.on('request', request => {
     const url = new URL(request.url());
     if (url.origin === origin && /^\/(fizzbuzz|healthz|readyz|audit|operations|capacity|cache|procurement|onboarding|precedent|companions|premises)(\/|\?|$)/.test(url.pathname)) businessRequests.push(url.pathname);
+    if(url.origin===origin&&/^\/api\/high-scores(?:\/|$)/.test(url.pathname)&&!['GET','HEAD'].includes(request.method()))publicationRequests.push(request.method()+' '+url.pathname);
    });
    observeRequests();
    const freshBrowser=async()=>{
-    assert.deepEqual(businessRequests,[]);await browser.close();browser=await launchBrowser(engine);
+    assert.deepEqual(businessRequests,[]);assert.deepEqual(publicationRequests,[],'Release verification must not send score mutations');await browser.close();browser=await launchBrowser(engine);
     context=await browser.newContext();await protectProductionScores(context);page=await context.newPage();page.setDefaultTimeout(60000);demo=demoNavigator(page);observeRequests();
    };
    await page.goto(origin+'/high-scores/');await expect(page.locator('#high-scores-list')).toContainText('Top');
@@ -201,6 +195,7 @@ export async function verifyPublic(origin: string, revision: string) {
    await page.goto(origin+'/full-reset/');await expect(page).toHaveURL(origin+'/',{timeout:90000});assert.equal(await page.evaluate(()=>localStorage.getItem('slopbuzz:extraordinary-appointments:v1')),null);
    assert.equal(await page.evaluate(key=>localStorage.getItem(key),scoringStorageKey),null);assert.equal(await page.evaluate(key=>localStorage.getItem(key),cabinetStorageKey),null);
    assert.deepEqual(businessRequests, []);
+   assert.deepEqual(publicationRequests,[],'Release verification must not send score mutations');
    console.log(`${engine.name()}: public runtime, cache, recovery, navigation and offline execution passed.`);
   } finally {
    await browser.close();

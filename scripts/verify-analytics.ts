@@ -6,6 +6,7 @@ import {chromium, expect} from '@playwright/test';
 import {launchBrowser} from './browser-launch.ts';
 import assert from 'node:assert/strict';
 import {createStaticServer} from './serve.ts';
+import {protectProductionScores} from './protect-production-scores.ts';
 
 /** Send marked preview traffic through the real first-party receiving desk. */
 export async function verifyAnalytics(origin: string, expectedRevision?: string, publicToken?: string): Promise<string> {
@@ -14,6 +15,7 @@ export async function verifyAnalytics(origin: string, expectedRevision?: string,
  const browser = await launchBrowser(chromium);
  try {
   const page = await browser.newPage({serviceWorkers:'block', userAgent:'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36',extraHTTPHeaders:{DNT:'1','Sec-GPC':'1'}});
+  await protectProductionScores(page.context());
   await page.addInitScript(() => {
    Object.defineProperty(navigator,'webdriver',{get:()=>false});
    Object.defineProperty(navigator,'userAgentData',{get:()=>undefined});
@@ -21,7 +23,8 @@ export async function verifyAnalytics(origin: string, expectedRevision?: string,
    Object.defineProperty(navigator,'globalPrivacyControl',{value:true});
   });
   const direct: string[] = [];
-  page.on('request', request => {if(new URL(request.url()).hostname.endsWith('posthog.com')) direct.push(request.url());});
+  const scoreWrites: string[] = [];
+  page.on('request', request => {const url=new URL(request.url());if(url.hostname.endsWith('posthog.com')) direct.push(request.url());if(url.origin===origin&&/^\/api\/high-scores(?:\/|$)/.test(url.pathname)&&!['GET','HEAD'].includes(request.method()))scoreWrites.push(request.method()+' '+url.pathname);});
   await page.route('**/analytics-config.json',async route => {
    const response = await route.fetch();const config = await response.json();
    if(expectedRevision) assert.equal(config.revision, expectedRevision);
@@ -43,6 +46,7 @@ export async function verifyAnalytics(origin: string, expectedRevision?: string,
   assert.equal((await demo).status(),200,'First-party demo event rejected');
   await expect(page.locator('#run-status')).toContainText('Mandate complete');
   assert.deepEqual(direct,[],'Browser contacted PostHog directly');
+  assert.deepEqual(scoreWrites,[],'Analytics verification must not publish synthetic scores');
   assert.deepEqual((await page.context().cookies()).filter(cookie=>cookie.name.includes('ph_')),[]);
   console.log('First-party PostHog pageview and demo accepted with DNT/GPC enabled; smoke traffic tagged preview.');
  } finally {await browser.close();}
